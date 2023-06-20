@@ -4,6 +4,12 @@
 
   (paper "A4")
 
+  (title_block
+    (title "SignalSlinger Design")
+    (date "2023-06-20")
+    (rev "1.0")
+  )
+
   (lib_symbols
     (symbol "Connector:Conn_Coaxial" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
       (property "Reference" "J" (id 0) (at 0.254 3.048 0)

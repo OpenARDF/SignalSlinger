@@ -4,6 +4,12 @@
 
   (paper "A4")
 
+  (title_block
+    (title "SignalSlinger Design")
+    (date "2023-06-20")
+    (rev "1.0")
+  )
+
   (lib_symbols
     (symbol "Connector:DB9_Female" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
       (property "Reference" "J" (id 0) (at 0 13.97 0)
@@ -3557,11 +3563,6 @@
     (effects (font (size 1.27 1.27) (thickness 0.254) bold) (justify left bottom))
     (uuid 55b2d793-9962-4e6a-ab82-66910f5518fb)
   )
-  (text "J110 Connections\nA:   Open   1-5W Variable RF Out CW Tx\nB:   Open   1W Fixed RF Out CW Tx\nC:   1-2    30mW Fixed RF Out CW Tx"
-    (at 185.42 121.92 0)
-    (effects (font (size 1.27 1.27) (thickness 0.254) bold) (justify left bottom))
-    (uuid 68de8d33-de87-4632-9f85-00089b0c6830)
-  )
   (text "RF Configurations\nA: External 5-12.5V = 1-5W Variable RF Out CW Tx\nB: 1W Fixed RF Out CW Tx\nC: 30mW Fixed RF Out CW Tx\n\nPower Source Configurations\n1. External 5-12.5V\n2. Internal LiIon Battery (3.2-4.2V)\n\n"
     (at 190.5 165.1 0)
     (effects (font (size 1.5 1.5) (thickness 0.3) bold) (justify left bottom))
@@ -6999,6 +7000,9 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/274b3e97-1cec-4af2-8ebe-e67dd6978acc"
       (reference "#PWR0233") (unit 1) (value "GND") (footprint "")
     )
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/7e7a61a5-2fd3-45c0-94ac-d31b757fdb9c"
+      (reference "#PWR0234") (unit 1) (value "GND") (footprint "")
+    )
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/b600cc7c-7732-4f3a-9659-2132a29c4d79"
       (reference "#PWR0301") (unit 1) (value "GND") (footprint "")
     )
@@ -7200,6 +7204,9 @@
     (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/97dfdd75-44f0-4dee-8527-bbc76d4da58b"
       (reference "HDWR412") (unit 1) (value "Pin Header Shorting Jumpers") (footprint "")
     )
+    (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/6dd4c5c1-cbca-4eb3-9be0-3e6afa74ef4c"
+      (reference "HDWR413") (unit 1) (value "FTDI Adapter PCB") (footprint "")
+    )
     (path "/48f385a0-9ac3-46be-bebb-920052f20de4"
       (reference "J101") (unit 1) (value "Conn_01x02") (footprint "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical")
     )
@@ -7316,6 +7323,9 @@
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/e25fe1fe-4dcb-40ed-a0e3-cc952002a7ec"
       (reference "R204") (unit 1) (value "1M") (footprint "Resistor_SMD:R_0805_2012Metric")
+    )
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/a604157e-b596-422f-8a01-c3245280c807"
+      (reference "R205") (unit 1) (value "105k") (footprint "Resistor_SMD:R_0805_2012Metric")
     )
     (path "/8753d621-69e1-4251-a22d-f8eaf42e9c5c"
       (reference "SW101") (unit 1) (value "SW_SPST") (footprint "Button_Switch_SMD:SW_SPST_B3U-3000P-B")
