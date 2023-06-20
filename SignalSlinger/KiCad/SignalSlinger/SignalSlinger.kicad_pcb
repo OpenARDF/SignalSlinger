@@ -149,6 +149,7 @@
   (net 72 "unconnected-(U103-Pad4)")
   (net 73 "unconnected-(U103-Pad5)")
   (net 74 "Net-(J108-Pad2)")
+  (net 75 "Net-(D106-Pad1)")
 
   (footprint "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical" (layer "F.Cu")
     (tedit 5A19A420) (tstamp 00d4378f-b04d-4f15-9846-e0fb20a0c432)
@@ -495,7 +496,7 @@
     (fp_line (start -0.8 -0.1) (end -0.8 0.4) (layer "F.Fab") (width 0.1) (tstamp b0c95b4a-714f-47e1-9282-6bc31e878f11))
     (fp_line (start 0.8 -0.4) (end -0.5 -0.4) (layer "F.Fab") (width 0.1) (tstamp d5968a57-3871-4d5d-a33e-5e61335df0ef))
     (pad "1" smd roundrect (at -0.7875 0) (size 0.875 0.95) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
-      (net 2 "GND") (pinfunction "A1") (pintype "passive") (tstamp 28df9c38-3187-4bc6-aa2f-1cc43c2b3b96))
+      (net 75 "Net-(D106-Pad1)") (pinfunction "A1") (pintype "passive") (tstamp 28df9c38-3187-4bc6-aa2f-1cc43c2b3b96))
     (pad "2" smd roundrect (at 0.7875 0) (size 0.875 0.95) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 2 "GND") (pinfunction "A2") (pintype "passive") (tstamp 24ac5030-999b-4968-8639-194173fe7939))
     (model "${KICAD6_3DMODEL_DIR}/Diode_SMD.3dshapes/D_0603_1608Metric.wrl"
@@ -3367,7 +3368,7 @@
     (pad "1" smd roundrect (at -4.65 -8.255) (size 2.05 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 50 "B{slash}B_PS_Enable") (pinfunction "PA7") (pintype "bidirectional") (tstamp c06ea64d-2c39-4164-b825-4f26224d4483))
     (pad "2" smd roundrect (at -4.65 -6.985) (size 2.05 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
-      (net 2 "GND") (pinfunction "PC0/TxD1") (pintype "bidirectional") (tstamp 6f2e70aa-c3a1-4a2c-983c-3139bda896d9))
+      (net 75 "Net-(D106-Pad1)") (pinfunction "PC0/TxD1") (pintype "bidirectional") (tstamp 6f2e70aa-c3a1-4a2c-983c-3139bda896d9))
     (pad "3" smd roundrect (at -4.65 -5.715) (size 2.05 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 22 "Net-(D105-Pad2)") (pinfunction "PC1/RxD1") (pintype "bidirectional") (tstamp 7eb6567a-d2a7-48e5-b0e5-99e059f47fd1))
     (pad "4" smd roundrect (at -4.65 -4.445) (size 2.05 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
@@ -5232,7 +5233,7 @@
     (pad "8" smd rect locked (at -1.385 0 90) (size 1.846667 3.48) (layers "F.Cu" "F.Paste" "F.Mask")
       (net 22 "Net-(D105-Pad2)") (pinfunction "8") (pintype "passive") (tstamp 52b78132-1873-470f-840e-d34e1bc4801a))
     (pad "9" smd rect locked (at -4.155 0 90) (size 1.846667 3.48) (layers "F.Cu" "F.Paste" "F.Mask")
-      (net 2 "GND") (pinfunction "9") (pintype "passive") (tstamp 23a2c557-1d59-4447-bb8b-b98371ab3599))
+      (net 75 "Net-(D106-Pad1)") (pinfunction "9") (pintype "passive") (tstamp 23a2c557-1d59-4447-bb8b-b98371ab3599))
     (model "${KICAD6_3DMODEL_DIR}/Connector_Dsub.3dshapes/DSUB-9_Female_EdgeMount_P2.77mm.wrl"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
