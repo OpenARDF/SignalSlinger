@@ -15,7 +15,7 @@ C303 ,1800pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1800PF 100V C
 C304 ,91pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 91PF 100V NP0 0603,478-10247-1-ND,C2170042,<a href="https://www.digikey.com/products/en?keywords=478-10247-1-ND">Link</a>,KYOCERA AVX,06031U910FAT2A
 D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
 D103 D104 ,LED_Filled,2,LED_SMD:LED_APDA1806SECK,,LED RED CLEAR SMD RIGHT ANGLE,754-2329-1-ND, , ,Kingbright,APDA1806SECK/J3-PRV
-D105 D106 ,ESD9B5.0ST5G_1,2,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,Bourns Inc.,CG0603MLC-05LE
+D105 D106 D108 D109 D110 ,ESD9B5.0ST5G_1,5,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,Bourns Inc.,CG0603MLC-05LE
 D107 ,MBRD10100CT,1,Package_TO_SOT_SMD:TO-252-3_TabPin2,,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338,Diodes Incorporated,MBRD10200CT-13
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND , ,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
 HDWR401 ,Chassis Box,1,,,4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs, , ,https://www.polycase.com/sl-42p?qty=1#200=99&227=163,polycase,SL-42PMBT
