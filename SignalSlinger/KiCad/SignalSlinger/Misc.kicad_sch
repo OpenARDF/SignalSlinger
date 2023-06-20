@@ -624,7 +624,7 @@
     (property "Reference" "HDWR413" (id 0) (at 153.67 120.65 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Value" "" (id 1) (at 153.67 143.51 0))
+    (property "Value" "FTDI Adapter PCB" (id 1) (at 153.67 143.51 0))
     (property "Footprint" "" (id 2) (at 153.67 133.35 0)
       (effects (font (size 1.27 1.27)) hide)
     )
