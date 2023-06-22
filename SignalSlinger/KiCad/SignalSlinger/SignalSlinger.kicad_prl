@@ -15,7 +15,7 @@
     "ratsnest_display_mode": 0,
     "selection_filter": {
       "dimensions": true,
-      "footprints": false,
+      "footprints": true,
       "graphics": true,
       "keepouts": true,
       "lockedItems": true,
@@ -24,7 +24,7 @@
       "text": true,
       "tracks": true,
       "vias": true,
-      "zones": false
+      "zones": true
     },
     "visible_items": [
       0,
@@ -41,6 +41,7 @@
       14,
       15,
       16,
+      17,
       18,
       19,
       20,
@@ -61,7 +62,7 @@
       36
     ],
     "visible_layers": "ffcffff_ffffffff",
-    "zone_display_mode": 0
+    "zone_display_mode": 1
   },
   "meta": {
     "filename": "SignalSlinger.kicad_prl",
