@@ -3,7 +3,7 @@ BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm
 BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 1200mAh, , ,https://www.adafruit.com/product/258,Adafruit,258
 C101 C104 C105 C107 C208 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND, , ,Samsung Electro-Mechanics,CL21B104KACNNNC
 C102 C103 C106 C108 C112 C113 C114 C204 C301 ,470nF,9,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,<a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND">Link</a>,AVX Corporation,08051C474K4Z2A
-C109 C201 C203 C205 C206 C207 C210 ,10uF,7,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 10V X7R 0805,1276-1764-1-ND, , ,Samsung Electro-Mechanics,CL21B106KPQNNNE
+C109 C116 C201 C203 C205 C206 C207 C210 ,10uF,8,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 10V X7R 0805,1276-1764-1-ND, , ,Samsung Electro-Mechanics,CL21B106KPQNNNE
 C110 C213 C214 C215 ,22uF,4,Capacitor_SMD:C_1210_3225Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,<a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND">Link</a>,Samsung Electro-Mechanics,CL32A226MAJNNNE
 C111 ,47 uF low ESR,1,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,<a href="https://www.digikey.com/products/en?keywords=399-3904-1-ND">Link</a>,KEMET,T495X476K020ATE150
 C115 ,C_Trim_Small,1,Capacitors:MURATA-TZC3,, , , , , , 
@@ -32,12 +32,15 @@ HDWR410 ,PCB_AND_ASSEMBLY,1,,,Printed Circuit Board(s) plus Assembly, , , , ,
 HDWR411 ,Pin Header (Straight),1,,,CONN HEADER VERT 20POS 2.54MM,2057-PH1-20-UA-ND, ,https://www.digikey.com/en/products/detail/adam-tech/PH1-20-UA/9830398,Adam Tech,PH1-20-UA
 HDWR412 ,Pin Header Shorting Jumpers,1,,,CONN JUMPER SHORTING .100" GOLD,S9337-ND, ,https://www.digikey.com/en/products/detail/sullins-connector-solutions/QPC02SXGN-RC/2618262,Sullins Connector Solutions,QPC02SXGN-RC
 HDWR413 ,FTDI Adapter PCB,1,,, , , , , , 
-J101 J102 J103 J104 J105 J106 ,Conn_01x02,6,Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical,, , , , , , 
+J101 J103 J104 J105 J106 ,Conn_01x02,5,Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical,, , , , , , 
 J107 ,DB9 Female,1,Connector_Dsub:DSUB-9_Female_EdgeMount_P2.77mm,, ,609-1525-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,TH,TH
 J108 J110 ,Conn_01x02,2,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np,np, 
 J109 J111 J202 J302 ,Conn_01x03,4,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,, , , , , , 
+J112 ,External Power Source,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
+J113 ,Controlled Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J201 ,Barrel_Jack_Switch,1,Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal,,CONN PWR JACK 2X5.5MM SOLDER,CP-036AHPJCT-ND, ,https://www.digikey.com/en/products/detail/cui-devices/PJ-036AH-SMT-TR/1530971,CUI Devices,PJ-036AH-SMT-TR
 J301 ,To Antenna,1,Connector_Coaxial:BNC_TEConnectivity_1478035_Horizontal,,CONN BNC JACK R/A 50 OHM PCB,ARF1065-ND, ,https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB,Amphenol RF,31-5431
+JP101 ,V-ext disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 JP301 ,QRP disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT,,TH,FT50A-43 (Amidon), ,<a href="http://www.amidoncorp.com/ft-50A-43/">Link</a>,TH,TH
 L102 ,INDUCTOR_tapped,1,Inductors:Toroid_T-50A_TH_BF_CT_Vertical,,TH,FT50A-43 (Amidon), ,<a href="http://www.amidoncorp.com/ft-50A-43/">Link</a>,TH,TH
@@ -60,7 +63,7 @@ SW101 ,SW_SPST,1,Button_Switch_SMD:SW_SPST_B3U-3000P-B,,SWITCH TACTILE SPST-NO 0
 TP101 ,I2C1,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,, ,np, ,np,np, 
 U101 ,AVR128DA28,1,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,,IC MCU 8BIT 128KB FLASH 28SOIC,150-AVR128DA28T-E/SOCT-ND, , ,Microchip Technology,AVR128DA28T-E/SO
 U102 ,SI5351,1,Package_SO:MSOP-10_3x3mm_P0.5mm,,IC CLK GENERATOR 200MHZ 10MSOP,336-2399-5-ND,C529366,<a href="https://www.digikey.com/products/en?keywords=336-2399-5-ND">Link</a>,Silicon Labs,SI5351A-B-GT
-U103 ,TPS22810DBVT,1,TO_SOT_Packages_SMD:SOT-23-6,,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,<a href="https://www.digikey.com/products/en?keywords=296-45304-1-ND">Link</a>,Texas Instruments,TPS22810DBVT
+U103 U105 ,TPS22810DBVT,2,Package_TO_SOT_SMD:SOT-23-6,,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,https://www.digikey.com/products/en?keywords=296-45304-1-ND,Texas Instruments,TPS22810DBVT
 U104 ,LM5134,1,Package_TO_SOT_SMD:SOT-23-6-LM5134,,IC GATE DRVR LOW-SIDE SOT23-6,296-40244-1-ND,C2677086,<a href="https://www.digikey.com/products/en?keywords=296-40244-1-ND">Link</a>,Texas Instruments,LM5134BMFX/NOPB
 U201 U202 ,LP2985-3.3,2,Package_TO_SOT_SMD:SOT-23-5,,IC REG LINEAR 3.3V 150MA SOT23-5,296-18479-1-ND, , ,Texas Instruments,LP2985A-33DBVR
 U203 ,TPS63060,1,Package_SON:Texas_S-PWSON-N10_ThermalVias,,IC REG BCK BST ADJ 2A 10WSON,296-30178-1-ND, ,https://www.digikey.com/en/products/detail/texas-instruments/TPS63060DSCT/2812707,Texas Instruments,TPS63060DSCT
