@@ -1,22 +1,23 @@
 Ref,Value,QTY PER,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN,
-BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-2.5sqmm_1x02_P7.2mm_D2.4mm_OD3.6mm,, , , , , , 
+BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm,, , , , , , 
 BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 1200mAh, , ,https://www.adafruit.com/product/258,Adafruit,258
 C101 C104 C105 C107 C208 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND, , ,Samsung Electro-Mechanics,CL21B104KACNNNC
 C102 C103 C106 C108 C112 C113 C114 C204 C301 ,470nF,9,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,<a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND">Link</a>,AVX Corporation,08051C474K4Z2A
-C109 C201 C203 C205 C206 C207 C210 ,10uF,7,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,,CAP CER 10UF 10V X7R 0805,1276-1764-1-ND, , ,Samsung Electro-Mechanics,CL21B106KPQNNNE
+C109 C201 C203 C205 C206 C207 C210 ,10uF,7,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 10V X7R 0805,1276-1764-1-ND, , ,Samsung Electro-Mechanics,CL21B106KPQNNNE
 C110 C213 C214 C215 ,22uF,4,Capacitor_SMD:C_1210_3225Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,<a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND">Link</a>,Samsung Electro-Mechanics,CL32A226MAJNNNE
 C111 ,47 uF low ESR,1,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,<a href="https://www.digikey.com/products/en?keywords=399-3904-1-ND">Link</a>,KEMET,T495X476K020ATE150
 C115 ,C_Trim_Small,1,Capacitors:MURATA-TZC3,, , , , , , 
-C202 C209 ,10nF,2,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,,CAP CER 10000PF 50V X7R 0805,1276-1015-1-ND, , ,Samsung Electro-Mechanics,CL21B103KBANNNC
+C202 C209 ,10nF,2,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10000PF 50V X7R 0805,1276-1015-1-ND, , ,Samsung Electro-Mechanics,CL21B103KBANNNC
 C211 ,10pF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10PF 50V C0G/NP0 0805,478-KGM21BCG1H100JTCT-ND, ,https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414,KYOCERA AVX,KGM21BCG1H100JT
 C212 ,1uF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 1UF 50V X7R 0805,1276-6470-1-ND, ,https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467,Samsung Electro-Mechanics,CL21B105KBFNNNG
 C302 C305 ,1100pF,2,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1100PF 50V NP0 0805,399-14552-1-ND,C2327793,<a href="https://www.digikey.com/products/en?keywords=399-14552-1-ND">Link</a>,KEMET,C0805C112J5GAC7800
 C303 ,1800pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1800PF 100V C0G 0805,445-5752-1-ND,C2173329,<a href="https://www.digikey.com/products/en?keywords=445-5752-1-ND">Link</a>,TDK Corporation,CGA4F2C0G2A182J085AA
 C304 ,91pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 91PF 100V NP0 0603,478-10247-1-ND,C2170042,<a href="https://www.digikey.com/products/en?keywords=478-10247-1-ND">Link</a>,KYOCERA AVX,06031U910FAT2A
 D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
-D103 D104 ,LED_Filled,2,LED_SMD:LED_APDA1806SECK,,LED RED CLEAR SMD RIGHT ANGLE,754-2329-1-ND, , ,Kingbright,APDA1806SECK/J3-PRV
+D103 ,Red LED,1,LED_SMD:LED_0805_2012Metric,,LED RED CLEAR SMD,160-1415-1-ND, ,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
+D104 ,Green LED,1,LED_SMD:LED_APDA1806SECK,,LED GREEN CLEAR SMD,160-1414-1-ND, ,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
 D105 D106 D108 D109 D110 ,ESD9B5.0ST5G_1,5,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,Bourns Inc.,CG0603MLC-05LE
-D107 ,MBRD10100CT,1,Package_TO_SOT_SMD:TO-252-3_TabPin2,,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338,Diodes Incorporated,MBRD10200CT-13
+D107 ,MBRD10100CT,1,Package_TO_SOT_SMD:TO-252-2,,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338,Diodes Incorporated,MBRD10200CT-13
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND , ,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
 HDWR401 ,Chassis Box,1,,,4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs, , ,https://www.polycase.com/sl-42p?qty=1#200=99&227=163,polycase,SL-42PMBT
 HDWR402 ,LED Light Pipes,1,,,LIGHT PIPE ROUND 3MM,LFB063CTP-ND, ,https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593,Visual Communications Company - VCC,LFB063CTP
@@ -30,6 +31,7 @@ HDWR409 ,6-pin Angled Header,1,,,CONN HEADER R/A 6POS 2.54MM,929550-01-06-ND, ,h
 HDWR410 ,PCB_AND_ASSEMBLY,1,,,Printed Circuit Board(s) plus Assembly, , , , , 
 HDWR411 ,Pin Header (Straight),1,,,CONN HEADER VERT 20POS 2.54MM,2057-PH1-20-UA-ND, ,https://www.digikey.com/en/products/detail/adam-tech/PH1-20-UA/9830398,Adam Tech,PH1-20-UA
 HDWR412 ,Pin Header Shorting Jumpers,1,,,CONN JUMPER SHORTING .100" GOLD,S9337-ND, ,https://www.digikey.com/en/products/detail/sullins-connector-solutions/QPC02SXGN-RC/2618262,Sullins Connector Solutions,QPC02SXGN-RC
+HDWR413 ,FTDI Adapter PCB,1,,, , , , , , 
 J101 J102 J103 J104 J105 J106 ,Conn_01x02,6,Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical,, , , , , , 
 J107 ,DB9 Female,1,Connector_Dsub:DSUB-9_Female_EdgeMount_P2.77mm,, ,609-1525-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,TH,TH
 J108 J110 ,Conn_01x02,2,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np,np, 
@@ -43,11 +45,11 @@ L201 ,choke,1,Inductor_SMD:L_Wuerth_WE-LQS,,FIXED IND 2.2UH 3.83A 23MOHM SMD,732
 L202 ,1uH,1,Inductor_SMD:L_Bourns_SRN5040TA,,FIXED IND 1UH 5A 12 MOHM SMD,SRN5040TA-1R0MCT-ND, ,https://www.digikey.com/en/products/detail/bourns-inc/SRN5040TA-1R0M/9653870,Bourns Inc.,SRN5040TA-1R0M
 L301 L302 ,2.7uH,2,Inductors:Toroid_T-60_2TH,,TH,T60-2 (Amidon), ,<a href="http://www.amidoncorp.com/t60-2/">Link</a>,TH,TH
 MOD201 ,AdaFruit Charger,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,,LI-ION LI-POLYMER CHARGER BOARD,1528-1833-ND, ,https://www.digikey.com/en/products/detail/adafruit-industries-llc/1904/5054545,AdaFruit,Product ID: 1904
-P101 ,ISP/PDI,1,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,, ,609-3487-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,Amphenol ICC (FCI),95278-101A06LF
+P101 ,ISP/PDI,1,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,,CONN HEADER SMD 6POS 2.54MM,609-3487-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,Amphenol ICC (FCI),95278-101A06LF
 Q101 ,BSS84W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET P-CH 50V 130MA SOT323,BSS84W-FDICT-ND, , ,Diodes Incorporated,BSS84W-7-F
 Q102 ,BSS138W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET N-CH 50V 200MA SOT323,BSS138W-FDICT-ND, , ,Diodes Incorporated,BSS138W-7-F
 Q103 ,IRF610,1,TO_SOT_Packages:TO-220_Neutral123_Vertical_LargePads,,TH,IRF610PBF-ND, ,<a href="https://www.digikey.com/products/en?keywords=IRF610PBF-ND">Link</a>,TH,TH
-R101 R201 R203 ,105k,3,Resistor_SMD:R_0805_2012Metric,,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND, ,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
+R101 R201 R203 R205 ,105k,4,Resistor_SMD:R_0805_2012Metric,,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND, ,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
 R102 ,162k,1,Resistor_SMD:R_0805_2012Metric,,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND, ,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
 R103 ,12.4k,1,Resistor_SMD:R_0805_2012Metric,,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND, ,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572,YAGEO,RC0805FR-0712K4L
 R104 R105 ,1k,2,Resistor_SMD:R_0805_2012Metric,,RES 1K OHM 1% 1/8W 0805,RMCF0805FT1K00CT-ND, ,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090,Stackpole Electronics Inc,RMCF0805FT1K00
