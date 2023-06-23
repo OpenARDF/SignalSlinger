@@ -2,7 +2,7 @@
 <export version="E">
   <design>
     <source>/Users/Charles/Documents/GitHub/SignalSlinger/SignalSlinger/KiCad/SignalSlinger/SignalSlinger.kicad_sch</source>
-    <date>Thursday, June 22, 2023 at 12:49:13 PM</date>
+    <date>Thursday, June 22, 2023 at 08:43:57 PM</date>
     <tool>Eeschema (6.0.4-0)</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
@@ -84,6 +84,8 @@
       <fields>
         <field name="Description">CAP CER 0.1UF 25V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-1099-1-ND</field>
+        <field name="LCSC Part Number">C29926</field>
+        <field name="Link">https://www.digikey.com/short/q2f22qnq</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B104KACNNNC</field>
       </fields>
@@ -92,6 +94,8 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B104KACNNNC"/>
       <property name="Description" value="CAP CER 0.1UF 25V X7R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/q2f22qnq"/>
+      <property name="LCSC Part Number" value="C29926"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -104,13 +108,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -127,13 +131,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -149,6 +153,8 @@
       <fields>
         <field name="Description">CAP CER 0.1UF 25V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-1099-1-ND</field>
+        <field name="LCSC Part Number">C29926</field>
+        <field name="Link">https://www.digikey.com/short/q2f22qnq</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B104KACNNNC</field>
       </fields>
@@ -157,6 +163,8 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B104KACNNNC"/>
       <property name="Description" value="CAP CER 0.1UF 25V X7R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/q2f22qnq"/>
+      <property name="LCSC Part Number" value="C29926"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -168,6 +176,8 @@
       <fields>
         <field name="Description">CAP CER 0.1UF 25V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-1099-1-ND</field>
+        <field name="LCSC Part Number">C29926</field>
+        <field name="Link">https://www.digikey.com/short/q2f22qnq</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B104KACNNNC</field>
       </fields>
@@ -176,6 +186,8 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B104KACNNNC"/>
       <property name="Description" value="CAP CER 0.1UF 25V X7R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/q2f22qnq"/>
+      <property name="LCSC Part Number" value="C29926"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -188,13 +200,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -210,6 +222,8 @@
       <fields>
         <field name="Description">CAP CER 0.1UF 25V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-1099-1-ND</field>
+        <field name="LCSC Part Number">C29926</field>
+        <field name="Link">https://www.digikey.com/short/q2f22qnq</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B104KACNNNC</field>
       </fields>
@@ -218,6 +232,8 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B104KACNNNC"/>
       <property name="Description" value="CAP CER 0.1UF 25V X7R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/q2f22qnq"/>
+      <property name="LCSC Part Number" value="C29926"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -230,13 +246,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -250,16 +266,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -272,13 +292,13 @@
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
         <field name="LCSC Part Number">C337455</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL32A226MAJNNNE</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=1276-3373-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
       <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
@@ -289,19 +309,19 @@
       <tstamps>2d9121ff-df85-4a4c-9305-5ac02a8d5857</tstamps>
     </comp>
     <comp ref="C111">
-      <value>47 uF low ESR</value>
+      <value>47uF low ESR</value>
       <footprint>Capacitors:C_2917</footprint>
       <fields>
         <field name="Description">CAP TANT 47UF 10% 20V 2917</field>
         <field name="Digi-Key Part No.">399-3904-1-ND</field>
         <field name="LCSC Part Number">C122333</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=399-3904-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=399-3904-1-ND</field>
         <field name="Manufacturer">KEMET</field>
         <field name="Manufacturer PN">T495X476K020ATE150</field>
       </fields>
       <libsource lib="Device" part="CP1_Small-Device" description=""/>
       <property name="Digi-Key Part No." value="399-3904-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=399-3904-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=399-3904-1-ND"/>
       <property name="Manufacturer" value="KEMET"/>
       <property name="Manufacturer PN" value="T495X476K020ATE150"/>
       <property name="Description" value="CAP TANT 47UF 10% 20V 2917"/>
@@ -318,13 +338,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -341,13 +361,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -364,13 +384,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -393,16 +413,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -414,6 +438,7 @@
       <fields>
         <field name="Description">DIODE GEN PURP 80V 125MA SOD523</field>
         <field name="Digi-Key Part No.">1N4148WTDICT-ND</field>
+        <field name="LCSC Part Number">C83482</field>
         <field name="Link">https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731</field>
         <field name="Manufacturer">Diodes Incorporated</field>
         <field name="Manufacturer PN">1N4148WT-7</field>
@@ -424,6 +449,7 @@
       <property name="Manufacturer" value="Diodes Incorporated"/>
       <property name="Manufacturer PN" value="1N4148WT-7"/>
       <property name="Description" value="DIODE GEN PURP 80V 125MA SOD523"/>
+      <property name="LCSC Part Number" value="C83482"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -435,6 +461,7 @@
       <fields>
         <field name="Description">DIODE GEN PURP 80V 125MA SOD523</field>
         <field name="Digi-Key Part No.">1N4148WTDICT-ND</field>
+        <field name="LCSC Part Number">C83482</field>
         <field name="Link">https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731</field>
         <field name="Manufacturer">Diodes Incorporated</field>
         <field name="Manufacturer PN">1N4148WT-7</field>
@@ -445,6 +472,7 @@
       <property name="Manufacturer" value="Diodes Incorporated"/>
       <property name="Manufacturer PN" value="1N4148WT-7"/>
       <property name="Description" value="DIODE GEN PURP 80V 125MA SOD523"/>
+      <property name="LCSC Part Number" value="C83482"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -456,6 +484,7 @@
       <fields>
         <field name="Description">LED RED CLEAR SMD</field>
         <field name="Digi-Key Part No.">160-1415-1-ND</field>
+        <field name="LCSC Part Number">C94868</field>
         <field name="Link">https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779</field>
         <field name="Manufacturer">Lite-On Inc.</field>
         <field name="Manufacturer PN">LTST-C170KRKT</field>
@@ -466,6 +495,7 @@
       <property name="Manufacturer PN" value="LTST-C170KRKT"/>
       <property name="Description" value="LED RED CLEAR SMD"/>
       <property name="Link" value="https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779"/>
+      <property name="LCSC Part Number" value="C94868"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -477,6 +507,7 @@
       <fields>
         <field name="Description">LED GREEN CLEAR SMD</field>
         <field name="Digi-Key Part No.">160-1414-1-ND</field>
+        <field name="LCSC Part Number">C98221</field>
         <field name="Link">https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777</field>
         <field name="Manufacturer">Lite-On Inc.</field>
         <field name="Manufacturer PN">LTST-C170KGKT</field>
@@ -487,6 +518,7 @@
       <property name="Manufacturer PN" value="LTST-C170KGKT"/>
       <property name="Description" value="LED GREEN CLEAR SMD"/>
       <property name="Link" value="https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777"/>
+      <property name="LCSC Part Number" value="C98221"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -499,13 +531,13 @@
         <field name="Description">VARISTOR 0603</field>
         <field name="Digi-Key Part No.">CG0603MLC-05LECT-ND</field>
         <field name="LCSC Part Number">C316054</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND</field>
         <field name="Manufacturer">Bourns Inc.</field>
         <field name="Manufacturer PN">CG0603MLC-05LE</field>
       </fields>
       <libsource lib="Diode" part="ESD9B5.0ST5G_1" description="ESD protection diode, 5.0Vrwm, SOD-923"/>
       <property name="Digi-Key Part No." value="CG0603MLC-05LECT-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"/>
       <property name="Manufacturer" value="Bourns Inc."/>
       <property name="Manufacturer PN" value="CG0603MLC-05LE"/>
       <property name="Description" value="VARISTOR 0603"/>
@@ -522,13 +554,13 @@
         <field name="Description">VARISTOR 0603</field>
         <field name="Digi-Key Part No.">CG0603MLC-05LECT-ND</field>
         <field name="LCSC Part Number">C316054</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND</field>
         <field name="Manufacturer">Bourns Inc.</field>
         <field name="Manufacturer PN">CG0603MLC-05LE</field>
       </fields>
       <libsource lib="Diode" part="ESD9B5.0ST5G_1" description="ESD protection diode, 5.0Vrwm, SOD-923"/>
       <property name="Digi-Key Part No." value="CG0603MLC-05LECT-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"/>
       <property name="Manufacturer" value="Bourns Inc."/>
       <property name="Manufacturer PN" value="CG0603MLC-05LE"/>
       <property name="Description" value="VARISTOR 0603"/>
@@ -544,6 +576,7 @@
       <fields>
         <field name="Description">DIODE SCHOTTKY 200V 5A TO252</field>
         <field name="Digi-Key Part No.">MBRD10200CT-13DICT-ND</field>
+        <field name="LCSC Part Number">C156323</field>
         <field name="Link">https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338</field>
         <field name="Manufacturer">Diodes Incorporated</field>
         <field name="Manufacturer PN">MBRD10200CT-13</field>
@@ -554,6 +587,7 @@
       <property name="Manufacturer" value="Diodes Incorporated"/>
       <property name="Manufacturer PN" value="MBRD10200CT-13"/>
       <property name="Description" value="DIODE SCHOTTKY 200V 5A TO252"/>
+      <property name="LCSC Part Number" value="C156323"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -566,13 +600,13 @@
         <field name="Description">VARISTOR 0603</field>
         <field name="Digi-Key Part No.">CG0603MLC-05LECT-ND</field>
         <field name="LCSC Part Number">C316054</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND</field>
         <field name="Manufacturer">Bourns Inc.</field>
         <field name="Manufacturer PN">CG0603MLC-05LE</field>
       </fields>
       <libsource lib="Diode" part="ESD9B5.0ST5G_1" description="ESD protection diode, 5.0Vrwm, SOD-923"/>
       <property name="Digi-Key Part No." value="CG0603MLC-05LECT-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"/>
       <property name="Manufacturer" value="Bourns Inc."/>
       <property name="Manufacturer PN" value="CG0603MLC-05LE"/>
       <property name="Description" value="VARISTOR 0603"/>
@@ -589,13 +623,13 @@
         <field name="Description">VARISTOR 0603</field>
         <field name="Digi-Key Part No.">CG0603MLC-05LECT-ND</field>
         <field name="LCSC Part Number">C316054</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND</field>
         <field name="Manufacturer">Bourns Inc.</field>
         <field name="Manufacturer PN">CG0603MLC-05LE</field>
       </fields>
       <libsource lib="Diode" part="ESD9B5.0ST5G_1" description="ESD protection diode, 5.0Vrwm, SOD-923"/>
       <property name="Digi-Key Part No." value="CG0603MLC-05LECT-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"/>
       <property name="Manufacturer" value="Bourns Inc."/>
       <property name="Manufacturer PN" value="CG0603MLC-05LE"/>
       <property name="Description" value="VARISTOR 0603"/>
@@ -612,13 +646,13 @@
         <field name="Description">VARISTOR 0603</field>
         <field name="Digi-Key Part No.">CG0603MLC-05LECT-ND</field>
         <field name="LCSC Part Number">C316054</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND</field>
         <field name="Manufacturer">Bourns Inc.</field>
         <field name="Manufacturer PN">CG0603MLC-05LE</field>
       </fields>
       <libsource lib="Diode" part="ESD9B5.0ST5G_1" description="ESD protection diode, 5.0Vrwm, SOD-923"/>
       <property name="Digi-Key Part No." value="CG0603MLC-05LECT-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND"/>
       <property name="Manufacturer" value="Bourns Inc."/>
       <property name="Manufacturer PN" value="CG0603MLC-05LE"/>
       <property name="Description" value="VARISTOR 0603"/>
@@ -678,13 +712,13 @@
       <footprint>Connector_Dsub:DSUB-9_Female_EdgeMount_P2.77mm</footprint>
       <fields>
         <field name="Digi-Key Part No.">609-1525-ND</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=609-1525-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=609-1525-ND</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Connector" part="DB9_Female" description="9-pin female D-SUB connector"/>
       <property name="Digi-Key Part No." value="609-1525-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=609-1525-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=609-1525-ND"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Sheetname" value=""/>
@@ -789,13 +823,13 @@
       <fields>
         <field name="Description">TH</field>
         <field name="Digi-Key Part No.">FT50A-43 (Amidon)</field>
-        <field name="Link">&lt;a href="http://www.amidoncorp.com/ft-50A-43/"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">http://www.amidoncorp.com/ft-50A-43/</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Device" part="INDUCTOR_CT" description=""/>
       <property name="Digi-Key Part No." value="FT50A-43 (Amidon)"/>
-      <property name="Link" value="&lt;a href=&quot;http://www.amidoncorp.com/ft-50A-43/&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="http://www.amidoncorp.com/ft-50A-43/"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Description" value="TH"/>
@@ -810,13 +844,13 @@
       <fields>
         <field name="Description">TH</field>
         <field name="Digi-Key Part No.">FT50A-43 (Amidon)</field>
-        <field name="Link">&lt;a href="http://www.amidoncorp.com/ft-50A-43/"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">http://www.amidoncorp.com/ft-50A-43/</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Device" part="INDUCTOR_tapped" description=""/>
       <property name="Digi-Key Part No." value="FT50A-43 (Amidon)"/>
-      <property name="Link" value="&lt;a href=&quot;http://www.amidoncorp.com/ft-50A-43/&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="http://www.amidoncorp.com/ft-50A-43/"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Description" value="TH"/>
@@ -831,16 +865,18 @@
       <fields>
         <field name="Description">CONN HEADER SMD 6POS 2.54MM</field>
         <field name="Digi-Key Part No.">609-3487-1-ND</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="LCSC Part Number">C178294</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=609-3487-1-ND</field>
         <field name="Manufacturer">Amphenol ICC (FCI)</field>
         <field name="Manufacturer PN">95278-101A06LF</field>
       </fields>
       <libsource lib="Connector_Generic" part="Conn_02x03_Odd_Even" description="Generic connector, double row, 02x03, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"/>
       <property name="Digi-Key Part No." value="609-3487-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=609-3487-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=609-3487-1-ND"/>
       <property name="Manufacturer" value="Amphenol ICC (FCI)"/>
       <property name="Manufacturer PN" value="95278-101A06LF"/>
       <property name="Description" value="CONN HEADER SMD 6POS 2.54MM"/>
+      <property name="LCSC Part Number" value="C178294"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -852,6 +888,8 @@
       <fields>
         <field name="Description">MOSFET P-CH 50V 130MA SOT323</field>
         <field name="Digi-Key Part No.">BSS84W-FDICT-ND</field>
+        <field name="LCSC Part Number">C110490</field>
+        <field name="Link">https://www.digikey.com/short/fjvhfm07</field>
         <field name="Manufacturer">Diodes Incorporated</field>
         <field name="Manufacturer PN">BSS84W-7-F</field>
       </fields>
@@ -860,6 +898,8 @@
       <property name="Manufacturer" value="Diodes Incorporated"/>
       <property name="Manufacturer PN" value="BSS84W-7-F"/>
       <property name="Description" value="MOSFET P-CH 50V 130MA SOT323"/>
+      <property name="Link" value="https://www.digikey.com/short/fjvhfm07"/>
+      <property name="LCSC Part Number" value="C110490"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -868,10 +908,11 @@
     <comp ref="Q102">
       <value>BSS138W-7-F</value>
       <footprint>Package_TO_SOT_SMD:SOT-323_SC-70</footprint>
-      <datasheet>https://www.diodes.com/assets/Datasheets/BSS138W.pdf</datasheet>
       <fields>
         <field name="Description">MOSFET N-CH 50V 200MA SOT323</field>
         <field name="Digi-Key Part No.">BSS138W-FDICT-ND</field>
+        <field name="LCSC Part Number">C24553</field>
+        <field name="Link">https://www.digikey.com/short/m8f8nn79</field>
         <field name="Manufacturer">Diodes Incorporated</field>
         <field name="Manufacturer PN">BSS138W-7-F</field>
       </fields>
@@ -880,6 +921,8 @@
       <property name="Manufacturer" value="Diodes Incorporated"/>
       <property name="Manufacturer PN" value="BSS138W-7-F"/>
       <property name="Description" value="MOSFET N-CH 50V 200MA SOT323"/>
+      <property name="Link" value="https://www.digikey.com/short/m8f8nn79"/>
+      <property name="LCSC Part Number" value="C24553"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -891,13 +934,13 @@
       <fields>
         <field name="Description">TH</field>
         <field name="Digi-Key Part No.">IRF610PBF-ND</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=IRF610PBF-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=IRF610PBF-ND</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Transistor_FET" part="IRF610_TO220-Transistor_FET" description=""/>
       <property name="Digi-Key Part No." value="IRF610PBF-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=IRF610PBF-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=IRF610PBF-ND"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Description" value="TH"/>
@@ -912,6 +955,7 @@
       <fields>
         <field name="Description">RES 105K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-105KCRCT-ND</field>
+        <field name="LCSC Part Number">C273877</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-07105KL</field>
@@ -922,6 +966,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-07105KL"/>
       <property name="Description" value="RES 105K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C273877"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -933,6 +978,7 @@
       <fields>
         <field name="Description">RES 162K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-162KCRCT-ND</field>
+        <field name="LCSC Part Number">C273888</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-07162KL</field>
@@ -943,6 +989,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-07162KL"/>
       <property name="Description" value="RES 162K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C273888"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -954,6 +1001,7 @@
       <fields>
         <field name="Description">RES 12.4K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-12.4KCRCT-ND</field>
+        <field name="LCSC Part Number">C137595</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-0712K4L</field>
@@ -964,6 +1012,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-0712K4L"/>
       <property name="Description" value="RES 12.4K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C137595"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -975,6 +1024,7 @@
       <fields>
         <field name="Description">RES 1K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">RMCF0805FT1K00CT-ND</field>
+        <field name="LCSC Part Number">C17513</field>
         <field name="Link">https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090</field>
         <field name="Manufacturer">Stackpole Electronics Inc</field>
         <field name="Manufacturer PN">RMCF0805FT1K00</field>
@@ -985,6 +1035,7 @@
       <property name="Manufacturer" value="Stackpole Electronics Inc"/>
       <property name="Manufacturer PN" value="RMCF0805FT1K00"/>
       <property name="Description" value="RES 1K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C17513"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -996,6 +1047,7 @@
       <fields>
         <field name="Description">RES 1K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">RMCF0805FT1K00CT-ND</field>
+        <field name="LCSC Part Number">C17513</field>
         <field name="Link">https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090</field>
         <field name="Manufacturer">Stackpole Electronics Inc</field>
         <field name="Manufacturer PN">RMCF0805FT1K00</field>
@@ -1006,6 +1058,7 @@
       <property name="Manufacturer" value="Stackpole Electronics Inc"/>
       <property name="Manufacturer PN" value="RMCF0805FT1K00"/>
       <property name="Description" value="RES 1K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C17513"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1017,6 +1070,7 @@
       <fields>
         <field name="Description">RES 47K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-47.0KCRCT-ND</field>
+        <field name="LCSC Part Number">C126351</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-0747KL/727973</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-0747KL</field>
@@ -1027,6 +1081,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-0747KL"/>
       <property name="Description" value="RES 47K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C126351"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1038,6 +1093,7 @@
       <fields>
         <field name="Description">RES 10K OHM 1% 1/4W 0805</field>
         <field name="Digi-Key Part No.">RNCP0805FTD10K0CT-ND</field>
+        <field name="LCSC Part Number">C2441435</field>
         <field name="Link">https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262</field>
         <field name="Manufacturer">Stackpole Electronics Inc</field>
         <field name="Manufacturer PN">RNCP0805FTD10K0</field>
@@ -1048,6 +1104,7 @@
       <property name="Manufacturer" value="Stackpole Electronics Inc"/>
       <property name="Manufacturer PN" value="RNCP0805FTD10K0"/>
       <property name="Description" value="RES 10K OHM 1% 1/4W 0805"/>
+      <property name="LCSC Part Number" value="C2441435"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1059,6 +1116,7 @@
       <fields>
         <field name="Description">RES 10K OHM 1% 1/4W 0805</field>
         <field name="Digi-Key Part No.">RNCP0805FTD10K0CT-ND</field>
+        <field name="LCSC Part Number">C2441435</field>
         <field name="Link">https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262</field>
         <field name="Manufacturer">Stackpole Electronics Inc</field>
         <field name="Manufacturer PN">RNCP0805FTD10K0</field>
@@ -1069,6 +1127,7 @@
       <property name="Manufacturer" value="Stackpole Electronics Inc"/>
       <property name="Manufacturer PN" value="RNCP0805FTD10K0"/>
       <property name="Description" value="RES 10K OHM 1% 1/4W 0805"/>
+      <property name="LCSC Part Number" value="C2441435"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1117,6 +1176,8 @@
       <fields>
         <field name="Description">IC MCU 8BIT 128KB FLASH 28SOIC</field>
         <field name="Digi-Key Part No.">150-AVR128DA28T-E/SOCT-ND</field>
+        <field name="LCSC Part Number">C1870730</field>
+        <field name="Link">https://www.digikey.com/short/781hqp8f</field>
         <field name="Manufacturer">Microchip Technology</field>
         <field name="Manufacturer PN">AVR128DA28T-E/SO</field>
       </fields>
@@ -1125,6 +1186,8 @@
       <property name="Manufacturer" value="Microchip Technology"/>
       <property name="Manufacturer PN" value="AVR128DA28T-E/SO"/>
       <property name="Description" value="IC MCU 8BIT 128KB FLASH 28SOIC"/>
+      <property name="Link" value="https://www.digikey.com/short/781hqp8f"/>
+      <property name="LCSC Part Number" value="C1870730"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1138,13 +1201,13 @@
         <field name="Description">IC CLK GENERATOR 200MHZ 10MSOP</field>
         <field name="Digi-Key Part No.">336-2399-5-ND</field>
         <field name="LCSC Part Number">C529366</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=336-2399-5-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=336-2399-5-ND</field>
         <field name="Manufacturer">Silicon Labs</field>
         <field name="Manufacturer PN">SI5351A-B-GT</field>
       </fields>
       <libsource lib="Oscillator" part="SI5351" description="I2C Programmable CMOS Clock Generator"/>
       <property name="Digi-Key Part No." value="336-2399-5-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=336-2399-5-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=336-2399-5-ND"/>
       <property name="Manufacturer" value="Silicon Labs"/>
       <property name="Manufacturer PN" value="SI5351A-B-GT"/>
       <property name="Description" value="IC CLK GENERATOR 200MHZ 10MSOP"/>
@@ -1185,13 +1248,13 @@
         <field name="Description">IC GATE DRVR LOW-SIDE SOT23-6</field>
         <field name="Digi-Key Part No.">296-40244-1-ND</field>
         <field name="LCSC Part Number">C2677086</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=296-40244-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=296-40244-1-ND</field>
         <field name="Manufacturer">Texas Instruments</field>
         <field name="Manufacturer PN">LM5134BMFX/NOPB</field>
       </fields>
       <libsource lib="Driver_FET" part="LM5134-Driver_FET" description=""/>
       <property name="Digi-Key Part No." value="296-40244-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=296-40244-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=296-40244-1-ND"/>
       <property name="Manufacturer" value="Texas Instruments"/>
       <property name="Manufacturer PN" value="LM5134BMFX/NOPB"/>
       <property name="Description" value="IC GATE DRVR LOW-SIDE SOT23-6"/>
@@ -1273,10 +1336,10 @@
     <comp ref="X101">
       <value>SIT1566AC TCO</value>
       <footprint>Oscillator:Oscillator_SMD_SiTime_SIT1566AC-4Pin_BGA</footprint>
-      <datasheet>http://www.petermann-technik.de/fileadmin/petermann/pdf/crystal-oscillators/OCXO-14_PETERMANN-TECHNIK.pdf</datasheet>
       <fields>
         <field name="Description">MEMS OSC TCXO 32.768KHZ CSP</field>
         <field name="Digi-Key Part No.">1473-SIT1566AC-JV-XXE-32.768ECT-ND</field>
+        <field name="Link">https://www.digikey.com/short/r7q3vdbp</field>
         <field name="Manufacturer">SiTime</field>
         <field name="Manufacturer PN">SIT1566AC-JV-XXE-32.768E</field>
       </fields>
@@ -1285,6 +1348,7 @@
       <property name="Manufacturer" value="SiTime"/>
       <property name="Manufacturer PN" value="SIT1566AC-JV-XXE-32.768E"/>
       <property name="Description" value="MEMS OSC TCXO 32.768KHZ CSP"/>
+      <property name="Link" value="https://www.digikey.com/short/r7q3vdbp"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1296,13 +1360,13 @@
       <fields>
         <field name="Description">XTAL OSC TCXO 25.0000MHZ SNWV</field>
         <field name="Digi-Key Part No.">1664-1273-1-ND</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1664-1273-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=1664-1273-1-ND</field>
         <field name="Manufacturer">Taitien</field>
         <field name="Manufacturer PN">TXETCLSANF-25.000000</field>
       </fields>
       <libsource lib="Oscillator" part="ASTX-H11" description="HCMOS SMD TCXO"/>
       <property name="Digi-Key Part No." value="1664-1273-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=1664-1273-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=1664-1273-1-ND"/>
       <property name="Manufacturer" value="Taitien"/>
       <property name="Manufacturer PN" value="TXETCLSANF-25.000000"/>
       <property name="Description" value="XTAL OSC TCXO 25.0000MHZ SNWV"/>
@@ -1324,16 +1388,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1343,16 +1411,20 @@
       <value>10nF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10000PF 50V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1015-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B103KBANNNC</field>
+        <field name="Description">CAP CER 0805 10NF 50V C0G 5%</field>
+        <field name="Digi-Key Part No.">399-C0805C103J5GEC7800CT-ND</field>
+        <field name="LCSC Part Number">C3887673</field>
+        <field name="Link">https://www.digikey.com/short/qd893213</field>
+        <field name="Manufacturer">KEMET</field>
+        <field name="Manufacturer PN">C0805C103J5GEC7800</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1015-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B103KBANNNC"/>
-      <property name="Description" value="CAP CER 10000PF 50V X7R 0805"/>
+      <property name="Digi-Key Part No." value="399-C0805C103J5GEC7800CT-ND"/>
+      <property name="Manufacturer" value="KEMET"/>
+      <property name="Manufacturer PN" value="C0805C103J5GEC7800"/>
+      <property name="Description" value="CAP CER 0805 10NF 50V C0G 5%"/>
+      <property name="Link" value="https://www.digikey.com/short/qd893213"/>
+      <property name="LCSC Part Number" value="C3887673"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1362,16 +1434,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1384,13 +1460,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -1404,16 +1480,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1423,16 +1503,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1442,16 +1526,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1463,6 +1551,8 @@
       <fields>
         <field name="Description">CAP CER 0.1UF 25V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-1099-1-ND</field>
+        <field name="LCSC Part Number">C29926</field>
+        <field name="Link">https://www.digikey.com/short/q2f22qnq</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B104KACNNNC</field>
       </fields>
@@ -1471,6 +1561,8 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B104KACNNNC"/>
       <property name="Description" value="CAP CER 0.1UF 25V X7R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/q2f22qnq"/>
+      <property name="LCSC Part Number" value="C29926"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1480,16 +1572,20 @@
       <value>10nF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10000PF 50V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1015-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B103KBANNNC</field>
+        <field name="Description">CAP CER 0805 10NF 50V C0G 5%</field>
+        <field name="Digi-Key Part No.">399-C0805C103J5GEC7800CT-ND</field>
+        <field name="LCSC Part Number">C3887673</field>
+        <field name="Link">https://www.digikey.com/short/qd893213</field>
+        <field name="Manufacturer">KEMET</field>
+        <field name="Manufacturer PN">C0805C103J5GEC7800</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1015-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B103KBANNNC"/>
-      <property name="Description" value="CAP CER 10000PF 50V X7R 0805"/>
+      <property name="Digi-Key Part No." value="399-C0805C103J5GEC7800CT-ND"/>
+      <property name="Manufacturer" value="KEMET"/>
+      <property name="Manufacturer PN" value="C0805C103J5GEC7800"/>
+      <property name="Description" value="CAP CER 0805 10NF 50V C0G 5%"/>
+      <property name="Link" value="https://www.digikey.com/short/qd893213"/>
+      <property name="LCSC Part Number" value="C3887673"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1499,16 +1595,20 @@
       <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 10UF 10V X7R 0805</field>
-        <field name="Digi-Key Part No.">1276-1764-1-ND</field>
-        <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL21B106KPQNNNE</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-1764-1-ND"/>
-      <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL21B106KPQNNNE"/>
-      <property name="Description" value="CAP CER 10UF 10V X7R 0805"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1520,6 +1620,7 @@
       <fields>
         <field name="Description">CAP CER 10PF 50V C0G/NP0 0805</field>
         <field name="Digi-Key Part No.">478-KGM21BCG1H100JTCT-ND</field>
+        <field name="LCSC Part Number">C157608</field>
         <field name="Link">https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414</field>
         <field name="Manufacturer">KYOCERA AVX</field>
         <field name="Manufacturer PN">KGM21BCG1H100JT</field>
@@ -1530,6 +1631,7 @@
       <property name="Manufacturer" value="KYOCERA AVX"/>
       <property name="Manufacturer PN" value="KGM21BCG1H100JT"/>
       <property name="Description" value="CAP CER 10PF 50V C0G/NP0 0805"/>
+      <property name="LCSC Part Number" value="C157608"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1541,6 +1643,7 @@
       <fields>
         <field name="Description">CAP CER 1UF 50V X7R 0805</field>
         <field name="Digi-Key Part No.">1276-6470-1-ND</field>
+        <field name="LCSC Part Number">C28323</field>
         <field name="Link">https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL21B105KBFNNNG</field>
@@ -1551,6 +1654,7 @@
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL21B105KBFNNNG"/>
       <property name="Description" value="CAP CER 1UF 50V X7R 0805"/>
+      <property name="LCSC Part Number" value="C28323"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1563,13 +1667,13 @@
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
         <field name="LCSC Part Number">C337455</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL32A226MAJNNNE</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=1276-3373-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
       <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
@@ -1586,13 +1690,13 @@
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
         <field name="LCSC Part Number">C337455</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL32A226MAJNNNE</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=1276-3373-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
       <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
@@ -1609,13 +1713,13 @@
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
         <field name="LCSC Part Number">C337455</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
         <field name="Manufacturer PN">CL32A226MAJNNNE</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=1276-3373-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
       <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
       <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
@@ -1631,6 +1735,7 @@
       <fields>
         <field name="Description">DIODE ARRAY SCHOTTKY 30V SOT23</field>
         <field name="Digi-Key Part No.">1727-2902-1-ND </field>
+        <field name="LCSC Part Number">C37704</field>
         <field name="Link">https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216</field>
         <field name="Manufacturer">Nexperia USA Inc.</field>
         <field name="Manufacturer PN">BAT54C,215</field>
@@ -1641,6 +1746,7 @@
       <property name="Manufacturer" value="Nexperia USA Inc."/>
       <property name="Manufacturer PN" value="BAT54C,215"/>
       <property name="Description" value="DIODE ARRAY SCHOTTKY 30V SOT23"/>
+      <property name="LCSC Part Number" value="C37704"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1677,11 +1783,12 @@
       <tstamps>6f98ff01-f5b3-4b25-9ed6-371f55ea098f</tstamps>
     </comp>
     <comp ref="L201">
-      <value>choke</value>
+      <value>2.2uH</value>
       <footprint>Inductor_SMD:L_Wuerth_WE-LQS</footprint>
       <fields>
         <field name="Description">FIXED IND 2.2UH 3.83A 23MOHM SMD</field>
         <field name="Digi-Key Part No.">732-10754-1-ND</field>
+        <field name="LCSC Part Number">C2041406</field>
         <field name="Link">https://www.digikey.com/en/products/detail/w%C3%BCrth-elektronik/74404043022A/6598076</field>
         <field name="Manufacturer">Würth Elektronik</field>
         <field name="Manufacturer PN">74404043022A</field>
@@ -1692,6 +1799,7 @@
       <property name="Manufacturer" value="Würth Elektronik"/>
       <property name="Manufacturer PN" value="74404043022A"/>
       <property name="Description" value="FIXED IND 2.2UH 3.83A 23MOHM SMD"/>
+      <property name="LCSC Part Number" value="C2041406"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1745,6 +1853,7 @@
       <fields>
         <field name="Description">RES 105K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-105KCRCT-ND</field>
+        <field name="LCSC Part Number">C273877</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-07105KL</field>
@@ -1755,6 +1864,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-07105KL"/>
       <property name="Description" value="RES 105K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C273877"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1766,6 +1876,7 @@
       <fields>
         <field name="Description">RES 1M OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">13-RC0805FR-131MLCT-ND</field>
+        <field name="LCSC Part Number">C4198744</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-131ML/14008312</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-131ML</field>
@@ -1776,6 +1887,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-131ML"/>
       <property name="Description" value="RES 1M OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C4198744"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1787,6 +1899,7 @@
       <fields>
         <field name="Description">RES 105K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-105KCRCT-ND</field>
+        <field name="LCSC Part Number">C273877</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-07105KL</field>
@@ -1797,6 +1910,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-07105KL"/>
       <property name="Description" value="RES 105K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C273877"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1808,6 +1922,7 @@
       <fields>
         <field name="Description">RES 1M OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">13-RC0805FR-131MLCT-ND</field>
+        <field name="LCSC Part Number">C4198744</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-131ML/14008312</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-131ML</field>
@@ -1818,6 +1933,7 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-131ML"/>
       <property name="Description" value="RES 1M OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C4198744"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1847,10 +1963,11 @@
     <comp ref="U201">
       <value>LP2985-3.3</value>
       <footprint>Package_TO_SOT_SMD:SOT-23-5</footprint>
-      <datasheet>http://www.ti.com/lit/ds/symlink/lp2985.pdf</datasheet>
       <fields>
         <field name="Description">IC REG LINEAR 3.3V 150MA SOT23-5</field>
         <field name="Digi-Key Part No.">296-18479-1-ND</field>
+        <field name="LCSC Part Number">C89826</field>
+        <field name="Link">https://www.digikey.com/short/vr2m3rjp</field>
         <field name="Manufacturer">Texas Instruments</field>
         <field name="Manufacturer PN">LP2985A-33DBVR</field>
       </fields>
@@ -1859,6 +1976,8 @@
       <property name="Manufacturer" value="Texas Instruments"/>
       <property name="Manufacturer PN" value="LP2985A-33DBVR"/>
       <property name="Description" value="IC REG LINEAR 3.3V 150MA SOT23-5"/>
+      <property name="Link" value="https://www.digikey.com/short/vr2m3rjp"/>
+      <property name="LCSC Part Number" value="C89826"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1867,10 +1986,11 @@
     <comp ref="U202">
       <value>LP2985-3.3</value>
       <footprint>Package_TO_SOT_SMD:SOT-23-5</footprint>
-      <datasheet>http://www.ti.com/lit/ds/symlink/lp2985.pdf</datasheet>
       <fields>
         <field name="Description">IC REG LINEAR 3.3V 150MA SOT23-5</field>
         <field name="Digi-Key Part No.">296-18479-1-ND</field>
+        <field name="LCSC Part Number">C89826</field>
+        <field name="Link">https://www.digikey.com/short/vr2m3rjp</field>
         <field name="Manufacturer">Texas Instruments</field>
         <field name="Manufacturer PN">LP2985A-33DBVR</field>
       </fields>
@@ -1879,6 +1999,8 @@
       <property name="Manufacturer" value="Texas Instruments"/>
       <property name="Manufacturer PN" value="LP2985A-33DBVR"/>
       <property name="Description" value="IC REG LINEAR 3.3V 150MA SOT23-5"/>
+      <property name="Link" value="https://www.digikey.com/short/vr2m3rjp"/>
+      <property name="LCSC Part Number" value="C89826"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1890,6 +2012,7 @@
       <fields>
         <field name="Description">IC REG BCK BST ADJ 2A 10WSON</field>
         <field name="Digi-Key Part No.">296-30178-1-ND</field>
+        <field name="LCSC Part Number">C2070911</field>
         <field name="Link">https://www.digikey.com/en/products/detail/texas-instruments/TPS63060DSCT/2812707</field>
         <field name="Manufacturer">Texas Instruments</field>
         <field name="Manufacturer PN">TPS63060DSCT</field>
@@ -1900,6 +2023,7 @@
       <property name="Manufacturer" value="Texas Instruments"/>
       <property name="Manufacturer PN" value="TPS63060DSCT"/>
       <property name="Description" value="IC REG BCK BST ADJ 2A 10WSON"/>
+      <property name="LCSC Part Number" value="C2070911"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1912,13 +2036,13 @@
         <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
         <field name="Digi-Key Part No.">478-9924-1-ND</field>
         <field name="LCSC Part Number">C342818</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-9924-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
         <field name="Manufacturer">AVX Corporation</field>
         <field name="Manufacturer PN">08051C474K4Z2A</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-9924-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
       <property name="Manufacturer" value="AVX Corporation"/>
       <property name="Manufacturer PN" value="08051C474K4Z2A"/>
       <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
@@ -1935,13 +2059,13 @@
         <field name="Description">CAP CER 1100PF 50V NP0 0805</field>
         <field name="Digi-Key Part No.">399-14552-1-ND</field>
         <field name="LCSC Part Number">C2327793</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=399-14552-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=399-14552-1-ND</field>
         <field name="Manufacturer">KEMET</field>
         <field name="Manufacturer PN">C0805C112J5GAC7800</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="399-14552-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=399-14552-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=399-14552-1-ND"/>
       <property name="Manufacturer" value="KEMET"/>
       <property name="Manufacturer PN" value="C0805C112J5GAC7800"/>
       <property name="Description" value="CAP CER 1100PF 50V NP0 0805"/>
@@ -1958,13 +2082,13 @@
         <field name="Description">CAP CER 1800PF 100V C0G 0805</field>
         <field name="Digi-Key Part No.">445-5752-1-ND</field>
         <field name="LCSC Part Number">C2173329</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=445-5752-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=445-5752-1-ND</field>
         <field name="Manufacturer">TDK Corporation</field>
         <field name="Manufacturer PN">CGA4F2C0G2A182J085AA</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="445-5752-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=445-5752-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=445-5752-1-ND"/>
       <property name="Manufacturer" value="TDK Corporation"/>
       <property name="Manufacturer PN" value="CGA4F2C0G2A182J085AA"/>
       <property name="Description" value="CAP CER 1800PF 100V C0G 0805"/>
@@ -1981,13 +2105,13 @@
         <field name="Description">CAP CER 91PF 100V NP0 0603</field>
         <field name="Digi-Key Part No.">478-10247-1-ND</field>
         <field name="LCSC Part Number">C2170042</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-10247-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=478-10247-1-ND</field>
         <field name="Manufacturer">KYOCERA AVX</field>
         <field name="Manufacturer PN">06031U910FAT2A</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="478-10247-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=478-10247-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-10247-1-ND"/>
       <property name="Manufacturer" value="KYOCERA AVX"/>
       <property name="Manufacturer PN" value="06031U910FAT2A"/>
       <property name="Description" value="CAP CER 91PF 100V NP0 0603"/>
@@ -2004,13 +2128,13 @@
         <field name="Description">CAP CER 1100PF 50V NP0 0805</field>
         <field name="Digi-Key Part No.">399-14552-1-ND</field>
         <field name="LCSC Part Number">C2327793</field>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=399-14552-1-ND"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">https://www.digikey.com/products/en?keywords=399-14552-1-ND</field>
         <field name="Manufacturer">KEMET</field>
         <field name="Manufacturer PN">C0805C112J5GAC7800</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Digi-Key Part No." value="399-14552-1-ND"/>
-      <property name="Link" value="&lt;a href=&quot;https://www.digikey.com/products/en?keywords=399-14552-1-ND&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="https://www.digikey.com/products/en?keywords=399-14552-1-ND"/>
       <property name="Manufacturer" value="KEMET"/>
       <property name="Manufacturer PN" value="C0805C112J5GAC7800"/>
       <property name="Description" value="CAP CER 1100PF 50V NP0 0805"/>
@@ -2065,13 +2189,13 @@
       <fields>
         <field name="Description">TH</field>
         <field name="Digi-Key Part No.">T60-2 (Amidon)</field>
-        <field name="Link">&lt;a href="http://www.amidoncorp.com/t60-2/"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">http://www.amidoncorp.com/t60-2/</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Device" part="INDUCTOR_SMALL" description=""/>
       <property name="Digi-Key Part No." value="T60-2 (Amidon)"/>
-      <property name="Link" value="&lt;a href=&quot;http://www.amidoncorp.com/t60-2/&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="http://www.amidoncorp.com/t60-2/"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Description" value="TH"/>
@@ -2086,13 +2210,13 @@
       <fields>
         <field name="Description">TH</field>
         <field name="Digi-Key Part No.">T60-2 (Amidon)</field>
-        <field name="Link">&lt;a href="http://www.amidoncorp.com/t60-2/"&gt;Link&lt;/a&gt;</field>
+        <field name="Link">http://www.amidoncorp.com/t60-2/</field>
         <field name="Manufacturer">TH</field>
         <field name="Manufacturer PN">TH</field>
       </fields>
       <libsource lib="Device" part="INDUCTOR_SMALL" description=""/>
       <property name="Digi-Key Part No." value="T60-2 (Amidon)"/>
-      <property name="Link" value="&lt;a href=&quot;http://www.amidoncorp.com/t60-2/&quot;&gt;Link&lt;/a&gt;"/>
+      <property name="Link" value="http://www.amidoncorp.com/t60-2/"/>
       <property name="Manufacturer" value="TH"/>
       <property name="Manufacturer PN" value="TH"/>
       <property name="Description" value="TH"/>
