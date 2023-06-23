@@ -1,4 +1,4 @@
-## Footprint report - date Thursday, June 22, 2023 at 01:18:38 PM
+## Footprint report - date Friday, June 23, 2023 at 08:23:18 AM
 ## Created by Pcbnew version (6.0.4-0)
 ## Unit = mm, Angle = deg.
 
@@ -1393,7 +1393,7 @@ drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "1"
-Shape Rect Layer both
+Shape Circle Layer both
 position -7.912100  1.104900  size  1.727200  1.727200  orientation 0.00
 drill  1.016000
 shape_offset  0.000000  0.000000
@@ -1418,7 +1418,7 @@ attribut none
 position 113.240000 92.190000  orientation 0.00
 layer front
 $PAD "1"
-Shape Rect Layer both
+Shape Circle Layer both
 position -7.912100 -1.104900  size  1.727200  1.727200  orientation 0.00
 drill  1.016000
 shape_offset  0.000000  0.000000
