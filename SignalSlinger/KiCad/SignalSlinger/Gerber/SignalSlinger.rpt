@@ -1,4 +1,4 @@
-## Footprint report - date Friday, June 23, 2023 at 08:23:18 AM
+## Footprint report - date Monday, June 26, 2023 at 08:47:29 PM
 ## Created by Pcbnew version (6.0.4-0)
 ## Unit = mm, Angle = deg.
 
@@ -12,17 +12,17 @@ $EndBOARD
 $MODULE BT201
 footprint Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm
 attribut virtual
-position 89.120000 67.220000  orientation 90.00
+position 89.330000 62.710000  orientation -90.00
 layer back
 $PAD "1"
-Shape Roundrect Layer both
-position  0.000000  0.000000  size  2.100000  2.100000  orientation 0.00
+Shape Circle Layer both
+position  0.000000  0.000000  size  2.100000  2.100000  orientation 360.00
 drill  1.100000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
-Shape Circle Layer both
-position  4.600000  0.000000  size  2.100000  2.100000  orientation 0.00
+Shape Roundrect Layer both
+position  4.600000  0.000000  size  2.100000  2.100000  orientation 360.00
 drill  1.100000
 shape_offset  0.000000  0.000000
 $EndPAD
@@ -899,6 +899,25 @@ drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $EndMODULE  D201
+
+$MODULE D202
+footprint Diode_SMD:D_SMA
+attribut smd
+position 112.140000 80.870000  orientation 180.00
+layer front
+$PAD "1"
+Shape Rect Layer front
+position -2.000000  0.000000  size  2.500000  1.800000  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rect Layer front
+position  2.000000  0.000000  size  2.500000  1.800000  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D202
 
 $MODULE J101
 footprint Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical
@@ -1842,6 +1861,19 @@ $EndMODULE  R205
 $MODULE REF**
 footprint MountingHole:MountingHole_3.5mm
 attribut virtual
+position 51.855000 71.950000  orientation 0.00
+layer front
+$PAD ""
+Shape Circle Layer both
+position  0.000000  0.000000  size  3.500000  3.500000  orientation 0.00
+drill  3.500000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  REF**
+
+$MODULE REF**
+footprint MountingHole:MountingHole_3.5mm
+attribut virtual
 position 128.055000 106.875000  orientation 0.00
 layer front
 $PAD ""
@@ -1869,19 +1901,6 @@ $MODULE REF**
 footprint MountingHole:MountingHole_3.5mm
 attribut virtual
 position 128.055000 71.950000  orientation 0.00
-layer front
-$PAD ""
-Shape Circle Layer both
-position  0.000000  0.000000  size  3.500000  3.500000  orientation 0.00
-drill  3.500000
-shape_offset  0.000000  0.000000
-$EndPAD
-$EndMODULE  REF**
-
-$MODULE REF**
-footprint MountingHole:MountingHole_3.5mm
-attribut virtual
-position 51.855000 71.950000  orientation 0.00
 layer front
 $PAD ""
 Shape Circle Layer both
@@ -1929,169 +1948,169 @@ position 69.420000 75.860000  orientation 180.00
 layer front
 $PAD "1"
 Shape Roundrect Layer front
-position -4.650000 -8.255000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -8.255000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
 Shape Roundrect Layer front
-position -4.650000 -6.985000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -6.985000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "3"
 Shape Roundrect Layer front
-position -4.650000 -5.715000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -5.715000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "4"
 Shape Roundrect Layer front
-position -4.650000 -4.445000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -4.445000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "5"
 Shape Roundrect Layer front
-position -4.650000 -3.175000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -3.175000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "6"
 Shape Roundrect Layer front
-position -4.650000 -1.905000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -1.905000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "7"
 Shape Roundrect Layer front
-position -4.650000 -0.635000  size  2.050000  0.600000  orientation 0.00
+position -4.700000 -0.635000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "8"
 Shape Roundrect Layer front
-position -4.650000  0.635000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  0.635000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "9"
 Shape Roundrect Layer front
-position -4.650000  1.905000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  1.905000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "10"
 Shape Roundrect Layer front
-position -4.650000  3.175000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  3.175000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "11"
 Shape Roundrect Layer front
-position -4.650000  4.445000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  4.445000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "12"
 Shape Roundrect Layer front
-position -4.650000  5.715000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  5.715000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "13"
 Shape Roundrect Layer front
-position -4.650000  6.985000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  6.985000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "14"
 Shape Roundrect Layer front
-position -4.650000  8.255000  size  2.050000  0.600000  orientation 0.00
+position -4.700000  8.255000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "15"
 Shape Roundrect Layer front
-position  4.650000  8.255000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  8.255000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "16"
 Shape Roundrect Layer front
-position  4.650000  6.985000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  6.985000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "17"
 Shape Roundrect Layer front
-position  4.650000  5.715000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  5.715000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "18"
 Shape Roundrect Layer front
-position  4.650000  4.445000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  4.445000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "19"
 Shape Roundrect Layer front
-position  4.650000  3.175000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  3.175000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "20"
 Shape Roundrect Layer front
-position  4.650000  1.905000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  1.905000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "21"
 Shape Roundrect Layer front
-position  4.650000  0.635000  size  2.050000  0.600000  orientation 0.00
+position  4.700000  0.635000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "22"
 Shape Roundrect Layer front
-position  4.650000 -0.635000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -0.635000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "23"
 Shape Roundrect Layer front
-position  4.650000 -1.905000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -1.905000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "24"
 Shape Roundrect Layer front
-position  4.650000 -3.175000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -3.175000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "25"
 Shape Roundrect Layer front
-position  4.650000 -4.445000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -4.445000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "26"
 Shape Roundrect Layer front
-position  4.650000 -5.715000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -5.715000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "27"
 Shape Roundrect Layer front
-position  4.650000 -6.985000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -6.985000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "28"
 Shape Roundrect Layer front
-position  4.650000 -8.255000  size  2.050000  0.600000  orientation 0.00
+position  4.700000 -8.255000  size  2.050000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
@@ -2300,31 +2319,31 @@ position 66.590000 94.010000  orientation 180.00
 layer front
 $PAD "1"
 Shape Roundrect Layer front
-position -1.137500 -0.950000  size  1.325000  0.600000  orientation 0.00
+position -1.300000 -0.950000  size  1.100000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
 Shape Roundrect Layer front
-position -1.137500  0.000000  size  1.325000  0.600000  orientation 0.00
+position -1.300000  0.000000  size  1.100000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "3"
 Shape Roundrect Layer front
-position -1.137500  0.950000  size  1.325000  0.600000  orientation 0.00
+position -1.300000  0.950000  size  1.100000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "4"
 Shape Roundrect Layer front
-position  1.137500  0.950000  size  1.325000  0.600000  orientation 0.00
+position  1.300000  0.950000  size  1.100000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "5"
 Shape Roundrect Layer front
-position  1.137500 -0.950000  size  1.325000  0.600000  orientation 0.00
+position  1.300000 -0.950000  size  1.100000  0.600000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
@@ -2337,31 +2356,31 @@ position 76.910000 98.300000  orientation -90.00
 layer front
 $PAD "1"
 Shape Roundrect Layer front
-position -1.137500 -0.950000  size  1.325000  0.600000  orientation 360.00
+position -1.300000 -0.950000  size  1.100000  0.600000  orientation 360.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
 Shape Roundrect Layer front
-position -1.137500  0.000000  size  1.325000  0.600000  orientation 360.00
+position -1.300000  0.000000  size  1.100000  0.600000  orientation 360.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "3"
 Shape Roundrect Layer front
-position -1.137500  0.950000  size  1.325000  0.600000  orientation 360.00
+position -1.300000  0.950000  size  1.100000  0.600000  orientation 360.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "4"
 Shape Roundrect Layer front
-position  1.137500  0.950000  size  1.325000  0.600000  orientation 360.00
+position  1.300000  0.950000  size  1.100000  0.600000  orientation 360.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "5"
 Shape Roundrect Layer front
-position  1.137500 -0.950000  size  1.325000  0.600000  orientation 360.00
+position  1.300000 -0.950000  size  1.100000  0.600000  orientation 360.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
@@ -2823,25 +2842,25 @@ position 81.700000 101.430000  orientation 180.00
 layer front
 $PAD "1"
 Shape Rect Layer front
-position -1.150000  0.850000  size  1.000000  0.900000  orientation 0.00
+position -1.200000  0.900000  size  1.000000  0.900000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
 Shape Rect Layer front
-position  1.150000  0.850000  size  1.000000  0.900000  orientation 0.00
+position  1.200000  0.900000  size  1.000000  0.900000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "3"
 Shape Rect Layer front
-position  1.150000 -0.850000  size  1.000000  0.900000  orientation 0.00
+position  1.200000 -0.900000  size  1.000000  0.900000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "4"
 Shape Rect Layer front
-position -1.150000 -0.850000  size  1.000000  0.900000  orientation 0.00
+position -1.200000 -0.900000  size  1.000000  0.900000  orientation 0.00
 drill  0.000000
 shape_offset  0.000000  0.000000
 $EndPAD

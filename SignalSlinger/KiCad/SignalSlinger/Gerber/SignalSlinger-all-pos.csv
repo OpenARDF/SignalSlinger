@@ -1,4 +1,12 @@
 Ref,Val,Package,PosX,PosY,Rot,Side
+"C302","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-119.160000,-101.950000,0.000000,bottom
+"C303","1800pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-105.960000,-102.740000,0.000000,bottom
+"C304","91pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-102.820000,-94.910000,90.000000,bottom
+"C305","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-123.140000,-90.540000,90.000000,bottom
+"J107","DB9 Female","DSUB-9_Female_EdgeMount_P2.77mm",-50.102500,-89.412500,90.000000,bottom
+"L101","9T #24 Bifilar T50-43","Toroid_T-50A_TH_BF_CT",-117.890000,-111.220000,-90.000000,bottom
+"L301","2.7uH","Toroid_T-60_2TH",-113.240000,-92.174650,90.000000,bottom
+"MOD201","AdaFruit Charger","PinHeader_1x04_P2.54mm_Vertical",-75.377500,-61.990000,90.000000,bottom
 "C101","100nF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",61.360000,-67.150000,180.000000,top
 "C102","470nF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",72.660000,-65.560000,180.000000,top
 "C103","470nF","C_0805_2012Metric_Pad1.18x1.45mm_HandSolder",61.180000,-74.020000,0.000000,top

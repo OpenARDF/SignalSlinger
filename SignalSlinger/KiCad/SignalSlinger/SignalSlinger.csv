@@ -19,6 +19,7 @@ D104 ,Green LED,1,LED_SMD:LED_APDA1806SECK,,LED GREEN CLEAR SMD,160-1414-1-ND,C9
 D105 D106 D108 D109 D110 ,ESD9B5.0ST5G_1,5,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND,Bourns Inc.,CG0603MLC-05LE
 D107 ,MBRD10100CT,1,Package_TO_SOT_SMD:TO-252-2,,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND,C156323,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338,Diodes Incorporated,MBRD10200CT-13
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND ,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
+D202 ,D_Schottky_Filled,1,Diode_SMD:D_SMA,,DIODE SCHOTTKY 30V 3A SMA,B330A-FDICT-ND,C110485,https://www.digikey.com/short/70dw2rqz,Diodes Incorporated,B330A-13-F
 HDWR401 ,Chassis Box,1,,,4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs, , ,https://www.polycase.com/sl-42p?qty=1#200=99&227=163,polycase,SL-42PMBT
 HDWR402 ,LED Light Pipes,1,,,LIGHT PIPE ROUND 3MM,LFB063CTP-ND, ,https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593,Visual Communications Company - VCC,LFB063CTP
 HDWR403 ,PCB Screws,1,,,SCREWS-MBR-100 PCB Screws, , ,https://www.polycase.com/screws-mbr-100,polycase,SCREWS-MBR-100
