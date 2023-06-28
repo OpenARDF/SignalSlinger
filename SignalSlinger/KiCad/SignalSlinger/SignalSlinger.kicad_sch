@@ -7629,7 +7629,7 @@
       (reference "D201") (unit 1) (value "BAT54C") (footprint "Package_TO_SOT_SMD:SC-59")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/67c41640-a5e7-4fd7-a17b-9c7fc94c4026"
-      (reference "D202") (unit 1) (value "D_Schottky_Filled") (footprint "Diode_SMD:D_SMA")
+      (reference "D202") (unit 1) (value "B330A Schottky Diode") (footprint "Diode_SMD:D_SMA")
     )
     (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/0ea731ce-2373-4784-820a-5136c05bb580"
       (reference "HDWR401") (unit 1) (value "Chassis Box") (footprint "")
