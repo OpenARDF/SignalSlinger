@@ -892,9 +892,18 @@ int main(void)
 			{
 				if(!g_isMaster && !g_cloningInProgress)
 				{
-					if(g_event_enabled)
+					if(eventScheduled())
 					{
-						setupForFox(INVALID_FOX, START_EVENT_NOW); // Immediately start transmissions
+						g_event_enabled = false;
+						
+						if(!g_run_event_forever)
+						{
+							setupForFox(INVALID_FOX, START_EVENT_NOW); // Immediately start transmissions
+						}
+						else
+						{
+ 							startEventUsingRTC();
+						}
 					}
 					else
 					{
@@ -975,7 +984,7 @@ int main(void)
 						}
 						else
 						{
-							LEDS.sendCode((char*)"S ");
+							LEDS.blink(LEDS_RED_BLINK_FAST);
 						}
 					}
 				}	
@@ -1124,6 +1133,8 @@ int main(void)
 			{	
 				LEDS.init();
 				g_wifi_enable_delay = 2; /* Ensure WiFi is enabled and countdown is reset */
+				g_handle_counted_presses = 0;
+				g_switch_presses_count = 0;
 			}
 			else
 			{
@@ -2633,16 +2644,16 @@ bool __attribute__((optimize("O0"))) eventEnabled()
 	time_t now = time(null);
 	int32_t dif = timeDif(now, g_event_start_epoch);
 
+	g_time_to_wake_up = g_event_start_epoch - 5;
+
 	if(dif >= -30)  /* Don't sleep if the event starts in 30 seconds or less, or has already started */
 	{
 		g_sleepType = DO_NOT_SLEEP;
-		g_time_to_wake_up = g_event_start_epoch - 5;
 		return( true);
 	}
 
 	/* If we reach here, we have an event that will not start for at least 30 seconds. It needs to be enabled, and a sleep time needs to be calculated
 	 * while allowing time for power-up (coming out of sleep) prior to the event start */
-	g_time_to_wake_up = g_event_start_epoch - 5;
 	g_sleepType = SLEEP_UNTIL_START_TIME;
 
 	return( true);
@@ -3435,7 +3446,7 @@ void reportConfigErrors(void)
 		}
 		else if(!g_event_enabled)
 		{
-			sb_send_string((char*)"Start with > SYN 2\n");
+			sb_send_string((char*)"Start with > GO 2\n");
 		}
 		else
 		{
@@ -3546,7 +3557,7 @@ void reportSettings(void)
 		 
 		if(!g_event_enabled)
 		{
-			sb_send_string((char*)"*   Start with > SYN 2\n");
+			sb_send_string((char*)"*   Start with > GO 2\n");
 		}
  	}
 

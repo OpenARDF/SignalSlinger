@@ -33,12 +33,12 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.80"
+#define SW_REVISION "0.81"
 
 //#define TRANQUILIZE_WATCHDOG
 
-#define PRODUCT_NAME_SHORT "NanoFox ARDF Tx"
-#define PRODUCT_NAME_LONG "\n* NanoFox 80m ARDF Transmitter"
+#define PRODUCT_NAME_SHORT "SignalSlinger Tx"
+#define PRODUCT_NAME_LONG "\n* SignalSlinger 80m CW QRP Transmitter"
 
 /*******************************************************/
 
@@ -263,8 +263,8 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_TX_NOT_RESPONDING_TXT (char*)"* Error: No response from transmit hardware\n"
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
-#define TEXT_NOT_SLEEPING_TXT (char*)"* NanoFox is not sleeping\n"
-#define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === NanoFox Settings ===\n"
+#define TEXT_NOT_SLEEPING_TXT (char*)"* SignalSlinger is not sleeping\n"
+#define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Event Frequency Settings ===\n"
 #define MINIMUM_VALID_EPOCH ((time_t)1609459200)  /* 1 Jan 2021 00:00:00 */
 #define YEAR_2000_EPOCH ((time_t)946684800)  /* 1 Jan 2000 00:00:00 */

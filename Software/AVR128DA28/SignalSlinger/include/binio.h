@@ -64,6 +64,7 @@
 void BINIO_init(void);
 void debounce(void);
 uint8_t portDdebouncedVals(void);
+uint8_t portAdebouncedVals(void);
 
 class binio
 {
