@@ -7713,7 +7713,7 @@
       (reference "J202") (unit 1) (value "Conn_01x03") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical")
     )
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/d69177a2-5677-467e-9f98-c9fb5f757ff7"
-      (reference "J301") (unit 1) (value "To Antenna") (footprint "Connector_Coaxial:BNC_TEConnectivity_1478035_Horizontal")
+      (reference "J301") (unit 1) (value "To Antenna") (footprint "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal")
     )
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/9289bf1e-6dd7-4dc4-8a90-a248b0421e19"
       (reference "J302") (unit 1) (value "Conn_01x03") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical")
