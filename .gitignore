@@ -1,5 +1,15 @@
 # Misc
+*.atsuo
 *.zip
+*.o
+*.d
+*.hex
+*.elf
+*.map
+*.mk
+*.eep
+*.lss
+*.srec
 
 # Prerequisites
 *.d

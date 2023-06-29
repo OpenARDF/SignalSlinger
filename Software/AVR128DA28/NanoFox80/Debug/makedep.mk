@@ -26,8 +26,6 @@ src\driver_init.cpp
 
 src\eeprommanager.cpp
 
-src\Goertzel.cpp
-
 src\huzzah.cpp
 
 src\i2c.cpp

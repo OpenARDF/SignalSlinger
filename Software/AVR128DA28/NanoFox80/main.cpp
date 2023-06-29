@@ -1985,7 +1985,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				dtostrf(g_battery_voltage, 4, 1, txt);
 				txt[5] = '\0';
-  				sprintf(g_tempStr, "Bat =%s Volts\n", txt);
+  				sprintf(g_tempStr, "\nBat =%s Volts\n", txt);
  				sb_send_string(g_tempStr);
 
 				dtostrf(g_voltage_threshold, 4, 1, txt);

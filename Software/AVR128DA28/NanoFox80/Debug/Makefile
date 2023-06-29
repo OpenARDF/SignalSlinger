@@ -55,7 +55,6 @@ C_SRCS +=  \
 ../src/dac0.cpp \
 ../src/driver_init.cpp \
 ../src/eeprommanager.cpp \
-../src/Goertzel.cpp \
 ../src/huzzah.cpp \
 ../src/i2c.cpp \
 ../src/leds.cpp \
@@ -91,7 +90,6 @@ src/cpuint.o \
 src/dac0.o \
 src/driver_init.o \
 src/eeprommanager.o \
-src/Goertzel.o \
 src/huzzah.o \
 src/i2c.o \
 src/leds.o \
@@ -120,7 +118,6 @@ src/cpuint.o \
 src/dac0.o \
 src/driver_init.o \
 src/eeprommanager.o \
-src/Goertzel.o \
 src/huzzah.o \
 src/i2c.o \
 src/leds.o \
@@ -149,7 +146,6 @@ src/cpuint.d \
 src/dac0.d \
 src/driver_init.d \
 src/eeprommanager.d \
-src/Goertzel.d \
 src/huzzah.d \
 src/i2c.d \
 src/leds.d \
@@ -178,7 +174,6 @@ src/cpuint.d \
 src/dac0.d \
 src/driver_init.d \
 src/eeprommanager.d \
-src/Goertzel.d \
 src/huzzah.d \
 src/i2c.d \
 src/leds.d \
@@ -194,9 +189,9 @@ src/transmitter.d \
 src/usart_basic.d \
 src/util.d
 
-OUTPUT_FILE_PATH +=NanoFox80.elf
+OUTPUT_FILE_PATH +=SignalSlinger.elf
 
-OUTPUT_FILE_PATH_AS_ARGS +=NanoFox80.elf
+OUTPUT_FILE_PATH_AS_ARGS +=SignalSlinger.elf
 
 ADDITIONAL_DEPENDENCIES:=
 
@@ -286,13 +281,6 @@ src/driver_init.o: ../src/driver_init.cpp
 	
 
 src/eeprommanager.o: ../src/eeprommanager.cpp
-	@echo Building file: $<
-	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\include"  -O0 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-src/Goertzel.o: ../src/Goertzel.cpp
 	@echo Building file: $<
 	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\include"  -O0 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -423,13 +411,13 @@ all: $(OUTPUT_FILE_PATH) $(ADDITIONAL_DEPENDENCIES)
 $(OUTPUT_FILE_PATH): $(OBJS) $(USER_OBJS) $(OUTPUT_FILE_DEP) $(LIB_DEP) $(LINKER_SCRIPT_DEP)
 	@echo Building target: $@
 	@echo Invoking: AVR8/GNU Linker : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -o$(OUTPUT_FILE_PATH_AS_ARGS) $(OBJS_AS_ARGS) $(USER_OBJS) $(LIBS) -Wl,-Map="NanoFox80.map" -Wl,--start-group -Wl,-lm  -Wl,--end-group -Wl,--gc-sections -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28"  
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -o$(OUTPUT_FILE_PATH_AS_ARGS) $(OBJS_AS_ARGS) $(USER_OBJS) $(LIBS) -Wl,-Map="SignalSlinger.map" -Wl,--start-group -Wl,-lm  -Wl,--end-group -Wl,--gc-sections -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28"  
 	@echo Finished building target: $@
-	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures  "NanoFox80.elf" "NanoFox80.hex"
-	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -j .eeprom  --set-section-flags=.eeprom=alloc,load --change-section-lma .eeprom=0  --no-change-warnings -O ihex "NanoFox80.elf" "NanoFox80.eep" || exit 0
-	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objdump.exe" -h -S "NanoFox80.elf" > "NanoFox80.lss"
-	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O srec -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures "NanoFox80.elf" "NanoFox80.srec"
-	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-size.exe" "NanoFox80.elf"
+	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures  "SignalSlinger.elf" "SignalSlinger.hex"
+	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -j .eeprom  --set-section-flags=.eeprom=alloc,load --change-section-lma .eeprom=0  --no-change-warnings -O ihex "SignalSlinger.elf" "SignalSlinger.eep" || exit 0
+	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objdump.exe" -h -S "SignalSlinger.elf" > "SignalSlinger.lss"
+	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-objcopy.exe" -O srec -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures "SignalSlinger.elf" "SignalSlinger.srec"
+	"C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-size.exe" "SignalSlinger.elf"
 	
 	
 
@@ -441,5 +429,5 @@ $(OUTPUT_FILE_PATH): $(OBJS) $(USER_OBJS) $(OUTPUT_FILE_DEP) $(LIB_DEP) $(LINKER
 clean:
 	-$(RM) $(OBJS_AS_ARGS) $(EXECUTABLES)  
 	-$(RM) $(C_DEPS_AS_ARGS)   
-	rm -rf "NanoFox80.elf" "NanoFox80.a" "NanoFox80.hex" "NanoFox80.lss" "NanoFox80.eep" "NanoFox80.map" "NanoFox80.srec" "NanoFox80.usersignatures"
+	rm -rf "SignalSlinger.elf" "SignalSlinger.a" "SignalSlinger.hex" "SignalSlinger.lss" "SignalSlinger.eep" "SignalSlinger.map" "SignalSlinger.srec" "SignalSlinger.usersignatures"
 	
