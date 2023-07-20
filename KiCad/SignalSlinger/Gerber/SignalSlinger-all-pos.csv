@@ -2,7 +2,7 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "C302","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-119.160000,-101.950000,0.000000,bottom
 "C303","1800pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-105.960000,-102.740000,0.000000,bottom
 "C304","91pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-102.820000,-94.910000,90.000000,bottom
-"C305","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-123.140000,-90.540000,90.000000,bottom
+"C305","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-122.940000,-90.540000,90.000000,bottom
 "J107","DB9 Female","DSUB-9_Female_EdgeMount_P2.77mm",-50.102500,-89.412500,90.000000,bottom
 "L101","9T #24 Bifilar T50-43","Toroid_T-50A_TH_BF_CT",-117.890000,-111.220000,-90.000000,bottom
 "L301","2.7uH","Toroid_T-60_2TH",-113.240000,-92.174650,90.000000,bottom
@@ -59,7 +59,7 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "J113","Controlled Power","PinHeader_1x02_P2.54mm_Vertical",63.175000,-63.710000,-90.000000,top
 "J201","Barrel_Jack_Switch","BarrelJack_CUI_PJ-036AH-SMT_Horizontal",115.280000,-70.460000,180.000000,top
 "J202","Conn_01x03","PinHeader_1x03_P2.54mm_Vertical",80.950000,-79.635000,180.000000,top
-"J301","To Antenna","BNC_TEConnectivity_1478035_Horizontal",132.475000,-89.412500,-90.000000,top
+"J301","To Antenna","BNC_Amphenol_B6252HB-NPP3G-50_Horizontal",127.275000,-89.412500,-90.000000,top
 "J302","Conn_01x03","PinHeader_1x03_P2.54mm_Vertical",108.820000,-116.600000,-90.000000,top
 "L201","2.2uH","L_Wuerth_WE-LQS",118.215000,-81.570000,-90.000000,top
 "L202","1uH","L_Bourns_SRN5040TA",89.390000,-72.430000,0.000000,top

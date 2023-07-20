@@ -1,4 +1,4 @@
-## Footprint report - date Wednesday, June 28, 2023 at 10:44:20 AM
+## Footprint report - date Saturday, July 01, 2023 at 11:09:04 AM
 ## Created by Pcbnew version (6.0.4-0)
 ## Unit = mm, Angle = deg.
 
@@ -6,7 +6,7 @@ $BeginDESCRIPTION
 
 $BOARD
 upper_left_corner 33.677500 59.835000
-lower_right_corner 149.900000 118.990000
+lower_right_corner 161.100000 118.990000
 $EndBOARD
 
 $MODULE BT201
@@ -639,7 +639,7 @@ $EndMODULE  C304
 $MODULE C305
 footprint Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm
 attribut none
-position 123.140000 90.540000  orientation 90.00
+position 122.940000 90.540000  orientation 90.00
 layer back
 $PAD "1"
 Shape Circle Layer both
@@ -1214,38 +1214,32 @@ $EndPAD
 $EndMODULE  J202
 
 $MODULE J301
-footprint Connector_Coaxial:BNC_TEConnectivity_1478035_Horizontal
+footprint Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal
 attribut none
-position 132.475000 89.412500  orientation -90.00
+position 127.275000 89.412500  orientation -90.00
 layer front
 $PAD "1"
-Shape Circle Layer both
-position  0.000000  0.000000  size  3.500000  3.500000  orientation 360.00
-drill  1.100000
+Shape Oval Layer both
+position  0.000000  0.000000  size  1.600000  2.500000  orientation 360.00
+drill  0.890000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
-Shape Roundrect Layer both
-position -5.025000 -5.025000  size  4.000000  4.000000  orientation 360.00
-drill  1.500000
+Shape Oval Layer both
+position -5.080000 -5.080000  size  3.500000  7.000000  orientation 360.00
+drill  2.010000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
-Shape Roundrect Layer both
-position -5.025000  5.025000  size  4.000000  4.000000  orientation 360.00
-drill  1.500000
+Shape Oval Layer both
+position -2.540000  0.000000  size  1.600000  2.500000  orientation 360.00
+drill  0.890000
 shape_offset  0.000000  0.000000
 $EndPAD
 $PAD "2"
-Shape Roundrect Layer both
-position  5.025000 -5.025000  size  4.000000  4.000000  orientation 360.00
-drill  1.500000
-shape_offset  0.000000  0.000000
-$EndPAD
-$PAD "2"
-Shape Roundrect Layer both
-position  5.025000  5.025000  size  4.000000  4.000000  orientation 360.00
-drill  1.500000
+Shape Oval Layer both
+position  5.080000 -5.080000  size  3.500000  7.000000  orientation 360.00
+drill  2.010000
 shape_offset  0.000000  0.000000
 $EndPAD
 $EndMODULE  J301
