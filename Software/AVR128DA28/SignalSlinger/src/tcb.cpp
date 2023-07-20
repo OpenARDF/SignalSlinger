@@ -129,7 +129,7 @@ bool util_delay_ms(uint32_t delayValue)
 				countdownValue = 0;
 				return(false); /* time expired */
 			}
-			else if(delayValue != countdownValue) /* countdown delay changed */
+			else if(delayValue != countdownValue) /* countdown delay changed while counting */
 			{
  				TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 // 				TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
@@ -141,7 +141,7 @@ bool util_delay_ms(uint32_t delayValue)
 				return(false);
 			}
 		}
-		else if(delayValue != countdownValue)
+		else if(delayValue != countdownValue) /* New delay value received */
 		{
  			TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 // 			TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
@@ -172,7 +172,7 @@ ISR(TCA0_OVF_vect)
 {
 	uint8_t x = TCA0.SINGLE.INTFLAGS;
 	
-	if(x & TCB_CAPT_bm)
+	if(x & TCA_SINGLE_OVF_bm)
 	{
 		if(g_ms_counter) g_ms_counter--;
 	}

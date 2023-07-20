@@ -135,7 +135,7 @@ typedef struct
 } SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS 1 - Set master\n* > PAT [text] - Set xmit pattern\n* > SPD S|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [v] - Battery volts\n\0"
+#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS 1 - Set master\n* > PAT [text] - Set xmit pattern\n* > SPD S|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [v] - Battery volts\n\0"
 
 
 /**

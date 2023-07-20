@@ -27,7 +27,6 @@
 #include "driver_init.h"
 #include <system.h>
 #include "usart_basic.h"
-#include "linkbus.h"
 #include "serialbus.h"
 #include "dac0.h"
 #include "binio.h"
@@ -54,9 +53,8 @@ void system_init()
 
 	SLPCTRL_init();
 	
-	DAC0_init();
+	// DAC0_init();
 
-	linkbus_init(LB_BAUD, LINKBUS_USART);
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 
 	BOD_init();

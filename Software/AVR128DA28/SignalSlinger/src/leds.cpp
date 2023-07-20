@@ -244,7 +244,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 	
 	if(!led_timeout_count && (blinkMode != LEDS_OFF)) return;
 	
-	if(blinkMode != lastBlinkSetting)
+	if((blinkMode != lastBlinkSetting) || (blinkMode == LEDS_OFF))
 	{
 		TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
 

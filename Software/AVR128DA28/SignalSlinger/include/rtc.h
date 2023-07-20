@@ -34,5 +34,6 @@ void RTC_init_backup(void);
 void RTC_init_backup(uint16_t cal);
 void RTC_set_calibration(uint16_t cal);
 uint16_t RTC_get_cal(void);
+void RTC_zero(void);
 
 #endif //__RTC_H__

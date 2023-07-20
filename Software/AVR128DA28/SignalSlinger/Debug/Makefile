@@ -55,10 +55,8 @@ C_SRCS +=  \
 ../src/dac0.cpp \
 ../src/driver_init.cpp \
 ../src/eeprommanager.cpp \
-../src/huzzah.cpp \
 ../src/i2c.cpp \
 ../src/leds.cpp \
-../src/linkbus.cpp \
 ../src/morse.cpp \
 ../src/rtc.cpp \
 ../src/serialbus.cpp \
@@ -90,10 +88,8 @@ src/cpuint.o \
 src/dac0.o \
 src/driver_init.o \
 src/eeprommanager.o \
-src/huzzah.o \
 src/i2c.o \
 src/leds.o \
-src/linkbus.o \
 src/morse.o \
 src/protected_io.o \
 src/rtc.o \
@@ -118,10 +114,8 @@ src/cpuint.o \
 src/dac0.o \
 src/driver_init.o \
 src/eeprommanager.o \
-src/huzzah.o \
 src/i2c.o \
 src/leds.o \
-src/linkbus.o \
 src/morse.o \
 src/protected_io.o \
 src/rtc.o \
@@ -146,10 +140,8 @@ src/cpuint.d \
 src/dac0.d \
 src/driver_init.d \
 src/eeprommanager.d \
-src/huzzah.d \
 src/i2c.d \
 src/leds.d \
-src/linkbus.d \
 src/morse.d \
 src/protected_io.d \
 src/rtc.d \
@@ -174,10 +166,8 @@ src/cpuint.d \
 src/dac0.d \
 src/driver_init.d \
 src/eeprommanager.d \
-src/huzzah.d \
 src/i2c.d \
 src/leds.d \
-src/linkbus.d \
 src/morse.d \
 src/protected_io.d \
 src/rtc.d \
@@ -287,13 +277,6 @@ src/eeprommanager.o: ../src/eeprommanager.cpp
 	@echo Finished building: $<
 	
 
-src/huzzah.o: ../src/huzzah.cpp
-	@echo Building file: $<
-	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\include"  -O0 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
 src/i2c.o: ../src/i2c.cpp
 	@echo Building file: $<
 	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
@@ -302,13 +285,6 @@ src/i2c.o: ../src/i2c.cpp
 	
 
 src/leds.o: ../src/leds.cpp
-	@echo Building file: $<
-	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\include"  -O0 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-src/linkbus.o: ../src/linkbus.cpp
 	@echo Building file: $<
 	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\include"  -O0 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.9.103\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

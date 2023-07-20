@@ -37,27 +37,18 @@
 #include <compiler.h>
 #include <ctype.h> /* toupper() */
 #include <string.h>
-#include "linkbus.h"
 #include "serialbus.h"
 #include "usart_basic.h"
 #include "morse.h"
 
 void serial_Rx(uint8_t rx_char);
 void serial_Tx(uint8_t rx_char);
-void linkbus_Rx(uint8_t rx_char);
-void linkbus_Tx(uint8_t rx_char);
 
 extern USART_Number_t g_serialbus_usart_number;
-extern USART_Number_t g_linkbus_usart_number;
 
 ISR(USART0_RXC_vect)
 {
 	uint8_t rx_char = USART0_get_data();
-	
-	if(g_linkbus_usart_number == USART_0)
-	{
-		linkbus_Rx(rx_char);
-	}
 	
 	if(g_serialbus_usart_number == USART_0)
 	{
@@ -148,7 +139,7 @@ void serial_Rx(uint8_t rx_char)
 
 			charIndex = 0;
 			field_len = 0;
-			msg_ID = LB_MESSAGE_EMPTY;
+			msg_ID = SB_MESSAGE_EMPTY;
 
 			field_index = 0;
 			buff = NULL;
@@ -196,7 +187,7 @@ void serial_Rx(uint8_t rx_char)
 				{
 					if(rx_char == ' ')
 					{
-						if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= LINKBUS_MAX_MSG_NUMBER_OF_FIELDS))
+						if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
 						{
 							rx_char = '\0';
 						}
@@ -209,10 +200,10 @@ void serial_Rx(uint8_t rx_char)
 
 							field_index++;
 							field_len = 0;
-							charIndex = MIN(charIndex + 1, (LINKBUS_MAX_MSG_LENGTH - 1));
+							charIndex = MIN(charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 						}
 					}
-					else if(field_len < LINKBUS_MAX_MSG_FIELD_LENGTH)
+					else if(field_len < SERIALBUS_MAX_MSG_FIELD_LENGTH)
 					{
 						if(field_index == 0)    /* message ID received */
 						{
@@ -224,7 +215,7 @@ void serial_Rx(uint8_t rx_char)
 
 								charIndex = 0;
 								field_len = 0;
-								msg_ID = LB_MESSAGE_EMPTY;
+								msg_ID = SB_MESSAGE_EMPTY;
 
 								field_index = 0;
 								buff = NULL;
@@ -238,7 +229,7 @@ void serial_Rx(uint8_t rx_char)
 							buff->fields[field_index - 1][field_len] = '\0';
 						}
 
-						charIndex = MIN(charIndex + 1, (LINKBUS_MAX_MSG_LENGTH - 1));
+						charIndex = MIN(charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 					}
 					else
 					{
@@ -268,7 +259,7 @@ void serial_Rx(uint8_t rx_char)
 					msg_ID = rx_char;
 
 					/* Empty the field buffers */
-					for(i = 0; i < LINKBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
+					for(i = 0; i < SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
 					{
 						buff->fields[i][0] = '\0';
 					}
@@ -285,196 +276,6 @@ void serial_Rx(uint8_t rx_char)
 			}
 		}
 	}	
-}
-
-/**
-
-*/
-ISR(USART0_DRE_vect)
-{
-	if(g_linkbus_usart_number == USART_0)
-	{
-		static LinkbusTxBuffer* buff = 0;
-		static uint8_t charIndex = 0;
-
-		if(!buff)
-		{
-			buff = nextFullLBTxBuffer();
-		}
-
-		if((*buff)[charIndex])
-		{
-			/* Put data into buffer, sends the data */
-			USART0.TXDATAL = (*buff)[charIndex++];
-		}
-		else
-		{
-			charIndex = 0;
-			(*buff)[0] = '\0';
-			buff = nextFullLBTxBuffer();
-			if(!buff)
-			{
-				linkbus_end_tx();
-			}
-		}
-	}
-	
-	if(g_serialbus_usart_number == USART_0)
-	{
-		static SerialbusTxBuffer* buff = 0;
-		static uint8_t charIndex = 0;
-
-		if(!buff)
-		{
-			buff = nextFullSBTxBuffer();
-		}
-
-		if((*buff)[charIndex])
-		{
-			/* Put data into buffer, sends the data */
-			USART0.TXDATAL = (*buff)[charIndex++];
-		}
-		else
-		{
-			charIndex = 0;
-			(*buff)[0] = '\0';
-			buff = nextFullSBTxBuffer();
-			if(!buff)
-			{
-				serialbus_end_tx();
-			}
-		}
-	}
-}
-
-
-/**
-
-*/
-ISR(USART1_RXC_vect)
-{
-	uint8_t rx_char = USART1_get_data();	
-	
-	if(g_linkbus_usart_number == USART_1)
-	{
-		linkbus_Rx(rx_char);
-	}
-	
-	if(g_serialbus_usart_number == USART_1)
-	{
-		serial_Rx(rx_char);
-	}
-}
-
-void linkbus_Rx(uint8_t rx_char)
-{
-	static LinkbusRxBuffer* buff = NULL;
-	static uint8_t charIndex = 0;
-	static uint8_t field_index = 0;
-	static uint8_t field_len = 0;
-	static uint32_t tempMsg_ID = 0;
-	static bool receiving_msg = false;
-	static bool escapeNext = false;
-
-	if(!buff)
-	{
-		buff = nextEmptyLBRxBuffer();
-	}
-
-	if(buff)
-	{
-		rx_char = toupper(rx_char);
-		if(rx_char == '\n') rx_char = '\r';
-		
-		if(!escapeNext && (rx_char == '\\'))
-		{
-			escapeNext = true;
-		}
-		else if(!escapeNext && ((rx_char == '$') || (rx_char == '!')))    /* start of new message = $ */
-		{
-			charIndex = 0;
-			buff->type = (rx_char == '!') ? LINKBUS_MSG_REPLY : LINKBUS_MSG_COMMAND;
-			field_len = 0;
-			tempMsg_ID = 0;
-			receiving_msg = true;
-
-			/* Empty the field buffers */
-			for(field_index = 0; field_index < LINKBUS_MAX_MSG_NUMBER_OF_FIELDS; field_index++)
-			{
-				buff->fields[field_index][0] = '\0';
-			}
-
-			field_index = 0;
-		}
-		else if(receiving_msg)
-		{
-			if(!escapeNext && ((rx_char == ',') || (rx_char == ';') || (rx_char == '?')))   /* new field = ,; end of message = ; */
-			{
-				/* if(field_index == 0) // message ID received */
-				if(field_index > 0)
-				{
-					buff->fields[field_index - 1][field_len] = 0;
-				}
-
-				field_index++;
-				field_len = 0;
-
-				if(rx_char == ';')
-				{
-					if(charIndex > LINKBUS_MIN_MSG_LENGTH)
-					{
-						buff->id = (LBMessageID)tempMsg_ID;
-					}
-					receiving_msg = false;
-				}
-				else if(rx_char == '?')
-				{
-					buff->type = LINKBUS_MSG_QUERY;
-					if(charIndex >= LINKBUS_MIN_MSG_LENGTH)
-					{
-						buff->id = (LBMessageID)tempMsg_ID;
-					}
-					receiving_msg = false;
-				}
-
-				if(!receiving_msg)
-				{
-					buff = 0;
-				}
-			}
-			else
-			{
-				if(field_index == 0)    /* message ID received */
-				{
-					tempMsg_ID = tempMsg_ID * 10 + rx_char;
-				}
-				else
-				{
-					buff->fields[field_index - 1][field_len++] = rx_char;
-				}
-				
-				escapeNext = false;
-			}
-		}
-		else if(rx_char == '\r')    /* Carriage return resets any message in progress */
-		{
-			buff->id = LB_MESSAGE_EMPTY;
-			charIndex = LINKBUS_MAX_MSG_LENGTH;
-			field_len = 0;
-			tempMsg_ID = 0;
-			field_index = 0;
-			buff = NULL;
-		}
-
-		if(!escapeNext)
-		{
-			if(++charIndex >= LINKBUS_MAX_MSG_LENGTH)
-			{
-				receiving_msg = false;
-				charIndex = 0;
-			}
-		}
-	}
 }
 
 
@@ -509,31 +310,18 @@ ISR(USART1_DRE_vect)
 			}
 		}
 	}
+}
+
+
+/**
+
+*/
+ISR(USART1_RXC_vect)
+{
+	uint8_t rx_char = USART1_get_data();	
 	
-	if(g_linkbus_usart_number == USART_1)
+	if(g_serialbus_usart_number == USART_1)
 	{
-		static LinkbusTxBuffer* buff = 0;
-		static uint8_t charIndex = 0;
-
-		if(!buff)
-		{
-			buff = nextFullLBTxBuffer();
-		}
-
-		if((*buff)[charIndex])
-		{
-			/* Put data into buffer, sends the data */
-			USART1.TXDATAL = (*buff)[charIndex++];
-		}
-		else
-		{
-			charIndex = 0;
-			(*buff)[0] = '\0';
-			buff = nextFullLBTxBuffer();
-			if(!buff)
-			{
-				linkbus_end_tx();
-			}
-		}
+		serial_Rx(rx_char);
 	}
 }

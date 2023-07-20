@@ -237,16 +237,10 @@
     <Compile Include="include\eeprommanager.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\huzzah.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="include\i2c.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\leds.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="include\linkbus.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\morse.h">
@@ -318,16 +312,10 @@
     <Compile Include="src\eeprommanager.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\huzzah.cpp">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\i2c.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\leds.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\linkbus.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\morse.cpp">

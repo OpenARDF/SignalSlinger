@@ -26,6 +26,15 @@
 #include "morse.h"
 #include <stddef.h>
 
+/*
+   Structure to describe a Morse code character
+*/
+typedef struct {
+	uint8_t		pattern;
+	uint8_t		lengthInSymbols;
+	uint8_t		lengthInElements;
+} MorseCharacter;
+
 MorseCharacter getMorseChar(char c);
 
 #define SOLID_KEYDOWN 0xFF
@@ -64,7 +73,7 @@ bool makeMorse(char* s, bool* repeating, bool* finished)
 		if(*s)
 		{
 			str = s;
-			c = ' ';
+			c = str[0];
 			morseInProgress = getMorseChar(*str);
 			charIndex = 0;
 			symbolIndex = 0;

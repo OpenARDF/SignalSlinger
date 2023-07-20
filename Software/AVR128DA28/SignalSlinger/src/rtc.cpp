@@ -39,8 +39,21 @@ void RTC_init(void)
 	RTC_init(EEPROM_CLOCK_CALIBRATION_DEFAULT);
 }
 
+void RTC_zero(void)
+{
+	if(use_backup_clock)
+	{
+		RTC_init_backup(g_clock_calibration);
+	}
+	else
+	{
+		RTC_init(g_clock_calibration);
+	}
+}
+
 void RTC_init(uint16_t cal)
 {
+	g_clock_calibration = cal;
 	util_delay_ms(0);
     while ((RTC.STATUS > 0) && util_delay_ms(500)) { /* Wait for all registers to be synchronized */
     }
@@ -82,6 +95,7 @@ void RTC_init_backup(void)
 
 void RTC_init_backup(uint16_t cal)
 {
+	g_clock_calibration = cal;
 	use_backup_clock = true;
 	
 	ccp_write_io((void *)&(CLKCTRL.OSC32KCTRLA),
