@@ -6,8 +6,8 @@
 
   (title_block
     (title "SignalSlinger Design")
-    (date "2023-06-20")
-    (rev "1.0")
+    (date "2023-07-10")
+    (rev "1.1")
   )
 
   (lib_symbols

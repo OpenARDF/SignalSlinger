@@ -1,37 +1,37 @@
-Ref,Value,Qty,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN
-C101 C104 C105 C107 C208,100nF,5,Capacitor_SMD:C_0805_2012Metric,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
-C102 C103 C106 C108 C112 C204 C301,470nF,7,Capacitor_SMD:C_0805_2012Metric,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
-C109 C116 C201 C203 C205 C206 C207 C210,10uF,8,Capacitor_SMD:C_0805_2012Metric,CAP CER 10UF 35V X5R 0805,1276-1015-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp,Samsung Electro-Mechanics,CL21B103KBANNNC
-C110 C213 C214 C215,22uF,4,Capacitor_SMD:C_1210_3225Metric,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND,Samsung Electro-Mechanics,CL32A226MAJNNNE
-C111,47uF low ESR,1,Capacitors:C_2917,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND,KEMET,T495X476K020ATE150
-C202 C209,10nF,2,Capacitor_SMD:C_0805_2012,CAP CER 10000PF 50V X7R 0805,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/cw5mtp9h,KEMET,C0805C103J5GEC7800
-C211,10pF,1,Capacitor_SMD:C_0805_2012Metric,CAP CER 10PF 50V C0G/NP0 0805,478-KGM21BCG1H100JTCT-ND,C157608,https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414,KYOCERA AVX,KGM21BCG1H100JT
-C212,1uF,1,Capacitor_SMD:C_0805_2012Metric,CAP CER 1UF 50V X7R 0805,1276-6470-1-ND,C28323,https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467,Samsung Electro-Mechanics,CL21B105KBFNNNG
-D101 D102,1N914WT,2,Diode_SMD:D_SOD-523,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND,C83482,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
-D103,Red LED,1,LED_SMD:LED_0805_2012Metric,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
-D104,Green LED,1,LED_SMD:LED_APDA1806SECK,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
-D105 D106 D108 D109 D110,ESD9B5.0ST5G_1,5,Diode_SMD:D_0603_1608Metric,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND,Bourns Inc.,CG0603MLC-05LE
-D107,MBRD10100CT,1,Package_TO_SOT_SMD:TO-252-3_TabPin2,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND,C156323,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338,Diodes Incorporated,MBRD10200CT-13
-D201,BAT54C,1,Package_TO_SOT_SMD:SC-59,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
-D202,B330A Schottky Diode,1,Diode_SMD:D_SMA,DIODE SCHOTTKY 30V 3A SMA,B330A-FDICT-ND,C110485,https://www.digikey.com/short/70dw2rqz,Diodes Incorporated,B330A-13-F
-J201,Barrel_Jack_Switch,1,Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal,CONN PWR JACK 2X5.5MM SOLDER,CP-036AHPJCT-ND,,https://www.digikey.com/en/products/detail/cui-devices/PJ-036AH-SMT-TR/1530971,CUI Devices,PJ-036AH-SMT-TR
-L201,choke,1,Inductor_SMD:L_Wuerth_WE-LQS,FIXED IND 2.2UH 3.83A 23MOHM SMD,732-10754-1-ND,C2041406,https://www.digikey.com/en/products/detail/w%C3%BCrth-elektronik/74404043022A/6598076,Würth Elektronik,74404043022A
-L202,1uH,1,Inductor_SMD:L_Bourns_SRN5040TA,FIXED IND 1UH 5A 12 MOHM SMD,SRN5040TA-1R0MCT-ND,C2044735,https://www.digikey.com/en/products/detail/bourns-inc/SRN5040TA-1R0M/9653870,Bourns Inc.,SRN5040TA-1R0M
-P101,CONN HEADER SMD 6POS 2.54MM,1,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,CONN HEADER SMD 6POS 2.54MM,609-3487-1-ND,C178294,https://www.digikey.com/products/en?keywords=609-3487-1-ND,Amphenol ICC (FCI),95278-101A06LF
-Q101,BSS84W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,MOSFET P-CH 50V 130MA SOT323,BSS84W-FDICT-ND,C110490,https://www.digikey.com/short/fjvhfm07,Diodes Incorporated,BSS84W-7-F
-Q102,BSS138W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,MOSFET N-CH 50V 200MA SOT323,BSS138W-FDICT-ND,C24553,https://www.digikey.com/short/m8f8nn79,Diodes Incorporated,BSS138W-7-F
-R102,162k,1,Resistor_SMD:R_0805_2012Metric,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
-R103,12.4k,1,Resistor_SMD:R_0805_2012Metric,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND,C137595,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572,YAGEO,RC0805FR-0712K4L
-R104 R105,1k,2,Resistor_SMD:R_0805_2012Metric,RES 1K OHM 1% 1/8W 0805,RMCF0805FT1K00CT-ND,C17513,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090,Stackpole Electronics Inc,RMCF0805FT1K00
-R106,47k,1,Resistor_SMD:R_0805_2012Metric,RES 47K OHM 1% 1/8W 0805,311-47.0KCRCT-ND,C126351,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0747KL/727973,YAGEO,RC0805FR-0747KL
-R107 R108,10k,2,Capacitor_SMD:C_0805_2012Metric,RES 10K OHM 1% 1/4W 0805,RNCP0805FTD10K0CT-ND,C2441435,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262,Stackpole Electronics Inc,RNCP0805FTD10K0
-R101 R201 R203,105k,2,Resistor_SMD:R_0805_2012Metric,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND,C273877,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
-R202 R204,1M,2,Resistor_SMD:R_0805_2012Metric,RES 1M OHM 1% 1/8W 0805,13-RC0805FR-131MLCT-ND,C4198744,https://www.digikey.com/en/products/detail/yageo/RC0805FR-131ML/14008312,YAGEO,RC0805FR-131ML
-U101,AVR128DA28,1,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,IC MCU 8BIT 128KB FLASH 28SOIC,150-AVR128DA28T-E/SOCT-ND,C1870730,https://www.digikey.com/short/781hqp8f,Microchip Technology,AVR128DA28T-E/SO
-U102,SI5351,1,Package_SO:MSOP-10_3x3mm_P0.5mm,IC CLK GENERATOR 200MHZ 10MSOP,336-2399-5-ND,C529366,https://www.digikey.com/products/en?keywords=336-2399-5-ND,Silicon Labs,SI5351A-B-GT
-U103 U105,TPS22810DBVT,2,TO_SOT_Packages_SMD:SOT-23-6,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,https://www.digikey.com/products/en?keywords=296-45304-1-ND,Texas Instruments,TPS22810DBVT
-U104,LM5134,1,Package_TO_SOT_SMD:SOT-23-6-LM5134,IC GATE DRVR LOW-SIDE SOT23-6,296-40244-1-ND,C2677086,https://www.digikey.com/products/en?keywords=296-40244-1-ND,Texas Instruments,LM5134BMFX/NOPB
-U201 U202,LP2985-3.3,2,Package_TO_SOT_SMD:SOT-23-5,IC REG LINEAR 3.3V 150MA SOT23-5,296-18479-1-ND,C89826,https://www.digikey.com/short/vr2m3rjp,Texas Instruments,LP2985A-33DBVR
-U203,TPS63060,1,Package_SON:Texas_S-PWSON-N10_ThermalVias,IC REG BCK BST ADJ 2A 10WSON,296-30178-1-ND,C2070911,https://www.digikey.com/en/products/detail/texas-instruments/TPS63060DSCT/2812707,Texas Instruments,TPS63060DSCT
-X101,SIT1566AC TCO,1,Oscillator:Oscillator_SMD_SiTime_SIT1566AC-4Pin_BGA,MEMS OSC TCXO 32.768KHZ CSP,1473-SIT1566AC-JV-XXE-32.768ECT-ND,,https://www.digikey.com/short/r7q3vdbp,SiTime,SIT1566AC-JV-XXE-32.768E
-X102,25 MHz,1,Crystal:Crystal_SMD_TXETCLSANF-4Pin,XTAL OSC TCXO 25.0000MHZ SNWV,1664-1273-1-ND,,https://www.digikey.com/products/en?keywords=1664-1273-1-ND,Taitien,TXETCLSANF-25.000000
+Item #,Ref Des,Value,Qty,Manufacturer,Mfg Part #,Footprint / Package,Description / Value,Digi-Key Part No.,LCSC Part Number,Link
+1,C101 C104 C105 C107 C208,100nF,5,Samsung Electro-Mechanics,CL21B104KACNNNC,Capacitor_SMD:C_0805_2012Metric,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq
+2,C102 C103 C106 C108 C112 C204 C301,470nF,7,AVX Corporation,08051C474K4Z2A,Capacitor_SMD:C_0805_2012Metric,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND
+3,C109 C116 C201 C203 C205 C206 C207 C210,10uF,8,Samsung Electro-Mechanics,CL21B103KBANNNC,Capacitor_SMD:C_0805_2012Metric,CAP CER 10UF 35V X5R 0805,1276-1015-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp
+4,C110 C213 C214 C215,22uF,4,Samsung Electro-Mechanics,CL32A226MAJNNNE,Capacitor_SMD:C_1210_3225Metric,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND
+5,C111,47uF low ESR,1,KEMET,T495X476K020ATE150,Capacitors:C_2917,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND
+6,C202 C209,10nF,2,KEMET,C0805C103J5GEC7800,Capacitor_SMD:C_0805_2012,CAP CER 10000PF 50V X7R 0805,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/cw5mtp9h
+7,C211,10pF,1,KYOCERA AVX,KGM21BCG1H100JT,Capacitor_SMD:C_0805_2012Metric,CAP CER 10PF 50V C0G/NP0 0805,478-KGM21BCG1H100JTCT-ND,C157608,https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414
+8,C212,1uF,1,Samsung Electro-Mechanics,CL21B105KBFNNNG,Capacitor_SMD:C_0805_2012Metric,CAP CER 1UF 50V X7R 0805,1276-6470-1-ND,C28323,https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467
+9,D101 D102,1N914WT,2,Diodes Incorporated,1N4148WT-7,Diode_SMD:D_SOD-523,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND,C83482,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731
+10,D103,Red LED,1,Lite-On Inc.,LTST-C170KRKT,LED_SMD:LED_0805_2012Metric,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779
+11,D104,Green LED,1,Lite-On Inc.,LTST-C170KGKT,LED_SMD:LED_APDA1806SECK,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777
+12,D105 D106 D108 D109 D110 D111 D112,ESD9B5.0ST5G_1,7,Bourns Inc.,CG0603MLC-05LE,Diode_SMD:D_0603_1608Metric,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND
+13,D107,MBRD10100CT,1,Diodes Incorporated,MBRD10200CT-13,Package_TO_SOT_SMD:TO-252-3_TabPin2,DIODE SCHOTTKY 200V 5A TO252,MBRD10200CT-13DICT-ND,C156323,https://www.digikey.com/en/products/detail/diodes-incorporated/MBRD10200CT-13/5080338
+14,D201,BAT54C,1,Nexperia USA Inc.,BAT54C 215,Package_TO_SOT_SMD:SC-59,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216
+15,D202,B330A Schottky Diode,1,Diodes Incorporated,B330A-13-F,Diode_SMD:D_SMA,DIODE SCHOTTKY 30V 3A SMA,B330A-FDICT-ND,C110485,https://www.digikey.com/short/70dw2rqz
+16,J201,Barrel_Jack_Switch,1,CUI Devices,PJ-036AH-SMT-TR,Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal,CONN PWR JACK 2X5.5MM SOLDER,CP-036AHPJCT-ND,,https://www.digikey.com/en/products/detail/cui-devices/PJ-036AH-SMT-TR/1530971
+17,L201,choke,1,Würth Elektronik,74404043022A,Inductor_SMD:L_Wuerth_WE-LQS,FIXED IND 2.2UH 3.83A 23MOHM SMD,732-10754-1-ND,C2041406,https://www.digikey.com/en/products/detail/w%C3%BCrth-elektronik/74404043022A/6598076
+18,L202,1uH,1,Bourns Inc.,SRN5040TA-1R0M,Inductor_SMD:L_Bourns_SRN5040TA,FIXED IND 1UH 5A 12 MOHM SMD,SRN5040TA-1R0MCT-ND,C2044735,https://www.digikey.com/en/products/detail/bourns-inc/SRN5040TA-1R0M/9653870
+19,P101,CONN HEADER SMD 6POS 2.54MM,1,Amphenol ICC (FCI),95278-101A06LF,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,CONN HEADER SMD 6POS 2.54MM,609-3487-1-ND,C178294,https://www.digikey.com/products/en?keywords=609-3487-1-ND
+20,Q101,BSS84W-7-F,1,Diodes Incorporated,BSS84W-7-F,Package_TO_SOT_SMD:SOT-323_SC-70,MOSFET P-CH 50V 130MA SOT323,BSS84W-FDICT-ND,C110490,https://www.digikey.com/short/fjvhfm07
+21,Q102,BSS138W-7-F,1,Diodes Incorporated,BSS138W-7-F,Package_TO_SOT_SMD:SOT-323_SC-70,MOSFET N-CH 50V 200MA SOT323,BSS138W-FDICT-ND,C24553,https://www.digikey.com/short/m8f8nn79
+22,R102,162k,1,YAGEO,RC0805FR-07162KL,Resistor_SMD:R_0805_2012Metric,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630
+23,R103,12.4k,1,YAGEO,RC0805FR-0712K4L,Resistor_SMD:R_0805_2012Metric,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND,C137595,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572
+24,R104 R105,1k,2,Stackpole Electronics Inc,RMCF0805FT1K00,Resistor_SMD:R_0805_2012Metric,RES 1K OHM 1% 1/8W 0805,RMCF0805FT1K00CT-ND,C17513,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090
+25,R106,47k,1,YAGEO,RC0805FR-0747KL,Resistor_SMD:R_0805_2012Metric,RES 47K OHM 1% 1/8W 0805,311-47.0KCRCT-ND,C126351,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0747KL/727973
+26,R107 R108,10k,2,Stackpole Electronics Inc,RNCP0805FTD10K0,Capacitor_SMD:C_0805_2012Metric,RES 10K OHM 1% 1/4W 0805,RNCP0805FTD10K0CT-ND,C2441435,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262
+27,R101 R201 R203,105k,2,YAGEO,RC0805FR-07105KL,Resistor_SMD:R_0805_2012Metric,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND,C273877,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548
+28,R202 R204,1M,2,YAGEO,RC0805FR-131ML,Resistor_SMD:R_0805_2012Metric,RES 1M OHM 1% 1/8W 0805,13-RC0805FR-131MLCT-ND,C4198744,https://www.digikey.com/en/products/detail/yageo/RC0805FR-131ML/14008312
+29,U101,AVR128DA28,1,Microchip Technology,AVR128DA28T-E/SO,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,IC MCU 8BIT 128KB FLASH 28SOIC,150-AVR128DA28T-E/SOCT-ND,C1870730,https://www.digikey.com/short/781hqp8f
+30,U102,SI5351,1,Silicon Labs,SI5351A-B-GT,Package_SO:MSOP-10_3x3mm_P0.5mm,IC CLK GENERATOR 200MHZ 10MSOP,336-2399-5-ND,C529366,https://www.digikey.com/products/en?keywords=336-2399-5-ND
+31,U103 U105,TPS22810DBVT,2,Texas Instruments,TPS22810DBVT,TO_SOT_Packages_SMD:SOT-23-6,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,https://www.digikey.com/products/en?keywords=296-45304-1-ND
+32,U104,LM5134,1,Texas Instruments,LM5134BMFX/NOPB,Package_TO_SOT_SMD:SOT-23-6-LM5134,IC GATE DRVR LOW-SIDE SOT23-6,296-40244-1-ND,C2677086,https://www.digikey.com/products/en?keywords=296-40244-1-ND
+33,U201 U202,LP2985-3.3,2,Texas Instruments,LP2985A-33DBVR,Package_TO_SOT_SMD:SOT-23-5,IC REG LINEAR 3.3V 150MA SOT23-5,296-18479-1-ND,C89826,https://www.digikey.com/short/vr2m3rjp
+34,U203,TPS63060,1,Texas Instruments,TPS63060DSCT,Package_SON:Texas_S-PWSON-N10_ThermalVias,IC REG BCK BST ADJ 2A 10WSON,296-30178-1-ND,C2070911,https://www.digikey.com/en/products/detail/texas-instruments/TPS63060DSCT/2812707
+35,X101,SIT1566AC TCO,1,SiTime,SIT1566AC-JV-XXE-32.768E,Oscillator:Oscillator_SMD_SiTime_SIT1566AC-4Pin_BGA,MEMS OSC TCXO 32.768KHZ CSP,1473-SIT1566AC-JV-XXE-32.768ECT-ND,,https://www.digikey.com/short/r7q3vdbp
+36,X102,25 MHz,1,Taitien,TXETCLSANF-25.000000,Crystal:Crystal_SMD_TXETCLSANF-4Pin,XTAL OSC TCXO 25.0000MHZ SNWV,1664-1273-1-ND,,https://www.digikey.com/products/en?keywords=1664-1273-1-ND
