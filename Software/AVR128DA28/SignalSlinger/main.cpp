@@ -220,7 +220,7 @@ void initializeAllEventSettings(bool disableEvent);
 void suspendEvent(void);
 void stopEventNow(EventActionSource_t activationSource);
 void startEventNow(EventActionSource_t activationSource);
-void startEventUsingRTC(void);
+bool startEventUsingRTC(void);
 void setupForFox(Fox_t fox, EventAction_t action);
 time_t validateTimeString(char* str, time_t* epochVar);
 bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
@@ -293,81 +293,83 @@ void handle_1sec_tasks(void)
 	
 	if(isMasterCountdownSeconds) isMasterCountdownSeconds--;
 
-	if(g_event_commenced && !g_run_event_forever)
+	if(!g_cloningInProgress)
 	{
-		if(g_event_finish_epoch)
+		if(g_event_commenced && !g_run_event_forever)
 		{
-			temp_time = time(null);
-
-			if(temp_time >= g_event_finish_epoch)
-			{
-				g_last_status_code = STATUS_CODE_EVENT_FINISHED;
-				g_on_the_air = 0;
-				keyTransmitter(OFF);
-				g_event_enabled = false;
-				g_event_commenced = false;
-				g_sleepshutdown_seconds = 120;
-				LEDS.init();
-				
-				if(g_days_run < g_days_to_run)
-				{
-					g_event_start_epoch += SECONDS_24H;
-					g_event_finish_epoch += SECONDS_24H;
-					g_sleepType = SLEEP_UNTIL_START_TIME;
-					g_go_to_sleep_now = true;
-					g_days_run++;
-				}
-				else
-				{
-					g_sleepType = SLEEP_FOREVER;
-					g_go_to_sleep_now = true;
-				}
-			}
-		}
-	}
-
-	if(g_event_enabled && !g_isMaster)
-	{
-		if(g_event_commenced) /* an event is in progress */
-		{
-			if(g_sendID_seconds_countdown)
-			{
-				g_sendID_seconds_countdown--;
-			}
-		}
-		else /* waiting for the start time to arrive */
-		{
-			if(g_event_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
+			if(g_event_finish_epoch)
 			{
 				temp_time = time(null);
 
-				if(temp_time >= g_event_start_epoch) /* Time for the event to start */
+				if(temp_time >= g_event_finish_epoch)
 				{
-					powerToTransmitter(ON);
+					g_last_status_code = STATUS_CODE_EVENT_FINISHED;
+					g_on_the_air = 0;
+					keyTransmitter(OFF);
+					g_event_enabled = false;
+					g_event_commenced = false;
+					g_sleepshutdown_seconds = 120;
+					LEDS.init();
 				
-					if(g_intra_cycle_delay_time)
+					if(g_days_run < g_days_to_run)
 					{
-						g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
-						g_on_the_air = -g_intra_cycle_delay_time;
-						g_sendID_seconds_countdown = g_intra_cycle_delay_time + g_on_air_seconds - g_time_needed_for_ID;
+						g_event_start_epoch += SECONDS_24H;
+						g_event_finish_epoch += SECONDS_24H;
+						g_sleepType = SLEEP_UNTIL_START_TIME;
+						g_go_to_sleep_now = true;
+						g_days_run++;
 					}
 					else
 					{
-						g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
-						g_on_the_air = g_on_air_seconds;
-						g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
-						g_code_throttle = throttleValue(g_pattern_codespeed);
-						bool repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL);
+						g_sleepType = SLEEP_FOREVER;
+						g_go_to_sleep_now = true;
 					}
+				}
+			}
+		}
 
-					g_event_commenced = true;
-					LEDS.init();
+		if(g_event_enabled && !g_isMaster)
+		{
+			if(g_event_commenced) /* an event is in progress */
+			{
+				if(g_sendID_seconds_countdown)
+				{
+					g_sendID_seconds_countdown--;
+				}
+			}
+			else /* waiting for the start time to arrive */
+			{
+				if(g_event_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
+				{
+					temp_time = time(null);
+
+					if(temp_time >= g_event_start_epoch) /* Time for the event to start */
+					{
+						powerToTransmitter(ON);
+				
+						if(g_intra_cycle_delay_time)
+						{
+							g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
+							g_on_the_air = -g_intra_cycle_delay_time;
+							g_sendID_seconds_countdown = g_intra_cycle_delay_time + g_on_air_seconds - g_time_needed_for_ID;
+						}
+						else
+						{
+							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
+							g_on_the_air = g_on_air_seconds;
+							g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
+							g_code_throttle = throttleValue(g_pattern_codespeed);
+							bool repeat = true;
+							makeMorse(getCurrentPatternText(), &repeat, NULL);
+						}
+
+						g_event_commenced = true;
+						LEDS.init();
+					}
 				}
 			}
 		}
 	}
-
 
 	/**************************************
 	* Delay before sleep
@@ -383,7 +385,7 @@ void handle_1sec_tasks(void)
 				g_sleepType = SLEEP_FOREVER;
 			}
 		}
-		else if(g_isMaster || g_event_commenced || g_cloningInProgress)
+		else if(g_isMaster || g_cloningInProgress)
 		{
 			g_sleepshutdown_seconds = 120;
 		}
@@ -501,7 +503,7 @@ ISR(TCB0_INT_vect)
 			g_util_tick_countdown--;
 		}
 		
-		if(g_programming_countdown) g_programming_countdown--;
+		if(g_programming_countdown > 0) g_programming_countdown--;
 		if(g_programming_msg_throttle) g_programming_msg_throttle--;
 		if(g_send_clone_success_countdown) g_send_clone_success_countdown--;
 							
@@ -980,8 +982,7 @@ int main(void)
 			
 			if(!g_isMaster)
 			{
-				SC status = STATUS_CODE_IDLE;
-				g_last_error_code = launchEvent(&status);
+				g_last_error_code = launchEvent((SC*)&g_last_status_code);
 				g_sleepshutdown_seconds = 120;
 			}
 		}
@@ -1622,10 +1623,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_send_clone_success_countdown)
 					{
 						g_cloningInProgress = true;
-						sb_send_string((char*)"MAS\r");
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						suspendEvent();
+						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_event_checksum = 0;
+						sb_send_string((char*)"MAS\r");
 					}
 				}
 				else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
@@ -1638,7 +1639,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_string((char*)"MAS ACK\r");
 						g_send_clone_success_countdown = 18000;
 						setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
-						g_start_event = true;
+//						g_start_event = true;
 					}
 					else
 					{
@@ -2040,11 +2041,6 @@ EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
 {
 	EC ec = activateEventUsingCurrentSettings(statusCode);
 
-	if(*statusCode)
-	{
-		g_last_status_code = *statusCode;
-	}
-
 	if(ec)
 	{
 		g_last_error_code = ec;
@@ -2241,12 +2237,11 @@ void suspendEvent()
 	g_event_commenced = false;  /* get things stopped immediately */
 	g_run_event_forever = false;
 	g_sleepshutdown_seconds = 120;
-	g_sleepType = SLEEP_FOREVER;
+// 	g_sleepType = SLEEP_FOREVER;
 	keyTransmitter(OFF);
 	bool repeat = false;
 	makeMorse((char*)"\0", &repeat, null);  /* reset makeMorse */
 	LEDS.init();
-//	g_event_enabled = eventEnabled();
 }
 
 void startEventNow(EventActionSource_t activationSource)
@@ -2337,8 +2332,9 @@ void stopEventNow(EventActionSource_t activationSource)
 // 	}
 }
 
-void startEventUsingRTC(void)
+bool startEventUsingRTC(void)
 {
+	bool err = false;
 	time_t now = time(null);
 	ConfigurationState_t state = clockConfigurationCheck();
 
@@ -2358,8 +2354,11 @@ void startEventUsingRTC(void)
 	}
 	else
 	{
+		err = true;
 		reportConfigErrors();
 	}
+	
+	return err;
 }
 
 
@@ -2564,8 +2563,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		syncSystemTimeToRTC();
 		g_run_event_forever = true;
 		g_sleepshutdown_seconds = UINT16_MAX;
-		SC status = STATUS_CODE_IDLE;
-		launchEvent(&status);
+		launchEvent((SC*)&g_last_status_code);
 	}
 	else if(action == START_TRANSMISSIONS_NOW)                                  /* Immediately start transmitting, regardless RTC or time slot */
 	{
@@ -2577,9 +2575,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	}
 	else         /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
-		SC sc;
- //		EC ec = 
-		launchEvent(&sc);
+		launchEvent((SC*)&g_last_status_code);
 	}
 
 // 	sendMorseTone(OFF);
@@ -3317,10 +3313,11 @@ Frequency_Hz getFrequencySetting(void)
 
 void handleSerialCloning(void)
 {
-	if(!g_programming_countdown)
+	if(g_programming_countdown == 0)
 	{
 		g_programming_state = SYNC_Searching_for_slave;
 		g_cloningInProgress = false;
+		g_programming_countdown = -1;
 	}
 	
 	SerialbusRxBuffer* sb_buff = nextFullSBRxBuffer();
@@ -3334,25 +3331,12 @@ void handleSerialCloning(void)
 	
 	if(!g_programming_msg_throttle && !g_cloningInProgress)
 	{
-		sb_send_master_string((char*)"\rMAS P\r"); /* Set slave to active cloning state */
+		sb_send_master_string((char*)"MAS P\r"); /* Set slave to active cloning state */
 		g_programming_msg_throttle = 600;
+		g_programming_state = SYNC_Searching_for_slave;
 	}
 	
 	
-// 	SYNC_Waiting_for_CLK_T_reply,
-// 	SYNC_Waiting_for_CLK_S_reply,
-// 	SYNC_Waiting_for_CLK_F_reply,
-// 	SYNC_Waiting_for_ID_reply,
-// 	SYNC_Waiting_for_ID_CodeSpeed_reply,
-// 	SYNC_Waiting_for_Pattern_Speed_reply,
-// 	SYNC_Waiting_for_EVT_reply,
-// 	SYNC_Waiting_for_NoEvent_Freq_reply,
-// 	SYNC_Waiting_for_Freq_Low_reply,
-// 	SYNC_Waiting_for_Freq_Med_reply,
-// 	SYNC_Waiting_for_Freq_Hi_reply,
-// 	SYNC_Waiting_for_Freq_Beacon_reply,
-
-
 	switch(g_programming_state)
 	{
 		case SYNC_Searching_for_slave:
@@ -3360,7 +3344,7 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-				if((msg_id == SB_MESSAGE_MASTER) && !(sb_buff->fields[SB_FIELD1][0])) /* Slave responds with MAS message */
+				if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
 				{
 					g_cloningInProgress = true;
 					g_seconds_transition = false;
