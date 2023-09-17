@@ -1,4 +1,4 @@
-20496244734288220
+20497935035441001
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -55002,6 +55002,13 @@ Inductor_SMD
 L_Wuerth_WE-TPC-3816
 L_Wuerth_WE-TPC-3816 StepUp generated footprint, http://katalog.we-online.de/pbs/datasheet/7440310047.pdf
 wurth wuerth smd inductor
+0
+2
+2
+Inductor_SMD
+WPN4020H2R2MT
+Inductor, Shenzhen Sunlord Electronics Co., Ltd.
+inductor smd
 0
 2
 2

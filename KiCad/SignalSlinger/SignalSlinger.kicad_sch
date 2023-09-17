@@ -3620,6 +3620,10 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 6dbcf4ba-08a8-419f-b6c8-9478b1f839c4)
   )
+  (text "L101:\n9T (24 cm) #24 Bifilar FT-50A-43" (at 256.54 68.58 0)
+    (effects (font (size 0.9906 0.9906) (thickness 0.1981) bold) (justify left bottom))
+    (uuid 869fdd93-0ef0-4f6c-b098-9b315168c45a)
+  )
   (text "I2C pull-ups can be provided by uC \nport pin pull-ups on SCL and SDA."
     (at 154.94 88.9 0)
     (effects (font (size 0.9906 0.9906) (thickness 0.1981) bold) (justify left bottom))
@@ -3663,6 +3667,13 @@
       (effects (font (size 1 1)) (justify left) hide)
     )
   )
+  (global_label "Straightkey" (shape input) (at 160.02 175.26 0) (fields_autoplaced)
+    (effects (font (size 1 1)) (justify left))
+    (uuid 181b8649-579b-4ea7-8c84-3d37d40c20dc)
+    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 170.2533 175.1975 0)
+      (effects (font (size 1 1)) (justify left) hide)
+    )
+  )
   (global_label "CLK1" (shape output) (at 175.26 60.96 0) (fields_autoplaced)
     (effects (font (size 0.9906 0.9906)) (justify left))
     (uuid 1a0b9273-c10a-453a-85db-a96e949df2db)
@@ -3684,6 +3695,13 @@
       (effects (font (size 1 1)) (justify right) hide)
     )
   )
+  (global_label "Paddle_Dit" (shape input) (at 160.02 170.18 0) (fields_autoplaced)
+    (effects (font (size 1 1)) (justify left))
+    (uuid 2b2d02d0-861e-484e-98af-76ad5ec10a19)
+    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 169.8248 170.1175 0)
+      (effects (font (size 1 1)) (justify left) hide)
+    )
+  )
   (global_label "FET_DRIVER_ENABLE" (shape output) (at 80.01 71.12 0) (fields_autoplaced)
     (effects (font (size 0.9906 0.9906)) (justify left))
     (uuid 2d829a31-8a3b-43be-9698-e88572240f37)
@@ -3702,6 +3720,13 @@
     (effects (font (size 1 1)) (justify left))
     (uuid 6b21cce9-86fe-4b09-baae-e494508b115a)
     (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 92.0529 76.1375 0)
+      (effects (font (size 1 1)) (justify left) hide)
+    )
+  )
+  (global_label "Paddle Dah" (shape input) (at 160.02 172.72 0) (fields_autoplaced)
+    (effects (font (size 1 1)) (justify left))
+    (uuid 6dbcf4ba-08a8-419f-b6c8-9478b1f839c5)
+    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 170.5867 172.6575 0)
       (effects (font (size 1 1)) (justify left) hide)
     )
   )
@@ -4815,6 +4840,24 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 79697d4d-98ac-41b4-b6e4-665c5d053212))
+  )
+
+  (symbol (lib_id "power:GND") (at 160.02 167.64 90) (unit 1)
+    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (uuid 550b26c9-1cee-47c6-81a9-45e6d70bb39c)
+    (property "Reference" "#PWR0166" (id 0) (at 166.37 167.64 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Value" "GND" (id 1) (at 164.4634 167.64 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "" (id 2) (at 160.02 167.64 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (id 3) (at 160.02 167.64 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 983d644f-93f6-4c81-b3b3-dda4967ed234))
   )
 
   (symbol (lib_id "Diode:ESD9B5.0ST5G_1") (at 139.7 137.16 270) (unit 1)
@@ -6505,6 +6548,25 @@
     (pin "2" (uuid 288fe286-076e-4deb-a3cf-9c595ca6ab4a))
   )
 
+  (symbol (lib_id "Connector_Generic:Conn_01x04") (at 154.94 170.18 0) (mirror y) (unit 1)
+    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (uuid db76a492-e672-4dba-bea7-c36487286d56)
+    (property "Reference" "J105" (id 0) (at 154.94 165.2072 0))
+    (property "Value" "Conn_01x04" (id 1) (at 154.94 165.2071 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" (id 2) (at 154.94 170.18 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (id 3) (at 154.94 170.18 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid b2f8add0-dc97-44b8-af3e-d3795153fd9e))
+    (pin "2" (uuid 177148f9-8f0f-4982-8a97-c338508c403f))
+    (pin "3" (uuid 51b56a34-3925-4bcb-9a62-a4235930105b))
+    (pin "4" (uuid 17bffe97-bc29-4dff-95c8-7047dcee4c5d))
+  )
+
   (symbol (lib_id "Device:C_Small") (at 260.35 57.15 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid df1f292a-0d55-4b3a-8276-267fdbcc34d5)
@@ -7199,6 +7261,12 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/64420f99-9dfc-492c-a163-3ae4d1ee0e20"
       (reference "#PWR0164") (unit 1) (value "GND") (footprint "")
     )
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/f25afcc1-fcb9-4c17-a20d-0ea083f083ef"
+      (reference "#PWR0165") (unit 1) (value "+3V3") (footprint "")
+    )
+    (path "/550b26c9-1cee-47c6-81a9-45e6d70bb39c"
+      (reference "#PWR0166") (unit 1) (value "GND") (footprint "")
+    )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/80c237a1-ee53-4ac9-8ec4-43aca92dc707"
       (reference "#PWR0201") (unit 1) (value "GND") (footprint "")
     )
@@ -7410,13 +7478,13 @@
       (reference "C212") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/01d30a66-451a-43fd-95f2-0bdd2117103d"
-      (reference "C213") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_1210_3225Metric")
+      (reference "C213") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/ebba386f-ca53-469e-b170-4c68f88638d5"
-      (reference "C214") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_1210_3225Metric")
+      (reference "C214") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/5c012b10-83b8-496d-af4b-de5dc92abc05"
-      (reference "C215") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_1210_3225Metric")
+      (reference "C215") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/1e940795-b9b5-45f3-99c7-d1d40e53f1a6"
       (reference "C216") (unit 1) (value "10uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
@@ -7424,7 +7492,7 @@
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/6f542a9f-17a1-4d58-b757-d062d47cb36c"
       (reference "C301") (unit 1) (value "470nF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
-    (path "/da189f43-fd1f-445a-980b-345fda8b9a74/1e903e0b-fffc-4a7b-9e11-b17f2dc58886"
+    (path "/da189f43-fd1f-445a-980b-345fda8b9a74/f0d89eae-86d0-4eee-82c6-ad3daf7543e5"
       (reference "C302") (unit 1) (value "1100pF") (footprint "Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm")
     )
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/0bc324fd-d7b0-4453-b5e2-c85924b63c43"
@@ -7529,6 +7597,9 @@
     (path "/cfb460c6-00bb-42bc-a85e-d3510f7731c0"
       (reference "J104") (unit 1) (value "Conn_01x02") (footprint "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical")
     )
+    (path "/db76a492-e672-4dba-bea7-c36487286d56"
+      (reference "J105") (unit 1) (value "Conn_01x04") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical")
+    )
     (path "/aad2424a-3937-4bc7-96c8-78c666e64a3d"
       (reference "J106") (unit 1) (value "Conn_01x02") (footprint "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical")
     )
@@ -7578,7 +7649,7 @@
       (reference "L102") (unit 1) (value "INDUCTOR_tapped") (footprint "Inductors:Toroid_T-50A_TH_BF_CT_Vertical")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/b1a6cee7-c293-4248-bf6c-e4b6e388a068"
-      (reference "L201") (unit 1) (value "2.2uH") (footprint "Inductor_SMD:L_Wuerth_WE-LQS")
+      (reference "L201") (unit 1) (value "2.2uH") (footprint "Inductor_SMD:WPN4020H2R2MT")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/0c5297a9-41d0-4223-b152-7bff564be51e"
       (reference "L202") (unit 1) (value "1uH") (footprint "Inductor_SMD:L_Bourns_SRN5040TA")
@@ -7640,7 +7711,7 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/e25fe1fe-4dcb-40ed-a0e3-cc952002a7ec"
       (reference "R204") (unit 1) (value "1M") (footprint "Resistor_SMD:R_0805_2012Metric")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/a604157e-b596-422f-8a01-c3245280c807"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/846f2c13-278f-48b2-82e1-5d1c7211b810"
       (reference "R205") (unit 1) (value "105k") (footprint "Resistor_SMD:R_0805_2012Metric")
     )
     (path "/8753d621-69e1-4251-a22d-f8eaf42e9c5c"
