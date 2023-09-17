@@ -2,14 +2,14 @@
 <export version="E">
   <design>
     <source>/Users/Charles/Documents/GitHub/SignalSlinger/KiCad/SignalSlinger/SignalSlinger.kicad_sch</source>
-    <date>Saturday, July 08, 2023 at 08:39:32 PM</date>
+    <date>Friday, July 28, 2023 at 01:06:24 PM</date>
     <tool>Eeschema (6.0.4-0)</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
         <title>SignalSlinger Design</title>
         <company/>
-        <rev>1.0</rev>
-        <date>2023-06-20</date>
+        <rev>1.1</rev>
+        <date>2023-07-10</date>
         <source>SignalSlinger.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -26,8 +26,8 @@
       <title_block>
         <title>SignalSlinger Design</title>
         <company/>
-        <rev>1.0</rev>
-        <date>2023-06-20</date>
+        <rev>1.1</rev>
+        <date>2023-07-10</date>
         <source>PowerSupply.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -44,8 +44,8 @@
       <title_block>
         <title>SignalSlinger Design</title>
         <company/>
-        <rev>1.0</rev>
-        <date>2023-06-20</date>
+        <rev>1.1</rev>
+        <date>2023-07-10</date>
         <source>RF_Filters.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -62,8 +62,8 @@
       <title_block>
         <title>SignalSlinger Design</title>
         <company/>
-        <rev>1.0</rev>
-        <date>2023-06-20</date>
+        <rev>1.1</rev>
+        <date>2023-07-10</date>
         <source>Misc.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -720,6 +720,15 @@
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>cfb460c6-00bb-42bc-a85e-d3510f7731c0</tstamps>
+    </comp>
+    <comp ref="J105">
+      <value>Conn_01x04</value>
+      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical</footprint>
+      <libsource lib="Connector_Generic" part="Conn_01x04" description="Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>db76a492-e672-4dba-bea7-c36487286d56</tstamps>
     </comp>
     <comp ref="J106">
       <value>Conn_01x02</value>
@@ -1829,22 +1838,20 @@
     </comp>
     <comp ref="L201">
       <value>2.2uH</value>
-      <footprint>Inductor_SMD:L_Wuerth_WE-LQS</footprint>
+      <footprint>Inductor_SMD:WPN4020H2R2MT</footprint>
       <fields>
-        <field name="Description">FIXED IND 2.2UH 3.83A 23MOHM SMD</field>
-        <field name="Digi-Key Part No.">732-10754-1-ND</field>
-        <field name="LCSC Part Number">C2041406</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/w%C3%BCrth-elektronik/74404043022A/6598076</field>
-        <field name="Manufacturer">Würth Elektronik</field>
-        <field name="Manufacturer PN">74404043022A</field>
+        <field name="Description">FIXED IND 2.2UH 4.3A 48MOHM SMD</field>
+        <field name="Digi-Key Part No.">3442-WPN4020H2R2MTCT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/shenzhen-sunlord-electronics-co-ltd/WPN4020H2R2MT/14119999?s=N4IgTCBcDaIOoAUByAWADGNAJMAlMAsgCogC6AvkA</field>
+        <field name="Manufacturer">Shenzhen Sunlord Electronics Co., Ltd.</field>
+        <field name="Manufacturer PN">WPN4020H2R2MT</field>
       </fields>
       <libsource lib="Device" part="L_Ferrite" description="Inductor with ferrite core"/>
-      <property name="Digi-Key Part No." value="732-10754-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/w%C3%BCrth-elektronik/74404043022A/6598076"/>
-      <property name="Manufacturer" value="Würth Elektronik"/>
-      <property name="Manufacturer PN" value="74404043022A"/>
-      <property name="Description" value="FIXED IND 2.2UH 3.83A 23MOHM SMD"/>
-      <property name="LCSC Part Number" value="C2041406"/>
+      <property name="Digi-Key Part No." value="3442-WPN4020H2R2MTCT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/shenzhen-sunlord-electronics-co-ltd/WPN4020H2R2MT/14119999?s=N4IgTCBcDaIOoAUByAWADGNAJMAlMAsgCogC6AvkA"/>
+      <property name="Manufacturer" value="Shenzhen Sunlord Electronics Co., Ltd."/>
+      <property name="Manufacturer PN" value="WPN4020H2R2MT"/>
+      <property name="Description" value="FIXED IND 2.2UH 4.3A 48MOHM SMD"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -1990,6 +1997,7 @@
       <fields>
         <field name="Description">RES 105K OHM 1% 1/8W 0805</field>
         <field name="Digi-Key Part No.">311-105KCRCT-ND</field>
+        <field name="LCSC Part Number">C273877</field>
         <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548</field>
         <field name="Manufacturer">YAGEO</field>
         <field name="Manufacturer PN">RC0805FR-07105KL</field>
@@ -2000,10 +2008,11 @@
       <property name="Manufacturer" value="YAGEO"/>
       <property name="Manufacturer PN" value="RC0805FR-07105KL"/>
       <property name="Description" value="RES 105K OHM 1% 1/8W 0805"/>
+      <property name="LCSC Part Number" value="C273877"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>a604157e-b596-422f-8a01-c3245280c807</tstamps>
+      <tstamps>846f2c13-278f-48b2-82e1-5d1c7211b810</tstamps>
     </comp>
     <comp ref="U201">
       <value>LP2985-3.3</value>
@@ -3367,6 +3376,7 @@
       <node ref="C103" pin="2" pintype="passive"/>
       <node ref="C201" pin="2" pintype="passive"/>
       <node ref="P101" pin="2" pinfunction="Pin_2" pintype="passive"/>
+      <node ref="R204" pin="1" pintype="passive"/>
       <node ref="U101" pin="14" pinfunction="AVDD" pintype="power_in"/>
       <node ref="U101" pin="20" pinfunction="VDD" pintype="power_in"/>
       <node ref="U201" pin="5" pinfunction="VOUT" pintype="power_out"/>
@@ -3380,7 +3390,6 @@
       <node ref="D107" pin="3" pinfunction="K" pintype="passive"/>
       <node ref="J109" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="R202" pin="1" pintype="passive"/>
-      <node ref="R204" pin="1" pintype="passive"/>
       <node ref="U203" pin="9" pinfunction="VOUT" pintype="power_out"/>
     </net>
     <net code="3" name="+BATT">
@@ -3395,7 +3404,7 @@
       <node ref="R102" pin="2" pintype="passive"/>
     </net>
     <net code="5" name="B{slash}B_PS_Enable">
-      <node ref="R205" pin="1" pintype="passive"/>
+      <node ref="R205" pin="2" pintype="passive"/>
       <node ref="U101" pin="1" pinfunction="PA7" pintype="bidirectional"/>
       <node ref="U203" pin="3" pinfunction="EN" pintype="input"/>
     </net>
@@ -3470,6 +3479,7 @@
       <node ref="J102" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="J103" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J104" pin="1" pinfunction="Pin_1" pintype="passive"/>
+      <node ref="J105" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J106" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J107" pin="6" pinfunction="6" pintype="passive"/>
       <node ref="J108" pin="1" pinfunction="Pin_1" pintype="passive"/>
@@ -3488,7 +3498,7 @@
       <node ref="R106" pin="2" pintype="passive"/>
       <node ref="R201" pin="2" pintype="passive"/>
       <node ref="R203" pin="2" pintype="passive"/>
-      <node ref="R205" pin="2" pintype="passive"/>
+      <node ref="R205" pin="1" pintype="passive"/>
       <node ref="SW101" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="TP101" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="U101" pin="15" pinfunction="GND" pintype="power_in"/>
@@ -3723,11 +3733,13 @@
     </net>
     <net code="54" name="Paddle Dah">
       <node ref="D108" pin="2" pinfunction="A2" pintype="passive"/>
+      <node ref="J105" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="J107" pin="2" pinfunction="2" pintype="passive"/>
       <node ref="U101" pin="27" pinfunction="PA5/RxD0" pintype="bidirectional"/>
     </net>
     <net code="55" name="Paddle_Dit">
       <node ref="D109" pin="2" pinfunction="A2" pintype="passive"/>
+      <node ref="J105" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="J107" pin="1" pinfunction="1" pintype="passive"/>
       <node ref="U101" pin="26" pinfunction="PA4/TxD0" pintype="bidirectional"/>
     </net>
@@ -3747,6 +3759,7 @@
     </net>
     <net code="59" name="Straightkey">
       <node ref="D110" pin="1" pinfunction="A1" pintype="passive"/>
+      <node ref="J105" pin="4" pinfunction="Pin_4" pintype="passive"/>
       <node ref="J107" pin="3" pinfunction="3" pintype="passive"/>
       <node ref="U101" pin="28" pinfunction="PA6" pintype="bidirectional"/>
     </net>
