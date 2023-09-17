@@ -54,13 +54,13 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 	0x00000000, // 	Guard
 	0x00000000, //  time_t event_finish_epoch; 
 	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 1];
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
 	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",  // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",  // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
 	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0", // 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 1]; 
+	"\0\0\0\0\0\0\0\0\0", // 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2]; 
 	0x00000000, // 	Guard
 	(Fox_t)0x00, // Fox_t fox_setting_none;
 	0x00000000, // 	Guard
@@ -126,7 +126,7 @@ extern volatile Frequency_Hz g_frequency_med;
 extern volatile Frequency_Hz g_frequency_hi;
 extern volatile Frequency_Hz g_frequency_beacon;
 
-extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 1];
+extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 2];
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 extern uint16_t g_80m_power_level_mW;

@@ -44,13 +44,13 @@ struct EE_prom
 	uint32_t guard4_2;
 	time_t event_finish_epoch; 
 	uint32_t guard4_3;
- 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+ 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_4;
-	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_5;
- 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+ 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_6;
-	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
+	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
 	uint32_t guard4_7;
 	Fox_t fox_setting_none;
 	uint32_t guard4_8;
@@ -112,13 +112,13 @@ typedef enum
 	Event_finish_epoch =  Guard4_2 + GUARDSIZE, /* 4 bytes */
 	Guard4_3 = Event_finish_epoch + sizeof(time_t),					/**** Guard = 4 bytes ****/
 	Pattern_text =  Guard4_3 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1  bytes */
-	Guard4_4 = Pattern_text + MAX_PATTERN_TEXT_LENGTH + 1,			/**** Guard = 4 bytes ****/
+	Guard4_4 = Pattern_text + MAX_PATTERN_TEXT_LENGTH+2,			/**** Guard = 4 bytes ****/
 	Foxoring_pattern_text =  Guard4_4 + GUARDSIZE,  /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_5 = Foxoring_pattern_text + MAX_PATTERN_TEXT_LENGTH + 1,	/**** Guard = 4 bytes ****/
+	Guard4_5 = Foxoring_pattern_text + MAX_PATTERN_TEXT_LENGTH+2,	/**** Guard = 4 bytes ****/
 	StationID_text =  Guard4_5 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_6 = StationID_text + MAX_PATTERN_TEXT_LENGTH + 1,		/**** Guard = 4 bytes ****/
-	UnlockCode =  Guard4_6 + GUARDSIZE, /* UNLOCK_CODE_SIZE + 1 bytes */
-	Guard4_7 = UnlockCode + UNLOCK_CODE_SIZE + 1,					/**** Guard = 4 bytes ****/
+	Guard4_6 = StationID_text + MAX_PATTERN_TEXT_LENGTH+2,		/**** Guard = 4 bytes ****/
+	UnlockCode =  Guard4_6 + GUARDSIZE, /* UNLOCK_CODE_SIZE + 2 bytes */
+	Guard4_7 = UnlockCode + UNLOCK_CODE_SIZE+2,					/**** Guard = 4 bytes ****/
 	Fox_setting_none =  Guard4_7 + GUARDSIZE, /* 1 bytes */
 	Guard4_8 = Fox_setting_none + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
 	Fox_setting_classic =  Guard4_8 + GUARDSIZE, /* 1 bytes */

@@ -39,6 +39,7 @@ typedef enum
 
 typedef enum
 {
+	AWAKENED_INIT,
 	POWER_UP_START,
 	AWAKENED_BY_CLOCK,
 	AWAKENED_BY_BUTTONPRESS
@@ -48,8 +49,8 @@ typedef enum
 {
 	HARDWARE_OK,
 	HARDWARE_NO_RTC = 0x01,
-	HARDWARE_NO_SI5351 = 0x02,
-//	HARDWARE_NO_WIFI = 0x04
+	HARDWARE_NO_SI5351 = 0x02
+//	,HARDWARE_NO_WIFI = 0x04
 } HardwareError_t;
 
 
@@ -88,7 +89,8 @@ typedef enum {
  * Whenever possible limit globals' scope to this file using "static"
  * Use "volatile" for globals shared between ISRs and foreground
  ************************************************************************/
-static char g_tempStr[50] = { '\0' };
+#define TEMP_STRING_SIZE 50
+static char g_tempStr[TEMP_STRING_SIZE+1] = { '\0' };
 static volatile EC g_last_error_code = ERROR_CODE_NO_ERROR;
 static volatile SC g_last_status_code = STATUS_CODE_IDLE;
 
@@ -107,7 +109,7 @@ static volatile uint16_t g_sleepshutdown_seconds = 120;
 static volatile bool g_report_seconds = false;
 static volatile int g_hardware_error = (int)HARDWARE_OK;
 
-char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 1];
+char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
 volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile uint8_t g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
@@ -177,9 +179,11 @@ Frequency_Hz g_frequency_hi = EEPROM_FREQUENCY_HI_DEFAULT;
 Frequency_Hz g_frequency_beacon = EEPROM_FREQUENCY_BEACON_DEFAULT;
 
 int8_t g_utc_offset;
-uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 1];
+uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 2];
 
-volatile bool g_enable_manual_transmissions = false;
+extern volatile uint16_t i2c_failure_count;
+
+volatile bool g_enable_manual_transmissions = true;
 
 /***********************************************************************
  * Private Function Prototypes
@@ -211,7 +215,8 @@ void handleSerialCloning(void);
 bool eventScheduled(void);
 bool eventScheduledForNow(void);
 bool eventScheduledForTheFuture(void);
-void syncSystemTimeToRTC(void);
+bool noEventWillRun(void);
+time_t pauseUntilSecTransition(void);
 
 /*******************************/
 /* Hardcoded event support     */
@@ -310,6 +315,7 @@ void handle_1sec_tasks(void)
 					g_event_commenced = false;
 					g_sleepshutdown_seconds = 120;
 					LEDS.init();
+					g_days_run++;
 				
 					if(g_days_run < g_days_to_run)
 					{
@@ -317,12 +323,11 @@ void handle_1sec_tasks(void)
 						g_event_finish_epoch += SECONDS_24H;
 						g_sleepType = SLEEP_UNTIL_START_TIME;
 						g_go_to_sleep_now = true;
-						g_days_run++;
 					}
 					else
 					{
 						g_sleepType = SLEEP_FOREVER;
-						g_go_to_sleep_now = true;
+						g_sleepshutdown_seconds = 3;
 					}
 				}
 			}
@@ -358,11 +363,12 @@ void handle_1sec_tasks(void)
 							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 							g_on_the_air = g_on_air_seconds;
 							g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
-							g_code_throttle = throttleValue(g_pattern_codespeed);
-							bool repeat = true;
-							makeMorse(getCurrentPatternText(), &repeat, NULL);
 						}
-
+						
+						g_code_throttle = throttleValue(getFoxCodeSpeed());
+						bool repeat = true;
+						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+						
 						g_event_commenced = true;
 						LEDS.init();
 					}
@@ -378,21 +384,36 @@ void handle_1sec_tasks(void)
 
 	if(!g_sleepshutdown_seconds)
 	{
- 		if(g_sleepType == DO_NOT_SLEEP)
+ 		if(g_isMaster || g_cloningInProgress)
+ 		{
+	 		g_sleepshutdown_seconds = 120; /* Never sleep while cloning or while master */
+ 		}
+		else if(g_event_commenced && g_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)))
 		{
-			if(!g_event_enabled && !eventScheduled()) 
-			{
-				g_sleepType = SLEEP_FOREVER;
-			}
-		}
-		else if(g_isMaster || g_cloningInProgress)
-		{
-			g_sleepshutdown_seconds = 120;
+			g_sleepshutdown_seconds = 120; /* Never sleep during active transmissions */
 		}
 		else
 		{
-			LEDS.init();
-			g_go_to_sleep_now = true;								
+			if(g_sleepType == DO_NOT_SLEEP)
+			{
+				if(noEventWillRun()) /* Should never evaluate to true, but checking just in case */
+				{
+					g_sleepType = SLEEP_FOREVER;
+				}
+			}
+			else
+			{
+				if(g_sleepType == SLEEP_FOREVER)
+				{
+					if(eventScheduledForTheFuture()) /* Should never evaluate to true, but checking just in case */
+					{
+						g_sleepType = SLEEP_UNTIL_START_TIME;
+					}
+				}
+				
+				/* If we reach here, g_sleepType = 	SLEEP_UNTIL_START_TIME, SLEEP_UNTIL_NEXT_XMSN, SLEEP_USER_OVERRIDE, or SLEEP_FOREVER */
+				g_go_to_sleep_now = true;
+			}
 		}
 	}
 }
@@ -403,7 +424,6 @@ Periodic tasks not requiring precise timing. Rate = 300 Hz
 */
 ISR(TCB0_INT_vect)
 {
-	static bool initializeManualTransmissions = true;
 	static uint8_t fiftyMS = 6;
 	static bool on_air_finished = false;
 	static bool transitionPrepped = false;
@@ -417,7 +437,7 @@ ISR(TCB0_INT_vect)
 		static uint16_t codeInc = 0;
 		bool repeat, finished;
 		static uint16_t switch_closures_count_period = 0;
-		uint8_t holdSwitch;
+		uint8_t holdSwitch = 0;
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
 		static bool muteAfterID = false;				/* Inhibit any transmissions immediately after the ID has been sent */
@@ -432,35 +452,40 @@ ISR(TCB0_INT_vect)
 			{	
 				if(holdSwitch) /* Switch was open, so now it must be closed */
 				{
-					if(!LEDS.active())
-					{
-						LEDS.init();
-					}
-					else
+					if(LEDS.active())
 					{
 						g_switch_presses_count++;
 						buttonReleased = false;
-						if(g_switch_presses_count == 1)
-						{
-							serialbus_init(SB_BAUD, SERIALBUS_USART);
-						}
+					}
+					else
+					{
+						longPressEnabled = false;
 					}
 				}
 				else /* Switch is now open */
 				{
-					g_switch_closed_time = 0;
-					buttonReleased = true;
-					longPressEnabled = true;
-					
-					if(g_send_clone_success_countdown || g_cloningInProgress) 
+					if(!LEDS.active())
 					{
-						g_send_clone_success_countdown = 0;
-						g_cloningInProgress = false;
-						g_programming_msg_throttle = 0;
+						LEDS.init();
+						serialbus_init(SB_BAUD, SERIALBUS_USART);
 					}
+					else
+					{
+						g_switch_closed_time = 0;
+						buttonReleased = true;
+					
+						if(g_send_clone_success_countdown || g_cloningInProgress) 
+						{
+							g_send_clone_success_countdown = 0;
+							g_cloningInProgress = false;
+							g_programming_msg_throttle = 0;
+						}
+					}
+					
+					longPressEnabled = true;
 				}
 			}
-			else if(!holdSwitch) /* Switch closed */
+			else if(!holdSwitch && LEDS.active()) /* Switch closed, LEDs operating */
 			{
 				if(!g_long_button_press && longPressEnabled)
 				{
@@ -508,11 +533,9 @@ ISR(TCB0_INT_vect)
 		if(g_send_clone_success_countdown) g_send_clone_success_countdown--;
 							
 		static bool key = false;
-
-		if(g_event_enabled && g_event_commenced) /* Handle cycling transmissions */
+		
+		if(g_event_enabled && g_event_commenced && !g_isMaster) /* Handle cycling transmissions */
 		{
-			initializeManualTransmissions = true;
-			
 			if((g_on_the_air > 0) || (g_sending_station_ID) || (!g_off_air_seconds))
 			{
 				on_air_finished = true;
@@ -523,7 +546,7 @@ ISR(TCB0_INT_vect)
 					g_last_status_code = STATUS_CODE_SENDING_ID;
 					g_code_throttle = throttleValue(g_id_codespeed);
 					repeat = false;
-					makeMorse(g_messages_text[STATION_ID], &repeat, NULL);  /* Send only once */
+					makeMorse(g_messages_text[STATION_ID], &repeat, NULL, CALLER_AUTOMATED_EVENT);  /* Send only once */
 					g_sending_station_ID = true;
 					g_sendID_seconds_countdown = g_ID_period_seconds;
 				}
@@ -534,14 +557,14 @@ ISR(TCB0_INT_vect)
 
 					if(!codeInc)
 					{
-						key = makeMorse(NULL, &repeat, &finished);
+						key = makeMorse(NULL, &repeat, &finished, CALLER_AUTOMATED_EVENT);
 						
 						if(!repeat && finished) /* ID has completed, so resume pattern */
 						{
 							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
-							g_code_throttle = throttleValue(g_pattern_codespeed);
+							g_code_throttle = throttleValue(getFoxCodeSpeed());
 							repeat = true;
-							makeMorse(getCurrentPatternText(), &repeat, NULL);
+							makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
 							muteAfterID = g_sending_station_ID && g_off_air_seconds;
 							g_sending_station_ID = false;
 							if(!g_off_air_seconds)
@@ -578,8 +601,7 @@ ISR(TCB0_INT_vect)
 					
 					if(on_air_finished)
 					{
-// 						if(g_off_air_seconds)
-// 						{
+						on_air_finished = false;							
 						keyTransmitter(OFF);
 				
 						if(key)
@@ -589,7 +611,6 @@ ISR(TCB0_INT_vect)
 						}
 						
 						g_on_the_air = -g_off_air_seconds;
-						on_air_finished = false;							
 						/* Enable sleep during off-the-air periods */
 						int32_t timeRemaining = 0;
 						time_t temp_time = time(null);
@@ -612,28 +633,22 @@ ISR(TCB0_INT_vect)
 								g_sendID_seconds_countdown = MAX(0, g_ID_period_seconds - (int)seconds_to_sleep);
 							}
 						}
-// 						}
-// 						else /* Transmissions are continuous */
-// 						{
-// 							g_on_the_air = g_on_air_seconds;
-// 							g_code_throttle = throttleValue(g_pattern_codespeed);
-// 						}
 	
 						muteAfterID = false;
 						g_sending_station_ID = false;
 				
 						/* Resume normal pattern */
+						g_code_throttle = throttleValue(getFoxCodeSpeed());
 						repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL);    /* Reset pattern to start */
+						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);    /* Reset pattern to start */
 						LEDS.setRed(OFF);
 					}
 					else /* Off-the-air period just finished, or the event just began while off the air */
 					{
 						g_on_the_air = g_on_air_seconds;
-						on_air_finished = false;
-						g_code_throttle = throttleValue(g_pattern_codespeed);
+						g_code_throttle = throttleValue(getFoxCodeSpeed());
 						repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL);
+						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
 						codeInc = g_code_throttle;
 					}
 				}
@@ -646,13 +661,12 @@ ISR(TCB0_INT_vect)
 			bool sendBuffEmpty = g_text_buff.empty();
 			repeat = false;
 			
-			if(initializeManualTransmissions)
+			if(lastMorseCaller() != CALLER_MANUAL_TRANSMISSIONS)
 			{
-				initializeManualTransmissions = false;
 				g_text_buff.reset();
-				makeMorse((char*)"\0", &repeat, null); /* reset makeMorse */
 				sendBuffEmpty = true;
 				charFinished = true;
+				makeMorse((char*)"\0", &repeat, null, CALLER_MANUAL_TRANSMISSIONS); 
 			}
 			
 			if(sendBuffEmpty && charFinished)
@@ -667,7 +681,6 @@ ISR(TCB0_INT_vect)
 					}
 				
 					codeInc = g_code_throttle;
-					makeMorse((char*)"\0", &repeat, null); /* reset makeMorse */
 					idle = true;
 				}
 			}
@@ -681,7 +694,7 @@ ISR(TCB0_INT_vect)
 
 					if(!codeInc)
 					{
-						key = makeMorse(null, &repeat, &charFinished);
+						key = makeMorse(null, &repeat, &charFinished, CALLER_MANUAL_TRANSMISSIONS);
 
 						if(charFinished) /* Completed, send next char */
 						{
@@ -691,8 +704,8 @@ ISR(TCB0_INT_vect)
 								g_code_throttle = throttleValue(getPatternCodeSpeed());
 								cc[0] = g_text_buff.get();
 								cc[1] = '\0';
-								makeMorse(cc, &repeat, null);
-								key = makeMorse(null, &repeat, &charFinished);
+								makeMorse(cc, &repeat, null, CALLER_MANUAL_TRANSMISSIONS);
+								key = makeMorse(null, &repeat, &charFinished, CALLER_MANUAL_TRANSMISSIONS);
 							}
 						}
 
@@ -771,6 +784,10 @@ ISR(PORTD_PORT_vect)
 			g_go_to_sleep_now = false;
 			g_sleeping = false;
 			g_awakenedBy = AWAKENED_BY_BUTTONPRESS;	
+		}
+		else if(!sb_enabled())
+		{
+			serialbus_init(SB_BAUD, SERIALBUS_USART);
 		}
 		
 		g_sleepshutdown_seconds = MAX(120U, g_sleepshutdown_seconds);
@@ -868,6 +885,7 @@ int main(void)
 			else if (g_handle_counted_presses == 2)
 			{
 				suspendEvent();
+				g_sleepType = SLEEP_USER_OVERRIDE;
 			}
 			
 			g_handle_counted_presses = 0;
@@ -933,7 +951,7 @@ int main(void)
 					}
 					else
 					{
-						if(eventScheduledForNow()) /* An event should be running now, but isn't = error */
+						if(noEventWillRun()) /* No event is running now, nor will one run in the future */
 						{
 							LEDS.blink(LEDS_RED_BLINK_FAST);
 						}
@@ -941,12 +959,16 @@ int main(void)
 						{
 							LEDS.sendCode((char*)"E  ");
 						}
-						else /* No event is scheduled to run now, nor in the future = warning */
+						else /* Should not reach here, but if we do, it is an error */
 						{
 							LEDS.blink(LEDS_RED_BLINK_FAST);
 						}
 					}
 				}	
+			}
+			else /* Make sure the text buffer is being emptied */
+			{
+				g_enable_manual_transmissions = true; /* There is only one consumer of g_text_buff so it is always OK to enable manual transmissions */
 			}
 		}
 		
@@ -974,6 +996,7 @@ int main(void)
 			g_programming_countdown = 0;
 			g_send_clone_success_countdown = 0;
 			LEDS.init();
+			g_text_buff.reset();
 		}
 		
 		if(g_start_event)
@@ -992,11 +1015,11 @@ int main(void)
 		 ******************************/
 		if(g_go_to_sleep_now && !g_cloningInProgress)
 		{
-			LEDS.blink(LEDS_OFF);
+			LEDS.deactivate();
 			serialbus_disable();
 			shutdown_transmitter();	
 
-			if(g_sleepType == SLEEP_FOREVER)
+			if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_USER_OVERRIDE))
 			{
 				g_time_to_wake_up = FOREVER_EPOCH;
 			}
@@ -1005,6 +1028,7 @@ int main(void)
 
 			SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_STDBY_gc);		
 			g_sleeping = true;
+			g_awakenedBy = AWAKENED_INIT;
 			
 			/* Disable BOD? */
 			
@@ -1023,24 +1047,22 @@ int main(void)
 			/* Re-enable BOD? */
 			g_sleeping = false;
 			atmel_start_init();
+			
+			if(g_awakenedBy != AWAKENED_BY_BUTTONPRESS)
+			{	
+				serialbus_disable();
+			}
+
 			powerUp3V3();
 			RTC_set_calibration(g_clock_calibration);
 			while(util_delay_ms(2000));
 			init_transmitter();
+			g_sleepshutdown_seconds = 120;
 			
-			if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
-			{	
-				LEDS.init();
-				g_sleepshutdown_seconds = 120;
-				g_handle_counted_presses = 0;
-				g_switch_presses_count = 0;
-			}
-			else
+			if(g_sleepType != SLEEP_UNTIL_NEXT_XMSN)
 			{
-				serialbus_disable();
+				g_start_event = true;
 			}
-
-			g_start_event = true;
 
  			g_last_status_code = STATUS_CODE_RETURNED_FROM_SLEEP;
 		}
@@ -1060,6 +1082,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 		switch(msg_id)
 		{
+			case SB_MESSAGE_DEBUG:
+			{
+				sprintf(g_tempStr, "\nI2C error count = %d\n", i2c_failure_count);
+				sb_send_string(g_tempStr);
+			}
+			break;
+			
 			case SB_MESSAGE_SET_FOX:
 			{
 				int c1 = (int)(sb_buff->fields[SB_FIELD1][0]);
@@ -1259,7 +1288,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					else
 					{
 						g_sleepType = SLEEP_FOREVER;
-						g_go_to_sleep_now = true;
+						g_sleepshutdown_seconds = 3;
 					}
 				}
 				else
@@ -1408,16 +1437,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						if(strlen(sb_buff->fields[SB_FIELD1]) <= MAX_PATTERN_TEXT_LENGTH)
 						{
-							strcpy(g_tempStr, sb_buff->fields[SB_FIELD1]);
+							strncpy(g_tempStr, sb_buff->fields[SB_FIELD1], MAX_PATTERN_TEXT_LENGTH);
 						
 							if(g_event == EVENT_FOXORING)
 							{
-								strcpy(g_messages_text[FOXORING_PATTERN_TEXT], g_tempStr);
+								strncpy(g_messages_text[FOXORING_PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
 								g_ee_mgr.updateEEPROMVar(Foxoring_pattern_text, g_messages_text[FOXORING_PATTERN_TEXT]);
 							}
 							else
 							{
-								strcpy(g_messages_text[PATTERN_TEXT], g_tempStr);
+								strncpy(g_messages_text[PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
 							}
 						}
 						else
@@ -1948,6 +1977,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 			
+			case SB_MESSAGE_VER:
+			{
+				if(!g_cloningInProgress)
+				{
+					sb_send_string((char*)PRODUCT_NAME_LONG);
+					sprintf(g_tempStr, "\n* SW Ver: %s\n", SW_REVISION);
+					sb_send_string(g_tempStr);
+				}
+			}
+			break;
+			
 			case SB_MESSAGE_HELP:
 			{
 				if(!g_cloningInProgress)
@@ -2004,15 +2044,16 @@ bool __attribute__((optimize("O0"))) eventEnabled()
 	time_t now = time(null);
 	int32_t dif = timeDif(now, g_event_start_epoch);
 
-	g_sleepType = SLEEP_UNTIL_START_TIME;
-	g_time_to_wake_up = g_event_start_epoch - 10; /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
+	g_time_to_wake_up = g_event_start_epoch - 15; /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
 	
 	if(dif >= -30)  /* Don't sleep if the event starts in 30 seconds or less, or has already started */
 	{
+		g_sleepType = SLEEP_AFTER_EVENT;
 		g_sleepshutdown_seconds = 120;
 		return( true);
 	}
 
+	g_sleepType = SLEEP_UNTIL_START_TIME;
 	/* If we reach here, we have an event that will not start for at least 30 seconds. */
 	return( true);
 }
@@ -2031,10 +2072,11 @@ uint16_t throttleValue(uint8_t speed)
 	return( (uint16_t)temp);
 }
 
-void syncSystemTimeToRTC(void)
+time_t pauseUntilSecTransition(void)
 {
 	g_seconds_transition = false;  /* Sync to RTC second transition */
 	while(!g_seconds_transition);
+	return(time(null));
 }
 
 EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
@@ -2055,8 +2097,7 @@ EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
 
 EC activateEventUsingCurrentSettings(SC* statusCode)
 {
-	syncSystemTimeToRTC();
-	time_t now = time(null);
+	time_t now = pauseUntilSecTransition();
 	
 	/* Make sure everything has been sanely initialized */
 	if(!g_run_event_forever)
@@ -2121,6 +2162,11 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 	}
 	else
 	{
+		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
+		g_code_throttle = throttleValue(getFoxCodeSpeed());
+		bool repeat = true;
+		makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+		
 		if(g_run_event_forever)
 		{
 			g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
@@ -2131,7 +2177,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 			g_event_commenced = true;
 		}
 		else
-		{			
+		{		
 			int32_t dif = timeDif(now, g_event_start_epoch); /* returns arg1 - arg2 */
 
 			if(dif >= 0)                                    /* start time is in the past */
@@ -2233,14 +2279,11 @@ void initializeAllEventSettings(bool disableEvent)
 void suspendEvent()
 {
 	g_event_enabled = false;    /* get things stopped immediately */
-	g_on_the_air = 0;           /*  stop transmitting */
+	g_on_the_air = 0;           /* stop transmitting */
 	g_event_commenced = false;  /* get things stopped immediately */
 	g_run_event_forever = false;
 	g_sleepshutdown_seconds = 120;
-// 	g_sleepType = SLEEP_FOREVER;
 	keyTransmitter(OFF);
-	bool repeat = false;
-	makeMorse((char*)"\0", &repeat, null);  /* reset makeMorse */
 	LEDS.init();
 }
 
@@ -2553,16 +2596,15 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 	if(action == START_NOTHING)
 	{
-		g_event_commenced = false; 
-		g_event_enabled = false;
+		g_event_commenced = false;                   /* do not get things running yet */
+		g_event_enabled = false;                     /* do not get things running yet */
 		keyTransmitter(OFF);
 		LEDS.setRed(OFF);
 	}
 	else if(action == START_EVENT_NOW_AND_RUN_FOREVER)
 	{
-		syncSystemTimeToRTC();
 		g_run_event_forever = true;
-		g_sleepshutdown_seconds = UINT16_MAX;
+		g_sleepshutdown_seconds = 120;
 		launchEvent((SC*)&g_last_status_code);
 	}
 	else if(action == START_TRANSMISSIONS_NOW)                                  /* Immediately start transmitting, regardless RTC or time slot */
@@ -2577,18 +2619,6 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	{
 		launchEvent((SC*)&g_last_status_code);
 	}
-
-// 	sendMorseTone(OFF);
-// 	g_code_throttle    = 0;                 /* Adjusts Morse code speed */
-// 	g_on_the_air       = false;             /* Controls transmitter Morse activity */
-
-// 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
-// 	digitalWrite(PIN_LED, OFF);             /*  LED Off - in case it was left on */
-// 
-// 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
-// 	g_sendAMmodulation = false;
-// 	g_LED_enunciating = false;
-// 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 }
 
 time_t validateTimeString(char* str, time_t* epochVar)
@@ -2821,12 +2851,12 @@ void reportSettings(void)
 	
 	sb_send_string(TEXT_CURRENT_SETTINGS_TXT);
 	
-	sprintf(g_tempStr, "*   Time: %s\n", convertEpochToTimeString(now, buf, 50));
+	sprintf(g_tempStr, "*   Time: %s\n", convertEpochToTimeString(now, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
 		
 	if(!event2Text(g_tempStr, g_event))
 	{
-		strcpy(buf, g_tempStr);
+		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
 		sprintf(g_tempStr, "*   Event: %s\n", buf);
 	}
 	else
@@ -2840,7 +2870,7 @@ void reportSettings(void)
 	
 	if(!fox2Text(g_tempStr, f))
 	{
-		strcpy(buf, g_tempStr);
+		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
 		sprintf(g_tempStr, "*   Fox: %s\n", buf);
 	}
 	else
@@ -2860,7 +2890,7 @@ void reportSettings(void)
 		sb_send_string((char*)"*   Callsign: None\n");
 	}
 		
-	sprintf(g_tempStr, "*   Callsign WPM: %d wpm\n", g_id_codespeed);	
+	sprintf(g_tempStr, "*   Callsign WPM: %d\n", g_id_codespeed);	
 	sb_send_string(g_tempStr);
 	
 	sprintf(g_tempStr, "*   Xmit Pattern: %s\n", getCurrentPatternText());
@@ -2902,9 +2932,9 @@ void reportSettings(void)
 		}
 	}
 	
-	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(g_event_start_epoch, buf, 50));
+	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(g_event_start_epoch, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
-	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(g_event_finish_epoch, buf, 50));
+	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
 
 	if(g_event != EVENT_NONE)
@@ -2945,16 +2975,16 @@ void reportSettings(void)
 	}
 	else
 	{
-		reportTimeTill(now, g_event_start_epoch, "*    Starts in: ", "*    In progress\n");
-		reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "*    Lasts: ", NULL);
+		reportTimeTill(now, g_event_start_epoch, "\n*   Starts in: ", "\n*   In progress\n");
+		reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "*   Lasts: ", NULL);
 		if(g_event_start_epoch < now)
 		{
-			reportTimeTill(now, g_event_finish_epoch, "*    Time Remaining: ", NULL);
+			reportTimeTill(now, g_event_finish_epoch, "*   Time Remaining: ", NULL);
 		}
 		  	
 		if(!g_event_enabled)
 		{
-			sb_send_string((char*)"*   Start with > GO 2\n");
+			sb_send_string((char*)"\n*  Start with > GO 2\n");
 		}
 	}
 }
@@ -3477,7 +3507,7 @@ void handleSerialCloning(void)
 						}
 						else
 						{
-							strcpy(g_tempStr, "ID \"\"\r");
+							strncpy(g_tempStr, "ID \"\"\r", TEMP_STRING_SIZE);
 						}
  
 						sb_send_master_string(g_tempStr);
@@ -3703,6 +3733,15 @@ void handleSerialCloning(void)
 	
 	if(sb_buff) sb_buff->id = SB_MESSAGE_EMPTY;
 
+}
+
+bool noEventWillRun(void)
+{
+	bool result;
+	
+	result = !eventScheduled() || !g_event_enabled || ((g_sleepType == SLEEP_USER_OVERRIDE) || (g_sleepType == SLEEP_FOREVER));
+	
+	return result;
 }
 
 bool eventScheduledForNow(void)

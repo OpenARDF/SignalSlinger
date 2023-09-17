@@ -427,7 +427,7 @@ bool sb_send_master_string(char* str)
 
 	do
 	{
-		lengthToSend = MIN(length-lengthSent, (uint16_t)SERIALBUS_MAX_TX_MSG_LENGTH);
+		lengthToSend = MIN(length-lengthSent, (uint16_t)(SERIALBUS_MAX_TX_MSG_LENGTH-1));
 		strncpy(buf, &str[lengthSent], lengthToSend);
 
 		buf[lengthToSend] = '\0';
