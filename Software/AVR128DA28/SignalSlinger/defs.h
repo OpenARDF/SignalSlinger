@@ -205,7 +205,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0128
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0129
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -230,6 +230,8 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_CLK0_ONOFF_DEFAULT OFF
 #define EEPROM_CLK1_ONOFF_DEFAULT OFF
 #define EEPROM_CLK2_ONOFF_DEFAULT OFF
+
+#define EEPROM_FUNCTION_DEFAULT Function_QRP_TX
 
 #define EEPROM_CLOCK_CALIBRATION_DEFAULT 32767
 #define EEPROM_BATTERY_THRESHOLD_V (3.800)
@@ -287,6 +289,14 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
+
+typedef enum
+{
+	Function_Undefined,
+	Function_QRP_TX,
+	Function_ARDF_TX,
+	Function_Signal_Gen
+} Function_t;
 
 
 /******************************************************

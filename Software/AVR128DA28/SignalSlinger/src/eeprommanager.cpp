@@ -106,11 +106,13 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 	0x00000000,	// 	Guard
 	0x00,		// 	uint8_t master_setting;
 	0x00000000, // 	Guard
-	0x00000000, // float voltage_threshold
+	0x00000000, //  float voltage_threshold
 	0x00000000, // 	Guard
-	0x0000, // uint16_t clock_calibration
+	0x0000,		//  uint16_t clock_calibration
 	0x00000000, //  Guard
-	0x00        // uint8_t days_to_run;
+	0x00,       //  uint8_t days_to_run
+	0x00000000, //  Guard
+	0x00        //  uint8_t function
 };
 
 extern bool g_isMaster;
@@ -139,7 +141,8 @@ extern volatile int16_t g_ID_period_seconds;
 extern volatile int16_t g_intra_cycle_delay_time;
 extern volatile float g_voltage_threshold;
 extern uint16_t g_clock_calibration;
-extern uint8_t g_days_to_run;
+extern volatile uint8_t g_days_to_run;
+extern volatile Function_t g_function;
 
 extern char g_tempStr[];
 
@@ -544,12 +547,22 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		}
 		break;
 		
-				
+		
 		case Days_to_run:
 		{
 			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.days_to_run)))
 			{
 				avr_eeprom_write_byte(Days_to_run, *(uint8_t*)val);
+			}
+		}
+		break;
+		
+		
+		case Function:
+		{
+			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.function)))
+			{
+				avr_eeprom_write_byte(Function, *(uint8_t*)val);
 			}
 		}
 		break;
@@ -599,6 +612,7 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Voltage_threshold, (void*)&g_voltage_threshold);
 	updateEEPROMVar(Clock_calibration, (void*)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
+	updateEEPROMVar(Function, (void*)&g_function);
 }
 
 
@@ -613,11 +627,11 @@ bool EepromManager::readNonVols(void)
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT; // (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.master_setting));
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_event = (Event_t)eeprom_read_byte((const uint8_t*)&(EepromManager::ee_vars.event_setting));
-		g_frequency = CLAMP(TX_MINIMUM_80M_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency)), TX_MAXIMUM_80M_FREQUENCY);
-		g_frequency_low = CLAMP(TX_MINIMUM_80M_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)), TX_MAXIMUM_80M_FREQUENCY);
- 		g_frequency_med = CLAMP(TX_MINIMUM_80M_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)), TX_MAXIMUM_80M_FREQUENCY);
- 		g_frequency_hi = CLAMP(TX_MINIMUM_80M_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_80M_FREQUENCY);
- 		g_frequency_beacon = CLAMP(TX_MINIMUM_80M_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_80M_FREQUENCY);
+		g_frequency = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency)), TX_MAXIMUM_FREQUENCY);
+		g_frequency_low = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)), TX_MAXIMUM_FREQUENCY);
+ 		g_frequency_med = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)), TX_MAXIMUM_FREQUENCY);
+ 		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_FREQUENCY);
+ 		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_FREQUENCY);
 		g_fox[EVENT_NONE] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5));
 		g_fox[EVENT_CLASSIC] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5));
 		g_fox[EVENT_SPRINT] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5));
@@ -688,6 +702,8 @@ bool EepromManager::readNonVols(void)
 		g_clock_calibration = eeprom_read_word(&(EepromManager::ee_vars.clock_calibration));
 
 		g_days_to_run = eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.days_to_run)));
+
+		g_function = (Function_t)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.function)));
 
 		failure = false;
 	}
@@ -823,6 +839,9 @@ bool EepromManager::readNonVols(void)
 
 			g_days_to_run = 1;
 			avr_eeprom_write_byte(Days_to_run, g_days_to_run);
+			
+			g_function = EEPROM_FUNCTION_DEFAULT;
+			avr_eeprom_write_byte(Function, (uint8_t)g_function);
 			
 			/* Done */
 

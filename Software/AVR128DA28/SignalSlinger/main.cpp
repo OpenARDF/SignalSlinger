@@ -130,6 +130,7 @@ volatile bool g_muteAfterID = false;												/* Inhibit any transmissions aft
 volatile uint32_t g_event_checksum = 0;
 volatile uint8_t g_days_to_run = 1;
 volatile uint8_t g_days_run = 0;
+volatile Function_t g_function = Function_ARDF_TX;
 extern uint16_t g_clock_calibration;
 
 static volatile bool g_run_event_forever = false;
@@ -799,16 +800,16 @@ ISR(PORTD_PORT_vect)
 
 void powerDown3V3(void)
 {
-	PORTA_set_pin_level(RF_OUT_ENABLE, LOW);
+	fet_driver(OFF);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-	PORTD_set_pin_level(VDIV_ENABLE, LOW);
+//	PORTD_set_pin_level(VDIV_ENABLE, LOW);
 }
 
 void powerUp3V3(void)
 {
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, HIGH);	
-	PORTA_set_pin_level(RF_OUT_ENABLE, LOW);
-	PORTD_set_pin_level(VDIV_ENABLE, HIGH);
+	fet_driver(OFF);
+//	PORTD_set_pin_level(VDIV_ENABLE, HIGH);
 }
 
 int main(void)
@@ -1013,7 +1014,7 @@ int main(void)
 		/********************************
 		 * Handle sleep
 		 ******************************/
-		if(g_go_to_sleep_now && !g_cloningInProgress)
+		if(g_go_to_sleep_now && !g_cloningInProgress && (g_function == Function_ARDF_TX))
 		{
 			LEDS.deactivate();
 			serialbus_disable();
@@ -1305,7 +1306,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					Frequency_Hz f;
 					if(g_cloningInProgress)
 					{
-						if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f))
+						if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f, 0))
 						{
 							char freqTier = sb_buff->fields[SB_FIELD1][0];
 							
@@ -1341,7 +1342,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						}
 					}
-					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f))
+					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f, 0))
 					{
 						g_frequency = f;
 						
@@ -1759,6 +1760,33 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
 						setupForFox(getFoxSetting(), START_NOTHING);
+					}
+				}
+				
+				if(!(g_cloningInProgress)) reportSettings();
+			}
+			break;
+			
+			case SB_MESSAGE_FUNCTION:
+			{
+				char fun = sb_buff->fields[SB_FIELD1][0];
+				
+				if(fun)
+				{
+					if((fun == 'Q') || (fun == (uint8_t)Function_QRP_TX))
+					{
+						g_function = Function_QRP_TX;
+						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+					}
+					else if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX))
+					{
+						g_function = Function_ARDF_TX;
+						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+					}
+					else if((fun == 'S') || (fun == (uint8_t)Function_Signal_Gen))
+					{
+						g_function = Function_Signal_Gen;
+						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
 					}
 				}
 				
@@ -2848,6 +2876,18 @@ void reportSettings(void)
 	char buf[50];
 	
 	time_t now = time(null);
+	
+	if(!function2Text(g_tempStr, g_function))
+	{
+		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
+		sprintf(g_tempStr, "\n*   Function: %s\n", buf);
+	}
+	else
+	{
+		sprintf(g_tempStr, "\n*   Unknown Functionality!\n");
+	}
+	
+	sb_send_string(g_tempStr);
 	
 	sb_send_string(TEXT_CURRENT_SETTINGS_TXT);
 	

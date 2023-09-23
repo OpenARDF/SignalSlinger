@@ -101,6 +101,8 @@ struct EE_prom
 	uint16_t clock_calibration;
 	uint32_t guard4_31;
 	uint8_t days_to_run;
+	uint32_t guard4_32;
+	uint8_t function;
 };
 
 typedef enum
@@ -160,14 +162,16 @@ typedef enum
 	Frequency_Hi =  Guard4_26 + GUARDSIZE,  /* 4 bytes */
 	Guard4_27 = Frequency_Hi + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
 	Frequency_Beacon =  Guard4_27 + GUARDSIZE,  /* 4 bytes */
-	Guard4_28 = Frequency_Beacon + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
+	Guard4_28 = Frequency_Beacon + sizeof(Frequency_Hz),			/**** Guard = 4 bytes ****/
 	Master_setting =  Guard4_28 + GUARDSIZE, /* bool: 1 byte */ 
-	Guard4_29 = Master_setting + sizeof(bool),					/**** Guard = 4 bytes ****/
+	Guard4_29 = Master_setting + sizeof(bool),						/**** Guard = 4 bytes ****/
 	Voltage_threshold =  Guard4_29 + GUARDSIZE,   /* 4 bytes */
 	Guard4_30 = Voltage_threshold + sizeof(float),					/**** Guard = 4 bytes ****/
 	Clock_calibration =  Guard4_30 + GUARDSIZE,   /* 2 bytes */
-	Guard4_31 = Clock_calibration + sizeof(uint16_t),					/**** Guard = 2 bytes ****/
-	Days_to_run = Guard4_31 + GUARDSIZE   /* 1 byte */
+	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 2 bytes ****/
+	Days_to_run = Guard4_31 + GUARDSIZE   /* 1 byte */,
+	Guard4_32 = Days_to_run + sizeof(uint8_t),						/**** Guard = 2 bytes ****/
+	Function = Guard4_32 + GUARDSIZE   /* 1 byte */
 } EE_var_t;
 
 

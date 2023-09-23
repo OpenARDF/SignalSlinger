@@ -60,8 +60,8 @@ typedef int16_t Attenuation;
                              /*  0,10,100, 200, 300, 400, 500, 600, 800, 1000, 1500, 2000, 2500, 3000, 4000, 5000 */
 #define DEFAULT_80M_POWER_TABLE {0, 8, 80, 160, 216, 248, 280, 312, 365,  402,  522,  586,  650,  713,  776,  840 }
 
-#define TX_MINIMUM_80M_FREQUENCY (uint32_t)3500000
-#define TX_MAXIMUM_80M_FREQUENCY (uint32_t)4000000
+#define TX_MINIMUM_FREQUENCY (uint32_t)100000
+#define TX_MAXIMUM_FREQUENCY (uint32_t)150000000
 
 /**
  */
@@ -99,6 +99,10 @@ bool keyTransmitter(bool on);
 /**
  */
 EC powerToTransmitter(bool on);
+
+/**
+ */
+void fet_driver(bool state);
 
 /** 
  */
