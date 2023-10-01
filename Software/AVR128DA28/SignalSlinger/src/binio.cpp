@@ -131,7 +131,7 @@ void BINIO_init(void)
 	PORTD_pin_set_isc(SWITCH, PORT_ISC_BOTHEDGES_gc);
 	
 	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
-	PORTD_set_pin_level(LED_GREEN, LOW);
+	PORTD_set_pin_level(LED_GREEN, HIGH);
 
 	g_adc_initialization = ADC_NOT_INITIALIZED; /* Reset ADC configuration */
 
