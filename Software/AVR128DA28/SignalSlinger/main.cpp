@@ -182,7 +182,7 @@ Frequency_Hz g_frequency_beacon = EEPROM_FREQUENCY_BEACON_DEFAULT;
 int8_t g_utc_offset;
 uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 2];
 
-extern volatile uint16_t i2c_failure_count;
+extern volatile uint16_t g_i2c_failure_count;
 
 volatile bool g_enable_manual_transmissions = true;
 
@@ -898,11 +898,7 @@ int main(void)
 			
 			if(g_text_buff.empty())
 			{
-				if((g_battery_voltage >= 0.1) && (g_battery_voltage <= g_voltage_threshold))
-				{
-					LEDS.sendCode((char*)"V ");
-				}
-				else if(g_send_clone_success_countdown)
+				if(g_send_clone_success_countdown)
 				{
 					LEDS.sendCode((char*)"X ");
 				}
@@ -910,6 +906,10 @@ int main(void)
 				{
 					LEDS.sendCode((char*)"M ");
 				}
+			}
+			else /* Make sure the text buffer is being emptied */
+			{
+				g_enable_manual_transmissions = true; /* There is only one consumer of g_text_buff so it is always OK to enable manual transmissions */
 			}
 			
 			if(!isMasterCountdownSeconds)
@@ -1067,6 +1067,18 @@ int main(void)
 
  			g_last_status_code = STATUS_CODE_RETURNED_FROM_SLEEP;
 		}
+		
+		if(g_i2c_failure_count)
+		{
+			static time_t t = 0;
+			time_t now = time(null);
+			
+			if(difftime(now, t) > 600) /* Update no more often than every 10 minutes */
+			{
+				t = now;
+				g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
+			}
+		}
 	}
 }
 
@@ -1085,8 +1097,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		{
 			case SB_MESSAGE_DEBUG:
 			{
-				sprintf(g_tempStr, "\nI2C error count = %d\n", i2c_failure_count);
+				char c1 = (sb_buff->fields[SB_FIELD1][0]);
+				sprintf(g_tempStr, "\nI2C error count = %d\n", g_i2c_failure_count);
 				sb_send_string(g_tempStr);
+				
+				if(c1 == '0')
+				{
+					g_i2c_failure_count = 0;
+					g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
+					sb_send_string((char*)"Count reset\n");
+				}
 			}
 			break;
 			

@@ -102,6 +102,8 @@ struct EE_prom
 	uint32_t guard4_31;
 	uint8_t days_to_run;
 	uint32_t guard4_32;
+	uint16_t i2c_failure_count;
+	uint32_t guard4_33;
 	uint8_t function;
 };
 
@@ -169,9 +171,11 @@ typedef enum
 	Guard4_30 = Voltage_threshold + sizeof(float),					/**** Guard = 4 bytes ****/
 	Clock_calibration =  Guard4_30 + GUARDSIZE,   /* 2 bytes */
 	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 2 bytes ****/
-	Days_to_run = Guard4_31 + GUARDSIZE   /* 1 byte */,
-	Guard4_32 = Days_to_run + sizeof(uint8_t),						/**** Guard = 2 bytes ****/
-	Function = Guard4_32 + GUARDSIZE   /* 1 byte */
+	Days_to_run = Guard4_31 + GUARDSIZE,   /* 1 byte */
+	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 2 bytes ****/
+	I2C_failure_count = Guard4_32 + GUARDSIZE,   /* 2 bytes */
+	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 2 bytes ****/
+	Function = Guard4_33 + GUARDSIZE   /* 1 byte */
 } EE_var_t;
 
 

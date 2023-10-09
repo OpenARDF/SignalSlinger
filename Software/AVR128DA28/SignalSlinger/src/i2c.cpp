@@ -58,7 +58,7 @@ enum {
 };
 
 volatile uint16_t g_i2c0_timeout_ticks = 200; 
-volatile uint16_t i2c_failure_count = 0;
+volatile uint16_t g_i2c_failure_count = 0;
 
 /************************************************************************/
 /* I2C_0                                                               */
@@ -129,7 +129,7 @@ static uint8_t i2c_0_WaitW(void)
 	if(!g_i2c0_timeout_ticks) 
 	{
 		state = I2C_ERROR;
-		if(i2c_failure_count < UINT16_MAX) i2c_failure_count++;
+		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
 	}
 	
 	return state;
@@ -156,7 +156,7 @@ static uint8_t i2c_0_WaitR(void)
 	
 	if(!g_i2c0_timeout_ticks)
 	{
-		if(i2c_failure_count < UINT16_MAX) i2c_failure_count++;
+		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
 	}
 	
 	return state;
