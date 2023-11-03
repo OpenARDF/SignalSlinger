@@ -1,4 +1,4 @@
-20497935035441001
+20499682503277032
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -1515,6 +1515,13 @@ Button_Switch_SMD
 SW_SPST_SKQG_WithoutStem
 ALPS 5.2mm Square Low-profile Type (Surface Mount) SKQG Series, Without stem, http://www.alps.com/prod/info/E/HTML/Tact/SurfaceMount/SKQG/SKQGAEE010.html
 SPST Button Switch
+0
+4
+2
+Button_Switch_SMD
+SW_SPST_TL1014BF160QG
+https://www.e-switch.com/system/asset/product_line/data_sheet/213/TL3305.pdf
+TL3305 Series Tact Switch
 0
 4
 2
