@@ -46,11 +46,6 @@ void system_init()
 	CPUINT_init(); /* Interrupts must also be enabled before timer interrupts will function */
 	BINIO_init();
 
-// 	LED_set_RED_dir(PORT_DIR_OUT);
-// 	LED_set_RED_level(OFF);
-// 	LED_set_GREEN_dir(PORT_DIR_OUT);
-// 	LED_set_GREEN_level(OFF);
-
 	SLPCTRL_init();
 	
 	// DAC0_init();
@@ -74,20 +69,20 @@ void system_sleep_config()
 	LED_set_GREEN_dir(PORT_DIR_OUT);
 	LED_set_GREEN_level(OFF);
 	
-	PORTA_set_pin_dir(unusedA0, PORT_DIR_OUT);
-	PORTA_set_pin_level(unusedA0, LOW);
-	PORTA_set_pin_dir(RF_OUT_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(RF_OUT_ENABLE, LOW);
+	PORTA_set_pin_dir(FAN_CONTR, PORT_DIR_OUT);
+	PORTA_set_pin_level(FAN_CONTR, LOW);
+	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-	PORTA_set_pin_dir(WIFI_MODULE_DETECT, PORT_DIR_OUT);
-	PORTA_set_pin_level(WIFI_MODULE_DETECT, LOW);
+	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(POWER_ENABLE, LOW);
 	PORTA_set_pin_dir(TO_WIFI_RX, PORT_DIR_OUT);
 	PORTA_set_pin_level(TO_WIFI_RX, LOW);
 	PORTA_set_pin_dir(TO_WIFI_TX, PORT_DIR_OUT);
 	PORTA_set_pin_level(TO_WIFI_TX, LOW);
-	PORTA_set_pin_dir(WIFI_RESET, PORT_DIR_OUT);
-	PORTA_set_pin_level(WIFI_RESET, LOW);
+	PORTA_set_pin_dir(PS_5V_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(PS_5V_ENABLE, LOW);
 	PORTA_set_pin_dir(WIFI_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(WIFI_ENABLE, LOW);
 
@@ -101,8 +96,6 @@ void system_sleep_config()
 	PORTC_set_pin_dir(SI5351_SCL, PORT_DIR_OUT);
 	PORTC_set_pin_level(SI5351_SCL, LOW);
 	
-	PORTD_set_pin_dir(unusedD4, PORT_DIR_OUT);
-	PORTD_set_pin_level(unusedD4, LOW);
 	PORTD_set_pin_dir(unusedD5, PORT_DIR_OUT);
 	PORTD_set_pin_level(unusedD5, LOW);
 	PORTD_set_pin_dir(unusedD7, PORT_DIR_OUT);

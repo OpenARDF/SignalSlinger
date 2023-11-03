@@ -44,13 +44,13 @@ struct EE_prom
 	uint32_t guard4_2;
 	time_t event_finish_epoch; 
 	uint32_t guard4_3;
- 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+ 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_4;
-	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_5;
- 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 1]; 
+ 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
 	uint32_t guard4_6;
-	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
+	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
 	uint32_t guard4_7;
 	Fox_t fox_setting_none;
 	uint32_t guard4_8;
@@ -101,6 +101,10 @@ struct EE_prom
 	uint16_t clock_calibration;
 	uint32_t guard4_31;
 	uint8_t days_to_run;
+	uint32_t guard4_32;
+	uint16_t i2c_failure_count;
+	uint32_t guard4_33;
+	uint8_t function;
 };
 
 typedef enum
@@ -112,13 +116,13 @@ typedef enum
 	Event_finish_epoch =  Guard4_2 + GUARDSIZE, /* 4 bytes */
 	Guard4_3 = Event_finish_epoch + sizeof(time_t),					/**** Guard = 4 bytes ****/
 	Pattern_text =  Guard4_3 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1  bytes */
-	Guard4_4 = Pattern_text + MAX_PATTERN_TEXT_LENGTH + 1,			/**** Guard = 4 bytes ****/
+	Guard4_4 = Pattern_text + MAX_PATTERN_TEXT_LENGTH+2,			/**** Guard = 4 bytes ****/
 	Foxoring_pattern_text =  Guard4_4 + GUARDSIZE,  /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_5 = Foxoring_pattern_text + MAX_PATTERN_TEXT_LENGTH + 1,	/**** Guard = 4 bytes ****/
+	Guard4_5 = Foxoring_pattern_text + MAX_PATTERN_TEXT_LENGTH+2,	/**** Guard = 4 bytes ****/
 	StationID_text =  Guard4_5 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_6 = StationID_text + MAX_PATTERN_TEXT_LENGTH + 1,		/**** Guard = 4 bytes ****/
-	UnlockCode =  Guard4_6 + GUARDSIZE, /* UNLOCK_CODE_SIZE + 1 bytes */
-	Guard4_7 = UnlockCode + UNLOCK_CODE_SIZE + 1,					/**** Guard = 4 bytes ****/
+	Guard4_6 = StationID_text + MAX_PATTERN_TEXT_LENGTH+2,		/**** Guard = 4 bytes ****/
+	UnlockCode =  Guard4_6 + GUARDSIZE, /* UNLOCK_CODE_SIZE + 2 bytes */
+	Guard4_7 = UnlockCode + UNLOCK_CODE_SIZE+2,					/**** Guard = 4 bytes ****/
 	Fox_setting_none =  Guard4_7 + GUARDSIZE, /* 1 bytes */
 	Guard4_8 = Fox_setting_none + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
 	Fox_setting_classic =  Guard4_8 + GUARDSIZE, /* 1 bytes */
@@ -160,14 +164,18 @@ typedef enum
 	Frequency_Hi =  Guard4_26 + GUARDSIZE,  /* 4 bytes */
 	Guard4_27 = Frequency_Hi + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
 	Frequency_Beacon =  Guard4_27 + GUARDSIZE,  /* 4 bytes */
-	Guard4_28 = Frequency_Beacon + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
+	Guard4_28 = Frequency_Beacon + sizeof(Frequency_Hz),			/**** Guard = 4 bytes ****/
 	Master_setting =  Guard4_28 + GUARDSIZE, /* bool: 1 byte */ 
-	Guard4_29 = Master_setting + sizeof(bool),					/**** Guard = 4 bytes ****/
+	Guard4_29 = Master_setting + sizeof(bool),						/**** Guard = 4 bytes ****/
 	Voltage_threshold =  Guard4_29 + GUARDSIZE,   /* 4 bytes */
 	Guard4_30 = Voltage_threshold + sizeof(float),					/**** Guard = 4 bytes ****/
 	Clock_calibration =  Guard4_30 + GUARDSIZE,   /* 2 bytes */
-	Guard4_31 = Clock_calibration + sizeof(uint16_t),					/**** Guard = 2 bytes ****/
-	Days_to_run = Guard4_31 + GUARDSIZE   /* 1 byte */
+	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 2 bytes ****/
+	Days_to_run = Guard4_31 + GUARDSIZE,   /* 1 byte */
+	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 2 bytes ****/
+	I2C_failure_count = Guard4_32 + GUARDSIZE,   /* 2 bytes */
+	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 2 bytes ****/
+	Function = Guard4_33 + GUARDSIZE   /* 1 byte */
 } EE_var_t;
 
 

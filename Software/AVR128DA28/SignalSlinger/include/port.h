@@ -33,13 +33,13 @@ extern "C" {
 
 enum port_pull_mode {
 	PORT_PULL_OFF,
-	PORT_PULL_UP,
+	PORT_PULL_UP
 };
 
 enum port_dir {
 	PORT_DIR_IN,
 	PORT_DIR_OUT,
-	PORT_DIR_OFF,
+	PORT_DIR_OFF
 };
 
 /**

@@ -47,8 +47,9 @@ bool only_digits(char *s);
 uint32_t convertTimeStringToEpoch(char * s);
 bool mystrptime(char* s, struct tm* ltm);
 bool frequencyString(char* result, uint32_t freq);
-bool frequencyVal(char* str, Frequency_Hz* result);
+bool frequencyVal(char* str, Frequency_Hz* result, uint8_t band);
 bool fox2Text(char* str, Fox_t fox);
 bool event2Text(char* str, Event_t evt);
+bool function2Text(char* str, Function_t fun);
 
 #endif  /* UTIL_H_ */

@@ -220,9 +220,38 @@ bool frequencyString(char* result, uint32_t freq)
  * result = pointer to a Frequency_Hz variable to hold the frequency in Hz
  * Returns 1 if an error is detected
  */
-bool frequencyVal(char* str, Frequency_Hz* result)
+bool frequencyVal(char* str, Frequency_Hz* result, uint8_t band)
 {
 	bool failure = true;
+	float mhzMin, mhzMax, khzMin, khzMax, hzMin, hzMax;
+	
+	if(band == 80)
+	{
+		mhzMin = 3.5;
+		mhzMax = 4.0;
+		khzMin = 3500.;
+		khzMax = 4000.;
+		hzMin = 3500000.;
+		hzMax = 4000000.;
+	}
+	else if(band == 40)
+	{
+		mhzMin = 7.0;
+		mhzMax = 7.3;
+		khzMin = 7000.;
+		khzMax = 7300.;
+		hzMin = 7000000.;
+		hzMax = 7300000.;
+	}
+	else
+	{
+		mhzMin = 1.0;
+		mhzMax = 150.0;
+		khzMin = 1000.;
+		khzMax = 150000.;
+		hzMin = 1000000.;
+		hzMax = 150000000.;
+	}
 	
 	if(!str)
 	{
@@ -237,17 +266,17 @@ bool frequencyVal(char* str, Frequency_Hz* result)
 	{
 		float f = atof(str);
 		
-		if((f > 3.5) && (f < 4.0))
+		if((f > mhzMin) && (f < mhzMax))
 		{
 			f *= 1000000.;
 			failure = false;
 		}
-		else if((f > 3500.) && (f < 4000.))
+		else if((f > khzMin) && (f < khzMax))
 		{
 			f *= 1000.;
 			failure = false;
 		}
-		else if((f > 3500000.) && (f < 4000000.))
+		else if((f > hzMin) && (f < hzMax))
 		{
 			failure = false;
 		}
@@ -264,12 +293,17 @@ bool frequencyVal(char* str, Frequency_Hz* result)
 	{
 		Frequency_Hz f = (Frequency_Hz)atol(str);
 		
-		if((f > 3500) && (f < 4000))
+		if((f > (Frequency_Hz)mhzMin) && (f < (Frequency_Hz)mhzMax))
+		{
+			f *= 1000000;
+			failure = false;
+		}
+		else if((f > (Frequency_Hz)khzMin) && (f < (Frequency_Hz)khzMax))
 		{
 			f *= 1000;
 			failure = false;
 		}
-		else if((f > 3500000) && (f < 4000000))
+		else if((f > (Frequency_Hz)hzMin) && (f < (Frequency_Hz)hzMax))
 		{
 			f = f - (f % 100);
 			failure = false;
@@ -283,6 +317,39 @@ bool frequencyVal(char* str, Frequency_Hz* result)
 	}
 	
 	return(failure);	
+}
+
+bool function2Text(char* str, Function_t fun)
+{
+	bool failure = false;
+	
+	switch(fun)
+	{
+		case Function_ARDF_TX:
+		{
+			sprintf(str, "Fox Transmitter");
+		}
+		break;
+		
+		case Function_QRP_TX:
+		{
+			sprintf(str, "QRP Transmitter");
+		}
+		break;
+		
+		case Function_Signal_Gen:
+		{
+			sprintf(str, "Signal Generator");
+		}
+		break;
+		
+		default:
+		{
+			failure = true;
+		}		
+	}
+	
+	return failure;
 }
 
 bool fox2Text(char* str, Fox_t fox)

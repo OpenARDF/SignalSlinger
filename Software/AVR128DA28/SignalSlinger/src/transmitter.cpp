@@ -27,10 +27,10 @@
 #include <stdlib.h>
 #include <avr/eeprom.h>
 #include "transmitter.h"
+#include "port.h"
+#include "binio.h"
 // #include "i2c.h"    /* DAC on 80m VGA of Rev X1 Receiver board */
 // #include "dac0.h"
-// #include "binio.h"
-// #include "port.h"
 
 static volatile bool g_tx_initialized = false;
 volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -48,7 +48,6 @@ uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 /*
  * Local Function Prototypes
  */
-void fet_driver(bool state);
 void final_drain_voltage(bool state);
 
 
@@ -63,7 +62,7 @@ void final_drain_voltage(bool state);
 
 		if(!freq) return(err);
 		
-		if((*freq < TX_MAXIMUM_80M_FREQUENCY) && (*freq > TX_MINIMUM_80M_FREQUENCY))    /* 80m */
+		if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY))    /* 80m */
 		{
 			if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
 			{
@@ -107,14 +106,14 @@ void final_drain_voltage(bool state);
 	
 	void fet_driver(bool state)
 	{
-// 		if(state == ON)
-// 		{
-// 			PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
-// 		}
-// 		else
-// 		{
-// 			PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
-// 		}
+		if(state == ON)
+		{
+			PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
+		}
+		else
+		{
+			PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
+		}
 	}
 
 	void final_drain_voltage(bool state)

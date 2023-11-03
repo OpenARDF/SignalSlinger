@@ -89,14 +89,14 @@ uint8_t portAdebouncedVals(void)
 void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
-// 	PORTA_set_pin_dir(unusedA0, PORT_DIR_OUT);
-// 	PORTA_set_pin_level(unusedA0, HIGH);
+ 	PORTA_set_pin_dir(FAN_CONTR, PORT_DIR_OUT);
+ 	PORTA_set_pin_level(FAN_CONTR, LOW);
 	
- 	PORTA_set_pin_dir(RF_OUT_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(RF_OUT_ENABLE, LOW);
+ 	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 
-	PORTA_set_pin_dir(WIFI_MODULE_DETECT, PORT_DIR_IN); /* Detect presence of Huzzah module */
-	PORTA_set_pin_pull_mode(WIFI_MODULE_DETECT, PORT_PULL_OFF);
+	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT); /* Enables/latches battery power to +VSW */
+	PORTA_set_pin_level(POWER_ENABLE, HIGH);
 
  	PORTA_set_pin_dir(TO_WIFI_RX, PORT_DIR_OUT);
 
@@ -109,8 +109,8 @@ void BINIO_init(void)
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
 	
-	PORTA_set_pin_dir(WIFI_RESET, PORT_DIR_OUT);
-	PORTA_set_pin_level(WIFI_RESET, LOW);
+	PORTA_set_pin_dir(PS_5V_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(PS_5V_ENABLE, HIGH);
 	
 	/* PORTC *************************************************************************************/
 	
@@ -121,9 +121,7 @@ void BINIO_init(void)
 	
 	/* PORTD *************************************************************************************/
 	PORTD_set_pin_dir(VBAT_IN, PORT_DIR_IN);
-
-	PORTD_set_pin_dir(VDIV_ENABLE, PORT_DIR_OUT);
-	PORTD_set_pin_level(VDIV_ENABLE, LOW);
+	PORTD_set_pin_dir(POWER_GOOD, PORT_DIR_IN);
 
 	PORTD_set_pin_dir(LED_RED, PORT_DIR_OUT);
 	PORTD_set_pin_level(LED_RED, LOW);
@@ -132,6 +130,9 @@ void BINIO_init(void)
 	PORTD_set_pin_pull_mode(SWITCH, PORT_PULL_UP);
 	PORTD_pin_set_isc(SWITCH, PORT_ISC_BOTHEDGES_gc);
 	
+	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
+	PORTD_set_pin_level(LED_GREEN, HIGH);
+
 	g_adc_initialization = ADC_NOT_INITIALIZED; /* Reset ADC configuration */
 
 	/* PORTF *************************************************************************************/

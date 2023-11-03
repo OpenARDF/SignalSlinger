@@ -39,9 +39,11 @@ public:
 	~leds();
 	
 	void init(void);
+	void init(Blink_t setBlink);
 	void blink(Blink_t blinkMode);
 	void blink(Blink_t blinkMode, bool resetTimeout);
 	bool active(void);
+	void deactivate(void);
 	void setRed(bool on);
 	void setGreen(bool on);
 	void resume(void);
@@ -49,6 +51,7 @@ public:
 	
 protected:
 	void reset(void);
+	void reset(Blink_t setBlink);
 private:
 //	leds( const leds &c );
 	leds& operator=( const leds &c );

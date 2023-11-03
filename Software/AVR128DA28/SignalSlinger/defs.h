@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.90"
+#define SW_REVISION "0.98"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -102,7 +102,9 @@ typedef enum {
 typedef enum {
 	DO_NOT_SLEEP,
 	SLEEP_UNTIL_START_TIME,
+	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
+	SLEEP_USER_OVERRIDE,
 	SLEEP_FOREVER
 	} SleepType;
 	
@@ -203,7 +205,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0123
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0129
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -228,6 +230,8 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_CLK0_ONOFF_DEFAULT OFF
 #define EEPROM_CLK1_ONOFF_DEFAULT OFF
 #define EEPROM_CLK2_ONOFF_DEFAULT OFF
+
+#define EEPROM_FUNCTION_DEFAULT Function_QRP_TX
 
 #define EEPROM_CLOCK_CALIBRATION_DEFAULT 32767
 #define EEPROM_BATTERY_THRESHOLD_V (3.800)
@@ -270,9 +274,9 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_NOT_SLEEPING_TXT (char*)"* SignalSlinger is not sleeping\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Event Frequency Settings ===\n"
-#define MINIMUM_VALID_EPOCH ((time_t)1609459200)  /* 1 Jan 2021 00:00:00 */
-#define YEAR_2000_EPOCH ((time_t)946684800)  /* 1 Jan 2000 00:00:00 */
-#define FOREVER_EPOCH ((time_t)4796712000) /* 1 Jan 2122 00:00:00 */
+#define MINIMUM_VALID_EPOCH ((time_t)1609459200UL)  /* 1 Jan 2021 00:00:00 */
+#define YEAR_2000_EPOCH ((time_t)946684800UL)  /* 1 Jan 2000 00:00:00 */
+#define FOREVER_EPOCH ((time_t)4294967295UL) /* 7 Feb 2106 00:00:00 */
 #define SECONDS_24H 86400
 
 typedef enum
@@ -285,6 +289,14 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
+
+typedef enum
+{
+	Function_Undefined,
+	Function_QRP_TX,
+	Function_ARDF_TX,
+	Function_Signal_Gen
+} Function_t;
 
 
 /******************************************************

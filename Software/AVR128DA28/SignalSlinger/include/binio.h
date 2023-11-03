@@ -29,14 +29,14 @@
 #include "defs.h"
 
 /* PORTA *************************************************************************************/
-#define WIFI_RESET 7
-#define WIFI_ENABLE 6
-#define TO_WIFI_TX 5
-#define TO_WIFI_RX 4
-#define WIFI_MODULE_DETECT 3
+#define PS_5V_ENABLE 7
+#define WIFI_ENABLE 6 /* Straight key */
+#define TO_WIFI_TX 5 /* Paddle Dah */
+#define TO_WIFI_RX 4 /* Paddle Dit */
+#define POWER_ENABLE 3
 #define V3V3_PWR_ENABLE 2
-#define RF_OUT_ENABLE 1
-#define unusedA0 0
+#define FET_DRIVER_ENABLE 1
+#define FAN_CONTR 0
 
 /* PORTC *************************************************************************************/
 #define SI5351_SCL 3
@@ -48,11 +48,10 @@
 #define unusedD7 7
 #define DAC_OUTPUT 6
 #define unusedD5 5
-#define unusedD4 4
+#define LED_GREEN 4
 #define SWITCH 3
 #define LED_RED 2
-#define LED_GREEN 2
-#define VDIV_ENABLE 1
+#define POWER_GOOD 1
 #define VBAT_IN 0
 
 /* PORTF *************************************************************************************/
