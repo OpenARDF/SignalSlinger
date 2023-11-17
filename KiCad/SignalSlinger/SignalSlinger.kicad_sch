@@ -5,9 +5,9 @@
   (paper "A4")
 
   (title_block
-    (title "SignalSlinger Design")
-    (date "2023-07-10")
-    (rev "1.1")
+    (title "SignalSlinger")
+    (date "2023-11-17")
+    (rev "1.2")
   )
 
   (lib_symbols
@@ -5825,7 +5825,7 @@
     (property "Reference" "U105" (id 0) (at 267.97 39.37 90)
       (effects (font (size 1.5 1.5) bold) (justify left))
     )
-    (property "Value" "" (id 1) (at 281.94 41.91 90)
+    (property "Value" "TO-220 ADJ Reg." (id 1) (at 281.94 41.91 90)
       (effects (font (size 1.5 1.5) bold) (justify left))
     )
     (property "Footprint" "TO_SOT_Packages:TO-220_Neutral123_Horizontal" (id 2) (at 254 49.53 0)
