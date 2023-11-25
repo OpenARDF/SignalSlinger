@@ -2,14 +2,14 @@
 <export version="E">
   <design>
     <source>/Users/Charles/Documents/GitHub/SignalSlinger/KiCad/SignalSlinger/SignalSlinger.kicad_sch</source>
-    <date>Friday, July 28, 2023 at 01:06:24 PM</date>
+    <date/>
     <tool>Eeschema (6.0.4-0)</tool>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
-        <title>SignalSlinger Design</title>
+        <title>SignalSlinger</title>
         <company/>
-        <rev>1.1</rev>
-        <date>2023-07-10</date>
+        <rev>2.0</rev>
+        <date>2023-11-21</date>
         <source>SignalSlinger.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -24,10 +24,10 @@
     </sheet>
     <sheet number="2" name="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/">
       <title_block>
-        <title>SignalSlinger Design</title>
+        <title>SignalSlinger</title>
         <company/>
-        <rev>1.1</rev>
-        <date>2023-07-10</date>
+        <rev>2.0</rev>
+        <date>2023-11-21</date>
         <source>PowerSupply.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -42,10 +42,10 @@
     </sheet>
     <sheet number="3" name="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/">
       <title_block>
-        <title>SignalSlinger Design</title>
+        <title>SignalSlinger</title>
         <company/>
-        <rev>1.1</rev>
-        <date>2023-07-10</date>
+        <rev>2.0</rev>
+        <date>2023-11-21</date>
         <source>RF_Filters.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -60,10 +60,10 @@
     </sheet>
     <sheet number="4" name="/Misc/" tstamps="/5a65e8dc-078c-4a84-92a2-c8664e602338/">
       <title_block>
-        <title>SignalSlinger Design</title>
+        <title>SignalSlinger</title>
         <company/>
-        <rev>1.1</rev>
-        <date>2023-07-10</date>
+        <rev>2.0</rev>
+        <date>2023-11-21</date>
         <source>Misc.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -352,62 +352,53 @@
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>df1f292a-0d55-4b3a-8276-267fdbcc34d5</tstamps>
+      <tstamps>3f2ec03c-c1e5-4b49-b68a-8e23ebf104d5</tstamps>
     </comp>
     <comp ref="C113">
-      <value>470nF</value>
+      <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
-        <field name="Digi-Key Part No.">478-9924-1-ND</field>
-        <field name="LCSC Part Number">C342818</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
-        <field name="Manufacturer">AVX Corporation</field>
-        <field name="Manufacturer PN">08051C474K4Z2A</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
-      <property name="Manufacturer" value="AVX Corporation"/>
-      <property name="Manufacturer PN" value="08051C474K4Z2A"/>
-      <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
-      <property name="LCSC Part Number" value="C342818"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>6034a3c9-05af-4bf3-aa8e-0392ba88fb18</tstamps>
+      <tstamps>626469f3-d449-4380-b38f-7dad165a7329</tstamps>
     </comp>
     <comp ref="C114">
-      <value>470nF</value>
+      <value>10uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 0.47UF 100V X7R 0805</field>
-        <field name="Digi-Key Part No.">478-9924-1-ND</field>
-        <field name="LCSC Part Number">C342818</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=478-9924-1-ND</field>
-        <field name="Manufacturer">AVX Corporation</field>
-        <field name="Manufacturer PN">08051C474K4Z2A</field>
+        <field name="Description">CAP CER 10UF 35V X5R 0805</field>
+        <field name="Digi-Key Part No.">445-14418-1-ND</field>
+        <field name="LCSC Part Number">C3843628</field>
+        <field name="Link">https://www.digikey.com/short/p8qdn4mp</field>
+        <field name="Manufacturer">TDK Corporation</field>
+        <field name="Manufacturer PN">C2012X5R1V106K125AC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="478-9924-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-9924-1-ND"/>
-      <property name="Manufacturer" value="AVX Corporation"/>
-      <property name="Manufacturer PN" value="08051C474K4Z2A"/>
-      <property name="Description" value="CAP CER 0.47UF 100V X7R 0805"/>
-      <property name="LCSC Part Number" value="C342818"/>
+      <property name="Digi-Key Part No." value="445-14418-1-ND"/>
+      <property name="Manufacturer" value="TDK Corporation"/>
+      <property name="Manufacturer PN" value="C2012X5R1V106K125AC"/>
+      <property name="Description" value="CAP CER 10UF 35V X5R 0805"/>
+      <property name="Link" value="https://www.digikey.com/short/p8qdn4mp"/>
+      <property name="LCSC Part Number" value="C3843628"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>a1f61b60-ce08-41ed-850b-6d93a7c40ec2</tstamps>
-    </comp>
-    <comp ref="C115">
-      <value>C_Trim_Small</value>
-      <footprint>Capacitors:MURATA-TZC3</footprint>
-      <libsource lib="Device" part="C_Trim_Small" description="Trimmable capacitor, small symbol"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>5dd997aa-3f5a-4155-ad1f-0e893a761968</tstamps>
+      <tstamps>f1588d22-76aa-429a-a1f8-983ff509ccce</tstamps>
     </comp>
     <comp ref="D101">
       <value>1N914WT</value>
@@ -685,6 +676,26 @@
       <sheetpath names="/" tstamps="/"/>
       <tstamps>64811abf-516c-4f50-8601-bf447456fb6b</tstamps>
     </comp>
+    <comp ref="D113">
+      <value>1N914WT</value>
+      <footprint>Diode_SMD:D_SOD-523</footprint>
+      <datasheet>http://www.mouser.com/ds/2/149/1N4148WT-461550.pdf</datasheet>
+      <libsource lib="Diode" part="1N914WT" description="75V 0.15A Fast switching Diode, SOD-523"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>76a10c0b-6cb7-464f-9327-60d8d92cce59</tstamps>
+    </comp>
+    <comp ref="D114">
+      <value>1N914WT</value>
+      <footprint>Diode_SMD:D_SOD-523</footprint>
+      <datasheet>http://www.mouser.com/ds/2/149/1N4148WT-461550.pdf</datasheet>
+      <libsource lib="Diode" part="1N914WT" description="75V 0.15A Fast switching Diode, SOD-523"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>c8421619-bfcc-4db9-9d95-17391592de97</tstamps>
+    </comp>
     <comp ref="J101">
       <value>Conn_01x02</value>
       <footprint>Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical</footprint>
@@ -758,57 +769,14 @@
       <sheetpath names="/" tstamps="/"/>
       <tstamps>f65562b6-a284-4df2-8df3-7bd9535e8174</tstamps>
     </comp>
-    <comp ref="J108">
-      <value>Conn_01x02</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical</footprint>
-      <fields>
-        <field name="Digi-Key Part No.">np</field>
-        <field name="Link">np</field>
-        <field name="Manufacturer">np</field>
-      </fields>
-      <libsource lib="Connector_Generic" part="Conn_01x02" description="Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
-      <property name="Digi-Key Part No." value="np"/>
-      <property name="Link" value="np"/>
-      <property name="Manufacturer" value="np"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>6f42057a-f031-40e2-9142-9dd5644d54b0</tstamps>
-    </comp>
     <comp ref="J109">
-      <value>Conn_01x03</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical</footprint>
-      <libsource lib="Connector_Generic" part="Conn_01x03" description="Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <value>SolderJumper_2_Bridged</value>
+      <footprint>Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm</footprint>
+      <libsource lib="Jumper" part="SolderJumper_2_Bridged" description="Solder Jumper, 2-pole, closed/bridged"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>8053805d-43d7-4ed0-876b-7c5f8d0cb97c</tstamps>
-    </comp>
-    <comp ref="J110">
-      <value>Conn_01x02</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical</footprint>
-      <fields>
-        <field name="Digi-Key Part No.">np</field>
-        <field name="Link">np</field>
-        <field name="Manufacturer">np</field>
-      </fields>
-      <libsource lib="Connector_Generic" part="Conn_01x02" description="Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
-      <property name="Digi-Key Part No." value="np"/>
-      <property name="Link" value="np"/>
-      <property name="Manufacturer" value="np"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>6eb05a8a-4610-49ae-b4ab-78db3264c343</tstamps>
-    </comp>
-    <comp ref="J111">
-      <value>Conn_01x03</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical</footprint>
-      <libsource lib="Connector_Generic" part="Conn_01x03" description="Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>625ee122-83b4-413e-844d-9fe44624de9d</tstamps>
+      <tstamps>3f4a3944-0f4e-4571-8bae-04a56b235eb1</tstamps>
     </comp>
     <comp ref="L101">
       <value>9T #24 Bifilar T50-43</value>
@@ -830,27 +798,6 @@
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>4ce4bf50-5c77-4c5d-a0ee-ed9a4794ecf5</tstamps>
-    </comp>
-    <comp ref="L102">
-      <value>INDUCTOR_tapped</value>
-      <footprint>Inductors:Toroid_T-50A_TH_BF_CT_Vertical</footprint>
-      <fields>
-        <field name="Description">TH</field>
-        <field name="Digi-Key Part No.">FT50A-43 (Amidon)</field>
-        <field name="Link">http://www.amidoncorp.com/ft-50A-43/</field>
-        <field name="Manufacturer">TH</field>
-        <field name="Manufacturer PN">TH</field>
-      </fields>
-      <libsource lib="Device" part="INDUCTOR_tapped" description=""/>
-      <property name="Digi-Key Part No." value="FT50A-43 (Amidon)"/>
-      <property name="Link" value="http://www.amidoncorp.com/ft-50A-43/"/>
-      <property name="Manufacturer" value="TH"/>
-      <property name="Manufacturer PN" value="TH"/>
-      <property name="Description" value="TH"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>8f2836e0-2726-4fd2-a9f5-fb4fdfcb0cb0</tstamps>
     </comp>
     <comp ref="P101">
       <value>ISP/PDI</value>
@@ -941,6 +888,32 @@
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>5f5dc156-a8a4-4775-90ba-b5be00b15f26</tstamps>
+    </comp>
+    <comp ref="R1">
+      <value>TBD</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="Digi-Key Part No.">TBD</field>
+      </fields>
+      <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
+      <property name="Digi-Key Part No." value="TBD"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>fee310bc-da09-4fae-8845-10a08cb26149</tstamps>
+    </comp>
+    <comp ref="R2">
+      <value>TBD</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="Digi-Key Part No.">TBD</field>
+      </fields>
+      <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
+      <property name="Digi-Key Part No." value="TBD"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>6802b5d4-85bc-4506-b915-e3373f657648</tstamps>
     </comp>
     <comp ref="R101">
       <value>105k</value>
@@ -1035,23 +1008,21 @@
       <tstamps>c4a0b625-0796-4f97-b5bb-d859e812789a</tstamps>
     </comp>
     <comp ref="R105">
-      <value>1k</value>
+      <value>220</value>
       <footprint>Resistor_SMD:R_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">RES 1K OHM 1% 1/8W 0805</field>
-        <field name="Digi-Key Part No.">RMCF0805FT1K00CT-ND</field>
-        <field name="LCSC Part Number">C17513</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090</field>
-        <field name="Manufacturer">Stackpole Electronics Inc</field>
-        <field name="Manufacturer PN">RMCF0805FT1K00</field>
+        <field name="Description">RES 220 OHM 1% 1/8W 0805</field>
+        <field name="Digi-Key Part No.">13-RC0805FR-10220RLCT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/yageo/rc0805fr-10220rl/14008375</field>
+        <field name="Manufacturer">Yageo</field>
+        <field name="Manufacturer PN">RC0805FR-10220RL</field>
       </fields>
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
-      <property name="Digi-Key Part No." value="RMCF0805FT1K00CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090"/>
-      <property name="Manufacturer" value="Stackpole Electronics Inc"/>
-      <property name="Manufacturer PN" value="RMCF0805FT1K00"/>
-      <property name="Description" value="RES 1K OHM 1% 1/8W 0805"/>
-      <property name="LCSC Part Number" value="C17513"/>
+      <property name="Digi-Key Part No." value="13-RC0805FR-10220RLCT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/yageo/rc0805fr-10220rl/14008375"/>
+      <property name="Manufacturer" value="Yageo"/>
+      <property name="Manufacturer PN" value="RC0805FR-10220RL"/>
+      <property name="Description" value="RES 220 OHM 1% 1/8W 0805"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1128,18 +1099,20 @@
     </comp>
     <comp ref="SW101">
       <value>SW_SPST</value>
-      <footprint>Button_Switch_SMD:SW_SPST_B3U-3000P-B</footprint>
+      <footprint>Button_Switch_SMD:SW_SPST_TL3305A</footprint>
       <fields>
         <field name="Description">SWITCH TACTILE SPST-NO 0.05A 12V</field>
-        <field name="Digi-Key Part No.">SW1256CT-ND</field>
-        <field name="Manufacturer">Omron Electronics Inc-EMC Div</field>
-        <field name="Manufacturer PN">B3U-3000P-B</field>
+        <field name="Digi-Key Part No.">EG5042CT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/e-switch/TL1014BF160QG/3910805</field>
+        <field name="Manufacturer">E-Switch</field>
+        <field name="Manufacturer PN">TL1014BF160QG</field>
       </fields>
       <libsource lib="Switch" part="SW_SPST" description="Single Pole Single Throw (SPST) switch"/>
-      <property name="Digi-Key Part No." value="SW1256CT-ND"/>
-      <property name="Manufacturer" value="Omron Electronics Inc-EMC Div"/>
-      <property name="Manufacturer PN" value="B3U-3000P-B"/>
+      <property name="Digi-Key Part No." value="EG5042CT-ND"/>
+      <property name="Manufacturer" value="E-Switch"/>
+      <property name="Manufacturer PN" value="TL1014BF160QG"/>
       <property name="Description" value="SWITCH TACTILE SPST-NO 0.05A 12V"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/e-switch/TL1014BF160QG/3910805"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1256,6 +1229,28 @@
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>66df0097-bbd9-400c-a9a9-0bf491ece168</tstamps>
+    </comp>
+    <comp ref="U105">
+      <value>TO-220 ADJ Reg.</value>
+      <footprint>TO_SOT_Packages:TO-220_Neutral123_Horizontal</footprint>
+      <datasheet>https://www.analog.com/media/en/technical-documentation/data-sheets/1086ffs.pdf</datasheet>
+      <fields>
+        <field name="Description">IC REG LIN POS ADJ 1.5A TO220-3</field>
+        <field name="Digi-Key Part No.">505-LT1086CT#PBF-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/analog-devices-inc/LT1086CT-PBF/891238</field>
+        <field name="Manufacturer">Analog Devices Inc.</field>
+        <field name="Manufacturer PN">LT1086CT#PBF</field>
+      </fields>
+      <libsource lib="Regulator_Linear" part="LT1086-ADJ" description="1.5A 25V LDO Linear Regulator, Adjustable Output, TO-220/TO-263"/>
+      <property name="Digi-Key Part No." value="505-LT1086CT#PBF-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/analog-devices-inc/LT1086CT-PBF/891238"/>
+      <property name="Manufacturer" value="Analog Devices Inc."/>
+      <property name="Manufacturer PN" value="LT1086CT#PBF"/>
+      <property name="Description" value="IC REG LIN POS ADJ 1.5A TO220-3"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>a49f0862-b292-4cc7-8130-32fdc172f8a1</tstamps>
     </comp>
     <comp ref="W101">
       <value>T2</value>
@@ -1631,7 +1626,7 @@
     </comp>
     <comp ref="C213">
       <value>22uF</value>
-      <footprint>Capacitor_SMD:C_1210_3225Metric</footprint>
+      <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
@@ -1654,7 +1649,7 @@
     </comp>
     <comp ref="C214">
       <value>22uF</value>
-      <footprint>Capacitor_SMD:C_1210_3225Metric</footprint>
+      <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
@@ -1677,7 +1672,7 @@
     </comp>
     <comp ref="C215">
       <value>22uF</value>
-      <footprint>Capacitor_SMD:C_1210_3225Metric</footprint>
+      <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
         <field name="Description">CAP CER 22UF 25V X5R 1210</field>
         <field name="Digi-Key Part No.">1276-3373-1-ND</field>
@@ -1767,6 +1762,27 @@
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
       <tstamps>67c41640-a5e7-4fd7-a17b-9c7fc94c4026</tstamps>
     </comp>
+    <comp ref="F201">
+      <value>1.1A</value>
+      <footprint>Fuse:Fuse_1812_4532Metric</footprint>
+      <fields>
+        <field name="Description">PTC RESET FUSE 16V 1.1A 1812</field>
+        <field name="Digi-Key Part No.">F3485CT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/littelfuse-inc/1812L110-16DR/2023965</field>
+        <field name="Manufacturer">Littelfuse Inc.</field>
+        <field name="Manufacturer PN">1812L110/16DR</field>
+      </fields>
+      <libsource lib="Device" part="Polyfuse_Small" description="Resettable fuse, polymeric positive temperature coefficient, small symbol"/>
+      <property name="Digi-Key Part No." value="F3485CT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/littelfuse-inc/1812L110-16DR/2023965"/>
+      <property name="Manufacturer" value="Littelfuse Inc."/>
+      <property name="Manufacturer PN" value="1812L110/16DR"/>
+      <property name="Description" value="PTC RESET FUSE 16V 1.1A 1812"/>
+      <property name="Sheetname" value="Power Supply"/>
+      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
+      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
+      <tstamps>3f758ec9-95f3-4acf-8bdb-6d3c6615ff72</tstamps>
+    </comp>
     <comp ref="J201">
       <value>Barrel_Jack_Switch</value>
       <footprint>Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal</footprint>
@@ -1789,13 +1805,17 @@
       <tstamps>c40f04fb-ee36-42ae-9454-c125086fbcbe</tstamps>
     </comp>
     <comp ref="J202">
-      <value>Conn_01x03</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical</footprint>
-      <libsource lib="Connector_Generic" part="Conn_01x03" description="Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <value>SolderJumper_3_Bridged12</value>
+      <footprint>Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels</footprint>
+      <fields>
+        <field name="Digi-Key Part No.">np</field>
+      </fields>
+      <libsource lib="Jumper" part="SolderJumper_3_Bridged12" description="3-pole Solder Jumper, pins 1+2 closed/bridged"/>
+      <property name="Digi-Key Part No." value="np"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>6f98ff01-f5b3-4b25-9ed6-371f55ea098f</tstamps>
+      <tstamps>ae8ffd1e-be1d-4f41-b4e2-0842fe0cb899</tstamps>
     </comp>
     <comp ref="J203">
       <value>External Power Source</value>
@@ -1946,23 +1966,21 @@
       <tstamps>d5955590-dc3c-4885-9085-04a0979df419</tstamps>
     </comp>
     <comp ref="R203">
-      <value>105k</value>
+      <value>80.6k</value>
       <footprint>Resistor_SMD:R_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">RES 105K OHM 1% 1/8W 0805</field>
-        <field name="Digi-Key Part No.">311-105KCRCT-ND</field>
-        <field name="LCSC Part Number">C273877</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548</field>
+        <field name="Description">RES 80.6K OHM 1% 1/8W 0805</field>
+        <field name="Digi-Key Part No.">311-80.6KCRCT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/yageo/RC0805FR-0780K6L/728161</field>
         <field name="Manufacturer">YAGEO</field>
-        <field name="Manufacturer PN">RC0805FR-07105KL</field>
+        <field name="Manufacturer PN">RC0805FR-0780K6L</field>
       </fields>
       <libsource lib="Device" part="R_Small_US" description="Resistor, small US symbol"/>
-      <property name="Digi-Key Part No." value="311-105KCRCT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548"/>
+      <property name="Digi-Key Part No." value="311-80.6KCRCT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/yageo/RC0805FR-0780K6L/728161"/>
       <property name="Manufacturer" value="YAGEO"/>
-      <property name="Manufacturer PN" value="RC0805FR-07105KL"/>
-      <property name="Description" value="RES 105K OHM 1% 1/8W 0805"/>
-      <property name="LCSC Part Number" value="C273877"/>
+      <property name="Manufacturer PN" value="RC0805FR-0780K6L"/>
+      <property name="Description" value="RES 80.6K OHM 1% 1/8W 0805"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
@@ -2134,43 +2152,31 @@
       <value>1100pF</value>
       <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
       <fields>
-        <field name="Description">CAP CER 1100PF 50V NP0 0805</field>
-        <field name="Digi-Key Part No.">399-14552-1-ND</field>
-        <field name="LCSC Part Number">C2327793</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=399-14552-1-ND</field>
+        <field name="Description">CAP CER 1100PF 250V NP0 5.08mm</field>
         <field name="Manufacturer">KEMET</field>
-        <field name="Manufacturer PN">C0805C112J5GAC7800</field>
+        <field name="Manufacturer PN">C325C112KAG5TA</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="399-14552-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=399-14552-1-ND"/>
       <property name="Manufacturer" value="KEMET"/>
-      <property name="Manufacturer PN" value="C0805C112J5GAC7800"/>
-      <property name="Description" value="CAP CER 1100PF 50V NP0 0805"/>
-      <property name="LCSC Part Number" value="C2327793"/>
+      <property name="Manufacturer PN" value="C325C112KAG5TA"/>
+      <property name="Description" value="CAP CER 1100PF 250V NP0 5.08mm"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
-      <tstamps>1e903e0b-fffc-4a7b-9e11-b17f2dc58886</tstamps>
+      <tstamps>f0d89eae-86d0-4eee-82c6-ad3daf7543e5</tstamps>
     </comp>
     <comp ref="C303">
       <value>1800pF</value>
       <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
       <fields>
-        <field name="Description">CAP CER 1800PF 100V C0G 0805</field>
-        <field name="Digi-Key Part No.">445-5752-1-ND</field>
-        <field name="LCSC Part Number">C2173329</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=445-5752-1-ND</field>
-        <field name="Manufacturer">TDK Corporation</field>
-        <field name="Manufacturer PN">CGA4F2C0G2A182J085AA</field>
+        <field name="Description">CAP CER 1800PF 250V C0G 5.08mm</field>
+        <field name="Manufacturer">KEMET</field>
+        <field name="Manufacturer PN">C325C182JAG5TA</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="445-5752-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=445-5752-1-ND"/>
-      <property name="Manufacturer" value="TDK Corporation"/>
-      <property name="Manufacturer PN" value="CGA4F2C0G2A182J085AA"/>
-      <property name="Description" value="CAP CER 1800PF 100V C0G 0805"/>
-      <property name="LCSC Part Number" value="C2173329"/>
+      <property name="Manufacturer" value="KEMET"/>
+      <property name="Manufacturer PN" value="C325C182JAG5TA"/>
+      <property name="Description" value="CAP CER 1800PF 250V C0G 5.08mm"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
@@ -2180,20 +2186,14 @@
       <value>91pF</value>
       <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
       <fields>
-        <field name="Description">CAP CER 91PF 100V NP0 0603</field>
-        <field name="Digi-Key Part No.">478-10247-1-ND</field>
-        <field name="LCSC Part Number">C2170042</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=478-10247-1-ND</field>
-        <field name="Manufacturer">KYOCERA AVX</field>
-        <field name="Manufacturer PN">06031U910FAT2A</field>
+        <field name="Description">CAP CER 91PF 250V NP0 5.08mm</field>
+        <field name="Manufacturer">KEMET</field>
+        <field name="Manufacturer PN">C325C910JAG5TA</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="478-10247-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=478-10247-1-ND"/>
-      <property name="Manufacturer" value="KYOCERA AVX"/>
-      <property name="Manufacturer PN" value="06031U910FAT2A"/>
-      <property name="Description" value="CAP CER 91PF 100V NP0 0603"/>
-      <property name="LCSC Part Number" value="C2170042"/>
+      <property name="Manufacturer" value="KEMET"/>
+      <property name="Manufacturer PN" value="C325C910JAG5TA"/>
+      <property name="Description" value="CAP CER 91PF 250V NP0 5.08mm"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
@@ -2203,20 +2203,14 @@
       <value>1100pF</value>
       <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
       <fields>
-        <field name="Description">CAP CER 1100PF 50V NP0 0805</field>
-        <field name="Digi-Key Part No.">399-14552-1-ND</field>
-        <field name="LCSC Part Number">C2327793</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=399-14552-1-ND</field>
+        <field name="Description">CAP CER 1100PF 250V NP0 5.08mm</field>
         <field name="Manufacturer">KEMET</field>
-        <field name="Manufacturer PN">C0805C112J5GAC7800</field>
+        <field name="Manufacturer PN">C325C112KAG5TA</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="399-14552-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=399-14552-1-ND"/>
       <property name="Manufacturer" value="KEMET"/>
-      <property name="Manufacturer PN" value="C0805C112J5GAC7800"/>
-      <property name="Description" value="CAP CER 1100PF 50V NP0 0805"/>
-      <property name="LCSC Part Number" value="C2327793"/>
+      <property name="Manufacturer PN" value="C325C112KAG5TA"/>
+      <property name="Description" value="CAP CER 1100PF 250V NP0 5.08mm"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
@@ -2242,24 +2236,6 @@
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
       <tstamps>d69177a2-5677-467e-9f98-c9fb5f757ff7</tstamps>
-    </comp>
-    <comp ref="J302">
-      <value>Conn_01x03</value>
-      <footprint>Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical</footprint>
-      <libsource lib="Connector_Generic" part="Conn_01x03" description="Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
-      <property name="Sheetname" value="RF Filters"/>
-      <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
-      <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
-      <tstamps>9289bf1e-6dd7-4dc4-8a90-a248b0421e19</tstamps>
-    </comp>
-    <comp ref="JP301">
-      <value>QRP disable</value>
-      <footprint>Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm</footprint>
-      <libsource lib="Jumper" part="SolderJumper_2_Bridged" description="Solder Jumper, 2-pole, closed/bridged"/>
-      <property name="Sheetname" value="RF Filters"/>
-      <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
-      <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
-      <tstamps>66886aae-0aef-4038-9518-9d3c547ce684</tstamps>
     </comp>
     <comp ref="L301">
       <value>2.7uH</value>
@@ -2804,22 +2780,6 @@
         <pin num="2" name="" type="passive"/>
       </pins>
     </libpart>
-    <libpart lib="Device" part="C_Trim_Small">
-      <description>Trimmable capacitor, small symbol</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>C_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">C</field>
-        <field name="Value">C_Trim_Small</field>
-        <field name="Datasheet">~</field>
-      </fields>
-      <pins>
-        <pin num="1" name="" type="passive"/>
-        <pin num="2" name="" type="passive"/>
-      </pins>
-    </libpart>
     <libpart lib="Device" part="D_Schottky_Dual_CommonCathode_AAK_Parallel">
       <description>Dual Schottky diode, common anode on pin 1</description>
       <docs>~</docs>
@@ -2900,23 +2860,6 @@
         <pin num="2" name="2" type="input"/>
       </pins>
     </libpart>
-    <libpart lib="Device" part="INDUCTOR_tapped">
-      <fields>
-        <field name="Reference">L?</field>
-        <field name="Value">INDUCTOR_tapped</field>
-        <field name="Footprint">Inductors:Toroid_T-50A_TH_BF_CT_Vertical</field>
-        <field name="Digi-Key Part No.">FT50A-43 (Amidon)</field>
-        <field name="Link">&lt;a href="http://www.amidoncorp.com/ft-50A-43/"&gt;Link&lt;/a&gt;</field>
-        <field name="Manufacturer">TH</field>
-        <field name="Manufacturer PN">TH</field>
-        <field name="Description">TH</field>
-      </fields>
-      <pins>
-        <pin num="1" name="1" type="passive"/>
-        <pin num="2" name="TAP" type="passive"/>
-        <pin num="3" name="3" type="passive"/>
-      </pins>
-    </libpart>
     <libpart lib="Device" part="LED_Filled">
       <description>Light emitting diode, filled shape</description>
       <docs>~</docs>
@@ -2952,6 +2895,23 @@
       <pins>
         <pin num="1" name="1" type="passive"/>
         <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="Polyfuse_Small">
+      <description>Resettable fuse, polymeric positive temperature coefficient, small symbol</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>*polyfuse*</fp>
+        <fp>*PTC*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">F</field>
+        <field name="Value">Polyfuse_Small</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
       </pins>
     </libpart>
     <libpart lib="Device" part="R_Small_US">
@@ -3052,6 +3012,23 @@
       <pins>
         <pin num="1" name="A" type="passive"/>
         <pin num="2" name="B" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Jumper" part="SolderJumper_3_Bridged12">
+      <description>3-pole Solder Jumper, pins 1+2 closed/bridged</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>SolderJumper*Bridged12*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">JP</field>
+        <field name="Value">SolderJumper_3_Bridged12</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="A" type="passive"/>
+        <pin num="2" name="C" type="passive"/>
+        <pin num="3" name="B" type="passive"/>
       </pins>
     </libpart>
     <libpart lib="MCU_Microchip_AVR" part="AVR128DA28">
@@ -3211,6 +3188,24 @@
         <pin num="3" name="ON/~{OFF}" type="input"/>
         <pin num="4" name="BP" type="input"/>
         <pin num="5" name="VOUT" type="power_out"/>
+      </pins>
+    </libpart>
+    <libpart lib="Regulator_Linear" part="LT1086-ADJ">
+      <description>1.5A 25V LDO Linear Regulator, Adjustable Output, TO-220/TO-263</description>
+      <docs>https://www.analog.com/media/en/technical-documentation/data-sheets/1086ffs.pdf</docs>
+      <footprints>
+        <fp>TO?220*</fp>
+        <fp>TO?263*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">LT1086-ADJ</field>
+        <field name="Datasheet">https://www.analog.com/media/en/technical-documentation/data-sheets/1086ffs.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="ADJ" type="input"/>
+        <pin num="2" name="VO" type="power_out"/>
+        <pin num="3" name="VI" type="power_in"/>
       </pins>
     </libpart>
     <libpart lib="Regulator_Switching" part="TPS63060">
@@ -3382,20 +3377,19 @@
       <node ref="U201" pin="5" pinfunction="VOUT" pintype="power_out"/>
       <node ref="X101" pin="3" pinfunction="Vdd" pintype="power_in"/>
     </net>
-    <net code="2" name="+5V">
+    <net code="2" name="+7V">
       <node ref="C212" pin="1" pintype="passive"/>
       <node ref="C213" pin="2" pintype="passive"/>
       <node ref="C214" pin="2" pintype="passive"/>
       <node ref="C215" pin="2" pintype="passive"/>
       <node ref="D107" pin="3" pinfunction="K" pintype="passive"/>
-      <node ref="J109" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="R202" pin="1" pintype="passive"/>
       <node ref="U203" pin="9" pinfunction="VOUT" pintype="power_out"/>
     </net>
     <net code="3" name="+BATT">
       <node ref="BT201" pin="1" pinfunction="+" pintype="passive"/>
       <node ref="J101" pin="2" pinfunction="Pin_2" pintype="passive"/>
-      <node ref="J202" pin="3" pinfunction="Pin_3" pintype="passive"/>
+      <node ref="J202" pin="3" pinfunction="B" pintype="passive"/>
       <node ref="MOD201" pin="1" pinfunction="Pin_1" pintype="passive"/>
     </net>
     <net code="4" name="+VSW">
@@ -3424,7 +3418,7 @@
     <net code="9" name="Frequency Down">
       <node ref="D112" pin="1" pinfunction="A1" pintype="passive"/>
       <node ref="J102" pin="1" pinfunction="Pin_1" pintype="passive"/>
-      <node ref="J107" pin="5" pinfunction="5" pintype="passive"/>
+      <node ref="J107" pin="8" pinfunction="8" pintype="passive"/>
       <node ref="U101" pin="13" pinfunction="PD7" pintype="bidirectional"/>
     </net>
     <net code="10" name="Frequency Up">
@@ -3445,9 +3439,9 @@
       <node ref="C109" pin="1" pintype="passive"/>
       <node ref="C110" pin="2" pintype="passive"/>
       <node ref="C111" pin="2" pintype="passive"/>
-      <node ref="C112" pin="2" pintype="passive"/>
+      <node ref="C112" pin="1" pintype="passive"/>
+      <node ref="C113" pin="1" pintype="passive"/>
       <node ref="C114" pin="2" pintype="passive"/>
-      <node ref="C115" pin="2" pintype="passive"/>
       <node ref="C201" pin="1" pintype="passive"/>
       <node ref="C202" pin="2" pintype="passive"/>
       <node ref="C203" pin="1" pintype="passive"/>
@@ -3481,19 +3475,17 @@
       <node ref="J104" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J105" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J106" pin="1" pinfunction="Pin_1" pintype="passive"/>
-      <node ref="J107" pin="6" pinfunction="6" pintype="passive"/>
-      <node ref="J108" pin="1" pinfunction="Pin_1" pintype="passive"/>
-      <node ref="J110" pin="1" pinfunction="Pin_1" pintype="passive"/>
+      <node ref="J107" pin="5" pinfunction="5" pintype="passive"/>
       <node ref="J201" pin="2" pintype="passive"/>
       <node ref="J203" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J204" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="J301" pin="2" pinfunction="Ext" pintype="passive"/>
-      <node ref="L102" pin="3" pinfunction="3" pintype="passive"/>
       <node ref="MOD201" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="MOD201" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="P101" pin="6" pinfunction="Pin_6" pintype="passive"/>
       <node ref="Q102" pin="2" pinfunction="S" pintype="passive"/>
       <node ref="Q103" pin="3" pinfunction="S" pintype="passive"/>
+      <node ref="R1" pin="1" pintype="passive"/>
       <node ref="R103" pin="1" pintype="passive"/>
       <node ref="R106" pin="2" pintype="passive"/>
       <node ref="R201" pin="2" pintype="passive"/>
@@ -3549,29 +3541,26 @@
     </net>
     <net code="17" name="Net-(C111-Pad1)">
       <node ref="C111" pin="1" pintype="passive"/>
-      <node ref="C112" pin="1" pintype="passive"/>
-      <node ref="J109" pin="2" pinfunction="Pin_2" pintype="passive"/>
+      <node ref="C112" pin="2" pintype="passive"/>
+      <node ref="D113" pin="2" pinfunction="A" pintype="passive"/>
+      <node ref="D114" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="J109" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="L101" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="R2" pin="2" pintype="passive"/>
+      <node ref="U105" pin="2" pinfunction="VO" pintype="power_out"/>
     </net>
-    <net code="18" name="Net-(C113-Pad1)">
-      <node ref="C113" pin="1" pintype="passive"/>
-      <node ref="J110" pin="2" pinfunction="Pin_2" pintype="passive"/>
-    </net>
-    <net code="19" name="Net-(C113-Pad2)">
-      <node ref="C113" pin="2" pintype="passive"/>
-      <node ref="L102" pin="2" pinfunction="TAP" pintype="passive"/>
-    </net>
-    <net code="20" name="Net-(C114-Pad1)">
+    <net code="18" name="Net-(C114-Pad1)">
       <node ref="C114" pin="1" pintype="passive"/>
-      <node ref="C115" pin="1" pintype="passive"/>
-      <node ref="J111" pin="3" pinfunction="Pin_3" pintype="passive"/>
-      <node ref="L102" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="D114" pin="2" pinfunction="A" pintype="passive"/>
+      <node ref="R1" pin="2" pintype="passive"/>
+      <node ref="R2" pin="1" pintype="passive"/>
+      <node ref="U105" pin="1" pinfunction="ADJ" pintype="input"/>
     </net>
-    <net code="21" name="Net-(C202-Pad1)">
+    <net code="19" name="Net-(C202-Pad1)">
       <node ref="C202" pin="1" pintype="passive"/>
       <node ref="U201" pin="4" pinfunction="BP" pintype="input"/>
     </net>
-    <net code="22" name="Net-(C203-Pad2)">
+    <net code="20" name="Net-(C203-Pad2)">
       <node ref="C203" pin="2" pintype="passive"/>
       <node ref="C206" pin="2" pintype="passive"/>
       <node ref="D201" pin="3" pinfunction="A" pintype="passive"/>
@@ -3579,199 +3568,193 @@
       <node ref="U201" pin="3" pinfunction="ON/~{OFF}" pintype="input"/>
       <node ref="U202" pin="1" pinfunction="VIN" pintype="power_in"/>
     </net>
-    <net code="23" name="Net-(C205-Pad2)">
+    <net code="21" name="Net-(C205-Pad2)">
       <node ref="C205" pin="2" pintype="passive"/>
       <node ref="C207" pin="2" pintype="passive"/>
-      <node ref="J202" pin="2" pinfunction="Pin_2" pintype="passive"/>
+      <node ref="J202" pin="2" pinfunction="C" pintype="passive"/>
       <node ref="U203" pin="2" pinfunction="VIN" pintype="power_in"/>
     </net>
-    <net code="24" name="Net-(C208-Pad1)">
+    <net code="22" name="Net-(C208-Pad1)">
       <node ref="C208" pin="1" pintype="passive"/>
       <node ref="U203" pin="6" pinfunction="VAUX" pintype="passive"/>
     </net>
-    <net code="25" name="Net-(C209-Pad1)">
+    <net code="23" name="Net-(C209-Pad1)">
       <node ref="C209" pin="1" pintype="passive"/>
       <node ref="U202" pin="4" pinfunction="BP" pintype="input"/>
     </net>
-    <net code="26" name="Net-(C211-Pad1)">
+    <net code="24" name="Net-(C211-Pad1)">
       <node ref="C211" pin="1" pintype="passive"/>
       <node ref="R202" pin="2" pintype="passive"/>
       <node ref="R203" pin="1" pintype="passive"/>
       <node ref="U203" pin="8" pinfunction="FB" pintype="input"/>
     </net>
-    <net code="27" name="Net-(C216-Pad1)">
+    <net code="25" name="Net-(C216-Pad1)">
       <node ref="C216" pin="1" pintype="passive"/>
       <node ref="J203" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="JP201" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="U204" pin="1" pinfunction="VIN" pintype="power_in"/>
     </net>
-    <net code="28" name="Net-(C301-Pad1)">
-      <node ref="C301" pin="1" pintype="passive"/>
-      <node ref="J302" pin="2" pinfunction="Pin_2" pintype="passive"/>
-      <node ref="JP301" pin="2" pinfunction="B" pintype="passive"/>
-    </net>
-    <net code="29" name="Net-(C301-Pad2)">
+    <net code="26" name="Net-(C301-Pad2)">
       <node ref="C301" pin="2" pintype="passive"/>
       <node ref="C302" pin="1" pintype="passive"/>
       <node ref="L301" pin="1" pinfunction="1" pintype="input"/>
       <node ref="W301" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="30" name="Net-(C303-Pad2)">
+    <net code="27" name="Net-(C303-Pad2)">
       <node ref="C303" pin="2" pintype="passive"/>
       <node ref="C304" pin="2" pintype="passive"/>
       <node ref="L301" pin="2" pinfunction="2" pintype="input"/>
       <node ref="L302" pin="1" pinfunction="1" pintype="input"/>
       <node ref="W302" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="31" name="Net-(C304-Pad1)">
+    <net code="28" name="Net-(C304-Pad1)">
       <node ref="C304" pin="1" pintype="passive"/>
       <node ref="C305" pin="1" pintype="passive"/>
       <node ref="J301" pin="1" pinfunction="In" pintype="passive"/>
       <node ref="L302" pin="2" pinfunction="2" pintype="input"/>
       <node ref="W303" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="32" name="Net-(D101-Pad2)">
+    <net code="29" name="Net-(D101-Pad2)">
       <node ref="D101" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="Q101" pin="1" pinfunction="G" pintype="input"/>
       <node ref="Q102" pin="3" pinfunction="D" pintype="passive"/>
       <node ref="R101" pin="1" pintype="passive"/>
     </net>
-    <net code="33" name="Net-(D102-Pad2)">
+    <net code="30" name="Net-(D102-Pad2)">
       <node ref="D102" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="U101" pin="9" pinfunction="PD3" pintype="bidirectional"/>
     </net>
-    <net code="34" name="Net-(D103-Pad2)">
+    <net code="31" name="Net-(D103-Pad2)">
       <node ref="D103" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J104" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="R104" pin="1" pintype="passive"/>
     </net>
-    <net code="35" name="Net-(D104-Pad2)">
+    <net code="32" name="Net-(D104-Pad2)">
       <node ref="D104" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J106" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="R105" pin="1" pintype="passive"/>
     </net>
-    <net code="36" name="Net-(D105-Pad2)">
+    <net code="33" name="Net-(D105-Pad2)">
       <node ref="D105" pin="2" pinfunction="A2" pintype="passive"/>
-      <node ref="J107" pin="8" pinfunction="8" pintype="passive"/>
+      <node ref="J107" pin="2" pinfunction="2" pintype="passive"/>
       <node ref="R106" pin="1" pintype="passive"/>
       <node ref="U101" pin="3" pinfunction="PC1/RxD1" pintype="bidirectional"/>
     </net>
-    <net code="37" name="Net-(D106-Pad1)">
+    <net code="34" name="Net-(D106-Pad1)">
       <node ref="D106" pin="1" pinfunction="A1" pintype="passive"/>
-      <node ref="J107" pin="9" pinfunction="9" pintype="passive"/>
+      <node ref="J107" pin="3" pinfunction="3" pintype="passive"/>
       <node ref="U101" pin="2" pinfunction="PC0/TxD1" pintype="bidirectional"/>
     </net>
-    <net code="38" name="Net-(D202-Pad1)">
+    <net code="35" name="Net-(D202-Pad1)">
       <node ref="D202" pin="1" pinfunction="K" pintype="passive"/>
-      <node ref="L201" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="F201" pin="2" pintype="passive"/>
     </net>
-    <net code="39" name="Net-(D202-Pad2)">
+    <net code="36" name="Net-(D202-Pad2)">
       <node ref="D202" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J201" pin="1" pintype="passive"/>
     </net>
-    <net code="40" name="Net-(J101-Pad1)">
+    <net code="37" name="Net-(F201-Pad1)">
+      <node ref="F201" pin="1" pintype="passive"/>
+      <node ref="L201" pin="1" pinfunction="1" pintype="passive"/>
+    </net>
+    <net code="38" name="Net-(J101-Pad1)">
       <node ref="J101" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="Q101" pin="2" pinfunction="S" pintype="passive"/>
       <node ref="R101" pin="2" pintype="passive"/>
     </net>
-    <net code="41" name="Net-(J108-Pad2)">
-      <node ref="J108" pin="2" pinfunction="Pin_2" pintype="passive"/>
-      <node ref="U104" pin="2" pinfunction="Pilot" pintype="output"/>
-    </net>
-    <net code="42" name="Net-(J204-Pad2)">
+    <net code="39" name="Net-(J204-Pad2)">
       <node ref="J204" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="U204" pin="6" pinfunction="VOUT" pintype="power_out"/>
     </net>
-    <net code="43" name="Net-(L101-Pad2)">
+    <net code="40" name="Net-(L101-Pad2)">
       <node ref="L101" pin="2" pinfunction="TAP" pintype="passive"/>
       <node ref="Q103" pin="2" pinfunction="D" pintype="passive"/>
     </net>
-    <net code="44" name="Net-(L202-Pad1)">
+    <net code="41" name="Net-(L202-Pad1)">
       <node ref="L202" pin="1" pinfunction="1" pintype="input"/>
       <node ref="U203" pin="1" pinfunction="L1" pintype="passive"/>
     </net>
-    <net code="45" name="Net-(L202-Pad2)">
+    <net code="42" name="Net-(L202-Pad2)">
       <node ref="L202" pin="2" pinfunction="2" pintype="input"/>
       <node ref="U203" pin="10" pinfunction="L2" pintype="passive"/>
     </net>
-    <net code="46" name="Net-(P101-Pad1)">
+    <net code="43" name="Net-(P101-Pad1)">
       <node ref="P101" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="U101" pin="19" pinfunction="UPDI" pintype="passive"/>
     </net>
-    <net code="47" name="Net-(Q103-Pad1)">
+    <net code="44" name="Net-(Q103-Pad1)">
       <node ref="Q103" pin="1" pinfunction="G" pintype="input"/>
       <node ref="U104" pin="3" pinfunction="Out" pintype="output"/>
       <node ref="W103" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="48" name="Net-(R104-Pad2)">
+    <net code="45" name="Net-(R104-Pad2)">
       <node ref="R104" pin="2" pintype="passive"/>
       <node ref="U101" pin="8" pinfunction="PD2" pintype="bidirectional"/>
     </net>
-    <net code="49" name="Net-(R105-Pad2)">
+    <net code="46" name="Net-(R105-Pad2)">
       <node ref="R105" pin="2" pintype="passive"/>
       <node ref="U101" pin="10" pinfunction="PD4" pintype="bidirectional"/>
     </net>
-    <net code="50" name="Net-(R107-Pad1)">
+    <net code="47" name="Net-(R107-Pad1)">
       <node ref="R107" pin="1" pintype="passive"/>
       <node ref="TP101" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="U101" pin="5" pinfunction="PC3/SCL" pintype="bidirectional"/>
       <node ref="U102" pin="4" pinfunction="SCL" pintype="passive"/>
     </net>
-    <net code="51" name="Net-(R108-Pad1)">
+    <net code="48" name="Net-(R108-Pad1)">
       <node ref="R108" pin="1" pintype="passive"/>
       <node ref="TP101" pin="4" pinfunction="Pin_4" pintype="passive"/>
       <node ref="U101" pin="4" pinfunction="PC2/SDA" pintype="bidirectional"/>
       <node ref="U102" pin="5" pinfunction="SDA" pintype="passive"/>
     </net>
-    <net code="52" name="Net-(R201-Pad1)">
+    <net code="49" name="Net-(R201-Pad1)">
       <node ref="R201" pin="1" pintype="passive"/>
       <node ref="U203" pin="4" pinfunction="PS/SYNC" pintype="input"/>
     </net>
-    <net code="53" name="Net-(U101-Pad16)">
+    <net code="50" name="Net-(U101-Pad16)">
       <node ref="U101" pin="16" pinfunction="PF0/XTAL32k1" pintype="input"/>
       <node ref="X101" pin="2" pinfunction="OUT" pintype="output"/>
     </net>
-    <net code="54" name="Paddle Dah">
+    <net code="51" name="Paddle Dah">
       <node ref="D108" pin="2" pinfunction="A2" pintype="passive"/>
       <node ref="J105" pin="3" pinfunction="Pin_3" pintype="passive"/>
-      <node ref="J107" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="J107" pin="6" pinfunction="6" pintype="passive"/>
       <node ref="U101" pin="27" pinfunction="PA5/RxD0" pintype="bidirectional"/>
     </net>
-    <net code="55" name="Paddle_Dit">
+    <net code="52" name="Paddle_Dit">
       <node ref="D109" pin="2" pinfunction="A2" pintype="passive"/>
       <node ref="J105" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="J107" pin="1" pinfunction="1" pintype="passive"/>
       <node ref="U101" pin="26" pinfunction="PA4/TxD0" pintype="bidirectional"/>
     </net>
-    <net code="56" name="Power_Good">
+    <net code="53" name="Power_Good">
       <node ref="R204" pin="2" pintype="passive"/>
       <node ref="U101" pin="7" pinfunction="PD1" pintype="bidirectional"/>
       <node ref="U203" pin="5" pinfunction="PG" pintype="output"/>
     </net>
-    <net code="57" name="Power_enable">
+    <net code="54" name="Power_enable">
       <node ref="Q102" pin="1" pinfunction="G" pintype="input"/>
       <node ref="U101" pin="25" pinfunction="PA3" pintype="passive"/>
     </net>
-    <net code="58" name="RF_Raw">
-      <node ref="J302" pin="1" pinfunction="Pin_1" pintype="passive"/>
-      <node ref="JP301" pin="1" pinfunction="A" pintype="passive"/>
+    <net code="55" name="RF_Raw">
+      <node ref="C301" pin="1" pintype="passive"/>
       <node ref="L101" pin="3" pinfunction="3" pintype="passive"/>
     </net>
-    <net code="59" name="Straightkey">
+    <net code="56" name="Straightkey">
       <node ref="D110" pin="1" pinfunction="A1" pintype="passive"/>
       <node ref="J105" pin="4" pinfunction="Pin_4" pintype="passive"/>
-      <node ref="J107" pin="3" pinfunction="3" pintype="passive"/>
+      <node ref="J107" pin="7" pinfunction="7" pintype="passive"/>
       <node ref="U101" pin="28" pinfunction="PA6" pintype="bidirectional"/>
     </net>
-    <net code="60" name="V+_Charging">
-      <node ref="J107" pin="7" pinfunction="7" pintype="passive"/>
+    <net code="57" name="V+_Charging">
+      <node ref="J107" pin="9" pinfunction="9" pintype="passive"/>
       <node ref="MOD201" pin="4" pinfunction="Pin_4" pintype="passive"/>
     </net>
-    <net code="61" name="V3V3_PWR_ENABLE">
+    <net code="58" name="V3V3_PWR_ENABLE">
       <node ref="U101" pin="24" pinfunction="PA2" pintype="bidirectional"/>
       <node ref="U202" pin="3" pinfunction="ON/~{OFF}" pintype="input"/>
     </net>
-    <net code="62" name="VDD">
+    <net code="59" name="VDD">
       <node ref="C105" pin="1" pintype="passive"/>
       <node ref="C106" pin="1" pintype="passive"/>
       <node ref="C108" pin="1" pintype="passive"/>
@@ -3784,81 +3767,78 @@
       <node ref="U202" pin="5" pinfunction="VOUT" pintype="power_out"/>
       <node ref="X102" pin="4" pinfunction="Vcc" pintype="power_in"/>
     </net>
-    <net code="63" name="V_ext">
+    <net code="60" name="V_ext">
+      <node ref="C113" pin="2" pintype="passive"/>
       <node ref="C204" pin="2" pintype="passive"/>
       <node ref="D107" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="D113" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="D201" pin="1" pinfunction="K" pintype="passive"/>
-      <node ref="J109" pin="3" pinfunction="Pin_3" pintype="passive"/>
-      <node ref="J202" pin="1" pinfunction="Pin_1" pintype="passive"/>
+      <node ref="J109" pin="1" pinfunction="A" pintype="passive"/>
+      <node ref="J202" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="JP201" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="L201" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="U105" pin="3" pinfunction="VI" pintype="power_in"/>
     </net>
-    <net code="64" name="Vbat">
+    <net code="61" name="Vbat">
       <node ref="R102" pin="1" pintype="passive"/>
       <node ref="R103" pin="2" pintype="passive"/>
       <node ref="U101" pin="6" pinfunction="PD0/AIN0" pintype="bidirectional"/>
     </net>
-    <net code="65" name="unconnected-(BT401-Pad1)">
+    <net code="62" name="unconnected-(BT401-Pad1)">
       <node ref="BT401" pin="1" pinfunction="+" pintype="passive+no_connect"/>
     </net>
-    <net code="66" name="unconnected-(BT401-Pad2)">
+    <net code="63" name="unconnected-(BT401-Pad2)">
       <node ref="BT401" pin="2" pinfunction="-" pintype="passive+no_connect"/>
     </net>
-    <net code="67" name="unconnected-(J111-Pad1)">
-      <node ref="J111" pin="1" pinfunction="Pin_1" pintype="passive+no_connect"/>
-    </net>
-    <net code="68" name="unconnected-(J111-Pad2)">
-      <node ref="J111" pin="2" pinfunction="Pin_2" pintype="passive+no_connect"/>
-    </net>
-    <net code="69" name="unconnected-(J201-Pad3)">
+    <net code="64" name="unconnected-(J201-Pad3)">
       <node ref="J201" pin="3" pintype="passive+no_connect"/>
     </net>
-    <net code="70" name="unconnected-(J302-Pad3)">
-      <node ref="J302" pin="3" pinfunction="Pin_3" pintype="passive+no_connect"/>
-    </net>
-    <net code="71" name="unconnected-(P101-Pad3)">
+    <net code="65" name="unconnected-(P101-Pad3)">
       <node ref="P101" pin="3" pinfunction="Pin_3" pintype="passive+no_connect"/>
     </net>
-    <net code="72" name="unconnected-(P101-Pad4)">
+    <net code="66" name="unconnected-(P101-Pad4)">
       <node ref="P101" pin="4" pinfunction="Pin_4" pintype="passive+no_connect"/>
     </net>
-    <net code="73" name="unconnected-(P101-Pad5)">
+    <net code="67" name="unconnected-(P101-Pad5)">
       <node ref="P101" pin="5" pinfunction="Pin_5" pintype="passive+no_connect"/>
     </net>
-    <net code="74" name="unconnected-(U101-Pad11)">
+    <net code="68" name="unconnected-(U101-Pad11)">
       <node ref="U101" pin="11" pinfunction="PD5" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="75" name="unconnected-(U101-Pad17)">
+    <net code="69" name="unconnected-(U101-Pad17)">
       <node ref="U101" pin="17" pinfunction="PF1/XTAL32k2" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="76" name="unconnected-(U101-Pad18)">
+    <net code="70" name="unconnected-(U101-Pad18)">
       <node ref="U101" pin="18" pinfunction="PF6/~{RESET}" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="77" name="unconnected-(U102-Pad3)">
+    <net code="71" name="unconnected-(U102-Pad3)">
       <node ref="U102" pin="3" pinfunction="XB" pintype="passive+no_connect"/>
     </net>
-    <net code="78" name="unconnected-(U102-Pad6)">
+    <net code="72" name="unconnected-(U102-Pad6)">
       <node ref="U102" pin="6" pinfunction="CLK2" pintype="passive+no_connect"/>
     </net>
-    <net code="79" name="unconnected-(U102-Pad10)">
+    <net code="73" name="unconnected-(U102-Pad10)">
       <node ref="U102" pin="10" pinfunction="CLK0" pintype="passive+no_connect"/>
     </net>
-    <net code="80" name="unconnected-(U103-Pad4)">
+    <net code="74" name="unconnected-(U103-Pad4)">
       <node ref="U103" pin="4" pinfunction="CT" pintype="output+no_connect"/>
     </net>
-    <net code="81" name="unconnected-(U103-Pad5)">
+    <net code="75" name="unconnected-(U103-Pad5)">
       <node ref="U103" pin="5" pinfunction="QOD" pintype="open_collector+no_connect"/>
     </net>
-    <net code="82" name="unconnected-(U204-Pad4)">
+    <net code="76" name="unconnected-(U104-Pad2)">
+      <node ref="U104" pin="2" pinfunction="Pilot" pintype="output+no_connect"/>
+    </net>
+    <net code="77" name="unconnected-(U204-Pad4)">
       <node ref="U204" pin="4" pinfunction="CT" pintype="output+no_connect"/>
     </net>
-    <net code="83" name="unconnected-(U204-Pad5)">
+    <net code="78" name="unconnected-(U204-Pad5)">
       <node ref="U204" pin="5" pinfunction="QOD" pintype="open_collector+no_connect"/>
     </net>
-    <net code="84" name="unconnected-(X101-Pad1)">
+    <net code="79" name="unconnected-(X101-Pad1)">
       <node ref="X101" pin="1" pinfunction="NC" pintype="no_connect"/>
     </net>
-    <net code="85" name="unconnected-(X102-Pad1)">
+    <net code="80" name="unconnected-(X102-Pad1)">
       <node ref="X102" pin="1" pinfunction="NC" pintype="no_connect"/>
     </net>
   </nets>

@@ -1,6 +1,10 @@
 Ref,Val,Package,PosX,PosY,Rot,Side
+"C302","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-110.150000,-95.250000,90.000000,bottom
+"C303","1800pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-117.580000,-107.290000,90.000000,bottom
+"C304","91pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-117.660000,-91.110000,-90.000000,bottom
+"C305","1100pF","C_Rect_L7.0mm_W2.5mm_P5.00mm",-125.760000,-98.940000,0.000000,bottom
 "J102","Conn_01x03","PinHeader_1x03_P2.54mm_Vertical",-52.045000,-114.710000,-90.000000,bottom
 "J105","Conn_01x04","PinHeader_1x04_P2.54mm_Vertical",-51.052500,-77.750000,-90.000000,bottom
 "J107","DB9 Female","DSUB-9_Female_EdgeMount_P2.77mm",-48.102500,-89.412500,90.000000,bottom
-"MOD201","AdaFruit Charger","PinHeader_1x04_P2.54mm_Vertical",-74.197500,-97.890000,90.000000,bottom
+"MOD201","AdaFruit Charger","PinHeader_1x04_P2.54mm_Vertical",-70.197500,-95.890000,90.000000,bottom
 "U105","TO-220 ADJ Reg.","TO-220_Neutral123_Horizontal",-122.759160,-81.200000,-90.000000,bottom

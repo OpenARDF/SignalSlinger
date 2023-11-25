@@ -1,1 +1,0 @@
-Male DB9 Connector Mock-up by Tails86 on Thingiverse: https://www.thingiverse.com/thing:4749243

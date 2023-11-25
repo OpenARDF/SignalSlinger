@@ -1,4 +1,4 @@
-20499682503277032
+20502170590524688
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -23477,6 +23477,13 @@ PCIe
 0
 164
 164
+Connector_PCBEdge
+DB9F_CI
+Connecteur DB9 femelle encarte
+CONN DB9
+0
+9
+9
 Connector_PCBEdge
 Samtec_MECF-05-0_-L-DV_2x05_P1.27mm_Polarized_Edge
 Highspeed card edge connector for PCB's with 05 contacts (polarized)
