@@ -12,7 +12,7 @@ Drill file 'SignalSlinger-PTH.drl' contains
     =============================================================
     T1  0.300mm  0.0118"  (5 holes)
     T2  0.331mm  0.0130"  (2 holes)
-    T3  0.400mm  0.0157"  (422 holes)
+    T3  0.400mm  0.0157"  (419 holes)
     T4  0.600mm  0.0236"  (2 holes)
     T5  0.700mm  0.0276"  (4 holes)
     T6  0.800mm  0.0315"  (8 holes)
@@ -23,7 +23,7 @@ Drill file 'SignalSlinger-PTH.drl' contains
     T11  1.100mm  0.0433"  (2 holes)
     T12  2.010mm  0.0791"  (2 holes)
 
-    Total plated holes count 490
+    Total plated holes count 487
 
 
 Drill file 'SignalSlinger-NPTH.drl' contains

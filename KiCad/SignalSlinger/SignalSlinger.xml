@@ -8,8 +8,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.0</rev>
-        <date>2023-11-21</date>
+        <rev>2.2</rev>
+        <date>2023-12-08</date>
         <source>SignalSlinger.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -26,8 +26,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.0</rev>
-        <date>2023-11-21</date>
+        <rev>2.2</rev>
+        <date>2023-12-08</date>
         <source>PowerSupply.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -44,8 +44,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.0</rev>
-        <date>2023-11-21</date>
+        <rev>2.2</rev>
+        <date>2023-12-08</date>
         <source>RF_Filters.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -62,8 +62,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.0</rev>
-        <date>2023-11-21</date>
+        <rev>2.2</rev>
+        <date>2023-12-08</date>
         <source>Misc.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -677,20 +677,42 @@
       <tstamps>64811abf-516c-4f50-8601-bf447456fb6b</tstamps>
     </comp>
     <comp ref="D113">
-      <value>1N914WT</value>
-      <footprint>Diode_SMD:D_SOD-523</footprint>
-      <datasheet>http://www.mouser.com/ds/2/149/1N4148WT-461550.pdf</datasheet>
+      <value>1N4001</value>
+      <footprint>Diode_SMD:D_SOD-123F</footprint>
+      <fields>
+        <field name="Description">DIODE GEN PURP 50V 1A SOD123F</field>
+        <field name="Digi-Key Part No.">HS1AFLCT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA</field>
+        <field name="Manufacturer">Taiwan Semiconductor Corporation</field>
+        <field name="Manufacturer PN">HS1AFL</field>
+      </fields>
       <libsource lib="Diode" part="1N914WT" description="75V 0.15A Fast switching Diode, SOD-523"/>
+      <property name="Digi-Key Part No." value="HS1AFLCT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA"/>
+      <property name="Manufacturer" value="Taiwan Semiconductor Corporation"/>
+      <property name="Manufacturer PN" value="HS1AFL"/>
+      <property name="Description" value="DIODE GEN PURP 50V 1A SOD123F"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>76a10c0b-6cb7-464f-9327-60d8d92cce59</tstamps>
     </comp>
     <comp ref="D114">
-      <value>1N914WT</value>
-      <footprint>Diode_SMD:D_SOD-523</footprint>
-      <datasheet>http://www.mouser.com/ds/2/149/1N4148WT-461550.pdf</datasheet>
+      <value>1N4001</value>
+      <footprint>Diode_SMD:D_SOD-123F</footprint>
+      <fields>
+        <field name="Description">DIODE GEN PURP 50V 1A SOD123F</field>
+        <field name="Digi-Key Part No.">HS1AFLCT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA</field>
+        <field name="Manufacturer">Taiwan Semiconductor Corporation</field>
+        <field name="Manufacturer PN">HS1AFL</field>
+      </fields>
       <libsource lib="Diode" part="1N914WT" description="75V 0.15A Fast switching Diode, SOD-523"/>
+      <property name="Digi-Key Part No." value="HS1AFLCT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA"/>
+      <property name="Manufacturer" value="Taiwan Semiconductor Corporation"/>
+      <property name="Manufacturer PN" value="HS1AFL"/>
+      <property name="Description" value="DIODE GEN PURP 50V 1A SOD123F"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1741,26 +1763,87 @@
     </comp>
     <comp ref="D202">
       <value>B330A Schottky Diode</value>
-      <footprint>Diode_SMD:D_SMA</footprint>
+      <footprint>Diode_SMD:D_SMB</footprint>
       <fields>
-        <field name="Description">DIODE SCHOTTKY 30V 3A SMA</field>
-        <field name="Digi-Key Part No.">B330A-FDICT-ND</field>
-        <field name="LCSC Part Number">C110485</field>
-        <field name="Link">https://www.digikey.com/short/70dw2rqz</field>
+        <field name="Description">DIODE GEN PURP 50V 3A SMB</field>
+        <field name="Digi-Key Part No.">S3AB-FDICT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419</field>
         <field name="Manufacturer">Diodes Incorporated</field>
-        <field name="Manufacturer PN">B330A-13-F</field>
+        <field name="Manufacturer PN">S3AB-13-F</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="B330A-FDICT-ND"/>
-      <property name="Link" value="https://www.digikey.com/short/70dw2rqz"/>
+      <property name="Digi-Key Part No." value="S3AB-FDICT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419"/>
       <property name="Manufacturer" value="Diodes Incorporated"/>
-      <property name="Manufacturer PN" value="B330A-13-F"/>
-      <property name="Description" value="DIODE SCHOTTKY 30V 3A SMA"/>
-      <property name="LCSC Part Number" value="C110485"/>
+      <property name="Manufacturer PN" value="S3AB-13-F"/>
+      <property name="Description" value="DIODE GEN PURP 50V 3A SMB"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
       <tstamps>67c41640-a5e7-4fd7-a17b-9c7fc94c4026</tstamps>
+    </comp>
+    <comp ref="D203">
+      <value>Schottky Diode</value>
+      <footprint>Diode_SMD:D_SOD-123</footprint>
+      <fields>
+        <field name="Description">DIODE SCHOTTKY 40V 500MA SOD123</field>
+        <field name="Digi-Key Part No.">3757-SS0540_R1_00001CT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617</field>
+        <field name="Manufacturer">Panjit International Inc.</field>
+        <field name="Manufacturer PN">SS0540_R1_00001</field>
+      </fields>
+      <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
+      <property name="Digi-Key Part No." value="3757-SS0540_R1_00001CT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617"/>
+      <property name="Manufacturer" value="Panjit International Inc."/>
+      <property name="Manufacturer PN" value="SS0540_R1_00001"/>
+      <property name="Description" value="DIODE SCHOTTKY 40V 500MA SOD123"/>
+      <property name="Sheetname" value="Power Supply"/>
+      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
+      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
+      <tstamps>e20bf944-d393-4fd1-97b5-6fd7f7604c33</tstamps>
+    </comp>
+    <comp ref="D204">
+      <value>Schottky Diode</value>
+      <footprint>Diode_SMD:D_SOD-123</footprint>
+      <fields>
+        <field name="Description">DIODE SCHOTTKY 40V 500MA SOD123</field>
+        <field name="Digi-Key Part No.">3757-SS0540_R1_00001CT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617</field>
+        <field name="Manufacturer">Panjit International Inc.</field>
+        <field name="Manufacturer PN">SS0540_R1_00001</field>
+      </fields>
+      <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
+      <property name="Digi-Key Part No." value="3757-SS0540_R1_00001CT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617"/>
+      <property name="Manufacturer" value="Panjit International Inc."/>
+      <property name="Manufacturer PN" value="SS0540_R1_00001"/>
+      <property name="Description" value="DIODE SCHOTTKY 40V 500MA SOD123"/>
+      <property name="Sheetname" value="Power Supply"/>
+      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
+      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
+      <tstamps>62e6bdff-cfbb-4ca4-8d2b-9934a718df37</tstamps>
+    </comp>
+    <comp ref="D205">
+      <value>Schottky Diode</value>
+      <footprint>Diode_SMD:D_SOD-123</footprint>
+      <fields>
+        <field name="Description">DIODE SCHOTTKY 40V 500MA SOD123</field>
+        <field name="Digi-Key Part No.">3757-SS0540_R1_00001CT-ND</field>
+        <field name="Link">https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617</field>
+        <field name="Manufacturer">Panjit International Inc.</field>
+        <field name="Manufacturer PN">SS0540_R1_00001</field>
+      </fields>
+      <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
+      <property name="Digi-Key Part No." value="3757-SS0540_R1_00001CT-ND"/>
+      <property name="Link" value="https://www.digikey.com/en/products/detail/panjit-international-inc/SS0540-R1-00001/14660617"/>
+      <property name="Manufacturer" value="Panjit International Inc."/>
+      <property name="Manufacturer PN" value="SS0540_R1_00001"/>
+      <property name="Description" value="DIODE SCHOTTKY 40V 500MA SOD123"/>
+      <property name="Sheetname" value="Power Supply"/>
+      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
+      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
+      <tstamps>1e9eae5c-a7ca-4c5b-a119-8ee2c6cbc7b0</tstamps>
     </comp>
     <comp ref="F201">
       <value>1.1A</value>
@@ -1804,21 +1887,8 @@
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
       <tstamps>c40f04fb-ee36-42ae-9454-c125086fbcbe</tstamps>
     </comp>
-    <comp ref="J202">
-      <value>SolderJumper_3_Bridged12</value>
-      <footprint>Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels</footprint>
-      <fields>
-        <field name="Digi-Key Part No.">np</field>
-      </fields>
-      <libsource lib="Jumper" part="SolderJumper_3_Bridged12" description="3-pole Solder Jumper, pins 1+2 closed/bridged"/>
-      <property name="Digi-Key Part No." value="np"/>
-      <property name="Sheetname" value="Power Supply"/>
-      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
-      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>ae8ffd1e-be1d-4f41-b4e2-0842fe0cb899</tstamps>
-    </comp>
     <comp ref="J203">
-      <value>External Power Source</value>
+      <value>External Fan Power</value>
       <footprint>Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical</footprint>
       <fields>
         <field name="Digi-Key Part No.">np</field>
@@ -3014,23 +3084,6 @@
         <pin num="2" name="B" type="passive"/>
       </pins>
     </libpart>
-    <libpart lib="Jumper" part="SolderJumper_3_Bridged12">
-      <description>3-pole Solder Jumper, pins 1+2 closed/bridged</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>SolderJumper*Bridged12*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">JP</field>
-        <field name="Value">SolderJumper_3_Bridged12</field>
-        <field name="Datasheet">~</field>
-      </fields>
-      <pins>
-        <pin num="1" name="A" type="passive"/>
-        <pin num="2" name="C" type="passive"/>
-        <pin num="3" name="B" type="passive"/>
-      </pins>
-    </libpart>
     <libpart lib="MCU_Microchip_AVR" part="AVR128DA28">
       <description>24MHz, 128kB Flash, 16kB SRAM, 512B EEPROM, USART, I2C, SPI, SOIC-28</description>
       <docs>http://ww1.microchip.com/downloads/en/DeviceDoc/doc7707.pdf</docs>
@@ -3388,8 +3441,8 @@
     </net>
     <net code="3" name="+BATT">
       <node ref="BT201" pin="1" pinfunction="+" pintype="passive"/>
+      <node ref="D204" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J101" pin="2" pinfunction="Pin_2" pintype="passive"/>
-      <node ref="J202" pin="3" pinfunction="B" pintype="passive"/>
       <node ref="MOD201" pin="1" pinfunction="Pin_1" pintype="passive"/>
     </net>
     <net code="4" name="+VSW">
@@ -3564,14 +3617,15 @@
       <node ref="C203" pin="2" pintype="passive"/>
       <node ref="C206" pin="2" pintype="passive"/>
       <node ref="D201" pin="3" pinfunction="A" pintype="passive"/>
+      <node ref="D203" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="U201" pin="1" pinfunction="VIN" pintype="power_in"/>
       <node ref="U201" pin="3" pinfunction="ON/~{OFF}" pintype="input"/>
       <node ref="U202" pin="1" pinfunction="VIN" pintype="power_in"/>
     </net>
-    <net code="21" name="Net-(C205-Pad2)">
-      <node ref="C205" pin="2" pintype="passive"/>
+    <net code="21" name="Net-(C207-Pad2)">
       <node ref="C207" pin="2" pintype="passive"/>
-      <node ref="J202" pin="2" pinfunction="C" pintype="passive"/>
+      <node ref="D204" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="D205" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="U203" pin="2" pinfunction="VIN" pintype="power_in"/>
     </net>
     <net code="22" name="Net-(C208-Pad1)">
@@ -3747,6 +3801,7 @@
       <node ref="U101" pin="28" pinfunction="PA6" pintype="bidirectional"/>
     </net>
     <net code="57" name="V+_Charging">
+      <node ref="D203" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J107" pin="9" pinfunction="9" pintype="passive"/>
       <node ref="MOD201" pin="4" pinfunction="Pin_4" pintype="passive"/>
     </net>
@@ -3770,11 +3825,12 @@
     <net code="60" name="V_ext">
       <node ref="C113" pin="2" pintype="passive"/>
       <node ref="C204" pin="2" pintype="passive"/>
+      <node ref="C205" pin="2" pintype="passive"/>
       <node ref="D107" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="D113" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="D201" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="D205" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J109" pin="1" pinfunction="A" pintype="passive"/>
-      <node ref="J202" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="JP201" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="L201" pin="2" pinfunction="2" pintype="passive"/>
       <node ref="U105" pin="3" pinfunction="VI" pintype="power_in"/>

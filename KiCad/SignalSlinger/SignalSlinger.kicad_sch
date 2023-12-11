@@ -6,8 +6,8 @@
 
   (title_block
     (title "SignalSlinger")
-    (date "2023-11-21")
-    (rev "2.1")
+    (date "2023-12-10")
+    (rev "2.2")
   )
 
   (lib_symbols
@@ -3604,7 +3604,7 @@
     (effects (font (size 1 1)) (justify left bottom))
     (uuid 0a402fd5-17e3-4dee-8dfa-e5f4af71bf66)
   )
-  (text "J109 Connections\nA:   1-2   1-5W Variable RF Out CW Tx\nB:   Open  1-5W Fixed by LT1086 and R2/R1"
+  (text "J109 Connections\nA:   1-2   1-5W Variable RF Out CW Tx\nB:   Open  1-5W Fixed by U105 and R2/R1"
     (at 210.82 25.4 0)
     (effects (font (size 1.27 1.27) (thickness 0.254) bold) (justify left bottom))
     (uuid 0f1ae417-596f-40e3-a136-78344db64225)
@@ -3617,7 +3617,7 @@
     (effects (font (size 2.0066 2.0066) (thickness 0.4013) bold) (justify left bottom))
     (uuid 3dce5c9e-e327-4427-bf18-58ac04cb3540)
   )
-  (text "RF Configurations\nA: External 5-10.5V = 1-5W Variable RF Out CW Tx\nB: Fixed 1-5W RF Out CW set by LT1086-ADJ\nC: 20mW Fixed RF Out CW Tx (Q103 replaced by 47 ohm resistor)\n\nPower Source Configurations\n1. External 5-12.5V\n2. Internal LiIon Battery (3.2-4.2V)\n\n"
+  (text "RF Configurations\nA: External 5-10.5V = 1-5W Variable RF Out CW Tx\nB: Fixed 1-5W RF Out CW set by U105\nC: 20mW Fixed RF Out CW Tx (Q103 replaced by 47 ohm resistor)\n\nPower Source Configurations\n1. External 5-12.5V\n2. Internal LiIon Battery (3.2-4.2V)\n\n"
     (at 208.28 166.37 0)
     (effects (font (size 1.5 1.5) (thickness 0.3) bold) (justify left bottom))
     (uuid 69a89655-b4b3-4b69-9803-089ef56fa77e)
@@ -3634,6 +3634,10 @@
     (at 154.94 88.9 0)
     (effects (font (size 0.9906 0.9906) (thickness 0.1981) bold) (justify left bottom))
     (uuid 95c7471a-27fe-4026-bde6-828530d738c1)
+  )
+  (text "Processor" (at 50.8 45.72 0)
+    (effects (font (size 2.0066 2.0066) (thickness 0.4013) bold) (justify left bottom))
+    (uuid 9d9e73bf-6b4b-44c7-a1ce-59e240396d4e)
   )
   (text "RED" (at 114.3 162.56 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
@@ -7498,13 +7502,16 @@
       (reference "D201") (unit 1) (value "BAT54C") (footprint "Package_TO_SOT_SMD:SC-59")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/67c41640-a5e7-4fd7-a17b-9c7fc94c4026"
-      (reference "D202") (unit 1) (value "B330A Schottky Diode") (footprint "Diode_SMD:D_SMA")
+      (reference "D202") (unit 1) (value "B330A Schottky Diode") (footprint "Diode_SMD:D_SMB")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/e20bf944-d393-4fd1-97b5-6fd7f7604c33"
       (reference "D203") (unit 1) (value "Schottky Diode") (footprint "Diode_SMD:D_SOD-123")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/62e6bdff-cfbb-4ca4-8d2b-9934a718df37"
       (reference "D204") (unit 1) (value "Schottky Diode") (footprint "Diode_SMD:D_SOD-123")
+    )
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/1e9eae5c-a7ca-4c5b-a119-8ee2c6cbc7b0"
+      (reference "D205") (unit 1) (value "Schottky Diode") (footprint "Diode_SMD:D_SOD-123")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/3f758ec9-95f3-4acf-8bdb-6d3c6615ff72"
       (reference "F201") (unit 1) (value "1.1A") (footprint "Fuse:Fuse_1812_4532Metric")
