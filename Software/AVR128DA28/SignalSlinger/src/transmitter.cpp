@@ -70,6 +70,8 @@ void final_drain_voltage(bool state);
 				err = false;
 			}
 		}
+		
+// 		si5351_set_freq(*freq, TX_CLOCK_VHF, leaveClockOff); /* Test for quadrature */
 
 		return(err);
 	}
@@ -86,10 +88,12 @@ void final_drain_voltage(bool state);
 		if(g_rf_output_inhibited)
 		{
 			final_drain_voltage(OFF);
+			PORTA_set_pin_level(PS_5V_ENABLE, LOW); /* Turn off boost regulator */
 		}
 		else
 		{
 			final_drain_voltage(state);
+			PORTA_set_pin_level(PS_5V_ENABLE, state); /* Turn on/off boost regulator */
 		}
 
 		return(ERROR_CODE_NO_ERROR);
@@ -240,8 +244,28 @@ void final_drain_voltage(bool state);
 		{
 			return( code);
 		}
+		
+		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
+		{
+			return( code);
+		}
 
-		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, true);
+// 		if((code = si5351_drive_strength(TX_CLOCK_VHF, SI5351_DRIVE_2MA)))
+// 		{
+// 			return( code);
+// 		}
+// 
+// 		if((code = si5351_clock_enable(TX_CLOCK_VHF, SI5351_CLK_DISABLED)))
+// 		{
+// 			return( code);
+// 		}
+// 
+// 		if((code = si5351_set_phase(TX_CLOCK_VHF, 0)))
+// 		{
+// 			return( code);
+// 		}
+// 
+		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, false);
 		if(!err)
 		{
 			g_tx_initialized = true;

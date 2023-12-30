@@ -134,7 +134,7 @@ void serial_Rx(uint8_t rx_char)
 			}
 			else
 			{
-				buff->id = SB_INVALID_MESSAGE; /* print help message */
+				buff->id = SB_CR_NO_DATA; /* handle blank line */
 			}
 
 			charIndex = 0;

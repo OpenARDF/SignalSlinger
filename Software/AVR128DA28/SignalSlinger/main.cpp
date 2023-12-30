@@ -19,6 +19,7 @@
 #include "leds.h"
 #include "CircularStringBuff.h"
 #include "rtc.h"
+#include "rstctrl.h"
 
 #include <cpuint.h>
 #include <ccp.h>
@@ -56,6 +57,7 @@ typedef enum
 
 typedef enum {
 	SYNC_Searching_for_slave,
+	SYNC_Waiting_for_FUN_A_reply,
 	SYNC_Align_to_Second_Transition,
 	SYNC_Waiting_for_CLK_T_reply,
 	SYNC_Waiting_for_CLK_S_reply,
@@ -303,7 +305,7 @@ void handle_1sec_tasks(void)
 	{
 		if(g_event_commenced && !g_run_event_forever)
 		{
-			if(g_event_finish_epoch)
+			if(g_event_finish_epoch) /* If a finish time has been set */
 			{
 				temp_time = time(null);
 
@@ -342,6 +344,15 @@ void handle_1sec_tasks(void)
 				{
 					g_sendID_seconds_countdown--;
 				}
+				
+// 				if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
+// 				{
+// 					static index = 0;
+// 					index++;
+// 					g_frequency_low
+// 					g_frequency_med
+// 					g_frequency_hi
+// 				}
 			}
 			else /* waiting for the start time to arrive */
 			{
@@ -402,7 +413,7 @@ void handle_1sec_tasks(void)
 					g_sleepType = SLEEP_FOREVER;
 				}
 			}
-			else
+			else if(!g_go_to_sleep_now)
 			{
 				if(g_sleepType == SLEEP_FOREVER)
 				{
@@ -451,7 +462,7 @@ ISR(TCB0_INT_vect)
 			
 			if(holdSwitch != (portDdebouncedVals() & (1 << SWITCH))) /* Change detected */
 			{	
-				if(holdSwitch) /* Switch was open, so now it must be closed */
+				if(holdSwitch) /* Switch was open, so it must have just now closed */
 				{
 					if(LEDS.active())
 					{
@@ -506,7 +517,7 @@ ISR(TCB0_INT_vect)
 				
 				if(!switch_closures_count_period)
 				{
-					if(g_switch_presses_count && (g_switch_presses_count < 3))
+					if(g_switch_presses_count && (g_switch_presses_count < 4))
 					{
 						g_handle_counted_presses = g_switch_presses_count;
 					}
@@ -829,26 +840,19 @@ int main(void)
 	time_t now = time(null);
 	while((util_delay_ms(2000)) && (now == time(null)));
 	
-	sb_send_string((char*)PRODUCT_NAME_LONG);
-	sprintf(g_tempStr, "\n* SW Ver: %s\n", SW_REVISION);
-	sb_send_string(g_tempStr);
 	sb_send_string(TEXT_RESET_OCCURRED_TXT);
 	
 	if(now == time(null))
 	{
 		g_hardware_error |= (int)HARDWARE_NO_RTC;
 		RTC_init_backup();
-		sb_send_string(TEXT_RTC_NOT_RESPONDING_TXT);	
 	}
-	
-	g_sleepshutdown_seconds = 120;
 	
 	if(init_transmitter(getFrequencySetting()) != ERROR_CODE_NO_ERROR)
 	{
 		if(!txIsInitialized())
 		{
 			g_hardware_error |= (int)HARDWARE_NO_SI5351;
-			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);	
 		}
 	}
 	
@@ -856,6 +860,9 @@ int main(void)
 	
 	reportSettings();
 	sb_send_NewPrompt();
+	
+	g_sleepshutdown_seconds = 120;
+	LEDS.setGreen(ON);
 
 	while (1) {
 		if(g_handle_counted_presses)
@@ -887,6 +894,10 @@ int main(void)
 			{
 				suspendEvent();
 				g_sleepType = SLEEP_USER_OVERRIDE;
+			}
+			else if (g_handle_counted_presses == 3)
+			{
+				RSTCTRL_reset();
 			}
 			
 			g_handle_counted_presses = 0;
@@ -932,7 +943,19 @@ int main(void)
 
 			if(g_text_buff.empty())
 			{
-				if((g_battery_voltage >= 0.1) && (g_battery_voltage <= g_voltage_threshold))
+				if(g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351 ))
+				{
+					if(g_hardware_error & ((int)HARDWARE_NO_RTC))
+					{
+						LEDS.sendCode((char*)"5CLK");
+					}
+					
+					if(g_hardware_error & ((int)HARDWARE_NO_SI5351))
+					{
+						LEDS.sendCode((char*)"5XMT");
+					}
+				}
+				else if((g_battery_voltage >= 0.1) && (g_battery_voltage <= g_voltage_threshold))
 				{
 					LEDS.sendCode((char*)"V ");
 				}
@@ -940,12 +963,10 @@ int main(void)
 				{
 					LEDS.blink(LEDS_RED_ON_CONSTANT, true);
 				}
-				else if(g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351 ))
-				{
-					LEDS.blink(LEDS_RED_BLINK_FAST);
-				}
 				else if(!g_event_commenced)
 				{
+					LEDS.setGreen(ON);
+					
 					if(g_send_clone_success_countdown)
 					{
 						LEDS.sendCode((char*)"X ");
@@ -1016,6 +1037,7 @@ int main(void)
 		 ******************************/
 		if(g_go_to_sleep_now && !g_cloningInProgress && (g_function == Function_ARDF_TX))
 		{
+			DISABLE_INTERRUPTS();
 			LEDS.deactivate();
 			serialbus_disable();
 			shutdown_transmitter();	
@@ -1023,6 +1045,13 @@ int main(void)
 			if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_USER_OVERRIDE))
 			{
 				g_time_to_wake_up = FOREVER_EPOCH;
+				
+				time_t now = time(null);
+
+				if(now < MINIMUM_VALID_EPOCH)
+				{
+					PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - only a button press will apply power again */
+				}
 			}
 			
 			system_sleep_config();
@@ -1030,6 +1059,7 @@ int main(void)
 			SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_STDBY_gc);		
 			g_sleeping = true;
 			g_awakenedBy = AWAKENED_INIT;
+			ENABLE_INTERRUPTS();
 			
 			/* Disable BOD? */
 			
@@ -1070,14 +1100,14 @@ int main(void)
 		
 		if(g_i2c_failure_count)
 		{
-			static time_t t = 0;
-			time_t now = time(null);
-			
-			if(difftime(now, t) > 600) /* Update no more often than every 10 minutes */
-			{
-				t = now;
-				g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
-			}
+// 			static time_t t = 0;
+// 			time_t now = time(null);
+// 			
+// 			if(difftime(now, t) > 600) /* Update no more often than every 10 minutes */
+// 			{
+// 				t = now;
+// 				g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
+// 			}
 		}
 	}
 }
@@ -1095,6 +1125,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 		switch(msg_id)
 		{
+			case SB_MESSAGE_RESET:
+			{
+				RSTCTRL_reset();
+			}
+			break;
+			
 			case SB_MESSAGE_DEBUG:
 			{
 				char c1 = (sb_buff->fields[SB_FIELD1][0]);
@@ -1130,6 +1166,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						else if((c1 == '2') && (c2 == '\0'))
 						{
 							c1 = FOXORING_FOX2;
+						}
+						else if((c1 == 'F') && (c2 == 'T'))
+						{
+							c1 = FREQUENCY_TEST_BEACON;
 						}
 						else
 						{
@@ -1465,10 +1505,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								strncpy(g_messages_text[FOXORING_PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
 								g_ee_mgr.updateEEPROMVar(Foxoring_pattern_text, g_messages_text[FOXORING_PATTERN_TEXT]);
 							}
-							else
-							{
-								strncpy(g_messages_text[PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
-							}
+// 							else
+// 							{
+// 								strncpy(g_messages_text[PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
+// 							}
 						}
 						else
 						{
@@ -1793,14 +1833,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 				if(fun)
 				{
-					if((fun == 'Q') || (fun == (uint8_t)Function_QRP_TX))
-					{
-						g_function = Function_QRP_TX;
-						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
-					}
-					else if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX))
+					if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX) || g_cloningInProgress)
 					{
 						g_function = Function_ARDF_TX;
+						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+					}
+					else if((fun == 'Q') || (fun == (uint8_t)Function_QRP_TX))
+					{
+						g_function = Function_QRP_TX;
 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
 					}
 					else if((fun == 'S') || (fun == (uint8_t)Function_Signal_Gen))
@@ -1809,8 +1849,18 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
 					}
 				}
-				
-				if(!(g_cloningInProgress)) reportSettings();
+							 
+				if(g_cloningInProgress)
+				{
+					sprintf(g_tempStr, "FUN A\r");
+					sb_send_string(g_tempStr);
+					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					g_event_checksum += 'A';
+				}
+				else
+				{
+					reportSettings();
+				}
 			}
 			break;
 
@@ -2041,14 +2091,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(!g_cloningInProgress)
 				{
 					reportSettings();
-					sb_send_string(HELP_TEXT_TXT);
+// 					sb_send_string(HELP_TEXT_TXT);
 				}
 			}
 			break;
+			
+// 			case SB_CR_NO_DATA: /* Carriage return with no other keystrokes */
+// 			{
+// 				if(!g_cloningInProgress)
+// 				{
+// //					reportSettings();
+// 					sb_send_string(HELP_TEXT_TXT);
+// 				}
+// 			}
+// 			break;
 
 			default:
 			{
-				suppressResponse = true;
+				if(!g_cloningInProgress)
+				{
+//					reportSettings();
+					sb_send_string(HELP_TEXT_TXT);
+				}
 			}
 			break;
 		}
@@ -2217,6 +2281,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 		
 		if(g_run_event_forever)
 		{
+			powerToTransmitter(ON);
 			g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 			g_on_the_air = g_on_air_seconds;
 			g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
@@ -2282,7 +2347,11 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 					}
 				}
 
-				if(!turnOnTransmitter)
+				if(turnOnTransmitter)
+				{
+					powerToTransmitter(ON);
+				}
+				else
 				{
 					keyTransmitter(OFF);
 				}
@@ -2629,7 +2698,17 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			g_off_air_seconds = 0;						/* off period is very short */
 		}
 		break;
-
+		
+		case FREQUENCY_TEST_BEACON:
+		{
+			init_transmitter(getFrequencySetting());
+			g_intra_cycle_delay_time = 0;
+			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
+			g_on_air_seconds = 60;						/* on period is very long */
+			g_off_air_seconds = 0;						/* off period is very short */
+		}
+		break;
+		
 		case SPECTATOR:
 		case BEACON:
 		default:
@@ -2896,6 +2975,20 @@ void reportSettings(void)
 	char buf[50];
 	
 	time_t now = time(null);
+	
+	sb_send_string((char*)PRODUCT_NAME_LONG);
+	sprintf(g_tempStr, "\n* SW Ver: %s\n", SW_REVISION);
+	sb_send_string(g_tempStr);
+		
+	if(g_hardware_error & (int)HARDWARE_NO_RTC)
+	{
+		sb_send_string(TEXT_RTC_NOT_RESPONDING_TXT);
+	}
+		
+	if(g_hardware_error & (int)HARDWARE_NO_SI5351)
+	{
+		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+	}
 	
 	if(!function2Text(g_tempStr, g_function))
 	{
@@ -3303,6 +3396,7 @@ char* getCurrentPatternText(void)
 		case FOXORING_FOX1:
 		case FOXORING_FOX2:
 		case FOXORING_FOX3:
+		case FREQUENCY_TEST_BEACON:
 		{
 			c = g_messages_text[FOXORING_PATTERN_TEXT];
 		}
@@ -3390,6 +3484,12 @@ Frequency_Hz getFrequencySetting(void)
 		}
 		break;
 		
+		case FREQUENCY_TEST_BEACON:
+		{
+			freq = g_frequency_low;
+		}
+		break;
+		
 		default:
 		{
 			freq = g_frequency;
@@ -3437,15 +3537,30 @@ void handleSerialCloning(void)
 				if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
 				{
 					g_cloningInProgress = true;
+					g_event_checksum = 0;
+					sprintf(g_tempStr, "FUN A\r"); /* Set slave to radio orienteering function */
+					sb_send_master_string(g_tempStr);
+					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
+					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+				}
+			}			
+		}
+		break;
+		
+		
+		case SYNC_Waiting_for_FUN_A_reply:
+		{
+			if(sb_buff)
+			{
+				msg_id = sb_buff->id;
+				if(msg_id == SB_MESSAGE_FUNCTION)
+				{
+					g_event_checksum += 'A';
 					g_seconds_transition = false;
 					g_programming_state = SYNC_Align_to_Second_Transition;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				}
-// 				else
-// 				{
-// 					handleSerialBusMsgs();
-// 				}
-			}			
+			}
 		}
 		break;
 		
@@ -3455,7 +3570,7 @@ void handleSerialCloning(void)
 			if(g_seconds_transition)
 			{
 				time_t now = time(null);
-				g_event_checksum = now;
+				g_event_checksum += now;
 				sprintf(g_tempStr, "CLK T %lu\r", now); /* Set slave's RTC */
 				sb_send_master_string(g_tempStr);
 				g_programming_state = SYNC_Waiting_for_CLK_T_reply;

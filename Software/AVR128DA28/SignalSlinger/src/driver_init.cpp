@@ -68,15 +68,15 @@ void system_sleep_config()
 	LED_set_RED_level(OFF);
 	LED_set_GREEN_dir(PORT_DIR_OUT);
 	LED_set_GREEN_level(OFF);
-	
+
 	PORTA_set_pin_dir(FAN_CONTR, PORT_DIR_OUT);
 	PORTA_set_pin_level(FAN_CONTR, LOW);
 	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(POWER_ENABLE, LOW);
+// 	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT); /* Must not disable battery power if running off of battery */
+// 	PORTA_set_pin_level(POWER_ENABLE, LOW); /* Must not disable battery power if running off of battery */
 	PORTA_set_pin_dir(TO_WIFI_RX, PORT_DIR_OUT);
 	PORTA_set_pin_level(TO_WIFI_RX, LOW);
 	PORTA_set_pin_dir(TO_WIFI_TX, PORT_DIR_OUT);
