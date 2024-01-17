@@ -26,7 +26,9 @@ extern Enunciation_t g_enunciator;
 
 static volatile bool timer_red_blink_inhibit = false; /* disable blinking by timer */
 static volatile bool timer_green_blink_inhibit = false; /* disable blinking by timer */
-static volatile Blink_t lastBlinkSetting = LEDS_OFF;
+static volatile Blink_t lastRedBlinkSetting = LEDS_OFF;
+static volatile Blink_t lastGreenBlinkSetting = LEDS_OFF;
+static volatile Blink_t lastBothBlinkSetting = LEDS_OFF;
 static volatile uint32_t led_timeout_count = LED_TIMEOUT_DELAY;
 static volatile int16_t red_blink_on_period = 0;
 static volatile int16_t red_blink_off_period = 0;
@@ -256,7 +258,11 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 	
 	if(!led_timeout_count && (blinkMode != LEDS_OFF)) return;
 	
-	if((blinkMode != lastBlinkSetting) || (blinkMode == LEDS_OFF))
+	bool isRed = ((blinkMode == LEDS_RED_OFF) || (blinkMode == LEDS_RED_BLINK_FAST) || (blinkMode == LEDS_RED_BLINK_SLOW) || (blinkMode == LEDS_RED_ON_CONSTANT));
+	bool isGreen = ((blinkMode == LEDS_GREEN_OFF) || (blinkMode == LEDS_GREEN_BLINK_FAST) || (blinkMode == LEDS_GREEN_BLINK_SLOW) || (blinkMode == LEDS_GREEN_ON_CONSTANT));
+	bool isBoth = !isRed && !isGreen;	
+		
+	if((isRed && (blinkMode != lastRedBlinkSetting)) || (isGreen && (blinkMode != lastGreenBlinkSetting)) || (isBoth && (blinkMode != lastBothBlinkSetting)))
 	{
 		TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
 
@@ -415,5 +421,16 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 		TCB1.INTCTRL |= TCB_CAPT_bm;   /* Capture or Timeout: enabled */
 	}
 	
-	lastBlinkSetting = blinkMode;
+	if(isRed)
+	{
+		lastRedBlinkSetting = blinkMode;
+	}
+	else if(isGreen)
+	{
+		lastGreenBlinkSetting = blinkMode;
+	}
+	else
+	{
+		lastBothBlinkSetting = blinkMode;
+	}
 }

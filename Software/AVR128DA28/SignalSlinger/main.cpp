@@ -303,12 +303,12 @@ void handle_1sec_tasks(void)
 
 	if(!g_cloningInProgress)
 	{
+		temp_time = time(null);
+
 		if(g_event_commenced && !g_run_event_forever)
 		{
 			if(g_event_finish_epoch) /* If a finish time has been set */
 			{
-				temp_time = time(null);
-
 				if(temp_time >= g_event_finish_epoch)
 				{
 					g_last_status_code = STATUS_CODE_EVENT_FINISHED;
@@ -345,14 +345,39 @@ void handle_1sec_tasks(void)
 					g_sendID_seconds_countdown--;
 				}
 				
-// 				if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
-// 				{
-// 					static index = 0;
-// 					index++;
-// 					g_frequency_low
-// 					g_frequency_med
-// 					g_frequency_hi
-// 				}
+ 				if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
+ 				{
+					static uint8_t selection = 0;
+ 					bool change = temp_time % 2;
+ 					
+					if(!change)
+					{
+						if(selection == 0)
+						{
+							init_transmitter(g_frequency_low);
+							g_code_throttle = throttleValue(14);
+							bool repeat = true;
+							makeMorse((char*)"E<<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
+							selection = 1;
+						}
+						else if(selection == 1)
+						{
+							init_transmitter(g_frequency_med);
+							g_code_throttle = throttleValue(14);
+							bool repeat = true;
+							makeMorse((char*)"I<<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
+							selection = 2;
+						}
+						else if(selection == 2)
+						{
+							init_transmitter(g_frequency_hi);
+							g_code_throttle = throttleValue(14);
+							bool repeat = true;
+							makeMorse((char*)"S<<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
+							selection = 0;
+						}
+					}
+ 				}
 			}
 			else /* waiting for the start time to arrive */
 			{
@@ -511,25 +536,32 @@ ISR(TCB0_INT_vect)
 				}
 			}
 		
-			if(switch_closures_count_period)
+			if(switch_closures_count_period) // Time to check if button presses have occurred
 			{
+				static uint8_t hold_switch_presses_count = 0;
 				switch_closures_count_period--;
 				
-				if(!switch_closures_count_period)
+				if(!switch_closures_count_period) // Time's up - examine how many button presses were counted
 				{
-					if(g_switch_presses_count && (g_switch_presses_count < 4))
+					if(g_switch_presses_count && (g_switch_presses_count < 6))
 					{
 						g_handle_counted_presses = g_switch_presses_count;
 					}
 					
 					g_switch_presses_count = 0;
+					hold_switch_presses_count = 0;
+				}
+				else if(g_switch_presses_count != hold_switch_presses_count) // Press detected - wait a while longer to see if there's another one
+				{
+					hold_switch_presses_count = g_switch_presses_count;
+					switch_closures_count_period = 40;
 				}
 			}
 			else if(g_switch_presses_count == 1 && buttonReleased)
 			{
-				switch_closures_count_period = 50;
+				switch_closures_count_period = 40;
 			}
-			else if(g_switch_presses_count > 2)
+			else if(g_switch_presses_count > 5) // Too many button presses - ignore them entirely
 			{
 				g_switch_presses_count = 0;
 			}
@@ -862,7 +894,7 @@ int main(void)
 	sb_send_NewPrompt();
 	
 	g_sleepshutdown_seconds = 120;
-	LEDS.setGreen(ON);
+	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 
 	while (1) {
 		if(g_handle_counted_presses)
@@ -895,9 +927,20 @@ int main(void)
 				suspendEvent();
 				g_sleepType = SLEEP_USER_OVERRIDE;
 			}
-			else if (g_handle_counted_presses == 3)
+			else if(g_isMaster)
 			{
-				RSTCTRL_reset();
+				if((g_handle_counted_presses == 4) && txIsInitialized()) // keydown forever
+				{
+					suspendEvent();
+					g_sleepType = SLEEP_USER_OVERRIDE;
+					keyTransmitter(ON);
+					LEDS.setRed(ON);
+					g_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
+				}
+				else if (g_handle_counted_presses == 5) // Perform software reset
+				{
+					RSTCTRL_reset();
+				}
 			}
 			
 			g_handle_counted_presses = 0;
@@ -909,6 +952,8 @@ int main(void)
 			
 			if(g_text_buff.empty())
 			{
+				LEDS.setGreen(ON);
+					
 				if(g_send_clone_success_countdown)
 				{
 					LEDS.sendCode((char*)"X ");
@@ -955,17 +1000,20 @@ int main(void)
 						LEDS.sendCode((char*)"5XMT");
 					}
 				}
-				else if((g_battery_voltage >= 0.1) && (g_battery_voltage <= g_voltage_threshold))
-				{
-					LEDS.sendCode((char*)"V ");
-				}
 				else if(g_cloningInProgress)
 				{
 					LEDS.blink(LEDS_RED_ON_CONSTANT, true);
 				}
 				else if(!g_event_commenced)
 				{
-					LEDS.setGreen(ON);
+					if((g_battery_voltage > 0.0) && g_battery_voltage <= g_voltage_threshold)
+					{
+						LEDS.blink(LEDS_GREEN_BLINK_FAST);
+					}
+					else
+					{
+						LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+					}
 					
 					if(g_send_clone_success_countdown)
 					{
@@ -1090,9 +1138,16 @@ int main(void)
 			init_transmitter();
 			g_sleepshutdown_seconds = 120;
 			
-			if(g_sleepType != SLEEP_UNTIL_NEXT_XMSN)
+			if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
 			{
-				g_start_event = true;
+				LEDS.blink(LEDS_OFF, true); /* Restart LED timeout */
+			}
+			else
+			{
+				if(g_sleepType != SLEEP_UNTIL_NEXT_XMSN)
+				{
+					g_start_event = true;
+				}
 			}
 
  			g_last_status_code = STATUS_CODE_RETURNED_FROM_SLEEP;
@@ -1167,7 +1222,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							c1 = FOXORING_FOX2;
 						}
-						else if((c1 == 'F') && (c2 == 'T'))
+						else if((c1 == 'F') || (c1 == 'T'))
 						{
 							c1 = FREQUENCY_TEST_BEACON;
 						}
@@ -2095,16 +2150,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 			}
 			break;
-			
-// 			case SB_CR_NO_DATA: /* Carriage return with no other keystrokes */
-// 			{
-// 				if(!g_cloningInProgress)
-// 				{
-// //					reportSettings();
-// 					sb_send_string(HELP_TEXT_TXT);
-// 				}
-// 			}
-// 			break;
 
 			default:
 			{
@@ -3396,9 +3441,14 @@ char* getCurrentPatternText(void)
 		case FOXORING_FOX1:
 		case FOXORING_FOX2:
 		case FOXORING_FOX3:
-		case FREQUENCY_TEST_BEACON:
 		{
 			c = g_messages_text[FOXORING_PATTERN_TEXT];
+		}
+		break;
+		
+		case FREQUENCY_TEST_BEACON:
+		{
+			c = (char*)"<";
 		}
 		break;
 		
