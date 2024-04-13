@@ -459,6 +459,14 @@ EC si5351_drive_strength(Si5351_clock, Si5351_drive);
 
 /**
  */
+EC si5351_set_phase(Si5351_clock clk, uint8_t phase);
+
+/**
+ */
+EC si5351_get_phase(Si5351_clock clk, uint8_t* phase);
+
+/**
+ */
 void si5351_set_correction(int32_t);
 
 /**

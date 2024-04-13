@@ -438,7 +438,7 @@ static inline void LED_set_RED_dir(const enum port_dir dir)
  */
 static inline void LED_set_GREEN_dir(const enum port_dir dir)
 {
-	PORTD_set_pin_dir(2, dir);
+	PORTD_set_pin_dir(4, dir);
 }
 
 /**
@@ -495,7 +495,7 @@ static inline void LED_set_RED_level(const bool level)
  */
 static inline void LED_set_GREEN_level(const bool level)
 {
-	PORTD_set_pin_level(2, level); /* Low == LED off */
+	PORTD_set_pin_level(4, level); /* Low == LED off */
 }
 
 /**
@@ -515,7 +515,7 @@ static inline void LED_toggle_RED_level()
  */
 static inline void LED_toggle_GREEN_level()
 {
-	PORTD_toggle_pin_level(2);
+	PORTD_toggle_pin_level(4);
 }
 
 /**

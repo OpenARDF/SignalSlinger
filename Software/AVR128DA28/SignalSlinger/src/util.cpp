@@ -327,7 +327,7 @@ bool function2Text(char* str, Function_t fun)
 	{
 		case Function_ARDF_TX:
 		{
-			sprintf(str, "Fox Transmitter");
+			sprintf(str, "Radio Orienteering");
 		}
 		break;
 		

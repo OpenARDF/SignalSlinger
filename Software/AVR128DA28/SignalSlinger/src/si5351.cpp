@@ -725,6 +725,43 @@ bool g_si5351_initialized = false;
 
 		return ERROR_CODE_NO_ERROR;
 	}
+	
+/*
+ * si5351_set_phase(void)
+ *
+ * Returns the oscillator correction factor.
+ */
+	EC si5351_set_phase(Si5351_clock clk, uint8_t phase)
+	{
+		uint8_t reg_val;
+		uint8_t data[2];
+		const uint8_t mask = 0x7F;
+
+		reg_val = phase & mask;
+		data[0] = reg_val;
+		if(si5351_write_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1)) return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+
+		return ERROR_CODE_NO_ERROR;
+	}
+	
+/*
+ * si5351_get_phase(void)
+ *
+ * Returns the oscillator correction factor.
+ */
+	EC si5351_get_phase(Si5351_clock clk, uint8_t* phase)
+	{
+		uint8_t data[2];
+
+		if(si5351_read_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1))
+		{
+			return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+		}
+		
+		if(phase) *phase = data[0];
+		
+		return ERROR_CODE_NO_ERROR;
+	}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 /* Private functions */
@@ -958,7 +995,6 @@ bool g_si5351_initialized = false;
 	{
 		return(g_si5351_ref_correction);
 	}
-
 
 /*
  * bool pll_calc(Frequency_Hz vco_freq, Union_si5351_regs *reg, int32_t correction)

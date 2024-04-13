@@ -110,7 +110,7 @@ void BINIO_init(void)
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
 	
 	PORTA_set_pin_dir(PS_5V_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(PS_5V_ENABLE, HIGH);
+	PORTA_set_pin_level(PS_5V_ENABLE, LOW);
 	
 	/* PORTC *************************************************************************************/
 	
@@ -131,7 +131,7 @@ void BINIO_init(void)
 	PORTD_pin_set_isc(SWITCH, PORT_ISC_BOTHEDGES_gc);
 	
 	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
-	PORTD_set_pin_level(LED_GREEN, HIGH);
+	PORTD_set_pin_level(LED_GREEN, LOW);
 
 	g_adc_initialization = ADC_NOT_INITIALIZED; /* Reset ADC configuration */
 

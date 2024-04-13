@@ -24,8 +24,11 @@ extern volatile bool g_enable_manual_transmissions;
 extern CircularStringBuff g_text_buff;
 extern Enunciation_t g_enunciator;
 
-static volatile bool timer_blink_inhibit = false; /* disable blinking by timer */
-static volatile Blink_t lastBlinkSetting = LEDS_OFF;
+static volatile bool timer_red_blink_inhibit = false; /* disable blinking by timer */
+static volatile bool timer_green_blink_inhibit = false; /* disable blinking by timer */
+static volatile Blink_t lastRedBlinkSetting = LEDS_OFF;
+static volatile Blink_t lastGreenBlinkSetting = LEDS_OFF;
+static volatile Blink_t lastBothBlinkSetting = LEDS_OFF;
 static volatile uint32_t led_timeout_count = LED_TIMEOUT_DELAY;
 static volatile int16_t red_blink_on_period = 0;
 static volatile int16_t red_blink_off_period = 0;
@@ -64,87 +67,76 @@ ISR(TCB1_INT_vect)
 			}
 		}
 		
-		if(!timer_blink_inhibit)
-		{
-			if(led_timeout_count)
-			{		
-				if(red_blink_count)
+		if(led_timeout_count)
+		{		
+			if(red_blink_count && !timer_red_blink_inhibit)
+			{
+				if(red_blink_count > 1)
 				{
-					if(red_blink_count > 1)
-					{
-						LED_set_RED_level(ON);
-						red_blink_count--;
-					}
-					else if(red_blink_count < -1)
-					{
-						LED_set_RED_level(OFF);
-						red_blink_count++;
-					}
+					LED_set_RED_level(ON);
+					red_blink_count--;
+				}
+				else if(red_blink_count < -1)
+				{
+					LED_set_RED_level(OFF);
+					red_blink_count++;
+				}
 				
-					if(red_blink_count == 1)
+				if(red_blink_count == 1)
+				{
+					if(red_blink_off_period)
 					{
-						if(red_blink_off_period)
-						{
-							red_blink_count = -red_blink_off_period;
-						}
-						else /* constantly on */
-						{
-							red_blink_count = red_blink_on_period;
-						}
+						red_blink_count = -red_blink_off_period;
 					}
-					else if(red_blink_count == -1)
+					else /* constantly on */
 					{
 						red_blink_count = red_blink_on_period;
 					}
-				
 				}
-				else if(red_led_configured)
+				else if(red_blink_count == -1)
 				{
-					LED_set_RED_level(OFF);
+					red_blink_count = red_blink_on_period;
 				}
+				
+			}
+// 			else if(red_led_configured)
+// 			{
+// 				LED_set_RED_level(OFF);
+// 			}
 			
-				if(green_blink_count)
+			if(green_blink_count && !timer_green_blink_inhibit)
+			{
+				if(green_blink_count > 1)
 				{
-					if(green_blink_count > 1)
-					{
-						LED_set_GREEN_level(ON);
-						green_blink_count--;
-					}
-					else if(green_blink_count < -1)
-					{
-						LED_set_GREEN_level(OFF);
-						green_blink_count++;
-					}
+					LED_set_GREEN_level(ON);
+					green_blink_count--;
+				}
+				else if(green_blink_count < -1)
+				{
+					LED_set_GREEN_level(OFF);
+					green_blink_count++;
+				}
 				
-					if(green_blink_count == 1)
+				if(green_blink_count == 1)
+				{
+					if(green_blink_off_period)
 					{
-						if(green_blink_off_period)
-						{
-							green_blink_count = -green_blink_off_period;
-						}
-						else /* constantly on */
-						{
-							green_blink_count = green_blink_on_period;
-						}
+						green_blink_count = -green_blink_off_period;
 					}
-					else if(green_blink_count == -1)
+					else /* constantly on */
 					{
 						green_blink_count = green_blink_on_period;
 					}
 				}
-				else if(green_led_configured)
+				else if(green_blink_count == -1)
 				{
-					LED_set_GREEN_level(OFF);
+					green_blink_count = green_blink_on_period;
 				}
 			}
-			else
-			{
-	//			TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
-				LED_set_RED_level(OFF);
-				LED_set_GREEN_level(OFF);
-		// 		red_led_configured = false;
-		// 		green_led_configured = false;
-			}		
+// 			else if(green_led_configured)
+// 			{
+// 				LED_set_GREEN_level(OFF);
+// 			}
 		}
 	}
 		
@@ -164,7 +156,7 @@ void leds::deactivate(void)
 	LED_set_GREEN_level(OFF);
 	g_text_buff.reset();
 	g_enable_manual_transmissions = false;
-	timer_blink_inhibit = true; /* Disable timer LED control */
+	timer_red_blink_inhibit = timer_green_blink_inhibit = true; /* Disable timer LED control */
 	led_timeout_count = 0;
 }
 
@@ -172,7 +164,9 @@ void leds::setRed(bool on)
 {
 	if(!led_timeout_count) return;
 
-//	TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
+//	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
+
+	timer_red_blink_inhibit = true;
 
 	if(on)
 	{
@@ -190,6 +184,8 @@ void leds::setGreen(bool on)
 
 //	TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
 
+	timer_green_blink_inhibit = true;
+
 	if(on)
 	{
 		LED_set_GREEN_level(ON);
@@ -206,7 +202,7 @@ void leds::reset(void)
 	blink(LEDS_OFF);
 	g_text_buff.reset();
 	g_enable_manual_transmissions = false;
-	timer_blink_inhibit = false; /* Enable timer LED control */
+	timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 	led_timeout_count = LED_TIMEOUT_DELAY;
 }
 
@@ -244,7 +240,7 @@ void leds::sendCode(char* str)
 		g_text_buff.put(str[i++]);
 	}
 	
-	timer_blink_inhibit = true; /* Prevent timer from controlling LED */
+	timer_red_blink_inhibit = true; /* Prevent timer from controlling LED */
 	g_enable_manual_transmissions = holdMan;
 }
 
@@ -262,7 +258,11 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 	
 	if(!led_timeout_count && (blinkMode != LEDS_OFF)) return;
 	
-	if((blinkMode != lastBlinkSetting) || (blinkMode == LEDS_OFF))
+	bool isRed = ((blinkMode == LEDS_RED_OFF) || (blinkMode == LEDS_RED_BLINK_FAST) || (blinkMode == LEDS_RED_BLINK_SLOW) || (blinkMode == LEDS_RED_ON_CONSTANT));
+	bool isGreen = ((blinkMode == LEDS_GREEN_OFF) || (blinkMode == LEDS_GREEN_BLINK_FAST) || (blinkMode == LEDS_GREEN_BLINK_SLOW) || (blinkMode == LEDS_GREEN_ON_CONSTANT));
+	bool isBoth = !isRed && !isGreen;	
+		
+	if((isRed && (blinkMode != lastRedBlinkSetting)) || (isGreen && (blinkMode != lastGreenBlinkSetting)) || (isBoth && (blinkMode != lastBothBlinkSetting)))
 	{
 		TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
 
@@ -301,7 +301,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_off_period = BRIEF_OFF;
 				red_blink_count = red_blink_on_period;	
 				red_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -311,7 +311,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				green_blink_off_period = BRIEF_OFF;	
 				green_blink_count = green_blink_on_period;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -321,7 +321,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_off_period = SLOW_OFF;
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -331,7 +331,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				green_blink_off_period = SLOW_OFF;	
 				green_blink_count = green_blink_on_period;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -345,7 +345,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -359,7 +359,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -373,7 +373,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -387,7 +387,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -397,7 +397,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				red_blink_off_period = 0;
 				red_blink_count = red_blink_on_period;
 				red_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_red_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -407,7 +407,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				green_blink_off_period = 0;
 				green_blink_count = green_blink_on_period;
 				green_led_configured = true;			
-				timer_blink_inhibit = false; /* Enable timer LED control */
+				timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
 			
@@ -421,5 +421,16 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 		TCB1.INTCTRL |= TCB_CAPT_bm;   /* Capture or Timeout: enabled */
 	}
 	
-	lastBlinkSetting = blinkMode;
+	if(isRed)
+	{
+		lastRedBlinkSetting = blinkMode;
+	}
+	else if(isGreen)
+	{
+		lastGreenBlinkSetting = blinkMode;
+	}
+	else
+	{
+		lastBothBlinkSetting = blinkMode;
+	}
 }
