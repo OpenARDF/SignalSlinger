@@ -1,8 +1,8 @@
 Ref,Value,QTY PER,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN,
 BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm,, , , , , , 
 BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 1200mAh, , ,https://www.adafruit.com/product/258,Adafruit,258
-C101 C104 C105 C107 C208 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
-C102 C103 C106 C108 C112 C204 C301 ,470nF,7,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
+C101 C104 C105 C107 C208 C218 ,100nF,6,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
+C102 C103 C106 C108 C112 C204 C217 C301 ,470nF,8,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
 C109 C113 C114 C201 C203 C205 C206 C207 C210 C216 ,10uF,10,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 35V X5R 0805,445-14418-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp,TDK Corporation,C2012X5R1V106K125AC
 C110 ,22uF,1,Capacitor_SMD:C_1210_3225Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND,Samsung Electro-Mechanics,CL32A226MAJNNNE
 C111 ,47uF low ESR,1,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND,KEMET,T495X476K020ATE150
@@ -10,11 +10,9 @@ C202 C209 ,10nF,2,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,
 C211 ,10pF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10PF 50V C0G/NP0 0805,478-KGM21BCG1H100JTCT-ND,C157608,https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414,KYOCERA AVX,KGM21BCG1H100JT
 C212 ,1uF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 1UF 50V X7R 0805,1276-6470-1-ND,C28323,https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467,Samsung Electro-Mechanics,CL21B105KBFNNNG
 C213 C214 C215 ,22uF,3,Capacitor_SMD:C_0805_2012Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND,Samsung Electro-Mechanics,CL32A226MAJNNNE
-C217 ,330nF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
-C218 ,100nF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
-C302 C305 ,1100pF,2,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1100PF 250V NP0 5.08mm, , , ,KEMET,C325C112KAG5TA
-C303 ,1800pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1800PF 250V C0G 5.08mm, , , ,KEMET,C325C182JAG5TA
-C304 ,91pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 91PF 250V NP0 5.08mm, , , ,KEMET,C325C910JAG5TA
+C302 C305 ,1100pF,2,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0), , , ,Murata Electronics,GRM2195C2A112JA01D
+C303 ,1800pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1800 pF 100 VDC 2% 0805 C0G (NP0) AEC-Q200, , , ,Murata Electronics,GCM2165C2A182GA16D
+C304 ,91pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 100V 91pF C0G 0805 1%, , , ,KYOCERA AVX,08051A910FAT2A
 D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND,C83482,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
 D103 ,Red LED,1,LED_SMD:LED_0805_2012Metric,,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
 D104 ,Green LED,1,LED_SMD:LED_APDA1806SECK,,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
@@ -82,5 +80,5 @@ W103 ,T4,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,,
 W301 ,T5,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W302 ,T6,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W303 ,T7,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
-X101 ,SIT1566AC TCO,1,Oscillator:Oscillator_SMD_SiTime_SIT1566AC-4Pin_BGA,,MEMS OSC TCXO 32.768KHZ CSP,1473-SIT1566AC-JV-XXE-32.768ECT-ND, ,https://www.digikey.com/short/r7q3vdbp,SiTime,SIT1566AC-JV-XXE-32.768E
+X101 ,ECS-327TXO-30-TR,1,Oscillator:Oscillator_SMD_ECS_327TXO,,OSC TCXO 32.768KHZ 3.0V SMD,50-ECS-327TXO-30-CT-ND, , ,ECS Inc.,ECS-327TXO-30-TR
 X102 ,25 MHz,1,Crystal:Crystal_SMD_TXETCLSANF-4Pin,,XTAL OSC TCXO 25.0000MHZ SNWV,1664-1273-1-ND, ,https://www.digikey.com/products/en?keywords=1664-1273-1-ND,Taitien,TXETCLSANF-25.000000
