@@ -4318,10 +4318,10 @@
     (property "Reference" "C110" (id 0) (at 236.22 82.55 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "22uF" (id 1) (at 229.87 82.55 90)
+    (property "Value" "" (id 1) (at 229.87 82.55 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Capacitor_SMD:C_1210_3225Metric" (id 2) (at 227.33 80.01 0)
+    (property "Footprint" "" (id 2) (at 227.33 80.01 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 227.33 80.01 0)
@@ -7463,10 +7463,10 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/9c78c20f-ec5b-47ac-bc0a-45c6fd1cfce1"
       (reference "C212") (unit 1) (value "1uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/01d30a66-451a-43fd-95f2-0bdd2117103d"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/5bd475aa-1807-415f-a022-e4e7bd343349"
       (reference "C213") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/ebba386f-ca53-469e-b170-4c68f88638d5"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/c2a8818a-1006-4c9c-a17a-990204a6ccc2"
       (reference "C214") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0805_2012Metric")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/5c012b10-83b8-496d-af4b-de5dc92abc05"

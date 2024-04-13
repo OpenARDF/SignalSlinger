@@ -1667,66 +1667,54 @@
       <value>22uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 22UF 25V X5R 1210</field>
-        <field name="Digi-Key Part No.">1276-3373-1-ND</field>
-        <field name="LCSC Part Number">C337455</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
+        <field name="Description">CAP CER 22UF 16V X5R 0805</field>
+        <field name="Digi-Key Part No.">1276-6780-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL32A226MAJNNNE</field>
+        <field name="Manufacturer PN">CL21A226MOCLRNC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
+      <property name="Digi-Key Part No." value="1276-6780-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
-      <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
-      <property name="LCSC Part Number" value="C337455"/>
+      <property name="Manufacturer PN" value="CL21A226MOCLRNC"/>
+      <property name="Description" value="CAP CER 22UF 16V X5R 0805"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>01d30a66-451a-43fd-95f2-0bdd2117103d</tstamps>
+      <tstamps>5bd475aa-1807-415f-a022-e4e7bd343349</tstamps>
     </comp>
     <comp ref="C214">
       <value>22uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 22UF 25V X5R 1210</field>
-        <field name="Digi-Key Part No.">1276-3373-1-ND</field>
-        <field name="LCSC Part Number">C337455</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
+        <field name="Description">CAP CER 22UF 16V X5R 0805</field>
+        <field name="Digi-Key Part No.">1276-6780-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL32A226MAJNNNE</field>
+        <field name="Manufacturer PN">CL21A226MOCLRNC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
+      <property name="Digi-Key Part No." value="1276-6780-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
-      <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
-      <property name="LCSC Part Number" value="C337455"/>
+      <property name="Manufacturer PN" value="CL21A226MOCLRNC"/>
+      <property name="Description" value="CAP CER 22UF 16V X5R 0805"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>ebba386f-ca53-469e-b170-4c68f88638d5</tstamps>
+      <tstamps>c2a8818a-1006-4c9c-a17a-990204a6ccc2</tstamps>
     </comp>
     <comp ref="C215">
       <value>22uF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">CAP CER 22UF 25V X5R 1210</field>
-        <field name="Digi-Key Part No.">1276-3373-1-ND</field>
-        <field name="LCSC Part Number">C337455</field>
-        <field name="Link">https://www.digikey.com/products/en?keywords=1276-3373-1-ND</field>
+        <field name="Description">CAP CER 22UF 16V X5R 0805</field>
+        <field name="Digi-Key Part No.">1276-6780-1-ND</field>
         <field name="Manufacturer">Samsung Electro-Mechanics</field>
-        <field name="Manufacturer PN">CL32A226MAJNNNE</field>
+        <field name="Manufacturer PN">CL21A226MOCLRNC</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <property name="Digi-Key Part No." value="1276-3373-1-ND"/>
-      <property name="Link" value="https://www.digikey.com/products/en?keywords=1276-3373-1-ND"/>
+      <property name="Digi-Key Part No." value="1276-6780-1-ND"/>
       <property name="Manufacturer" value="Samsung Electro-Mechanics"/>
-      <property name="Manufacturer PN" value="CL32A226MAJNNNE"/>
-      <property name="Description" value="CAP CER 22UF 25V X5R 1210"/>
-      <property name="LCSC Part Number" value="C337455"/>
+      <property name="Manufacturer PN" value="CL21A226MOCLRNC"/>
+      <property name="Description" value="CAP CER 22UF 16V X5R 0805"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
