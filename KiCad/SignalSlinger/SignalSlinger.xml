@@ -8,8 +8,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.3</rev>
-        <date>2024-04-13</date>
+        <rev>2.4</rev>
+        <date>2024-04-15</date>
         <source>SignalSlinger.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -26,8 +26,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.3</rev>
-        <date>2024-04-13</date>
+        <rev>2.4</rev>
+        <date>2024-04-15</date>
         <source>PowerSupply.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -44,8 +44,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.3</rev>
-        <date>2024-04-13</date>
+        <rev>2.4</rev>
+        <date>2024-04-15</date>
         <source>RF_Filters.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -62,8 +62,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>2.3</rev>
-        <date>2024-04-13</date>
+        <rev>2.4</rev>
+        <date>2024-04-15</date>
         <source>Misc.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -3632,7 +3632,7 @@
       <node ref="C215" pin="1" pintype="passive"/>
       <node ref="C216" pin="2" pintype="passive"/>
       <node ref="C217" pin="2" pintype="passive"/>
-      <node ref="C218" pin="1" pintype="passive"/>
+      <node ref="C218" pin="2" pintype="passive"/>
       <node ref="C302" pin="2" pintype="passive"/>
       <node ref="C303" pin="1" pintype="passive"/>
       <node ref="C305" pin="2" pintype="passive"/>
@@ -3721,6 +3721,7 @@
       <node ref="C112" pin="2" pintype="passive"/>
       <node ref="D113" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="D114" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="D115" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J109" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="L101" pin="1" pinfunction="1" pintype="passive"/>
       <node ref="R2" pin="2" pintype="passive"/>
@@ -3772,8 +3773,8 @@
       <node ref="JP201" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="U204" pin="1" pinfunction="VIN" pintype="power_in"/>
     </net>
-    <net code="26" name="Net-(C218-Pad2)">
-      <node ref="C218" pin="2" pintype="passive"/>
+    <net code="26" name="Net-(C218-Pad1)">
+      <node ref="C218" pin="1" pintype="passive"/>
       <node ref="D207" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="U205" pin="3" pinfunction="OUT" pintype="power_out"/>
     </net>
@@ -3962,7 +3963,6 @@
       <node ref="C205" pin="2" pintype="passive"/>
       <node ref="C217" pin="1" pintype="passive"/>
       <node ref="D113" pin="1" pinfunction="K" pintype="passive"/>
-      <node ref="D115" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="D201" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="D205" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J109" pin="1" pinfunction="A" pintype="passive"/>
