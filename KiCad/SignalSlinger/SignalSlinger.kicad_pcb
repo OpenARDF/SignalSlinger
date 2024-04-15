@@ -6622,6 +6622,7 @@
     )
   )
 
+  (gr_arc (start 82.144772 70.21) (mid 81.65 70.704772) (end 81.155228 70.21) (layer "F.SilkS") (width 0.3) (tstamp 13f7a552-a646-40e6-b51b-e08ee801d2ce))
   (gr_line locked (start 39.79 109.8976) (end 39.79 68.9274) (layer "Dwgs.User") (width 0.1) (tstamp 95a19fb0-70df-4a65-9bfd-e819ca6d50cc))
   (gr_line locked (start 48.8324 59.885) (end 131.0776 59.885) (layer "Edge.Cuts") (width 0.1) (tstamp 0ea3612e-c354-4f23-af70-69689ee5b35e))
   (gr_line locked (start 46 109.8976) (end 48.8324 109.8976) (layer "Edge.Cuts") (width 0.1) (tstamp 5e0b71fc-17cc-4cc6-ad38-4bfa57ad96c3))
