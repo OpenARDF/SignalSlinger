@@ -2874,6 +2874,11 @@
     (effects (font (size 1 1) (thickness 0.2) bold) (justify left bottom))
     (uuid edb00c07-59b1-44f5-acbd-fbb7ca200f78)
   )
+  (text "Power Source Configurations\n1. External 5-12.5V\n2. Internal LiIon Battery (3.2-4.2V)\n\n"
+    (at 20.32 63.5 0)
+    (effects (font (size 1.5 1.5) (thickness 0.3) bold) (justify left bottom))
+    (uuid f80271bd-b87b-4fd2-b564-922f5b089f3b)
+  )
 
   (global_label "V3V3_PWR_ENABLE" (shape input) (at 95.25 130.81 180) (fields_autoplaced)
     (effects (font (size 1 1)) (justify right))
