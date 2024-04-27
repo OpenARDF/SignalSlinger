@@ -7,7 +7,7 @@
   (title_block
     (title "SignalSlinger")
     (date "2024-04-15")
-    (rev "2.4")
+    (rev "3.0")
   )
 
   (lib_symbols
@@ -420,7 +420,7 @@
     (uuid 3c7c03fa-c45d-43c7-83f6-def3dfa7493a)
     (property "Reference" "L302" (id 0) (at 151.13 81.28 0))
     (property "Value" "2.7uH" (id 1) (at 151.13 85.09 0))
-    (property "Footprint" "Inductors:Toroid_T-60_2TH" (id 2) (at 151.13 83.82 0)
+    (property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical" (id 2) (at 151.13 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 151.13 83.82 0)
@@ -450,7 +450,7 @@
     (uuid 4ae91697-08a6-46e6-9c5f-689ef07b11bc)
     (property "Reference" "L301" (id 0) (at 125.73 81.28 0))
     (property "Value" "2.7uH" (id 1) (at 125.73 85.09 0))
-    (property "Footprint" "Inductors:Toroid_T-60_2TH" (id 2) (at 125.73 83.82 0)
+    (property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical" (id 2) (at 125.73 83.82 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 125.73 83.82 0)
