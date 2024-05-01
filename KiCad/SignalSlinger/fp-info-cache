@@ -1,4 +1,4 @@
-20528241918110710
+20530081659456405
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -57073,10 +57073,17 @@ net tie solder jumper bridged
 Jumper
 Jumper_THT_1x02_P1.27mm_Vertical
 Through hole straight pin header, 1x02, 1.27mm pitch, single row
-Through hole pin header THT 1x02 1.27mm single row
+net tie Through hole pin header THT 1x02 1.27mm single row
 0
 2
 2
+Jumper
+Jumper_THT_1x03_Bridged12_P1.27mm_Vertical
+Through hole straight pin header, 1x02, 1.27mm pitch, single row
+net tie Through hole pin header THT 1x02 1.27mm single row
+0
+3
+3
 Jumper
 SolderJumper-2_P1.3mm_Bridged2Bar_Pad1.0x1.5mm
 SMD Solder Jumper, 1x1.5mm Pads, 0.3mm gap, bridged with 2 copper strips
