@@ -215,14 +215,23 @@ void final_drain_voltage(bool state);
 	{
 		si5351_start_comms();
 	}
+	
+	EC init_transmitter(Frequency_Hz freq, bool leave_clock_off)
+	{
+		EC code;
+		g_80m_frequency = freq;
+		code = init_transmitter(leave_clock_off);
+		
+		return code;
+	}
 
 	EC init_transmitter(Frequency_Hz freq)
 	{
 		g_80m_frequency = freq;
-		return init_transmitter();
+		return init_transmitter(true);
 	}
 	
-	EC init_transmitter(void)
+	EC init_transmitter(bool leave_clock_off)
 	{
 		EC code;
 		bool err;
@@ -265,7 +274,7 @@ void final_drain_voltage(bool state);
 // 			return( code);
 // 		}
 // 
-		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, false);
+		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off);
 		if(!err)
 		{
 			g_tx_initialized = true;

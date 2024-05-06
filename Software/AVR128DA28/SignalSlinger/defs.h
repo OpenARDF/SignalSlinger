@@ -33,12 +33,12 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.105"
+#define SW_REVISION "0.107"
 
 //#define TRANQUILIZE_WATCHDOG
 
-#define PRODUCT_NAME_SHORT "SignalSlinger Tx"
-#define PRODUCT_NAME_LONG "\n* SignalSlinger 80m CW QRP Transmitter"
+#define PRODUCT_NAME_SHORT "SignalSlinger"
+#define PRODUCT_NAME_LONG "\n* SignalSlinger 80m Radio Orienteering Transmitter"
 
 /*******************************************************/
 

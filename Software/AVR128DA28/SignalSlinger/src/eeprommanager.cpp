@@ -649,7 +649,7 @@ bool EepromManager::readNonVols(void)
 		g_fox[EVENT_NONE] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5));
 		g_fox[EVENT_CLASSIC] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5));
 		g_fox[EVENT_SPRINT] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5));
-		g_fox[EVENT_FOXORING] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)), FOXORING_FOX3));
+		g_fox[EVENT_FOXORING] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)), FREQUENCY_TEST_BEACON));
 		g_fox[EVENT_BLIND_ARDF] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_blind)), FOX_5));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
