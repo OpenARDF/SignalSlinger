@@ -478,6 +478,12 @@ bool fox2Text(char* str, Fox_t fox)
 		}
 		break;
 		
+		case FREQUENCY_TEST_BEACON:
+		{
+			sprintf(str, "Frequency Tester Beacon");
+		}
+		break;
+		
 		default:
 		{
 			failure = true;

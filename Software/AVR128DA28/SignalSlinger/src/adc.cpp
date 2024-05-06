@@ -129,7 +129,7 @@ bool ADC0_conversionDone(void)
 	return (ADC0.INTFLAGS & ADC_RESRDY_bm);
 }
 
-int ADC0_read(void)
+int ADC0_read()
 {
 	return ADC0.RES; 	/* Reading the result also clears the interrupt flag */
 }

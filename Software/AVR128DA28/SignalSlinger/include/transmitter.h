@@ -73,8 +73,9 @@ typedef int16_t Attenuation;
 	
 /**
  */
-EC init_transmitter(void);
+EC init_transmitter(bool leave_clock_off);
 EC init_transmitter(Frequency_Hz freq);
+EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
  
 /** 
  */
