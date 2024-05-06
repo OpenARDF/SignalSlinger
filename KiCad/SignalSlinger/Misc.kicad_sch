@@ -6,8 +6,8 @@
 
   (title_block
     (title "SignalSlinger")
-    (date "2024-04-30")
-    (rev "3.1")
+    (date "2024-05-06")
+    (rev "3.2")
   )
 
   (lib_symbols
@@ -672,7 +672,7 @@
     (property "Reference" "HDWR413" (id 0) (at 153.67 120.65 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Value" "" (id 1) (at 153.67 143.51 0))
+    (property "Value" "FTDI Adapter PCB" (id 1) (at 153.67 143.51 0))
     (property "Footprint" "" (id 2) (at 153.67 133.35 0)
       (effects (font (size 1.27 1.27)) hide)
     )
@@ -690,7 +690,7 @@
     (property "Reference" "HDWR412" (id 0) (at 257.81 72.39 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Value" "" (id 1) (at 257.81 95.25 0))
+    (property "Value" "Shorting Jumper" (id 1) (at 257.81 95.25 0))
     (property "Footprint" "" (id 2) (at 257.81 85.09 0)
       (effects (font (size 1.27 1.27)) hide)
     )
