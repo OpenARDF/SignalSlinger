@@ -1,28 +1,25 @@
 Ref,Value,QTY PER,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN,
 BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm,, , , , , , 
 BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 1200mAh, , ,https://www.adafruit.com/product/258,Adafruit,258
-C101 C104 C105 C107 C208 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
-C102 C103 C106 C108 C112 C204 C301 ,470nF,7,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
-C109 C113 C114 C201 C203 C205 C206 C207 C210 C216 ,10uF,10,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 35V X5R 0805,445-14418-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp,TDK Corporation,C2012X5R1V106K125AC
+C101 C104 C105 C107 C218 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
+C102 C103 C106 C108 C112 C204 C217 C301 ,470nF,8,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
+C109 C201 C203 C205 C206 C207 C208 C210 C213 C216 ,10uF,10,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 35V X5R 0805,445-14418-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp,TDK Corporation,C2012X5R1V106K125AC
 C110 ,22uF,1,Capacitor_SMD:C_1210_3225Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND,Samsung Electro-Mechanics,CL32A226MAJNNNE
-C111 ,47uF low ESR,1,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND,KEMET,T495X476K020ATE150
-C202 C209 ,10nF,2,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
-C211 ,10pF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10PF 50V C0G/NP0 0805,478-KGM21BCG1H100JTCT-ND,C157608,https://www.digikey.com/en/products/detail/kyocera-avx/KGM21BCG1H100JT/563414,KYOCERA AVX,KGM21BCG1H100JT
-C212 ,1uF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 1UF 50V X7R 0805,1276-6470-1-ND,C28323,https://www.digikey.com/en/products/detail/samsung-electro-mechanics/CL21B105KBFNNNG/3894467,Samsung Electro-Mechanics,CL21B105KBFNNNG
-C213 C214 C215 ,22uF,3,Capacitor_SMD:C_0805_2012Metric,,CAP CER 22UF 25V X5R 1210,1276-3373-1-ND,C337455,https://www.digikey.com/products/en?keywords=1276-3373-1-ND,Samsung Electro-Mechanics,CL32A226MAJNNNE
-C217 ,330nF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
-C218 ,100nF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
-C302 C305 ,1100pF,2,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1100PF 250V NP0 5.08mm, , , ,KEMET,C325C112KAG5TA
-C303 ,1800pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 1800PF 250V C0G 5.08mm, , , ,KEMET,C325C182JAG5TA
-C304 ,91pF,1,Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm,,CAP CER 91PF 250V NP0 5.08mm, , , ,KEMET,C325C910JAG5TA
+C111 C212 C215 ,47uF low ESR,3,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND,KEMET,T495X476K020ATE150
+C202 C209 C211 ,10nF,3,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
+C214 ,1uF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 1UF 16V X7R 0805,311-1365-1-ND,C344171,<a href="https://www.digikey.com/products/en?keywords=311-1365-1-ND">Link</a>,Yageo,CC0805KKX7R7BB105
+C302 C305 ,1100pF,2,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0), , , ,Murata Electronics,GRM2195C2A112JA01D
+C303 ,1800pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1800 pF 100 VDC 2% 0805 C0G (NP0) AEC-Q200, , , ,Murata Electronics,GCM2165C2A182GA16D
+C304 ,91pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 100V 91pF C0G 0805 1%, , , ,KYOCERA AVX,08051A910FAT2A
 D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND,C83482,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
 D103 ,Red LED,1,LED_SMD:LED_0805_2012Metric,,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
-D104 ,Green LED,1,LED_SMD:LED_APDA1806SECK,,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
+D104 ,Green LED,1,LED_SMD:LED_0805_2012Metric,,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
 D105 D106 D108 D109 D110 D111 D112 ,ESD9B5.0ST5G_1,7,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND,Bourns Inc.,CG0603MLC-05LE
 D107 D115 D203 D204 D205 D206 D207 ,Schottky Diode,7,Diode_SMD:D_SOD-123FL,,DIODE SCHOTTKY 30V 1.5A SOD-123FL,RB070MM-30CT-ND, ,https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862,Rohm Semiconductor,RB070MM-30TR
-D113 D114 ,1N4001,2,Diode_SMD:D_SOD-123F,,DIODE GEN PURP 50V 1A SOD123F,HS1AFLCT-ND, ,https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA,Taiwan Semiconductor Corporation,HS1AFL
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND ,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
 D202 ,B330A Schottky Diode,1,Diode_SMD:D_SMB,,DIODE GEN PURP 50V 3A SMB,S3AB-FDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419,Diodes Incorporated,S3AB-13-F
+D208 D209 ,1N4001,2,Diode_SMD:D_SOD-123F,,DIODE GEN PURP 50V 1A SOD123F,HS1AFLCT-ND, ,https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA,Taiwan Semiconductor Corporation,HS1AFL
+D210 ,B530,1,Diode_SMD:D_SMC,,DIODE SCHOTTKY 30V 5A SMC,B530C-FDICT-ND,C110488,<a href="https://www.digikey.com/products/en?keywords=B530C-FDICT-ND">Link</a>,Diodes Incorporated,B530C-13-F
 F201 ,1.1A,1,Fuse:Fuse_1812_4532Metric,,PTC RESET FUSE 16V 1.1A 1812,F3485CT-ND, ,https://www.digikey.com/en/products/detail/littelfuse-inc/1812L110-16DR/2023965,Littelfuse Inc.,1812L110/16DR
 HDWR401 ,Chassis Box,1,,,4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs, , ,https://www.polycase.com/sl-42p?qty=1#200=99&227=163,polycase,SL-42PMBT
 HDWR402 ,LED Light Pipes,1,,,LIGHT PIPE ROUND 3MM,LFB063CTP-ND, ,https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593,Visual Communications Company - VCC,LFB063CTP
@@ -34,53 +31,56 @@ HDWR407 ,LiPo Charger Module,1,,,Micro-Lipo Charger for LiPo/LiIon Batt,1528-183
 HDWR408 ,9-Pin D Male,1,,,CONN D-SUB PLUG 9POS SLDR CUP,AE10972-ND, ,https://www.digikey.com/en/products/detail/assmann-wsw-components/A-DS-09-LL-Z/1241781,Assmann WSW Components,A-DS 09 LL/Z
 HDWR409 ,6-pin Angled Header,1,,,CONN HEADER R/A 6POS 2.54MM,929550-01-06-ND, ,https://www.digikey.com/en/products/detail/3m/929550-01-06-I/682149,3M,929550-01-06-I
 HDWR410 ,PCB_AND_ASSEMBLY,1,,,Printed Circuit Board(s) plus Assembly, , , , , 
-HDWR411 ,Pin Header (Straight),1,,,CONN HEADER VERT 20POS 2.54MM,2057-PH1-20-UA-ND, ,https://www.digikey.com/en/products/detail/adam-tech/PH1-20-UA/9830398,Adam Tech,PH1-20-UA
-HDWR412 ,Pin Header Shorting Jumpers,1,,,CONN JUMPER SHORTING .100" GOLD,S9337-ND, ,https://www.digikey.com/en/products/detail/sullins-connector-solutions/QPC02SXGN-RC/2618262,Sullins Connector Solutions,QPC02SXGN-RC
+HDWR411 ,TO-220 Mounting Hardware,1,,, ,Amazon, , , , 
 HDWR413 ,FTDI Adapter PCB,1,,, , , , , , 
 J101 J103 J104 J106 ,Conn_01x02,4,Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical,, , , , , , 
 J102 ,Conn_01x03,1,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,, , , , , , 
 J105 ,Conn_01x04,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,, , , , , , 
 J107 ,DB9 Female,1,Connector_Dsub:DSUB-9_Female_EdgeMount_P2.77mm,, ,609-1525-ND, ,https://www.digikey.com/products/en?keywords=609-1525-ND,TH,TH
-J109 ,SolderJumper_2_Bridged,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 J201 ,Barrel_Jack_Switch,1,Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal,,CONN PWR JACK 2X5.5MM SOLDER,CP-036AHPJCT-ND, ,https://www.digikey.com/en/products/detail/cui-devices/PJ-036AH-SMT-TR/1530971,CUI Devices,PJ-036AH-SMT-TR
+J202 ,SolderJumper_2_Bridged,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 J203 ,External Fan Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J204 ,Controlled Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J301 ,To Antenna,1,Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal,,CONN BNC JACK R/A 50 OHM PCB,ARF1065-ND, ,https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB,Amphenol RF,31-5431
+JP101 ,NetTie_Jumper_3_Bridged12,1,Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical,,CONN HEADER VERT 3POS 1.27MM,S9014E-03-ND, ,https://www.digikey.com/short/z0ntzpw3,Sullins Connector Solutions,GRPB031VWVN-RC
+JP102 ,NetTie_Jumper_2_Bridged,1,Jumper:Jumper_THT_1x02_P1.27mm_Vertical,,CONN HEADER VERT 2POS 1.27MM,S9014E-02-ND, ,https://www.digikey.com/short/4w5ttcv3,Sullins Connector Solutions,GRPB021VWVN-RC
 JP201 ,V-ext disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
-L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT,,TH,FT50A-43 (Amidon), ,http://www.amidoncorp.com/ft-50A-43/,TH,TH
+JP202 ,Boost Bypass,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
+L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT_Vertical,,TH,FT50A-43 (Amidon), ,http://www.amidoncorp.com/ft-50A-43/,TH,TH
 L201 ,2.2uH,1,Inductor_SMD:WPN4020H2R2MT,,FIXED IND 2.2UH 4.3A 48MOHM SMD,3442-WPN4020H2R2MTCT-ND, ,https://www.digikey.com/en/products/detail/shenzhen-sunlord-electronics-co-ltd/WPN4020H2R2MT/14119999?s=N4IgTCBcDaIOoAUByAWADGNAJMAlMAsgCogC6AvkA,Shenzhen Sunlord Electronics Co.  Ltd.,WPN4020H2R2MT
-L202 ,1uH,1,Inductor_SMD:L_Bourns_SRN5040TA,,FIXED IND 1UH 5A 12 MOHM SMD,SRN5040TA-1R0MCT-ND, ,https://www.digikey.com/en/products/detail/bourns-inc/SRN5040TA-1R0M/9653870,Bourns Inc.,SRN5040TA-1R0M
-L301 L302 ,2.7uH,2,Inductors:Toroid_T-60_2TH,,TH,T60-2 (Amidon), ,http://www.amidoncorp.com/t60-2/,TH,TH
+L202 ,6.8uH,1,Inductors:CDR7D28MN,,FIXED IND 6.8UH 2.75A 46.3 MOHM,308-1328-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=308-1328-1-ND">Link</a>,Sumida America Components Inc.,CDR7D28MNNP-6R8NC
+L301 L302 ,2.7uH,2,Inductors:Toroid_T-60_2TH_Vertical,,TH,T60-2 (Amidon), ,http://www.amidoncorp.com/t60-2/,TH,TH
 MOD201 ,AdaFruit Charger,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,,LI-ION LI-POLYMER CHARGER BOARD,1528-1833-ND, ,https://www.digikey.com/en/products/detail/adafruit-industries-llc/1904/5054545,AdaFruit,Product ID: 1904
 P101 ,ISP/PDI,1,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,,CONN HEADER SMD 6POS 2.54MM,609-3487-1-ND,C178294,https://www.digikey.com/products/en?keywords=609-3487-1-ND,Amphenol ICC (FCI),95278-101A06LF
 Q101 ,BSS84W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET P-CH 50V 130MA SOT323,BSS84W-FDICT-ND,C110490,https://www.digikey.com/short/fjvhfm07,Diodes Incorporated,BSS84W-7-F
 Q102 ,BSS138W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET N-CH 50V 200MA SOT323,BSS138W-FDICT-ND,C24553,https://www.digikey.com/short/m8f8nn79,Diodes Incorporated,BSS138W-7-F
 Q103 ,IRF610,1,TO_SOT_Packages:TO-220_Neutral123_Vertical_LargePads,,TH,IRF610PBF-ND, ,https://www.digikey.com/products/en?keywords=IRF610PBF-ND,TH,TH
-R1 R2 ,TBD,2,Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P2.54mm_Vertical,, ,TBD, , , , 
-R101 R201 R205 ,105k,3,Resistor_SMD:R_0805_2012Metric,,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND,C273877,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
-R102 ,162k,1,Resistor_SMD:R_0805_2012Metric,,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
-R103 ,12.4k,1,Resistor_SMD:R_0805_2012Metric,,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND,C137595,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572,YAGEO,RC0805FR-0712K4L
+Q201 ,RJK0354DSP,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,MOSFET N-CH 30V 16A 8SOP,RJK0354DSP-00#J0CT-ND,C919563,<a href="https://www.digikey.com/products/en?keywords=RJK0354DSP-00#J0CT-ND">Link</a>,Renesas Electronics America Inc,RJK0354DSP-00#J0
+R101 ,105k,1,Resistor_SMD:R_0805_2012Metric,,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND,C273877,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
+R102 R204 ,162k,2,Resistor_SMD:R_0805_2012Metric,,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
+R103 R205 ,12.4k,2,Resistor_SMD:R_0805_2012Metric,,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND,C137595,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572,YAGEO,RC0805FR-0712K4L
 R104 ,1k,1,Resistor_SMD:R_0805_2012Metric,,RES 1K OHM 1% 1/8W 0805,RMCF0805FT1K00CT-ND,C17513,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090,Stackpole Electronics Inc,RMCF0805FT1K00
 R105 ,220,1,Resistor_SMD:R_0805_2012Metric,,RES 220 OHM 1% 1/8W 0805,13-RC0805FR-10220RLCT-ND, ,https://www.digikey.com/en/products/detail/yageo/rc0805fr-10220rl/14008375,Yageo,RC0805FR-10220RL
 R106 ,47k,1,Resistor_SMD:R_0805_2012Metric,,RES 47K OHM 1% 1/8W 0805,311-47.0KCRCT-ND,C126351,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0747KL/727973,YAGEO,RC0805FR-0747KL
-R107 R108 ,10k,2,Capacitor_SMD:C_0805_2012Metric,,RES 10K OHM 1% 1/4W 0805,RNCP0805FTD10K0CT-ND,C2441435,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262,Stackpole Electronics Inc,RNCP0805FTD10K0
-R202 R204 ,1M,2,Resistor_SMD:R_0805_2012Metric,,RES 1M OHM 1% 1/8W 0805,13-RC0805FR-131MLCT-ND,C4198744,https://www.digikey.com/en/products/detail/yageo/RC0805FR-131ML/14008312,YAGEO,RC0805FR-131ML
-R203 ,80.6k,1,Resistor_SMD:R_0805_2012Metric,,RES 80.6K OHM 1% 1/8W 0805,311-80.6KCRCT-ND, ,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0780K6L/728161,YAGEO,RC0805FR-0780K6L
+R107 R108 R201 R202 ,10k,4,Resistor_SMD:R_0805_2012Metric,,RES 10K OHM 1% 1/4W 0805,RNCP0805FTD10K0CT-ND,C2441435,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RNCP0805FTD10K0/2240262,Stackpole Electronics Inc,RNCP0805FTD10K0
+R109 ,47 0.5W,1,Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P2.54mm_Vertical,, , , , , , 
+R1 R2 R3 R4 ,TBD,4,Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P2.54mm_Vertical,, ,TBD, , , , 
+R203 ,0.01 0.5W,1,Resistor_SMD:R_0805_2012Metric,,RES 0.01 OHM 1% 1/2W 0805,408-1544-1-ND,C728271,<a href="https://www.digikey.com/products/en?keywords=408-1544-1-ND">Link</a>,Susumu,KRL1220E-M-R010-F-T5
 SW101 ,SW_SPST,1,Button_Switch_SMD:SW_SPST_TL3305A,,SWITCH TACTILE SPST-NO 0.05A 12V,EG5042CT-ND, ,https://www.digikey.com/en/products/detail/e-switch/TL1014BF160QG/3910805,E-Switch,TL1014BF160QG
 TP101 ,I2C1,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,, ,np, ,np,np, 
 U101 ,AVR128DA28,1,Package_SO:SOIC-28W_7.5x17.9mm_P1.27mm,,IC MCU 8BIT 128KB FLASH 28SOIC,150-AVR128DA28T-E/SOCT-ND,C1870730,https://www.digikey.com/short/781hqp8f,Microchip Technology,AVR128DA28T-E/SO
 U102 ,SI5351,1,Package_SO:MSOP-10_3x3mm_P0.5mm,,IC CLK GENERATOR 200MHZ 10MSOP,336-2399-5-ND,C529366,https://www.digikey.com/products/en?keywords=336-2399-5-ND,Silicon Labs,SI5351A-B-GT
 U103 U204 ,TPS22810DBVT,2,Package_TO_SOT_SMD:SOT-23-6,,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,https://www.digikey.com/products/en?keywords=296-45304-1-ND,Texas Instruments,TPS22810DBVT
 U104 ,LM5134,1,Package_TO_SOT_SMD:SOT-23-6-LM5134,,IC GATE DRVR LOW-SIDE SOT23-6,296-40244-1-ND,C2677086,https://www.digikey.com/products/en?keywords=296-40244-1-ND,Texas Instruments,LM5134BMFX/NOPB
-U105 ,TO-220 ADJ Reg.,1,TO_SOT_Packages:TO-220_Neutral123_Horizontal,,IC REG LIN POS ADJ 1.5A TO220-3,505-LT1086CT#PBF-ND, ,https://www.digikey.com/en/products/detail/analog-devices-inc/LT1086CT-PBF/891238,Analog Devices Inc.,LT1086CT#PBF
 U201 U202 ,LP2985-3.3,2,Package_TO_SOT_SMD:SOT-23-5,,IC REG LINEAR 3.3V 150MA SOT23-5,296-18479-1-ND,C89826,https://www.digikey.com/short/vr2m3rjp,Texas Instruments,LP2985A-33DBVR
-U203 ,TPS63060,1,Package_SON:Texas_S-PWSON-N10_ThermalVias,,IC REG BCK BST ADJ 2A 10WSON,296-30178-1-ND,C2070911,https://www.digikey.com/en/products/detail/texas-instruments/TPS63060DSCT/2812707,Texas Instruments,TPS63060DSCT
+U203 ,TO-220 ADJ Reg.,1,Package_TO_SOT_THT:TO-220-3_Horizontal_TabDown,,IC REG LIN POS ADJ 1.5A TO220-3,505-LT1086CT#PBF-ND, ,https://www.digikey.com/en/products/detail/analog-devices-inc/LT1086CT-PBF/891238,Analog Devices Inc.,LT1086CT#PBF
 U205 ,uA7805,1,Package_TO_SOT_SMD:SOT-223-4,,IC REG LINEAR 5V 500MA SOT223-4,296-17616-1-ND, ,https://www.digikey.com/en/products/detail/texas-instruments/UA78M05IDCYR/706596,Texas Instruments,UA78M05IDCYR
+U206 ,MIC2196,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,IC REG CTRLR BOOST 8SOIC,MIC2196YM-CT-ND,C627808,<a href="https://www.digikey.com/products/en?keywords=MIC2196YM-CT-ND">Link</a>,Microchip Technology,MIC2196YM-TR
 W101 ,T2,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W102 ,T3,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W103 ,T4,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W301 ,T5,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W302 ,T6,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W303 ,T7,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
-X101 ,SIT1566AC TCO,1,Oscillator:Oscillator_SMD_SiTime_SIT1566AC-4Pin_BGA,,MEMS OSC TCXO 32.768KHZ CSP,1473-SIT1566AC-JV-XXE-32.768ECT-ND, ,https://www.digikey.com/short/r7q3vdbp,SiTime,SIT1566AC-JV-XXE-32.768E
+X101 ,ECS-327TXO-30-TR,1,Oscillator:Oscillator_SMD_ECS_327TXO,,OSC TCXO 32.768KHZ 3.0V SMD,50-ECS-327TXO-30-CT-ND, , ,ECS Inc.,ECS-327TXO-30-TR
 X102 ,25 MHz,1,Crystal:Crystal_SMD_TXETCLSANF-4Pin,,XTAL OSC TCXO 25.0000MHZ SNWV,1664-1273-1-ND, ,https://www.digikey.com/products/en?keywords=1664-1273-1-ND,Taitien,TXETCLSANF-25.000000
