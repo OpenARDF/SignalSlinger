@@ -6,8 +6,8 @@
 
   (title_block
     (title "SignalSlinger")
-    (date "2024-04-30")
-    (rev "3.1")
+    (date "2024-05-06")
+    (rev "3.2")
   )
 
   (lib_symbols
@@ -1189,11 +1189,11 @@
         )
       )
     )
-    (symbol "Jumper:NetTie_Jumper_2_Bridged" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
+    (symbol "Jumper:Jumper_2_Bridged" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
       (property "Reference" "JP" (id 0) (at 0 1.905 0)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Value" "NetTie_Jumper_2_Bridged" (id 1) (at 0 -2.54 0)
+      (property "Value" "Jumper_2_Bridged" (id 1) (at 0 -2.54 0)
         (effects (font (size 1.27 1.27)))
       )
       (property "Footprint" "" (id 2) (at 0 0 0)
@@ -1211,7 +1211,7 @@
       (property "ki_fp_filters" "Jumper* TestPoint*2Pads* TestPoint*Bridge*" (id 6) (at 0 0 0)
         (effects (font (size 1.27 1.27)) hide)
       )
-      (symbol "NetTie_Jumper_2_Bridged_0_0"
+      (symbol "Jumper_2_Bridged_0_0"
         (circle (center -2.032 0) (radius 0.508)
           (stroke (width 0) (type default) (color 0 0 0 0))
           (fill (type none))
@@ -1221,13 +1221,13 @@
           (fill (type none))
         )
       )
-      (symbol "NetTie_Jumper_2_Bridged_0_1"
+      (symbol "Jumper_2_Bridged_0_1"
         (arc (start 1.524 0.254) (mid 0 0.762) (end -1.524 0.254)
           (stroke (width 0) (type default) (color 0 0 0 0))
           (fill (type none))
         )
       )
-      (symbol "NetTie_Jumper_2_Bridged_1_1"
+      (symbol "Jumper_2_Bridged_1_1"
         (pin passive line (at -5.08 0 0) (length 2.54)
           (name "A" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27))))
@@ -1238,11 +1238,11 @@
         )
       )
     )
-    (symbol "Jumper:NetTie_Jumper_3_Bridged12" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
+    (symbol "Jumper:Jumper_3_Bridged12" (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
       (property "Reference" "JP" (id 0) (at -2.54 -2.54 0)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Value" "NetTie_Jumper_3_Bridged12" (id 1) (at 0 2.794 0)
+      (property "Value" "Jumper_3_Bridged12" (id 1) (at 0 2.794 0)
         (effects (font (size 1.27 1.27)))
       )
       (property "Footprint" "" (id 2) (at 0 0 0)
@@ -1260,7 +1260,7 @@
       (property "ki_fp_filters" "Jumper* TestPoint*3Pads* TestPoint*Bridge*" (id 6) (at 0 0 0)
         (effects (font (size 1.27 1.27)) hide)
       )
-      (symbol "NetTie_Jumper_3_Bridged12_0_0"
+      (symbol "Jumper_3_Bridged12_0_0"
         (circle (center -3.302 0) (radius 0.508)
           (stroke (width 0) (type default) (color 0 0 0 0))
           (fill (type none))
@@ -1274,7 +1274,7 @@
           (fill (type none))
         )
       )
-      (symbol "NetTie_Jumper_3_Bridged12_0_1"
+      (symbol "Jumper_3_Bridged12_0_1"
         (arc (start -0.254 0.508) (mid -1.651 0.9912) (end -3.048 0.508)
           (stroke (width 0) (type default) (color 0 0 0 0))
           (fill (type none))
@@ -1288,7 +1288,7 @@
           (fill (type none))
         )
       )
-      (symbol "NetTie_Jumper_3_Bridged12_1_1"
+      (symbol "Jumper_3_Bridged12_1_1"
         (pin passive line (at -6.35 0 0) (length 2.54)
           (name "A" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27))))
@@ -3738,11 +3738,11 @@
       (effects (font (size 1 1)) (justify left) hide)
     )
   )
-  (global_label "B{slash}B_PS_Enable" (shape output) (at 80.01 86.36 0) (fields_autoplaced)
+  (global_label "BOOST_PWR_ENABLE" (shape output) (at 80.01 86.36 0) (fields_autoplaced)
     (effects (font (size 1 1)) (justify left))
     (uuid eb598eb7-6732-4a1c-b511-a40d63ed7fd0)
-    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 93.4338 86.2975 0)
-      (effects (font (size 1 1)) (justify right) hide)
+    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 96.91 86.2975 0)
+      (effects (font (size 1 1)) (justify left) hide)
     )
   )
   (global_label "CLK1" (shape input) (at 199.39 95.25 180) (fields_autoplaced)
@@ -3813,6 +3813,41 @@
     )
     (pin "1" (uuid e3c923f9-df76-4320-a32c-27f3a0e96751))
     (pin "2" (uuid a3b84e97-3faa-41f2-b219-a1b630d65b64))
+  )
+
+  (symbol (lib_id "Jumper:Jumper_3_Bridged12") (at 240.03 95.25 270) (mirror x) (unit 1)
+    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (uuid 03943c92-80d7-476d-88e0-4e0ed7aec63e)
+    (property "Reference" "JP101" (id 0) (at 241.6562 95.6838 90)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "Jumper_3_Bridged12" (id 1) (at 241.6562 96.9522 90)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Footprint" "Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical" (id 2) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (id 3) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Digi-Key Part No." "S9014E-03-ND" (id 4) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Link" "https://www.digikey.com/short/z0ntzpw3" (id 5) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Manufacturer PN" "GRPB031VWVN-RC" (id 7) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Description" "CONN HEADER VERT 3POS 1.27MM" (id 8) (at 240.03 95.25 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 6b358c12-fdcd-4efa-9c61-87065b0315e2))
+    (pin "2" (uuid d7d67f04-e166-4ed5-b649-d0c411da1b91))
+    (pin "3" (uuid aec48149-d926-4270-9aad-98d51f843362))
   )
 
   (symbol (lib_id "power:PWR_FLAG") (at 19.05 190.5 0) (unit 1)
@@ -5054,6 +5089,40 @@
     (pin "2" (uuid 67295ec6-b066-429a-a2d1-e49993eb4086))
   )
 
+  (symbol (lib_id "Jumper:Jumper_2_Bridged") (at 252.73 58.42 270) (unit 1)
+    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (uuid 5f5cf5c4-69a1-46cf-b923-598cb687b24f)
+    (property "Reference" "JP102" (id 0) (at 254.127 58.8538 90)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "Jumper_2_Bridged" (id 1) (at 254.127 60.1222 90)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "Footprint" "Jumper:Jumper_THT_1x02_P1.27mm_Vertical" (id 2) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (id 3) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Digi-Key Part No." "S9014E-02-ND" (id 4) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Link" "https://www.digikey.com/short/4w5ttcv3" (id 5) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Manufacturer PN" "GRPB021VWVN-RC" (id 7) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Description" "CONN HEADER VERT 2POS 1.27MM" (id 8) (at 252.73 58.42 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 7e12127e-ff0d-4abd-91fa-bc8cfc12a600))
+    (pin "2" (uuid 09037297-5994-49e3-b5d1-c41f350aa6a9))
+  )
+
   (symbol (lib_id "Transistor_FET:IRF610_TO220-Transistor_FET") (at 259.08 105.41 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 5f5dc156-a8a4-4775-90ba-b5be00b15f26)
@@ -5603,40 +5672,6 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 01902745-dfa1-4fee-b615-edba8b25f801))
-  )
-
-  (symbol (lib_id "Jumper:NetTie_Jumper_2_Bridged") (at 252.73 58.42 270) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 9970a949-7fae-4283-8aea-7420fc61ccee)
-    (property "Reference" "JP102" (id 0) (at 254.127 58.8538 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "NetTie_Jumper_2_Bridged" (id 1) (at 254.127 60.1222 90)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Footprint" "Jumper:Jumper_THT_1x02_P1.27mm_Vertical" (id 2) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (id 3) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "S9014E-02-ND" (id 4) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/short/4w5ttcv3" (id 5) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "GRPB021VWVN-RC" (id 7) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN HEADER VERT 2POS 1.27MM" (id 8) (at 252.73 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 6d9205f5-e320-47bf-9d7e-5bc02f696776))
-    (pin "2" (uuid 496c9414-f848-44a8-a861-ed7e10b7e5f9))
   )
 
   (symbol (lib_id "Device:R_Small_US") (at 62.23 158.75 270) (unit 1)
@@ -6335,41 +6370,6 @@
     )
     (pin "1" (uuid cfd04805-5696-4c75-b37a-22ca0ad1dfd0))
     (pin "2" (uuid c2716356-b05d-4e41-b5c1-e154ca4cf829))
-  )
-
-  (symbol (lib_id "Jumper:NetTie_Jumper_3_Bridged12") (at 240.03 95.25 270) (mirror x) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid e01ea006-bc12-4b45-b2d7-9a36fe25ba48)
-    (property "Reference" "JP101" (id 0) (at 241.6562 95.6838 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "NetTie_Jumper_3_Bridged12" (id 1) (at 241.6562 96.9522 90)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Footprint" "Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical" (id 2) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (id 3) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "S9014E-03-ND" (id 4) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/short/z0ntzpw3" (id 5) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "GRPB031VWVN-RC" (id 7) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN HEADER VERT 3POS 1.27MM" (id 8) (at 240.03 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid e47b3fa1-4758-4a3d-b27c-f92c2ff9b10d))
-    (pin "2" (uuid b01f2d1f-390e-4966-9bb1-bbf01e8753e6))
-    (pin "3" (uuid 280ce016-8dce-421b-855f-e383f544938f))
   )
 
   (symbol (lib_id "Device:R_Small_US") (at 76.2 177.8 180) (unit 1)
@@ -7239,7 +7239,7 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/4c88a37e-331b-4918-9ff3-db2b8b8e9835"
       (reference "D209") (unit 1) (value "1N4001") (footprint "Diode_SMD:D_SOD-123F")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/e8f8b4f0-4cba-4aa3-ae8c-4ba3f1228c94"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/6356cacc-2afa-494f-b561-a60ef27a1656"
       (reference "D210") (unit 1) (value "B530") (footprint "Diode_SMD:D_SMC")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/3f758ec9-95f3-4acf-8bdb-6d3c6615ff72"
@@ -7323,16 +7323,16 @@
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/d69177a2-5677-467e-9f98-c9fb5f757ff7"
       (reference "J301") (unit 1) (value "To Antenna") (footprint "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal")
     )
-    (path "/e01ea006-bc12-4b45-b2d7-9a36fe25ba48"
-      (reference "JP101") (unit 1) (value "NetTie_Jumper_3_Bridged12") (footprint "Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical")
+    (path "/03943c92-80d7-476d-88e0-4e0ed7aec63e"
+      (reference "JP101") (unit 1) (value "Jumper_3_Bridged12") (footprint "Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical")
     )
-    (path "/9970a949-7fae-4283-8aea-7420fc61ccee"
-      (reference "JP102") (unit 1) (value "NetTie_Jumper_2_Bridged") (footprint "Jumper:Jumper_THT_1x02_P1.27mm_Vertical")
+    (path "/5f5cf5c4-69a1-46cf-b923-598cb687b24f"
+      (reference "JP102") (unit 1) (value "Jumper_2_Bridged") (footprint "Jumper:Jumper_THT_1x02_P1.27mm_Vertical")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/9c59f417-fa94-463a-8b40-d67cd01ecf5c"
       (reference "JP201") (unit 1) (value "V-ext disable") (footprint "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/72d83942-3f76-44b8-9dab-7d7ccc09ea80"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/98bce5c3-5705-4ed5-8870-42a460b6f755"
       (reference "JP202") (unit 1) (value "Boost Bypass") (footprint "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm")
     )
     (path "/4ce4bf50-5c77-4c5d-a0ee-ed9a4794ecf5"
@@ -7341,7 +7341,7 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/b1a6cee7-c293-4248-bf6c-e4b6e388a068"
       (reference "L201") (unit 1) (value "2.2uH") (footprint "Inductor_SMD:WPN4020H2R2MT")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/a5255672-9302-49e3-8450-4a120d6d8132"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/b32174a2-72a4-4471-8b70-7aa09447c075"
       (reference "L202") (unit 1) (value "6.8uH") (footprint "Inductors:CDR7D28MN")
     )
     (path "/da189f43-fd1f-445a-980b-345fda8b9a74/4ae91697-08a6-46e6-9c5f-689ef07b11bc"
@@ -7365,7 +7365,7 @@
     (path "/5f5dc156-a8a4-4775-90ba-b5be00b15f26"
       (reference "Q103") (unit 1) (value "IRF610") (footprint "TO_SOT_Packages:TO-220_Neutral123_Vertical_LargePads")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/03a2e006-4ff5-47aa-aab6-8af31b952cd8"
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/18c95a54-4806-4ae1-a33b-4f66c87c393d"
       (reference "Q201") (unit 1) (value "RJK0354DSP") (footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm")
     )
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/fa419f90-45e7-40ba-9418-6ac91e0ffd79"
@@ -7455,8 +7455,8 @@
     (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/0163b889-88e7-41a0-abee-4b00bf5027c4"
       (reference "U205") (unit 1) (value "uA7805") (footprint "Package_TO_SOT_SMD:SOT-223-4")
     )
-    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/f45e1ccb-3043-434b-a08e-b0137ff99c2d"
-      (reference "U206") (unit 1) (value "MIC2196") (footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm")
+    (path "/b7c888bf-e50e-45b8-8886-9bc5abf637fe/aa9c6d8e-bede-4466-bc49-5c8b1fb54e81"
+      (reference "U206") (unit 1) (value "MIC2196YM") (footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm")
     )
     (path "/a9c7a0e3-6be1-437f-a60c-f4356786a41e"
       (reference "W101") (unit 1) (value "T2") (footprint "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small")

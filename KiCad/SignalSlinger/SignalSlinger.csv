@@ -1,6 +1,6 @@
 Ref,Value,QTY PER,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN,
 BT201 ,LiIon Cell,1,Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm,, , , , , , 
-BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 1200mAh, , ,https://www.adafruit.com/product/258,Adafruit,258
+BT401 ,LiPo Battery,1,,,Lithium Ion Polymer Battery - 3.7v 100mAh, , ,https://www.adafruit.com/product/1570,Adafruit,1570
 C101 C104 C105 C107 C218 ,100nF,5,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.1UF 25V X7R 0805,1276-1099-1-ND,C29926,https://www.digikey.com/short/q2f22qnq,Samsung Electro-Mechanics,CL21B104KACNNNC
 C102 C103 C106 C108 C112 C204 C217 C301 ,470nF,8,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0.47UF 100V X7R 0805,478-9924-1-ND,C342818,https://www.digikey.com/products/en?keywords=478-9924-1-ND,AVX Corporation,08051C474K4Z2A
 C109 C201 C203 C205 C206 C207 C208 C210 C213 C216 ,10uF,10,Capacitor_SMD:C_0805_2012Metric,,CAP CER 10UF 35V X5R 0805,445-14418-1-ND,C3843628,https://www.digikey.com/short/p8qdn4mp,TDK Corporation,C2012X5R1V106K125AC
@@ -32,7 +32,8 @@ HDWR408 ,9-Pin D Male,1,,,CONN D-SUB PLUG 9POS SLDR CUP,AE10972-ND, ,https://www
 HDWR409 ,6-pin Angled Header,1,,,CONN HEADER R/A 6POS 2.54MM,929550-01-06-ND, ,https://www.digikey.com/en/products/detail/3m/929550-01-06-I/682149,3M,929550-01-06-I
 HDWR410 ,PCB_AND_ASSEMBLY,1,,,Printed Circuit Board(s) plus Assembly, , , , , 
 HDWR411 ,TO-220 Mounting Hardware,1,,, ,Amazon, , , , 
-HDWR413 ,FTDI Adapter PCB,1,,, , , , , , 
+HDWR412 HDWR414 ,Shorting Jumper,2,,,CONN JUMPER SHORTING 1.27MM GOLD,S9345-ND, ,https://www.digikey.com/short/w0p92mhw,Sullins Connector Solutions,NPB02SVAN-RC
+HDWR413 ,FTDI Adapter PCB,1,,, , , ,https://oshpark.com/shared_projects/15SnDRmB, , 
 J101 J103 J104 J106 ,Conn_01x02,4,Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical,, , , , , , 
 J102 ,Conn_01x03,1,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,, , , , , , 
 J105 ,Conn_01x04,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,, , , , , , 
@@ -42,8 +43,8 @@ J202 ,SolderJumper_2_Bridged,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.
 J203 ,External Fan Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J204 ,Controlled Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J301 ,To Antenna,1,Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal,,CONN BNC JACK R/A 50 OHM PCB,ARF1065-ND, ,https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB,Amphenol RF,31-5431
-JP101 ,NetTie_Jumper_3_Bridged12,1,Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical,,CONN HEADER VERT 3POS 1.27MM,S9014E-03-ND, ,https://www.digikey.com/short/z0ntzpw3,Sullins Connector Solutions,GRPB031VWVN-RC
-JP102 ,NetTie_Jumper_2_Bridged,1,Jumper:Jumper_THT_1x02_P1.27mm_Vertical,,CONN HEADER VERT 2POS 1.27MM,S9014E-02-ND, ,https://www.digikey.com/short/4w5ttcv3,Sullins Connector Solutions,GRPB021VWVN-RC
+JP101 ,Jumper_3_Bridged12,1,Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical,,CONN HEADER VERT 3POS 1.27MM,S9014E-03-ND, ,https://www.digikey.com/short/z0ntzpw3,Sullins Connector Solutions,GRPB031VWVN-RC
+JP102 ,Jumper_2_Bridged,1,Jumper:Jumper_THT_1x02_P1.27mm_Vertical,,CONN HEADER VERT 2POS 1.27MM,S9014E-02-ND, ,https://www.digikey.com/short/4w5ttcv3,Sullins Connector Solutions,GRPB021VWVN-RC
 JP201 ,V-ext disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 JP202 ,Boost Bypass,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
 L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT_Vertical,,TH,FT50A-43 (Amidon), ,http://www.amidoncorp.com/ft-50A-43/,TH,TH
@@ -75,7 +76,7 @@ U104 ,LM5134,1,Package_TO_SOT_SMD:SOT-23-6-LM5134,,IC GATE DRVR LOW-SIDE SOT23-6
 U201 U202 ,LP2985-3.3,2,Package_TO_SOT_SMD:SOT-23-5,,IC REG LINEAR 3.3V 150MA SOT23-5,296-18479-1-ND,C89826,https://www.digikey.com/short/vr2m3rjp,Texas Instruments,LP2985A-33DBVR
 U203 ,TO-220 ADJ Reg.,1,Package_TO_SOT_THT:TO-220-3_Horizontal_TabDown,,IC REG LIN POS ADJ 1.5A TO220-3,505-LT1086CT#PBF-ND, ,https://www.digikey.com/en/products/detail/analog-devices-inc/LT1086CT-PBF/891238,Analog Devices Inc.,LT1086CT#PBF
 U205 ,uA7805,1,Package_TO_SOT_SMD:SOT-223-4,,IC REG LINEAR 5V 500MA SOT223-4,296-17616-1-ND, ,https://www.digikey.com/en/products/detail/texas-instruments/UA78M05IDCYR/706596,Texas Instruments,UA78M05IDCYR
-U206 ,MIC2196,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,IC REG CTRLR BOOST 8SOIC,MIC2196YM-CT-ND,C627808,<a href="https://www.digikey.com/products/en?keywords=MIC2196YM-CT-ND">Link</a>,Microchip Technology,MIC2196YM-TR
+U206 ,MIC2196YM,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,IC REG CTRLR BOOST 8SOIC,MIC2196YM-CT-ND,C627808,<a href="https://www.digikey.com/products/en?keywords=MIC2196YM-CT-ND">Link</a>,Microchip Technology,MIC2196YM-TR
 W101 ,T2,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W102 ,T3,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
 W103 ,T4,1,Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small,, ,np, ,np, , 
