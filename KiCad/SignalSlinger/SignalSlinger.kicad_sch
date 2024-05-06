@@ -7278,8 +7278,14 @@
     (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/6c708673-e095-4bd6-b3ae-de6d3042cdc7"
       (reference "HDWR411") (unit 1) (value "TO-220 Mounting Hardware") (footprint "")
     )
+    (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/7a135176-f0e4-48f2-9141-c47828842636"
+      (reference "HDWR412") (unit 1) (value "Shorting Jumper") (footprint "")
+    )
     (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/6dd4c5c1-cbca-4eb3-9be0-3e6afa74ef4c"
       (reference "HDWR413") (unit 1) (value "FTDI Adapter PCB") (footprint "")
+    )
+    (path "/5a65e8dc-078c-4a84-92a2-c8664e602338/6aeb2690-fe53-43d6-88ca-adfe7a09db74"
+      (reference "HDWR414") (unit 1) (value "Shorting Jumper") (footprint "")
     )
     (path "/48f385a0-9ac3-46be-bebb-920052f20de4"
       (reference "J101") (unit 1) (value "Conn_01x02") (footprint "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical")
