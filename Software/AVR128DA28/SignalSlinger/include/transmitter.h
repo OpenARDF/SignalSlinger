@@ -114,12 +114,9 @@ void txKeyDown(bool key);
 EC txMilliwattsToSettings(uint16_t* powerMW, uint16_t* powerLevel);
 
 /*
- * Inhibits (or not) RF power from reaching the antenna connector by turning off power to the FET driver and final output FET drain.
- * When called with inhibit=false the function sets both settings to the values that they had when the function was called with inhibit=true with any
- * changes that might have been applied during the time that inhibit was in effect.
- * This is used in instances such as when the antenna is disconnected and reconnected.
+ * Shuts re-initializes the RF oscillator and leaves it in an off condition. Returns true if the oscillator was successfully initialized.
  */
-void inhibitRFOutput(bool inhibit);
+bool txConfirmRFisOff(void);
 
 
 #endif  /* TRANSMITTER_H_ */

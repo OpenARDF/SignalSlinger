@@ -51,14 +51,14 @@ void ADC0_setADCChannel(ADC_Active_Channel_t chan)
 {
 	switch(chan)
 	{
-		case ADCAudioInput:
+		case ADCLipoVoltage:
 		{
-			if(g_adc_initialization != ADC_FREE_RUN_INITIALIZED)
+			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
 			{
-				ADC0_SYSTEM_init(FREE_RUNNING); 
+				ADC0_SYSTEM_init(SINGLE_CONVERSION);
 			}
 			
-			ADC0.MUXPOS = ADC_MUXPOS_AIN2_gc;
+			ADC0.MUXPOS = ADC_MUXPOS_AIN0_gc;
 		}
 		break;
 		
@@ -69,7 +69,7 @@ void ADC0_setADCChannel(ADC_Active_Channel_t chan)
 				ADC0_SYSTEM_init(SINGLE_CONVERSION);
 			}
 			
-			ADC0.MUXPOS = ADC_MUXPOS_AIN0_gc;
+			ADC0.MUXPOS = ADC_MUXPOS_AIN1_gc;
 		}
 		break;
 		

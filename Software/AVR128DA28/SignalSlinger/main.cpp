@@ -109,6 +109,7 @@ static volatile uint16_t g_code_throttle = 50;
 static volatile uint16_t g_sleepshutdown_seconds = 120;
 static volatile bool g_report_seconds = false;
 static volatile int g_hardware_error = (int)HARDWARE_OK;
+static volatile bool g_do_once_per_5second_tasks = false;
 
 char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
 volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
@@ -144,13 +145,13 @@ static volatile SleepType g_sleepType = SLEEP_FOREVER;
 static volatile time_t g_time_since_wakeup = 0;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 2
-static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = { ADCExternalBatteryVoltage };
+static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = { ADCLipoVoltage, ADCExternalBatteryVoltage };
 enum ADC_Result_Order { INTERNAL_BATTERY_VOLTAGE, EXTERNAL_POWER_VOLTAGE };
-static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = { TIMER2_0_5HZ };
-static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = { 2000 };
+static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = { TIMER2_0_5HZ, TIMER2_0_5HZ };
+static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = { 2000, 2000 };
 //static uint16_t g_ADCFilterThreshold[NUMBER_OF_POLLED_ADC_CHANNELS] = { 500, 500, 500 };
-static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false };
-static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS];
+static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false, false };
+static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = { 0, 0 };
 
 volatile uint16_t g_switch_closed_time = 0;
 volatile uint16_t g_handle_counted_presses = 0;
@@ -223,6 +224,8 @@ bool eventScheduledForNow(void);
 bool eventScheduledForTheFuture(void);
 bool noEventWillRun(void);
 time_t pauseUntilSecTransition(void);
+void configRedLEDforEvent(void);
+
 
 /*******************************/
 /* Hardcoded event support     */
@@ -309,6 +312,7 @@ void handle_1sec_tasks(void)
 	if(!g_cloningInProgress)
 	{
 		temp_time = time(null);
+		if(!(g_time_since_wakeup % 5)) g_do_once_per_5second_tasks = true;
 
 		if(g_event_commenced && !g_run_event_forever)
 		{
@@ -463,6 +467,8 @@ ISR(TCB0_INT_vect)
 	static uint8_t fiftyMS = 6;
 	static bool on_air_finished = false;
 	static bool transitionPrepped = false;
+	static int idTimeout = 0;
+	static bool id_timed_out = false;
 	
 	uint8_t x = TCB0.INTFLAGS;
 	
@@ -571,10 +577,19 @@ ISR(TCB0_INT_vect)
 		if(g_send_clone_success_countdown) g_send_clone_success_countdown--;
 							
 		static bool key = false;
+		if(idTimeout)
+		{
+			idTimeout--;
+			
+			if(!idTimeout)
+			{
+				id_timed_out = true;
+			}
+		}
 		
 		if(g_event_enabled && g_event_commenced && !g_isMaster) /* Handle cycling transmissions */
 		{
-			if((g_on_the_air > 0) || (g_sending_station_ID) || (!g_off_air_seconds))
+			if((g_on_the_air > 0) || (g_sending_station_ID && !id_timed_out) || (!g_off_air_seconds))
 			{
 				on_air_finished = true;
 				transitionPrepped = false;
@@ -586,6 +601,8 @@ ISR(TCB0_INT_vect)
 					repeat = false;
 					makeMorse(g_messages_text[STATION_ID], &repeat, NULL, CALLER_AUTOMATED_EVENT);  /* Send only once */
 					g_sending_station_ID = true;
+					idTimeout = g_code_throttle << 2;
+					id_timed_out = false;
 					g_sendID_seconds_countdown = g_ID_period_seconds;
 					codeInc = g_code_throttle;
 				}
@@ -598,7 +615,7 @@ ISR(TCB0_INT_vect)
 					{
 						key = makeMorse(NULL, &repeat, &finished, CALLER_AUTOMATED_EVENT);
 						
-						if(!repeat && finished) /* ID has completed, so resume pattern */
+						if(!repeat && finished) /* ID has completed or timed out, so resume pattern */
 						{
 							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 							g_code_throttle = throttleValue(getFoxCodeSpeed());
@@ -606,6 +623,9 @@ ISR(TCB0_INT_vect)
 							makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
 							muteAfterID = g_sending_station_ID && g_off_air_seconds;
 							g_sending_station_ID = false;
+							idTimeout = 0;
+							id_timed_out = false;
+							
 							if(!g_off_air_seconds)
 							{
 								g_on_the_air = g_on_air_seconds;
@@ -637,17 +657,13 @@ ISR(TCB0_INT_vect)
 				if(!transitionPrepped)
 				{
 					transitionPrepped = true;
+					id_timed_out = false;
 					
 					if(on_air_finished)
 					{
 						on_air_finished = false;							
 						keyTransmitter(OFF);
-				
-						if(key)
-						{
-							key = OFF;
-							keyTransmitter(OFF);
-						}
+						key = OFF;
 						
 						g_on_the_air = -g_off_air_seconds;
 						/* Enable sleep during off-the-air periods */
@@ -675,6 +691,8 @@ ISR(TCB0_INT_vect)
 	
 						muteAfterID = false;
 						g_sending_station_ID = false;
+						idTimeout = 0;
+						id_timed_out = false;
 				
 						/* Resume normal pattern */
 						g_code_throttle = throttleValue(getFoxCodeSpeed());
@@ -793,8 +811,8 @@ ISR(TCB0_INT_vect)
  		}
  		else if(ADC0_conversionDone())   /* wait for conversion to complete */
  		{
- 			uint16_t hold = ADC0_read(); //ADC;
- 			
+			uint16_t hold = ADC0_read(); 		
+				
  			if((hold > 10) && (hold < 4090))
  			{
  				g_adcUpdated[indexConversionInProcess] = true;
@@ -861,7 +879,7 @@ void powerDown3V3(void)
 void powerUp3V3(void)
 {
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, HIGH);	
-	fet_driver(OFF);
+	fet_driver(ON);
 //	PORTD_set_pin_level(VDIV_ENABLE, HIGH);
 }
 
@@ -1184,7 +1202,7 @@ int main(void)
 			
 			if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
 			{
-				LEDS.blink(LEDS_OFF, true); /* Restart LED timeout */
+				configRedLEDforEvent();
 			}
 			else
 			{
@@ -1208,6 +1226,21 @@ int main(void)
 // 				g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
 // 			}
 		}
+		
+		if(g_do_once_per_5second_tasks)
+		{
+			// Failsafe: 
+			g_do_once_per_5second_tasks = false;
+			
+			if(!g_event_enabled || !g_event_commenced) // Check for an unlikely glitched key-down condition that could leave the RF output latched on
+			{
+				powerUp3V3(); // ensure power is applied to the RF oscillator
+				if(txConfirmRFisOff())
+				{
+					powerDown3V3(); // Shut off power to the RF oscillator
+				}
+			}
+		}
 	}
 }
 
@@ -1219,6 +1252,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 	while((sb_buff = nextFullSBRxBuffer()))
 	{
 		bool suppressResponse = false;
+		
+		g_sleepshutdown_seconds = MAX(300U, g_sleepshutdown_seconds);
+		LEDS.blink(LEDS_NO_CHANGE, true);
 
 		SBMessageID msg_id = sb_buff->id;
 
@@ -1890,35 +1926,35 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						g_event = EVENT_FOXORING;
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
-						setupForFox(getFoxSetting(), START_NOTHING);
+						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 					else if(sb_buff->fields[SB_FIELD1][0] == 'C')
 					{
 						g_event = EVENT_CLASSIC;
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
-						setupForFox(getFoxSetting(), START_NOTHING);
+						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 					else if(sb_buff->fields[SB_FIELD1][0] == 'S')
 					{
 						g_event = EVENT_SPRINT;
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
-						setupForFox(getFoxSetting(), START_NOTHING);
+						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 					else if(sb_buff->fields[SB_FIELD1][0] == 'B')
 					{
 						g_event = EVENT_BLIND_ARDF;
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
-						setupForFox(getFoxSetting(), START_NOTHING);
+						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 					else if(sb_buff->fields[SB_FIELD1][0])
 					{
 						g_event = EVENT_NONE;
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 						init_transmitter(getFrequencySetting());
-						setupForFox(getFoxSetting(), START_NOTHING);
+						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 				}
 				
@@ -1999,6 +2035,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							else
 							{
   								setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
+								if(eventScheduled())
+								{
+									startEventUsingRTC();
+								}
 							}
  						}
 					}
@@ -2212,9 +2252,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			sb_send_NewLine();
 			sb_send_NewPrompt();
 		}
-
-// 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
-// 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 	}
 }
 
@@ -2505,7 +2542,7 @@ void suspendEvent()
 	g_run_event_forever = false;
 	g_sleepshutdown_seconds = 120;
 	keyTransmitter(OFF);
-	LEDS.init();
+	configRedLEDforEvent();
 }
 
 void startEventNow(EventActionSource_t activationSource)
@@ -2564,6 +2601,8 @@ void startEventNow(EventActionSource_t activationSource)
 			}
 		}
 	}
+	
+	configRedLEDforEvent();
 }
 
 void stopEventNow(EventActionSource_t activationSource)
@@ -2590,21 +2629,44 @@ void stopEventNow(EventActionSource_t activationSource)
 		}
 	}
 
-// 	if(g_sync_pin_stable == STABLE_LOW)
-// 	{
-// 		digitalWrite(PIN_LED, OFF); /*  LED Off */
-// 	}
+	configRedLEDforEvent();
 }
 
 bool startEventUsingRTC(void)
 {
 	bool err = false;
-	time_t now = time(null);
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
 	{
 		setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
+	}
+	else
+	{
+		err = true;
+		reportConfigErrors();
+	}
+
+	configRedLEDforEvent();
+	
+	return err;
+}
+
+
+void configRedLEDforEvent(void)
+{		
+	time_t now = time(null);
+	
+	LEDS.init();
+
+	if(noEventWillRun())
+	{
+		LEDS.blink(LEDS_RED_BLINK_FAST, true);
+	}
+	else
+	{
+		LEDS.blink(LEDS_RED_OFF);
+		
 		reportTimeTill(now, g_event_start_epoch, "\nStarts in: ", "\nIn progress\n");
 
 		if(g_event_start_epoch < now)
@@ -2616,13 +2678,6 @@ bool startEventUsingRTC(void)
 			reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 		}
 	}
-	else
-	{
-		err = true;
-		reportConfigErrors();
-	}
-	
-	return err;
 }
 
 
@@ -2641,7 +2696,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 	g_event_enabled = false;
 	g_event_commenced = false;
-	LEDS.setRed(OFF);
+//	LEDS.setRed(OFF);
 
 	switch(fox)
 	{
@@ -2682,7 +2737,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				g_intra_cycle_delay_time = 240;
 			}
 			
-			g_sendID_seconds_countdown = 60;			/* wait 1 minute to send the ID */
+			g_ID_period_seconds = 60;
+			g_sendID_seconds_countdown = g_ID_period_seconds;			/* wait 1 minute to send the ID */
 			g_on_air_seconds = 60;						/* on period is very long */
 			g_off_air_seconds = 240;                    /* off period = 4 minutes */
 		}
@@ -2722,13 +2778,12 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		}
 		case SPRINT_S5:
 		{
+			if(delayNotSet)
 			{
-				if(delayNotSet)
-				{
-					g_intra_cycle_delay_time = 48;
-				}
+				g_intra_cycle_delay_time = 48;
 			}
 
+			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 12;						/* on period is very long */
 			g_off_air_seconds = 48;						/* off period = 48 seconds */
@@ -2771,7 +2826,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				g_intra_cycle_delay_time = 48;
 			}
 
-			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
+			g_ID_period_seconds = 600;
+			g_sendID_seconds_countdown = g_ID_period_seconds;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 12;						/* on period is very long */
 			g_off_air_seconds = 48;						/* off period = 48 seconds */
 		}
@@ -2797,7 +2853,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		{
 			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
-			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
+			g_ID_period_seconds = 600;
+			g_sendID_seconds_countdown = g_ID_period_seconds;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 60;						/* on period is very long */
 			g_off_air_seconds = 0;						/* off period is very short */
 		}
@@ -2807,7 +2864,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		{
 			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
-			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
+			g_ID_period_seconds = 600;
+			g_sendID_seconds_countdown = g_ID_period_seconds;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 60;						/* on period is very long */
 			g_off_air_seconds = 0;						/* off period is very short */
 			g_sleepshutdown_seconds = 300;
@@ -2831,7 +2889,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_event_commenced = false;                   /* do not get things running yet */
 		g_event_enabled = false;                     /* do not get things running yet */
 		keyTransmitter(OFF);
-		LEDS.setRed(OFF);
+//		LEDS.setRed(OFF);
 	}
 	else if(action == START_EVENT_NOW_AND_RUN_FOREVER)
 	{
@@ -2850,6 +2908,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	else         /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
 		launchEvent((SC*)&g_last_status_code);
+		LEDS.init();
 	}
 }
 
