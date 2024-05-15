@@ -256,11 +256,17 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 		led_timeout_count = LED_TIMEOUT_DELAY;
 	}
 	
+	if(blinkMode == LEDS_NO_CHANGE) return;
 	if(!led_timeout_count && (blinkMode != LEDS_OFF)) return;
 	
 	bool isRed = ((blinkMode == LEDS_RED_OFF) || (blinkMode == LEDS_RED_BLINK_FAST) || (blinkMode == LEDS_RED_BLINK_SLOW) || (blinkMode == LEDS_RED_ON_CONSTANT));
 	bool isGreen = ((blinkMode == LEDS_GREEN_OFF) || (blinkMode == LEDS_GREEN_BLINK_FAST) || (blinkMode == LEDS_GREEN_BLINK_SLOW) || (blinkMode == LEDS_GREEN_ON_CONSTANT));
 	bool isBoth = !isRed && !isGreen;	
+	
+	if(isRed && resetTimeout)
+	{
+		lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS; // A user action should always reset the red LED behavior
+	}
 		
 	if((isRed && (blinkMode != lastRedBlinkSetting)) || (isGreen && (blinkMode != lastGreenBlinkSetting)) || (isBoth && (blinkMode != lastBothBlinkSetting)))
 	{

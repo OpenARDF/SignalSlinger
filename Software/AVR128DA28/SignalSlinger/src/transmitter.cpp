@@ -42,6 +42,7 @@ volatile bool g_tx_power_is_zero = true;
 static volatile bool g_drain_voltage_enabled = false;
 static volatile bool g_final_output_setting = OFF;
 static volatile bool g_rf_output_inhibited = false;		
+static volatile bool g_transmitter_keyed = false;
 
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 
@@ -108,6 +109,51 @@ void final_drain_voltage(bool state);
 		}
 	}
 	
+	bool txConfirmRFisOff(void)
+	{
+		int tries = 5;
+		
+		while(tries-- && (si5351_get_phase(SI5351_CLK0, null) != ERROR_CODE_NO_ERROR)); /* confirm oscillator comms are working */
+		
+		if(tries > 0) // oscillator appears to be working
+		{
+			tries = 5;
+			while(tries-- && g_transmitter_keyed) // if the transmitter is keyed, key it off
+			{
+				keyTransmitter(OFF);
+			}
+		}
+		else // failed to communicate with SI5351
+		{
+			tries = 5;
+			while(tries-- && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
+			{
+				shutdown_transmitter();
+				restart_transmitter();
+			}
+			
+			if(tries <= 0) // failed to disable the RF generator
+			{
+				tries = 5;
+				
+				g_tx_initialized = false;
+				while(tries-- && !g_tx_initialized)
+				{
+					init_transmitter(true);
+					keyTransmitter(OFF);
+				}
+				
+				if(tries < 1)
+				{
+					return(true); // assume transmitter might be stuck in key down state
+				}
+			}
+		}
+		
+		return(g_transmitter_keyed);
+	}
+
+	
 	void fet_driver(bool state)
 	{
 		if(state == ON)
@@ -138,33 +184,15 @@ void final_drain_voltage(bool state);
 	}
 
 	
-	void inhibitRFOutput(bool inhibit)
-	{
-// 		g_rf_output_inhibited = inhibit;
-// 		
-// 		if(inhibit)
-// 		{
-// 			PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-// 		}
-// 		else
-// 		{
-// 			uint16_t pwr_mW = g_80m_power_level_mW;
-// 			txSetParameters(&pwr_mW, NULL);
-// 			PORTA_set_pin_level(V3V3_PWR_ENABLE, g_final_output_setting);
-// 		}
-	}
-
 	bool keyTransmitter(bool on)
-	{
-		static volatile bool transmitter_keyed = false;
-		
+	{		
 		if(g_tx_initialized)
 		{			
 			int tries = 5;
 			
 			if(on)
 			{
-				if(!transmitter_keyed)
+				if(!g_transmitter_keyed)
 				{
 					while(tries-- && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_ENABLED) != ERROR_CODE_NO_ERROR))
 					{
@@ -174,7 +202,7 @@ void final_drain_voltage(bool state);
 					
 					if(tries)
 					{
-						transmitter_keyed = true;
+						g_transmitter_keyed = true;
 					}
 				}
 			}
@@ -188,12 +216,12 @@ void final_drain_voltage(bool state);
 					
 				if(tries)
 				{
-					transmitter_keyed = false;
+					g_transmitter_keyed = false;
 				}
 			}
 		}
 		
-		return(transmitter_keyed);
+		return(g_transmitter_keyed);
 	}
 
 	uint16_t txGetPowerMw(void)
@@ -254,11 +282,11 @@ void final_drain_voltage(bool state);
 			return( code);
 		}
 		
-		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
-		{
-			return( code);
-		}
-
+// 		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
+// 		{
+// 			return( code);
+// 		}
+// 
 // 		if((code = si5351_drive_strength(TX_CLOCK_VHF, SI5351_DRIVE_2MA)))
 // 		{
 // 			return( code);
