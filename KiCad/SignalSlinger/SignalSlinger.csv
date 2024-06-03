@@ -15,12 +15,12 @@ D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148
 D103 ,Red LED,1,LED_SMD:LED_0805_2012Metric,,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
 D104 ,Green LED,1,LED_SMD:LED_0805_2012Metric,,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
 D105 D106 D108 D109 D110 D111 D112 ,ESD9B5.0ST5G_1,7,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND,Bourns Inc.,CG0603MLC-05LE
-D107 D115 D203 D204 D205 D206 D207 ,Schottky Diode,7,Diode_SMD:D_SOD-123FL,,DIODE SCHOTTKY 30V 1.5A SOD-123FL,RB070MM-30CT-ND, ,https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862,Rohm Semiconductor,RB070MM-30TR
+D107 D115 D203 D204 D206 D207 ,Schottky Diode,6,Diode_SMD:D_SOD-123FL,,DIODE SCHOTTKY 30V 1.5A SOD-123FL,RB070MM-30CT-ND, ,https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862,Rohm Semiconductor,RB070MM-30TR
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND ,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
 D202 ,B330A Schottky Diode,1,Diode_SMD:D_SMB,,DIODE GEN PURP 50V 3A SMB,S3AB-FDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419,Diodes Incorporated,S3AB-13-F
 D208 D209 ,1N4001,2,Diode_SMD:D_SOD-123F,,DIODE GEN PURP 50V 1A SOD123F,HS1AFLCT-ND, ,https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA,Taiwan Semiconductor Corporation,HS1AFL
 D210 ,B530,1,Diode_SMD:D_SMC,,DIODE SCHOTTKY 30V 5A SMC,B530C-FDICT-ND,C110488,<a href="https://www.digikey.com/products/en?keywords=B530C-FDICT-ND">Link</a>,Diodes Incorporated,B530C-13-F
-F201 ,1.1A,1,Fuse:Fuse_1812_4532Metric,,PTC RESET FUSE 16V 1.1A 1812,F3485CT-ND, ,https://www.digikey.com/en/products/detail/littelfuse-inc/1812L110-16DR/2023965,Littelfuse Inc.,1812L110/16DR
+F201 ,2.6A,1,Fuse:Fuse_1812_4532Metric,,PTC RESET FUSE 16V 2.6A 1812,0ZCG0260BF2B, ,https://www.digikey.com/en/products/detail/bel-fuse-inc/0ZCG0260BF2B/4156115,Bel Fuse Inc.,0ZCG0260BF2B
 HDWR401 ,Chassis Box,1,,,4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs, , ,https://www.polycase.com/sl-42p?qty=1#200=99&227=163,polycase,SL-42PMBT
 HDWR402 ,LED Light Pipes,1,,,LIGHT PIPE ROUND 3MM,LFB063CTP-ND, ,https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593,Visual Communications Company - VCC,LFB063CTP
 HDWR403 ,PCB Screws,1,,,SCREWS-MBR-100 PCB Screws, , ,https://www.polycase.com/screws-mbr-100,polycase,SCREWS-MBR-100
@@ -39,14 +39,14 @@ J102 ,Conn_01x03,1,Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,, 
 J105 ,Conn_01x04,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,, , , , , , 
 J107 ,DB9 Female,1,Connector_Dsub:DSUB-9_Female_EdgeMount_P2.77mm,, ,609-1525-ND, ,https://www.digikey.com/products/en?keywords=609-1525-ND,TH,TH
 J201 ,Barrel_Jack_Switch,1,Connector_BarrelJack:BarrelJack_CUI_PJ-036AH-SMT_Horizontal,,CONN PWR JACK 2X5.5MM SOLDER,CP-036AHPJCT-ND, ,https://www.digikey.com/en/products/detail/cui-devices/PJ-036AH-SMT-TR/1530971,CUI Devices,PJ-036AH-SMT-TR
-J202 ,SolderJumper_2_Bridged,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 J203 ,External Fan Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J204 ,Controlled Power,1,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,, ,np, ,np, , 
 J301 ,To Antenna,1,Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal,,CONN BNC JACK R/A 50 OHM PCB,ARF1065-ND, ,https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB,Amphenol RF,31-5431
 JP101 ,Jumper_3_Bridged12,1,Jumper:Jumper_THT_1x03_Bridged12_P1.27mm_Vertical,,CONN HEADER VERT 3POS 1.27MM,S9014E-03-ND, ,https://www.digikey.com/short/z0ntzpw3,Sullins Connector Solutions,GRPB031VWVN-RC
 JP102 ,Jumper_2_Bridged,1,Jumper:Jumper_THT_1x02_P1.27mm_Vertical,,CONN HEADER VERT 2POS 1.27MM,S9014E-02-ND, ,https://www.digikey.com/short/4w5ttcv3,Sullins Connector Solutions,GRPB021VWVN-RC
 JP201 ,V-ext disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
-JP202 ,Boost Bypass,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
+JP202 ,Ext-to-Linear,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
+JP203 ,Ext-to-Boost,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT_Vertical,,TH,FT50A-43 (Amidon), ,http://www.amidoncorp.com/ft-50A-43/,TH,TH
 L201 ,2.2uH,1,Inductor_SMD:WPN4020H2R2MT,,FIXED IND 2.2UH 4.3A 48MOHM SMD,3442-WPN4020H2R2MTCT-ND, ,https://www.digikey.com/en/products/detail/shenzhen-sunlord-electronics-co-ltd/WPN4020H2R2MT/14119999?s=N4IgTCBcDaIOoAUByAWADGNAJMAlMAsgCogC6AvkA,Shenzhen Sunlord Electronics Co.  Ltd.,WPN4020H2R2MT
 L202 ,6.8uH,1,Inductors:CDR7D28MN,,FIXED IND 6.8UH 2.75A 46.3 MOHM,308-1328-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=308-1328-1-ND">Link</a>,Sumida America Components Inc.,CDR7D28MNNP-6R8NC
@@ -58,7 +58,7 @@ Q102 ,BSS138W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET N-CH 50V 200MA SOT3
 Q103 ,IRF610,1,TO_SOT_Packages:TO-220_Neutral123_Vertical_LargePads,,TH,IRF610PBF-ND, ,https://www.digikey.com/products/en?keywords=IRF610PBF-ND,TH,TH
 Q201 ,RJK0354DSP,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,MOSFET N-CH 30V 16A 8SOP,RJK0354DSP-00#J0CT-ND,C919563,<a href="https://www.digikey.com/products/en?keywords=RJK0354DSP-00#J0CT-ND">Link</a>,Renesas Electronics America Inc,RJK0354DSP-00#J0
 R101 ,105k,1,Resistor_SMD:R_0805_2012Metric,,RES 105K OHM 1% 1/8W 0805,311-105KCRCT-ND,C273877,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07105KL/727548,YAGEO,RC0805FR-07105KL
-R102 R204 ,162k,2,Resistor_SMD:R_0805_2012Metric,,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
+R102 R110 R204 ,162k,3,Resistor_SMD:R_0805_2012Metric,,RES 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C273888,https://www.digikey.com/en/products/detail/yageo/RC0805FR-07162KL/727630,YAGEO,RC0805FR-07162KL
 R103 R205 ,12.4k,2,Resistor_SMD:R_0805_2012Metric,,RES 12.4K OHM 1% 1/8W 0805,311-12.4KCRCT-ND,C137595,https://www.digikey.com/en/products/detail/yageo/RC0805FR-0712K4L/727572,YAGEO,RC0805FR-0712K4L
 R104 ,1k,1,Resistor_SMD:R_0805_2012Metric,,RES 1K OHM 1% 1/8W 0805,RMCF0805FT1K00CT-ND,C17513,https://www.digikey.com/en/products/detail/stackpole-electronics-inc/RMCF0805FT1K00/1760090,Stackpole Electronics Inc,RMCF0805FT1K00
 R105 ,220,1,Resistor_SMD:R_0805_2012Metric,,RES 220 OHM 1% 1/8W 0805,13-RC0805FR-10220RLCT-ND, ,https://www.digikey.com/en/products/detail/yageo/rc0805fr-10220rl/14008375,Yageo,RC0805FR-10220RL
