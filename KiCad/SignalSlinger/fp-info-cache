@@ -1,4 +1,4 @@
-20530081692103156
+20533521828910892
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -53472,6 +53472,20 @@ heatsink
 0
 2
 1
+Inductor_SMD
+Coilcraft-PWB-4-CLC
+Through hole pin header
+pin header
+0
+6
+6
+Inductor_SMD
+Coilcraft-PWB-4-CLC_Plus_THT
+Through hole pin header
+pin header
+0
+32
+6
 Inductor_SMD
 Ferrite_Bead_NFZ32BW881_Reflow
 

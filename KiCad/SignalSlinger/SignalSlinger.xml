@@ -8,8 +8,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>3.3</rev>
-        <date>2024-06-12</date>
+        <rev>3.4</rev>
+        <date>2024-06-13</date>
         <source>SignalSlinger.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -26,8 +26,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>3.3</rev>
-        <date>2024-06-12</date>
+        <rev>3.4</rev>
+        <date>2024-06-13</date>
         <source>PowerSupply.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -44,8 +44,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>3.3</rev>
-        <date>2024-06-12</date>
+        <rev>3.4</rev>
+        <date>2024-06-13</date>
         <source>RF_Filters.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -62,8 +62,8 @@
       <title_block>
         <title>SignalSlinger</title>
         <company/>
-        <rev>3.3</rev>
-        <date>2024-06-12</date>
+        <rev>3.4</rev>
+        <date>2024-06-13</date>
         <source>Misc.kicad_sch</source>
         <comment number="1" value=""/>
         <comment number="2" value=""/>
@@ -497,16 +497,14 @@
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
@@ -633,21 +631,19 @@
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>5eba5dba-24e0-4969-94b7-4be7176f58ba</tstamps>
+      <tstamps>a9a36a75-420d-49ce-9062-e6b204c29358</tstamps>
     </comp>
     <comp ref="J101">
       <value>Conn_01x02</value>
@@ -809,23 +805,21 @@
       <tstamps>4e311d93-5f40-4ddc-a18b-bc90d30fc613</tstamps>
     </comp>
     <comp ref="Q101">
-      <value>BSS84W-7-F</value>
+      <value>NTS4173PT1G</value>
       <footprint>Package_TO_SOT_SMD:SOT-323_SC-70</footprint>
       <fields>
-        <field name="Description">MOSFET P-CH 50V 130MA SOT323</field>
-        <field name="Digi-Key Part No.">BSS84W-FDICT-ND</field>
-        <field name="LCSC Part Number">C110490</field>
-        <field name="Link">https://www.digikey.com/short/fjvhfm07</field>
-        <field name="Manufacturer">Diodes Incorporated</field>
-        <field name="Manufacturer PN">BSS84W-7-F</field>
+        <field name="Description">MOSFET P-CH 30V 1.2A SC70-3</field>
+        <field name="Digi-Key Part No.">NTS4173PT1GOSCT-ND</field>
+        <field name="Link">https://www.digikey.com/short/j97zqh7v</field>
+        <field name="Manufacturer">ONSEMI</field>
+        <field name="Manufacturer PN">NTS4173PT1G</field>
       </fields>
       <libsource lib="Transistor_FET" part="BSS84" description="-0.13A Id, -50V Vds, P-Channel MOSFET, SOT-23"/>
-      <property name="Digi-Key Part No." value="BSS84W-FDICT-ND"/>
-      <property name="Manufacturer" value="Diodes Incorporated"/>
-      <property name="Manufacturer PN" value="BSS84W-7-F"/>
-      <property name="Description" value="MOSFET P-CH 50V 130MA SOT323"/>
-      <property name="Link" value="https://www.digikey.com/short/fjvhfm07"/>
-      <property name="LCSC Part Number" value="C110490"/>
+      <property name="Digi-Key Part No." value="NTS4173PT1GOSCT-ND"/>
+      <property name="Manufacturer" value="ONSEMI"/>
+      <property name="Manufacturer PN" value="NTS4173PT1G"/>
+      <property name="Description" value="MOSFET P-CH 30V 1.2A SC70-3"/>
+      <property name="Link" value="https://www.digikey.com/short/j97zqh7v"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="SignalSlinger.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -1755,7 +1749,7 @@
     </comp>
     <comp ref="D202">
       <value>B330A Schottky Diode</value>
-      <footprint>Diode_SMD:D_SMB</footprint>
+      <footprint>Diode_SMD:D_SMA</footprint>
       <fields>
         <field name="Description">DIODE GEN PURP 50V 3A SMB</field>
         <field name="Digi-Key Part No.">S3AB-FDICT-ND</field>
@@ -1779,84 +1773,76 @@
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>698ef3e5-c802-45b7-80dd-701416eb8328</tstamps>
+      <tstamps>0dfa7599-218c-47d4-be01-a8f78bd1d912</tstamps>
     </comp>
     <comp ref="D204">
       <value>Schottky Diode</value>
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>4f3ddfea-cbf3-4ab3-8882-24e9d1905728</tstamps>
+      <tstamps>bd3260fb-6f13-4ed2-bf2a-b327da80acae</tstamps>
     </comp>
     <comp ref="D206">
       <value>Schottky Diode</value>
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>87b056ce-c433-4082-bd07-29a24fd1dfc2</tstamps>
+      <tstamps>39a39792-8398-4a60-bec3-9e28b759a61f</tstamps>
     </comp>
     <comp ref="D207">
       <value>Schottky Diode</value>
       <footprint>Diode_SMD:D_SOD-123FL</footprint>
       <fields>
         <field name="Description">DIODE SCHOTTKY 30V 1.5A SOD-123FL</field>
-        <field name="Digi-Key Part No.">RB070MM-30CT-ND</field>
-        <field name="Link">https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862</field>
-        <field name="Manufacturer">Rohm Semiconductor</field>
-        <field name="Manufacturer PN">RB070MM-30TR</field>
+        <field name="Digi-Key Part No.">CRS09QCT-ND</field>
+        <field name="Manufacturer">Toshiba Semiconductor and Storage</field>
+        <field name="Manufacturer PN">CRS09(TE85L,Q,M)</field>
       </fields>
       <libsource lib="Device" part="D_Schottky_Filled" description="Schottky diode, filled shape"/>
-      <property name="Digi-Key Part No." value="RB070MM-30CT-ND"/>
-      <property name="Link" value="https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862"/>
-      <property name="Manufacturer" value="Rohm Semiconductor"/>
-      <property name="Manufacturer PN" value="RB070MM-30TR"/>
+      <property name="Digi-Key Part No." value="CRS09QCT-ND"/>
+      <property name="Manufacturer" value="Toshiba Semiconductor and Storage"/>
+      <property name="Manufacturer PN" value="CRS09(TE85L,Q,M)"/>
       <property name="Description" value="DIODE SCHOTTKY 30V 1.5A SOD-123FL"/>
       <property name="Sheetname" value="Power Supply"/>
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
-      <tstamps>91d911d5-cad3-4a98-ba2b-306af461b4c4</tstamps>
+      <tstamps>0b6c997b-2ae3-4fe1-8412-36b6738b871c</tstamps>
     </comp>
     <comp ref="D208">
       <value>1N4001</value>
@@ -2029,6 +2015,23 @@
       <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
       <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
       <tstamps>29cb6cd0-968b-43c2-ad0e-ee489f24f74b</tstamps>
+    </comp>
+    <comp ref="JP204">
+      <value>Internal_V_Enable</value>
+      <footprint>Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm</footprint>
+      <fields>
+        <field name="Digi-Key Part No.">np</field>
+        <field name="Link">np</field>
+        <field name="Manufacturer">np</field>
+      </fields>
+      <libsource lib="Jumper" part="SolderJumper_2_Open" description="Solder Jumper, 2-pole, open"/>
+      <property name="Digi-Key Part No." value="np"/>
+      <property name="Link" value="np"/>
+      <property name="Manufacturer" value="np"/>
+      <property name="Sheetname" value="Power Supply"/>
+      <property name="Sheetfile" value="PowerSupply.kicad_sch"/>
+      <sheetpath names="/Power Supply/" tstamps="/b7c888bf-e50e-45b8-8886-9bc5abf637fe/"/>
+      <tstamps>068370c8-d635-4b09-b7f8-4271634b0d99</tstamps>
     </comp>
     <comp ref="L201">
       <value>2.2uH</value>
@@ -2447,14 +2450,16 @@
       <value>1100pF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0)</field>
+        <field name="Description">1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)</field>
+        <field name="Digi-Key Part No.">GRM2195C2A112JA01D-ND</field>
         <field name="Manufacturer">Murata Electronics</field>
         <field name="Manufacturer PN">GRM2195C2A112JA01D</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Manufacturer" value="Murata Electronics"/>
       <property name="Manufacturer PN" value="GRM2195C2A112JA01D"/>
-      <property name="Description" value="Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0)"/>
+      <property name="Description" value="1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"/>
+      <property name="Digi-Key Part No." value="GRM2195C2A112JA01D-ND"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
@@ -2498,18 +2503,20 @@
       <value>1100pF</value>
       <footprint>Capacitor_SMD:C_0805_2012Metric</footprint>
       <fields>
-        <field name="Description">Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0)</field>
+        <field name="Description">1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)</field>
+        <field name="Digi-Key Part No.">GRM2195C2A112JA01D-ND</field>
         <field name="Manufacturer">Murata Electronics</field>
         <field name="Manufacturer PN">GRM2195C2A112JA01D</field>
       </fields>
       <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
       <property name="Manufacturer" value="Murata Electronics"/>
       <property name="Manufacturer PN" value="GRM2195C2A112JA01D"/>
-      <property name="Description" value="Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0)"/>
+      <property name="Description" value="1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"/>
+      <property name="Digi-Key Part No." value="GRM2195C2A112JA01D-ND"/>
       <property name="Sheetname" value="RF Filters"/>
       <property name="Sheetfile" value="RF_Filters.kicad_sch"/>
       <sheetpath names="/RF Filters/" tstamps="/da189f43-fd1f-445a-980b-345fda8b9a74/"/>
-      <tstamps>8051eae5-ac4d-4d42-9a96-9e97374cb109</tstamps>
+      <tstamps>2f5d0f80-d906-427a-b562-7c3210c6805d</tstamps>
     </comp>
     <comp ref="J301">
       <value>To Antenna</value>
@@ -3797,7 +3804,7 @@
     </net>
     <net code="3" name="+VSW">
       <node ref="D201" pin="2" pinfunction="K" pintype="passive"/>
-      <node ref="D204" pin="2" pinfunction="A" pintype="passive"/>
+      <node ref="JP204" pin="2" pinfunction="B" pintype="passive"/>
       <node ref="Q101" pin="3" pinfunction="D" pintype="passive"/>
       <node ref="R102" pin="2" pintype="passive"/>
     </net>
@@ -4066,12 +4073,16 @@
       <node ref="D202" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="L201" pin="2" pinfunction="2" pintype="passive"/>
     </net>
-    <net code="37" name="Net-(D206-Pad1)">
+    <net code="37" name="Net-(D204-Pad2)">
+      <node ref="D204" pin="2" pinfunction="A" pintype="passive"/>
+      <node ref="JP204" pin="1" pinfunction="A" pintype="passive"/>
+    </net>
+    <net code="38" name="Net-(D206-Pad1)">
       <node ref="D206" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="D207" pin="1" pinfunction="K" pintype="passive"/>
       <node ref="MOD201" pin="4" pinfunction="Pin_4" pintype="passive"/>
     </net>
-    <net code="38" name="Net-(D210-Pad2)">
+    <net code="39" name="Net-(D210-Pad2)">
       <node ref="D210" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="L202" pin="1" pinfunction="1" pintype="input"/>
       <node ref="Q201" pin="5" pinfunction="D" pintype="passive"/>
@@ -4079,126 +4090,126 @@
       <node ref="Q201" pin="7" pinfunction="D" pintype="passive"/>
       <node ref="Q201" pin="8" pinfunction="D" pintype="passive"/>
     </net>
-    <net code="39" name="Net-(F201-Pad1)">
+    <net code="40" name="Net-(F201-Pad1)">
       <node ref="F201" pin="1" pintype="passive"/>
       <node ref="L201" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="40" name="Net-(F201-Pad2)">
+    <net code="41" name="Net-(F201-Pad2)">
       <node ref="F201" pin="2" pintype="passive"/>
       <node ref="J201" pin="1" pintype="passive"/>
     </net>
-    <net code="41" name="Net-(J101-Pad1)">
+    <net code="42" name="Net-(J101-Pad1)">
       <node ref="J101" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="Q101" pin="2" pinfunction="S" pintype="passive"/>
       <node ref="R101" pin="2" pintype="passive"/>
     </net>
-    <net code="42" name="Net-(J204-Pad2)">
+    <net code="43" name="Net-(J204-Pad2)">
       <node ref="J204" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="U204" pin="6" pinfunction="VOUT" pintype="power_out"/>
     </net>
-    <net code="43" name="Net-(JP101-Pad1)">
+    <net code="44" name="Net-(JP101-Pad1)">
       <node ref="JP101" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="Q103" pin="1" pinfunction="G" pintype="input"/>
       <node ref="R110" pin="2" pintype="passive"/>
       <node ref="W103" pin="1" pinfunction="1" pintype="passive"/>
     </net>
-    <net code="44" name="Net-(JP101-Pad2)">
+    <net code="45" name="Net-(JP101-Pad2)">
       <node ref="JP101" pin="2" pinfunction="C" pintype="passive"/>
       <node ref="U104" pin="3" pinfunction="Out" pintype="output"/>
     </net>
-    <net code="45" name="Net-(JP101-Pad3)">
+    <net code="46" name="Net-(JP101-Pad3)">
       <node ref="JP101" pin="3" pinfunction="B" pintype="passive"/>
       <node ref="R109" pin="2" pintype="passive"/>
     </net>
-    <net code="46" name="Net-(L101-Pad2)">
+    <net code="47" name="Net-(L101-Pad2)">
       <node ref="L101" pin="2" pinfunction="TAP" pintype="passive"/>
       <node ref="Q103" pin="2" pinfunction="D" pintype="passive"/>
       <node ref="R109" pin="1" pintype="passive"/>
     </net>
-    <net code="47" name="Net-(P101-Pad1)">
+    <net code="48" name="Net-(P101-Pad1)">
       <node ref="P101" pin="1" pinfunction="Pin_1" pintype="passive"/>
       <node ref="U101" pin="19" pinfunction="UPDI" pintype="passive"/>
     </net>
-    <net code="48" name="Net-(Q201-Pad1)">
+    <net code="49" name="Net-(Q201-Pad1)">
       <node ref="Q201" pin="1" pinfunction="S" pintype="passive"/>
       <node ref="Q201" pin="2" pinfunction="S" pintype="passive"/>
       <node ref="Q201" pin="3" pinfunction="S" pintype="passive"/>
       <node ref="R203" pin="2" pintype="passive"/>
       <node ref="U206" pin="4" pinfunction="CS" pintype="input"/>
     </net>
-    <net code="49" name="Net-(Q201-Pad4)">
+    <net code="50" name="Net-(Q201-Pad4)">
       <node ref="Q201" pin="4" pinfunction="G" pintype="passive"/>
       <node ref="U206" pin="7" pinfunction="OUTN" pintype="output"/>
     </net>
-    <net code="50" name="Net-(R3-Pad1)">
+    <net code="51" name="Net-(R3-Pad1)">
       <node ref="R3" pin="1" pintype="passive"/>
       <node ref="R4" pin="2" pintype="passive"/>
       <node ref="U206" pin="2" pinfunction="FB" pintype="input"/>
     </net>
-    <net code="51" name="Net-(R104-Pad2)">
+    <net code="52" name="Net-(R104-Pad2)">
       <node ref="R104" pin="2" pintype="passive"/>
       <node ref="U101" pin="8" pinfunction="PD2" pintype="bidirectional"/>
     </net>
-    <net code="52" name="Net-(R105-Pad2)">
+    <net code="53" name="Net-(R105-Pad2)">
       <node ref="R105" pin="2" pintype="passive"/>
       <node ref="U101" pin="10" pinfunction="PD4" pintype="bidirectional"/>
     </net>
-    <net code="53" name="Net-(R107-Pad1)">
+    <net code="54" name="Net-(R107-Pad1)">
       <node ref="R107" pin="1" pintype="passive"/>
       <node ref="TP101" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="U101" pin="5" pinfunction="PC3/SCL" pintype="bidirectional"/>
       <node ref="U102" pin="4" pinfunction="SCL" pintype="passive"/>
     </net>
-    <net code="54" name="Net-(R108-Pad1)">
+    <net code="55" name="Net-(R108-Pad1)">
       <node ref="R108" pin="1" pintype="passive"/>
       <node ref="TP101" pin="4" pinfunction="Pin_4" pintype="passive"/>
       <node ref="U101" pin="4" pinfunction="PC2/SDA" pintype="bidirectional"/>
       <node ref="U102" pin="5" pinfunction="SDA" pintype="passive"/>
     </net>
-    <net code="55" name="Net-(R202-Pad2)">
+    <net code="56" name="Net-(R202-Pad2)">
       <node ref="R202" pin="2" pintype="passive"/>
       <node ref="U206" pin="1" pinfunction="COMP" pintype="input"/>
     </net>
-    <net code="56" name="Net-(U101-Pad16)">
+    <net code="57" name="Net-(U101-Pad16)">
       <node ref="U101" pin="16" pinfunction="PF0/XTAL32k1" pintype="input"/>
       <node ref="X101" pin="3" pinfunction="OUT" pintype="output"/>
     </net>
-    <net code="57" name="Paddle Dah">
+    <net code="58" name="Paddle Dah">
       <node ref="D108" pin="2" pinfunction="A2" pintype="passive"/>
       <node ref="J105" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="J107" pin="6" pinfunction="6" pintype="passive"/>
       <node ref="U101" pin="27" pinfunction="PA5/RxD0" pintype="bidirectional"/>
     </net>
-    <net code="58" name="Paddle_Dit">
+    <net code="59" name="Paddle_Dit">
       <node ref="D109" pin="2" pinfunction="A2" pintype="passive"/>
       <node ref="J105" pin="2" pinfunction="Pin_2" pintype="passive"/>
       <node ref="J107" pin="1" pinfunction="1" pintype="passive"/>
       <node ref="U101" pin="26" pinfunction="PA4/TxD0" pintype="bidirectional"/>
     </net>
-    <net code="59" name="Power_enable">
+    <net code="60" name="Power_enable">
       <node ref="Q102" pin="1" pinfunction="G" pintype="input"/>
       <node ref="U101" pin="25" pinfunction="PA3" pintype="passive"/>
     </net>
-    <net code="60" name="RF_Raw">
+    <net code="61" name="RF_Raw">
       <node ref="C301" pin="1" pintype="passive"/>
       <node ref="L101" pin="3" pinfunction="3" pintype="passive"/>
     </net>
-    <net code="61" name="Straightkey">
+    <net code="62" name="Straightkey">
       <node ref="D110" pin="1" pinfunction="A1" pintype="passive"/>
       <node ref="J105" pin="4" pinfunction="Pin_4" pintype="passive"/>
       <node ref="J107" pin="7" pinfunction="7" pintype="passive"/>
       <node ref="U101" pin="28" pinfunction="PA6" pintype="bidirectional"/>
     </net>
-    <net code="62" name="V+_Charging">
+    <net code="63" name="V+_Charging">
       <node ref="D203" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="D206" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="J107" pin="9" pinfunction="9" pintype="passive"/>
     </net>
-    <net code="63" name="V3V3_PWR_ENABLE">
+    <net code="64" name="V3V3_PWR_ENABLE">
       <node ref="U101" pin="24" pinfunction="PA2" pintype="bidirectional"/>
       <node ref="U202" pin="3" pinfunction="ON/~{OFF}" pintype="input"/>
     </net>
-    <net code="64" name="VDD">
+    <net code="65" name="VDD">
       <node ref="C105" pin="1" pintype="passive"/>
       <node ref="C106" pin="1" pintype="passive"/>
       <node ref="C108" pin="1" pintype="passive"/>
@@ -4211,7 +4222,7 @@
       <node ref="U202" pin="5" pinfunction="VOUT" pintype="power_out"/>
       <node ref="X102" pin="4" pinfunction="Vcc" pintype="power_in"/>
     </net>
-    <net code="65" name="V_ext">
+    <net code="66" name="V_ext">
       <node ref="C204" pin="2" pintype="passive"/>
       <node ref="C205" pin="2" pintype="passive"/>
       <node ref="C217" pin="1" pintype="passive"/>
@@ -4221,12 +4232,12 @@
       <node ref="JP203" pin="1" pinfunction="A" pintype="passive"/>
       <node ref="U205" pin="1" pinfunction="IN" pintype="power_in"/>
     </net>
-    <net code="66" name="Vbat">
+    <net code="67" name="Vbat">
       <node ref="R102" pin="1" pintype="passive"/>
       <node ref="R103" pin="2" pintype="passive"/>
       <node ref="U101" pin="6" pinfunction="PD0/AIN0" pintype="bidirectional"/>
     </net>
-    <net code="67" name="Vdrive">
+    <net code="68" name="Vdrive">
       <node ref="C215" pin="1" pintype="passive"/>
       <node ref="D107" pin="2" pinfunction="A" pintype="passive"/>
       <node ref="D115" pin="2" pinfunction="A" pintype="passive"/>
@@ -4238,63 +4249,63 @@
       <node ref="R3" pin="2" pintype="passive"/>
       <node ref="U203" pin="2" pinfunction="VO" pintype="power_out"/>
     </net>
-    <net code="68" name="Vext">
+    <net code="69" name="Vext">
       <node ref="R204" pin="1" pintype="passive"/>
       <node ref="R205" pin="2" pintype="passive"/>
       <node ref="U101" pin="7" pinfunction="PD1" pintype="bidirectional"/>
     </net>
-    <net code="69" name="unconnected-(BT401-Pad1)">
+    <net code="70" name="unconnected-(BT401-Pad1)">
       <node ref="BT401" pin="1" pinfunction="+" pintype="passive+no_connect"/>
     </net>
-    <net code="70" name="unconnected-(BT401-Pad2)">
+    <net code="71" name="unconnected-(BT401-Pad2)">
       <node ref="BT401" pin="2" pinfunction="-" pintype="passive+no_connect"/>
     </net>
-    <net code="71" name="unconnected-(J201-Pad3)">
+    <net code="72" name="unconnected-(J201-Pad3)">
       <node ref="J201" pin="3" pintype="passive+no_connect"/>
     </net>
-    <net code="72" name="unconnected-(P101-Pad3)">
+    <net code="73" name="unconnected-(P101-Pad3)">
       <node ref="P101" pin="3" pinfunction="Pin_3" pintype="passive+no_connect"/>
     </net>
-    <net code="73" name="unconnected-(P101-Pad4)">
+    <net code="74" name="unconnected-(P101-Pad4)">
       <node ref="P101" pin="4" pinfunction="Pin_4" pintype="passive+no_connect"/>
     </net>
-    <net code="74" name="unconnected-(P101-Pad5)">
+    <net code="75" name="unconnected-(P101-Pad5)">
       <node ref="P101" pin="5" pinfunction="Pin_5" pintype="passive+no_connect"/>
     </net>
-    <net code="75" name="unconnected-(U101-Pad11)">
+    <net code="76" name="unconnected-(U101-Pad11)">
       <node ref="U101" pin="11" pinfunction="PD5" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="76" name="unconnected-(U101-Pad17)">
+    <net code="77" name="unconnected-(U101-Pad17)">
       <node ref="U101" pin="17" pinfunction="PF1/XTAL32k2" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="77" name="unconnected-(U101-Pad18)">
+    <net code="78" name="unconnected-(U101-Pad18)">
       <node ref="U101" pin="18" pinfunction="PF6/~{RESET}" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="78" name="unconnected-(U102-Pad3)">
+    <net code="79" name="unconnected-(U102-Pad3)">
       <node ref="U102" pin="3" pinfunction="XB" pintype="passive+no_connect"/>
     </net>
-    <net code="79" name="unconnected-(U102-Pad6)">
+    <net code="80" name="unconnected-(U102-Pad6)">
       <node ref="U102" pin="6" pinfunction="CLK2" pintype="passive+no_connect"/>
     </net>
-    <net code="80" name="unconnected-(U102-Pad10)">
+    <net code="81" name="unconnected-(U102-Pad10)">
       <node ref="U102" pin="10" pinfunction="CLK0" pintype="passive+no_connect"/>
     </net>
-    <net code="81" name="unconnected-(U103-Pad4)">
+    <net code="82" name="unconnected-(U103-Pad4)">
       <node ref="U103" pin="4" pinfunction="CT" pintype="output+no_connect"/>
     </net>
-    <net code="82" name="unconnected-(U103-Pad5)">
+    <net code="83" name="unconnected-(U103-Pad5)">
       <node ref="U103" pin="5" pinfunction="QOD" pintype="open_collector+no_connect"/>
     </net>
-    <net code="83" name="unconnected-(U104-Pad2)">
+    <net code="84" name="unconnected-(U104-Pad2)">
       <node ref="U104" pin="2" pinfunction="Pilot" pintype="output+no_connect"/>
     </net>
-    <net code="84" name="unconnected-(U204-Pad4)">
+    <net code="85" name="unconnected-(U204-Pad4)">
       <node ref="U204" pin="4" pinfunction="CT" pintype="output+no_connect"/>
     </net>
-    <net code="85" name="unconnected-(U204-Pad5)">
+    <net code="86" name="unconnected-(U204-Pad5)">
       <node ref="U204" pin="5" pinfunction="QOD" pintype="open_collector+no_connect"/>
     </net>
-    <net code="86" name="unconnected-(X102-Pad1)">
+    <net code="87" name="unconnected-(X102-Pad1)">
       <node ref="X102" pin="1" pinfunction="NC" pintype="no_connect"/>
     </net>
   </nets>

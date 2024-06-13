@@ -8,16 +8,16 @@ C110 ,22uF,1,Capacitor_SMD:C_1210_3225Metric,,CAP CER 22UF 25V X5R 1210,1276-337
 C111 C212 C215 ,47uF low ESR,3,Capacitors:C_2917,,CAP TANT 47UF 10% 20V 2917,399-3904-1-ND,C122333,https://www.digikey.com/products/en?keywords=399-3904-1-ND,KEMET,T495X476K020ATE150
 C202 C209 C211 ,10nF,3,Capacitor_SMD:C_0805_2012Metric,,CAP CER 0805 10NF 50V C0G 5%,399-C0805C103J5GEC7800CT-ND,C3887673,https://www.digikey.com/short/qd893213,KEMET,C0805C103J5GEC7800
 C214 ,1uF,1,Capacitor_SMD:C_0805_2012Metric,,CAP CER 1UF 16V X7R 0805,311-1365-1-ND,C344171,<a href="https://www.digikey.com/products/en?keywords=311-1365-1-ND">Link</a>,Yageo,CC0805KKX7R7BB105
-C302 C305 ,1100pF,2,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1100 pF 100 VDC 5% 0805 C0G (NP0), , , ,Murata Electronics,GRM2195C2A112JA01D
+C302 C305 ,1100pF,2,Capacitor_SMD:C_0805_2012Metric,,1100 pF ±5% 100V Ceramic Capacitor C0G  NP0 0805 (2012 Metric),GRM2195C2A112JA01D-ND, , ,Murata Electronics,GRM2195C2A112JA01D
 C303 ,1800pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 1800 pF 100 VDC 2% 0805 C0G (NP0) AEC-Q200, , , ,Murata Electronics,GCM2165C2A182GA16D
 C304 ,91pF,1,Capacitor_SMD:C_0805_2012Metric,,Multilayer Ceramic Capacitors MLCC - SMD/SMT 100V 91pF C0G 0805 1%, , , ,KYOCERA AVX,08051A910FAT2A
 D101 D102 ,1N914WT,2,Diode_SMD:D_SOD-523,,DIODE GEN PURP 80V 125MA SOD523,1N4148WTDICT-ND,C83482,https://www.digikey.com/en/products/detail/diodes-incorporated/1N4148WT-7/583731,Diodes Incorporated,1N4148WT-7
 D103 ,Red LED,1,LED_SMD:LED_0805_2012Metric,,LED RED CLEAR SMD,160-1415-1-ND,C94868,https://www.digikey.com/en/products/detail/liteon/LTST-C170KRKT/386779,Lite-On Inc.,LTST-C170KRKT
 D104 ,Green LED,1,LED_SMD:LED_0805_2012Metric,,LED GREEN CLEAR SMD,160-1414-1-ND,C98221,https://www.digikey.com/en/products/detail/liteon/LTST-C170KGKT/386777,Lite-On Inc.,LTST-C170KGKT
 D105 D106 D108 D109 D110 D111 D112 ,ESD9B5.0ST5G_1,7,Diode_SMD:D_0603_1608Metric,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND,Bourns Inc.,CG0603MLC-05LE
-D107 D115 D203 D204 D206 D207 ,Schottky Diode,6,Diode_SMD:D_SOD-123FL,,DIODE SCHOTTKY 30V 1.5A SOD-123FL,RB070MM-30CT-ND, ,https://www.digikey.com/en/products/detail/rohm-semiconductor/RB070MM-30TR/5001862,Rohm Semiconductor,RB070MM-30TR
+D107 D115 D203 D204 D206 D207 ,Schottky Diode,6,Diode_SMD:D_SOD-123FL,,DIODE SCHOTTKY 30V 1.5A SOD-123FL,CRS09QCT-ND, , ,Toshiba Semiconductor and Storage,CRS09(TE85L Q M)
 D201 ,BAT54C,1,Package_TO_SOT_SMD:SC-59,,DIODE ARRAY SCHOTTKY 30V SOT23,1727-2902-1-ND ,C37704,https://www.digikey.com/en/products/detail/nexperia-usa-inc/BAT54C-215/763216,Nexperia USA Inc.,BAT54C 215
-D202 ,B330A Schottky Diode,1,Diode_SMD:D_SMB,,DIODE GEN PURP 50V 3A SMB,S3AB-FDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419,Diodes Incorporated,S3AB-13-F
+D202 ,B330A Schottky Diode,1,Diode_SMD:D_SMA,,DIODE GEN PURP 50V 3A SMB,S3AB-FDICT-ND, ,https://www.digikey.com/en/products/detail/diodes-incorporated/S3AB-13-F/814419,Diodes Incorporated,S3AB-13-F
 D208 D209 ,1N4001,2,Diode_SMD:D_SOD-123F,,DIODE GEN PURP 50V 1A SOD123F,HS1AFLCT-ND, ,https://www.digikey.com/en/products/detail/taiwan-semiconductor-corporation/HS1AFL/9602851?s=N4IgTCBcDaIBIGUCMBBAYgGQMIBUC0AcgCIgC6AvkA,Taiwan Semiconductor Corporation,HS1AFL
 D210 ,B530,1,Diode_SMD:D_SMC,,DIODE SCHOTTKY 30V 5A SMC,B530C-FDICT-ND,C110488,<a href="https://www.digikey.com/products/en?keywords=B530C-FDICT-ND">Link</a>,Diodes Incorporated,B530C-13-F
 F201 ,2.6A,1,Fuse:Fuse_1812_4532Metric,,PTC RESET FUSE 16V 2.6A 1812,0ZCG0260BF2B, ,https://www.digikey.com/en/products/detail/bel-fuse-inc/0ZCG0260BF2B/4156115,Bel Fuse Inc.,0ZCG0260BF2B
@@ -47,13 +47,14 @@ JP102 ,Jumper_2_Bridged,1,Jumper:Jumper_THT_1x02_P1.27mm_Vertical,,CONN HEADER V
 JP201 ,V-ext disable,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
 JP202 ,Ext-to-Linear,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
 JP203 ,Ext-to-Boost,1,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,, , , , , , 
+JP204 ,Internal_V_Enable,1,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,, ,np, ,np,np, 
 L101 ,9T #24 Bifilar T50-43,1,Inductors:Toroid_T-50A_TH_BF_CT_Vertical,,TH,FT50A-43 (Amidon), ,http://www.amidoncorp.com/ft-50A-43/,TH,TH
 L201 ,2.2uH,1,Inductor_SMD:WPN4020H2R2MT,,FIXED IND 2.2UH 4.3A 48MOHM SMD,3442-WPN4020H2R2MTCT-ND, ,https://www.digikey.com/en/products/detail/shenzhen-sunlord-electronics-co-ltd/WPN4020H2R2MT/14119999?s=N4IgTCBcDaIOoAUByAWADGNAJMAlMAsgCogC6AvkA,Shenzhen Sunlord Electronics Co.  Ltd.,WPN4020H2R2MT
 L202 ,6.8uH,1,Inductors:CDR7D28MN,,FIXED IND 6.8UH 2.75A 46.3 MOHM,308-1328-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=308-1328-1-ND">Link</a>,Sumida America Components Inc.,CDR7D28MNNP-6R8NC
 L301 L302 ,2.7uH,2,Inductors:Toroid_T-60_2TH_Vertical,,TH,T60-2 (Amidon), ,http://www.amidoncorp.com/t60-2/,TH,TH
 MOD201 ,AdaFruit Charger,1,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,,LI-ION LI-POLYMER CHARGER BOARD,1528-1833-ND, ,https://www.digikey.com/en/products/detail/adafruit-industries-llc/1904/5054545,AdaFruit,Product ID: 1904
 P101 ,ISP/PDI,1,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical_SMD,,CONN HEADER SMD 6POS 2.54MM,609-3487-1-ND,C178294,https://www.digikey.com/products/en?keywords=609-3487-1-ND,Amphenol ICC (FCI),95278-101A06LF
-Q101 ,BSS84W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET P-CH 50V 130MA SOT323,BSS84W-FDICT-ND,C110490,https://www.digikey.com/short/fjvhfm07,Diodes Incorporated,BSS84W-7-F
+Q101 ,NTS4173PT1G,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET P-CH 30V 1.2A SC70-3,NTS4173PT1GOSCT-ND, ,https://www.digikey.com/short/j97zqh7v,ONSEMI,NTS4173PT1G
 Q102 ,BSS138W-7-F,1,Package_TO_SOT_SMD:SOT-323_SC-70,,MOSFET N-CH 50V 200MA SOT323,BSS138W-FDICT-ND,C24553,https://www.digikey.com/short/m8f8nn79,Diodes Incorporated,BSS138W-7-F
 Q103 ,IRF610,1,TO_SOT_Packages:TO-220_Neutral123_Vertical_LargePads,,TH,IRF610PBF-ND, ,https://www.digikey.com/products/en?keywords=IRF610PBF-ND,TH,TH
 Q201 ,RJK0354DSP,1,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,,MOSFET N-CH 30V 16A 8SOP,RJK0354DSP-00#J0CT-ND,C919563,<a href="https://www.digikey.com/products/en?keywords=RJK0354DSP-00#J0CT-ND">Link</a>,Renesas Electronics America Inc,RJK0354DSP-00#J0
