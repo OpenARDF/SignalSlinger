@@ -31,7 +31,8 @@ Drill file 'SignalSlinger-PTH.drl' contains
 Drill file 'SignalSlinger-NPTH.drl' contains
     unplated through holes:
     =============================================================
-    T1  2.000mm  0.0787"  (1 hole)
-    T2  3.500mm  0.1378"  (1 hole)
+    T1  0.750mm  0.0295"  (2 holes)
+    T2  2.000mm  0.0787"  (1 hole)
+    T3  3.500mm  0.1378"  (1 hole)
 
-    Total unplated holes count 2
+    Total unplated holes count 4

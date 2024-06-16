@@ -5528,10 +5528,10 @@
     (property "Reference" "SW101" (id 0) (at 101.6 167.64 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Value" "SW_SPST" (id 1) (at 106.553 166.8022 90)
+    (property "Value" "" (id 1) (at 106.553 166.8022 90)
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
-    (property "Footprint" "Button_Switch_SMD:SW_SPST_TL3305A" (id 2) (at 105.41 165.1 0)
+    (property "Footprint" "" (id 2) (at 105.41 165.1 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 105.41 165.1 0)
@@ -7470,7 +7470,7 @@
       (reference "R205") (unit 1) (value "12.4k") (footprint "Resistor_SMD:R_0805_2012Metric")
     )
     (path "/8753d621-69e1-4251-a22d-f8eaf42e9c5c"
-      (reference "SW101") (unit 1) (value "SW_SPST") (footprint "Button_Switch_SMD:SW_SPST_TL3305A")
+      (reference "SW101") (unit 1) (value "SW_SPST") (footprint "Button_Switch_SMD:SW_SPST_TL1014BF160QG")
     )
     (path "/266895fa-6ad4-44ed-bb39-fadda6cfebc1"
       (reference "TP101") (unit 1) (value "I2C1") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical")
