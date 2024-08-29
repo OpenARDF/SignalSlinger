@@ -77,14 +77,14 @@ void system_sleep_config()
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
 // 	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT); /* Must not disable battery power if running off of battery */
 // 	PORTA_set_pin_level(POWER_ENABLE, LOW); /* Must not disable battery power if running off of battery */
-	PORTA_set_pin_dir(TO_WIFI_RX, PORT_DIR_OUT);
-	PORTA_set_pin_level(TO_WIFI_RX, LOW);
-	PORTA_set_pin_dir(TO_WIFI_TX, PORT_DIR_OUT);
-	PORTA_set_pin_level(TO_WIFI_TX, LOW);
-	PORTA_set_pin_dir(PS_5V_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(PS_5V_ENABLE, LOW);
-	PORTA_set_pin_dir(WIFI_ENABLE, PORT_DIR_OUT);
-	PORTA_set_pin_level(WIFI_ENABLE, LOW);
+ 	PORTA_set_pin_dir(PADDLE_DIT, PORT_DIR_IN);
+ 	PORTA_set_pin_pull_mode(PADDLE_DIT, PORT_PULL_OFF);
+	PORTA_set_pin_dir(PADDLE_DAH, PORT_DIR_OUT);
+	PORTA_set_pin_level(PADDLE_DAH, LOW);
+	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+	PORTA_set_pin_dir(STRAIGHTKEY, PORT_DIR_OUT);
+	PORTA_set_pin_level(STRAIGHTKEY, LOW);
 
 	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
 	PORTC_set_pin_level(SERIAL_TX, LOW); /* Leave port serial line low */

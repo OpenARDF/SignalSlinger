@@ -29,10 +29,10 @@
 #include "defs.h"
 
 /* PORTA *************************************************************************************/
-#define PS_5V_ENABLE 7
-#define WIFI_ENABLE 6 /* Straight key */
-#define TO_WIFI_TX 5 /* Paddle Dah */
-#define TO_WIFI_RX 4 /* Paddle Dit */
+#define BOOST_PWR_ENABLE 7
+#define STRAIGHTKEY 6 /* Straight key */
+#define PADDLE_DAH 5 /* Paddle Dah */
+#define PADDLE_DIT 4 /* Paddle Dit */
 #define POWER_ENABLE 3
 #define V3V3_PWR_ENABLE 2
 #define FET_DRIVER_ENABLE 1

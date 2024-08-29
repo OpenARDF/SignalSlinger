@@ -166,6 +166,8 @@ static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
 bool g_cloningInProgress = false;
 Enunciation_t g_enunciator = LED_ONLY;
+static volatile uint16_t g_key_down_countdown = 0;
+static volatile bool g_reset_after_keydown = false;
 
 uint16_t g_Event_Configuration_Check = 0;
 
@@ -483,6 +485,16 @@ ISR(TCB0_INT_vect)
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
 		static bool muteAfterID = false;				/* Inhibit any transmissions immediately after the ID has been sent */
+		
+		if(g_key_down_countdown) 
+		{
+			g_key_down_countdown--;
+			
+			if(!g_key_down_countdown)
+			{
+				g_reset_after_keydown = true;
+			}
+		}
 		
 		fiftyMS++;
 		if(!(fiftyMS % 6))
@@ -923,6 +935,8 @@ int main(void)
 	
 	g_sleepshutdown_seconds = 120;
 	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+	
+	powerToTransmitter(ON);
 
 	while (1) 
 	{
@@ -1227,11 +1241,21 @@ int main(void)
 // 			}
 		}
 		
-		if(g_do_once_per_5second_tasks)
+		if(g_key_down_countdown || g_reset_after_keydown)
+		{
+			if(g_reset_after_keydown)
+			{
+				g_reset_after_keydown = false;
+ 				LEDS.setRed(OFF);
+				stopEventNow(PROGRAMMATIC);
+ 				keyTransmitter(OFF);
+			}
+		}
+		else if(g_do_once_per_5second_tasks)
 		{
 			// Failsafe: 
 			g_do_once_per_5second_tasks = false;
-			
+
 			if(!g_event_enabled || !g_event_commenced) // Check for an unlikely glitched key-down condition that could leave the RF output latched on
 			{
 				powerUp3V3(); // ensure power is applied to the RF oscillator
@@ -1662,8 +1686,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == '0')    
 					{
- 						stopEventNow(PROGRAMMATIC);
-						LEDS.setRed(OFF);
+						g_key_down_countdown = 0;
+ 						LEDS.setRed(OFF);
+						stopEventNow(PROGRAMMATIC);
  						keyTransmitter(OFF);
 					}
 					else if(sb_buff->fields[SB_FIELD1][0] == '1')  
@@ -1671,6 +1696,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  						stopEventNow(PROGRAMMATIC);
 						LEDS.setRed(ON);
  						keyTransmitter(ON);
+						g_key_down_countdown = 3000;
 					}
 					else
 					{
@@ -2876,6 +2902,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		case BEACON:
 		default:
 		{
+			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
 			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 60;						/* on period is very long */
