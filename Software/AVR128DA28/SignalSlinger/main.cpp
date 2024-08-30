@@ -381,6 +381,11 @@ void handle_1sec_tasks(void)
 							init_transmitter(g_frequency_hi);
 							makeMorse((char*)"< EEE<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
 						}
+						else if(g_frequency_to_test == 3)
+						{
+							init_transmitter(g_frequency_beacon);
+							makeMorse((char*)"< EEEE<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
+						}
 					}
  				}
 			}
@@ -951,7 +956,7 @@ int main(void)
 						if(g_event_commenced)
 						{
 							g_frequency_to_test++;
-							if(g_frequency_to_test > 2) g_frequency_to_test = 0;
+							if(g_frequency_to_test > 3) g_frequency_to_test = 0;
 						}
 						else
 						{
