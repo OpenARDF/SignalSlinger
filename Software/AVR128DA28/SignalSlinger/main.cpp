@@ -51,7 +51,6 @@ typedef enum
 	HARDWARE_OK,
 	HARDWARE_NO_RTC = 0x01,
 	HARDWARE_NO_SI5351 = 0x02
-//	,HARDWARE_NO_WIFI = 0x04
 } HardwareError_t;
 
 
@@ -95,6 +94,8 @@ typedef enum {
 static char g_tempStr[TEMP_STRING_SIZE+1] = { '\0' };
 static volatile EC g_last_error_code = ERROR_CODE_NO_ERROR;
 static volatile SC g_last_status_code = STATUS_CODE_IDLE;
+
+volatile bool g_device_enabled = false;
 
 static volatile bool g_powering_off = false;
 
@@ -397,7 +398,7 @@ void handle_1sec_tasks(void)
 
 					if(temp_time >= g_event_start_epoch) /* Time for the event to start */
 					{
-						powerToTransmitter(ON);
+						powerToTransmitter(g_device_enabled);
 				
 						if(g_intra_cycle_delay_time)
 						{
@@ -565,7 +566,7 @@ ISR(TCB0_INT_vect)
 				
 				if(!switch_closures_count_period) // Time's up - examine how many button presses were counted
 				{
-					if(g_switch_presses_count && (g_switch_presses_count < 6))
+					if(g_switch_presses_count && (g_switch_presses_count < 9))
 					{
 						g_handle_counted_presses = g_switch_presses_count;
 					}
@@ -583,7 +584,7 @@ ISR(TCB0_INT_vect)
 			{
 				switch_closures_count_period = 40;
 			}
-			else if(g_switch_presses_count > 5) // Too many button presses - ignore them entirely
+			else if(g_switch_presses_count > 8) // Too many button presses - ignore them entirely
 			{
 				g_switch_presses_count = 0;
 			}
@@ -907,6 +908,7 @@ int main(void)
 	powerUp3V3();
 	
 	g_ee_mgr.initializeEEPROMVars();
+	
 	g_ee_mgr.readNonVols();
 	g_isMaster = false; /* Never start up as master */
 	
@@ -918,6 +920,11 @@ int main(void)
 	while((util_delay_ms(2000)) && (now == time(null)));
 	
 	sb_send_string(TEXT_RESET_OCCURRED_TXT);
+	
+	if(!g_device_enabled)
+	{
+		sb_send_string(TEXT_DEVICE_DISABLED_TXT);
+	}
 	
 	if(now == time(null))
 	{
@@ -933,23 +940,36 @@ int main(void)
 		}
 	}
 	
-	g_start_event = eventEnabled(); /* Start any event stored in EEPROM */
-	
-	reportSettings();
+	g_start_event = g_device_enabled && eventEnabled(); /* Start any event stored in EEPROM */
 	sb_send_NewPrompt();
 	
 	g_sleepshutdown_seconds = 120;
 	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 	
-	powerToTransmitter(ON);
+	powerToTransmitter(g_device_enabled);
 
 	while (1) 
 	{
 		if(g_handle_counted_presses)
 		{
-			if(g_handle_counted_presses == 1)
+			if(g_isMaster)
 			{
-				if(!g_isMaster && !g_cloningInProgress)
+				if((g_handle_counted_presses == 4) && txIsInitialized()) // keydown forever
+				{
+					suspendEvent();
+					g_sleepType = SLEEP_USER_OVERRIDE;
+					keyTransmitter(ON);
+					LEDS.setRed(ON);
+					g_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
+				}
+				else if (g_handle_counted_presses == 5) // Perform software reset
+				{
+					RSTCTRL_reset();
+				}
+			}
+			else if(g_handle_counted_presses == 1)
+			{
+				if(!g_cloningInProgress && g_device_enabled)
 				{
 					if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
 					{
@@ -962,7 +982,6 @@ int main(void)
 						{
 							setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_FOREVER); // Immediately start transmissions							
 							g_frequency_to_test = 0;
-//							g_event_commenced = true;
 						}
 					}
 					else
@@ -992,20 +1011,10 @@ int main(void)
 				suspendEvent();
 				g_sleepType = SLEEP_USER_OVERRIDE;
 			}
-			else if(g_isMaster)
+			else if(g_handle_counted_presses == 8)
 			{
-				if((g_handle_counted_presses == 4) && txIsInitialized()) // keydown forever
-				{
-					suspendEvent();
-					g_sleepType = SLEEP_USER_OVERRIDE;
-					keyTransmitter(ON);
-					LEDS.setRed(ON);
-					g_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
-				}
-				else if (g_handle_counted_presses == 5) // Perform software reset
-				{
-					RSTCTRL_reset();
-				}
+				g_device_enabled = true;
+				g_ee_mgr.saveAllEEPROM();
 			}
 			
 			g_handle_counted_presses = 0;
@@ -1053,7 +1062,11 @@ int main(void)
 
 			if(g_text_buff.empty())
 			{
-				if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351 )))
+				if(!g_device_enabled)
+				{
+					LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
+				}
+				else if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
 				{
 					if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 					{
@@ -1221,6 +1234,7 @@ int main(void)
 			
 			if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
 			{
+				LEDS.init();
 				configRedLEDforEvent();
 			}
 			else
@@ -1687,59 +1701,73 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_KEY:
 			{
-				if(sb_buff->fields[SB_FIELD1][0])
+				if(g_device_enabled)
 				{
-					if(sb_buff->fields[SB_FIELD1][0] == '0')    
+					if(sb_buff->fields[SB_FIELD1][0])
 					{
-						g_key_down_countdown = 0;
- 						LEDS.setRed(OFF);
-						stopEventNow(PROGRAMMATIC);
- 						keyTransmitter(OFF);
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == '1')  
-					{
- 						stopEventNow(PROGRAMMATIC);
-						LEDS.setRed(ON);
- 						keyTransmitter(ON);
-						g_key_down_countdown = 3000;
+						if(sb_buff->fields[SB_FIELD1][0] == '0')    
+						{
+							g_key_down_countdown = 0;
+ 							LEDS.setRed(OFF);
+							stopEventNow(PROGRAMMATIC);
+ 							keyTransmitter(OFF);
+						}
+						else if(sb_buff->fields[SB_FIELD1][0] == '1')  
+						{
+ 							stopEventNow(PROGRAMMATIC);
+							LEDS.setRed(ON);
+ 							keyTransmitter(ON);
+							g_key_down_countdown = 3000;
+						}
+						else
+						{
+							sb_send_string((char*)"err\n");
+						}
 					}
 					else
 					{
-						sb_send_string((char*)"err\n");
+						LEDS.setRed(OFF);
+						LEDS.init();
+ 						keyTransmitter(OFF);
+						startEventNow(PROGRAMMATIC);
 					}
 				}
 				else
 				{
-					LEDS.setRed(OFF);
-					LEDS.init();
- 					keyTransmitter(OFF);
-					startEventNow(PROGRAMMATIC);
+					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 				}
 			}
 			break;
 
 			case SB_MESSAGE_GO:
 			{
-				if(sb_buff->fields[SB_FIELD1][0])
+				if(g_device_enabled)
 				{
-					if(sb_buff->fields[SB_FIELD1][0] == '0')       /* Stop the event. Re-sync will occur on next start */
+					if(sb_buff->fields[SB_FIELD1][0])
 					{
- 						stopEventNow(PROGRAMMATIC);
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == '1')  /* Start the event, re-syncing to a start time of now - same as a button press */
-					{
-						LEDS.setRed(OFF);
-						g_event_enabled = false; /* ensure that it will run immediately */
- 						startEventNow(PROGRAMMATIC);
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == '2')  /* Start the event at the programmed start time */
-					{
- 						g_event_enabled = false;					/* Disable an event currently underway */
- 						startEventUsingRTC();
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == '3')  /* Start the event immediately with transmissions starting now */
-					{
- 						setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);
+						if(sb_buff->fields[SB_FIELD1][0] == '0')       /* Stop the event. Re-sync will occur on next start */
+						{
+ 							stopEventNow(PROGRAMMATIC);
+						}
+						else if(sb_buff->fields[SB_FIELD1][0] == '1')  /* Start the event, re-syncing to a start time of now - same as a button press */
+						{
+							LEDS.setRed(OFF);
+							g_event_enabled = false; /* ensure that it will run immediately */
+ 							startEventNow(PROGRAMMATIC);
+						}
+						else if(sb_buff->fields[SB_FIELD1][0] == '2')  /* Start the event at the programmed start time */
+						{
+ 							g_event_enabled = false;					/* Disable an event currently underway */
+ 							startEventUsingRTC();
+						}
+						else if(sb_buff->fields[SB_FIELD1][0] == '3')  /* Start the event immediately with transmissions starting now */
+						{
+ 							setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);
+						}
+						else
+						{
+							sb_send_string((char*)"err\n");
+						}
 					}
 					else
 					{
@@ -1748,7 +1776,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
-					sb_send_string((char*)"err\n");
+					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 				}
 			}
 			break;
@@ -2429,7 +2457,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 // 		bool repeat = true;
 // 		makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
 		
-		powerToTransmitter(ON);
+		powerToTransmitter(g_device_enabled);
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		g_on_the_air = g_on_air_seconds;
 //		g_sendID_seconds_countdown = 600;
@@ -2453,7 +2481,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 		
 		if(g_run_event_forever)
 		{
-			powerToTransmitter(ON);
+			powerToTransmitter(g_device_enabled);
 			g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 			g_on_the_air = g_on_air_seconds;
 			g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
@@ -2521,7 +2549,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 
 				if(turnOnTransmitter)
 				{
-					powerToTransmitter(ON);
+					powerToTransmitter(g_device_enabled);
 				}
 				else
 				{
@@ -3292,25 +3320,25 @@ void reportSettings(void)
 		
 		if(!frequencyString(buf, g_frequency_low))
 		{
-			sprintf(g_tempStr, "*   Freq Low: %s\n", buf);
+			sprintf(g_tempStr, "*   [FOX 1] Freq Low: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
 
 		if(!frequencyString(buf, g_frequency_med))
 		{
-			sprintf(g_tempStr, "*   Freq Med: %s\n", buf);
+			sprintf(g_tempStr, "*   [FOX 2] Freq Med: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
 
 		if(!frequencyString(buf, g_frequency_hi))
 		{
-			sprintf(g_tempStr, "*   Freq High: %s\n", buf);
+			sprintf(g_tempStr, "*   [FOX 3] Freq High: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
 
 		if(!frequencyString(buf, g_frequency_beacon))
 		{
-			sprintf(g_tempStr, "*   Beacon Freq: %s\n", buf);
+			sprintf(g_tempStr, "*   [FOX B] Beacon Freq: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
 	}
@@ -3335,6 +3363,14 @@ void reportSettings(void)
 		{
 			sb_send_string((char*)"\n*  Start with > GO 2\n");
 		}
+	}
+	
+	if(!g_device_enabled)
+	{
+		sprintf(g_tempStr, "\n* Device disabled!");
+		sb_send_string(g_tempStr);
+		sprintf(g_tempStr, "\n* Press button eight (8) times to enable.");
+		sb_send_string(g_tempStr);
 	}
 }
 

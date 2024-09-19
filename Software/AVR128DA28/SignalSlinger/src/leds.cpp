@@ -13,8 +13,8 @@
 
 #define FAST_ON 25
 #define FAST_OFF 25
-#define SLOW_ON 25
-#define SLOW_OFF 500
+#define SLOW_ON 250
+#define SLOW_OFF 250
 #define BRIEF_ON 15
 #define BRIEF_OFF 50
 #define LED_TIMEOUT_DELAY 60000
@@ -203,6 +203,7 @@ void leds::reset(void)
 	g_text_buff.reset();
 	g_enable_manual_transmissions = false;
 	timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
+	lastRedBlinkSetting = lastGreenBlinkSetting = lastBothBlinkSetting = LEDS_NUMBER_OF_SETTINGS; 
 	led_timeout_count = LED_TIMEOUT_DELAY;
 }
 
@@ -323,7 +324,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 			
 			case LEDS_RED_BLINK_SLOW:
 			{
-				red_blink_on_period = SLOW_ON;
+				red_blink_on_period = FAST_ON;
 				red_blink_off_period = SLOW_OFF;
 				red_blink_count = red_blink_on_period;				
 				red_led_configured = true;			
@@ -437,6 +438,6 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 	}
 	else
 	{
-		lastBothBlinkSetting = blinkMode;
+		lastBothBlinkSetting = lastRedBlinkSetting = lastGreenBlinkSetting = blinkMode;
 	}
 }
