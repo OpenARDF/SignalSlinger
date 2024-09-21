@@ -105,6 +105,8 @@ struct EE_prom
 	uint16_t i2c_failure_count;
 	uint32_t guard4_33;
 	uint8_t function;
+	uint32_t guard4_34;
+	uint8_t device_enabled;
 };
 
 typedef enum
@@ -175,7 +177,9 @@ typedef enum
 	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 2 bytes ****/
 	I2C_failure_count = Guard4_32 + GUARDSIZE,   /* 2 bytes */
 	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 2 bytes ****/
-	Function = Guard4_33 + GUARDSIZE   /* 1 byte */
+	Function = Guard4_33 + GUARDSIZE,   /* 1 byte */
+	Guard4_34 = Function + sizeof(uint8_t),							/**** Guard = 2 bytes ****/
+	Device_Enabled = Guard4_34 + GUARDSIZE /* 1 byte */
 } EE_var_t;
 
 

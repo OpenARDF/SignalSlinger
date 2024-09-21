@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.20"
+#define SW_REVISION "0.27"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -48,7 +48,7 @@
 #define DATE_STRING_SUPPORT_ENABLED
 
 /*******************************************************/
-/* Error Codes                                                                   */
+/* Error Codes                                         */
 /*******************************************************/
 typedef enum {
 	ERROR_CODE_NO_ERROR = 0x00,
@@ -205,7 +205,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0129
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012C
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
@@ -268,6 +268,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_TX_NOT_RESPONDING_TXT (char*)"* Error: No response from transmit hardware\n"
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
+#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device Disabled! Enable with 8 button presses\n"
 #define TEXT_NOT_SLEEPING_TXT (char*)"* SignalSlinger is not sleeping\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Event Frequency Settings ===\n"

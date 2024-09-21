@@ -89,12 +89,12 @@ void final_drain_voltage(bool state);
 		if(g_rf_output_inhibited)
 		{
 			final_drain_voltage(OFF);
-			PORTA_set_pin_level(PS_5V_ENABLE, LOW); /* Turn off boost regulator */
+			PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW); /* Turn off boost regulator */
 		}
 		else
 		{
 			final_drain_voltage(state);
-			PORTA_set_pin_level(PS_5V_ENABLE, state); /* Turn on/off boost regulator */
+			PORTA_set_pin_level(BOOST_PWR_ENABLE, state); /* Turn on/off boost regulator */
 		}
 
 		return(ERROR_CODE_NO_ERROR);
