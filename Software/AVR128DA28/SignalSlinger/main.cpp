@@ -1062,11 +1062,7 @@ int main(void)
 
 			if(g_text_buff.empty())
 			{
-				if(!g_device_enabled)
-				{
-					LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
-				}
-				else if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+				if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
 				{
 					if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 					{
@@ -1077,6 +1073,10 @@ int main(void)
 					{
 						LEDS.sendCode((char*)"5XMT");
 					}
+				}
+				else if(!g_device_enabled)
+				{
+					LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
 				}
 				else if(g_cloningInProgress)
 				{
