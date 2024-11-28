@@ -51,7 +51,7 @@ void ADC0_setADCChannel(ADC_Active_Channel_t chan)
 {
 	switch(chan)
 	{
-		case ADCLipoVoltage:
+		case ADCInternalBatteryVoltage:
 		{
 			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
 			{

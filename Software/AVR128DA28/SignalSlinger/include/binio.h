@@ -51,8 +51,8 @@
 #define LED_GREEN 4
 #define SWITCH 3
 #define LED_RED 2
-#define POWER_GOOD 1
-#define VBAT_IN 0
+#define VBAT_EXT 1
+#define VBAT_INT 0
 
 /* PORTF *************************************************************************************/
 #define unusedF6 6

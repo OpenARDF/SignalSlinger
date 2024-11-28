@@ -94,7 +94,6 @@ typedef enum
 	SB_MESSAGE_HELP = '?',										/* Help */
 	SB_MESSAGE_DEBUG = 'D' * 100 + 'B' * 10 + 'G',				/* Debug information */
 	SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',			/* Functionality setting */
-
 	SB_INVALID_MESSAGE = MAX_UINT16,							/* This value must never overlap a valid message ID */
 	SB_CR_NO_DATA = MAX_UINT16-1								/* This value must never overlap a valid message ID */
 } SBMessageID;
@@ -141,7 +140,7 @@ typedef struct
 } SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > ? - Report all settings\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > FUN [A|Q|S] - Set device functionality\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS 1 - Set master\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [v] - Battery volts\n\0"
+#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > ? - Report all settings\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set slave or master\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [v] - Battery volts\n\0"
 
 
 /**

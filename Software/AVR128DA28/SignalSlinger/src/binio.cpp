@@ -121,15 +121,17 @@ void BINIO_init(void)
 // 	PORTC_set_pin_dir(SI5351_SCL, PORT_DIR_IN);
 	
 	/* PORTD *************************************************************************************/
-	PORTD_set_pin_dir(VBAT_IN, PORT_DIR_IN);
-	PORTD_set_pin_dir(POWER_GOOD, PORT_DIR_IN);
+	PORTD_set_pin_dir(VBAT_INT, PORT_DIR_IN);
+	PORTD_set_pin_pull_mode(VBAT_INT, PORT_PULL_OFF);
+	PORTD_set_pin_dir(VBAT_EXT, PORT_DIR_IN);
+	PORTD_set_pin_pull_mode(VBAT_EXT, PORT_PULL_OFF);
 
 	PORTD_set_pin_dir(LED_RED, PORT_DIR_OUT);
 	PORTD_set_pin_level(LED_RED, LOW);
 
 	PORTD_set_pin_dir(SWITCH, PORT_DIR_IN);
 	PORTD_set_pin_pull_mode(SWITCH, PORT_PULL_UP);
-	PORTD_pin_set_isc(SWITCH, PORT_ISC_BOTHEDGES_gc);
+	PORTD_pin_set_isc(SWITCH, PORT_ISC_FALLING_gc);
 	
 	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
 	PORTD_set_pin_level(LED_GREEN, LOW);
