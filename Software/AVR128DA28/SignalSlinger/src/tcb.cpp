@@ -138,7 +138,8 @@ bool util_delay_ms(uint32_t delayValue)
 				g_ms_counter = delayValue;
  				TCA0.SINGLE.INTCTRL = 1 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: enabled */
  				TCA0.SINGLE.CTRLA = 0x01; /* Enable TCA0 */
-				return(false);
+				counting = true;
+				return(true);
 			}
 		}
 		else if(delayValue != countdownValue) /* New delay value received */

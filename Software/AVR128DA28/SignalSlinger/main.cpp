@@ -944,7 +944,9 @@ int main(void)
 	g_button_hold_countdown = 1000;
 	
 	while((util_delay_ms(2500)) && (buttonHeldClosed &= switchIsClosed())); /* Avoid possible race conditions with peripheral devices powering up */
-		
+	
+	reportSettings();
+
 	if(buttonHeldClosed)
 	{
 		/* Check that the RTC is running */
@@ -1015,6 +1017,8 @@ int main(void)
 				g_long_button_press = false;
 				g_check_for_long_wakeup_press = false;
 				configRedLEDforEvent();
+				sb_send_string(TEXT_NOT_SLEEPING_TXT);
+				sb_send_NewPrompt();
 			}
 			else /* Spin your wheels waiting for above condition to test true */
 			{
@@ -1029,10 +1033,6 @@ int main(void)
 			 ******************************/
 			if(g_go_to_sleep_now && !g_cloningInProgress && (g_function == Function_ARDF_TX))
 			{
-				DISABLE_INTERRUPTS();
-				LEDS.deactivate();
-				serialbus_disable();
-				shutdown_transmitter();	
 
 				if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_USER_OVERRIDE))
 				{
@@ -1042,9 +1042,23 @@ int main(void)
 
 					if(now < MINIMUM_VALID_EPOCH)
 					{
+						sb_send_string(TEXT_POWER_OFF);
+						while((util_delay_ms(2000)) && serialbusTxInProgress());
+						while(util_delay_ms(200)); // Let serial xmsn finish before power off
 						PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - only a button press will apply power again */
 					}
+					else
+					{
+						sb_send_string(TEXT_SLEEPING_TXT);
+						while((util_delay_ms(2000)) && serialbusTxInProgress());
+						while(util_delay_ms(200)); // Let serial xmsn finish before sleep
+					}					
 				}
+
+				DISABLE_INTERRUPTS();
+				LEDS.deactivate();
+				serialbus_disable();
+				shutdown_transmitter();	
 			
 				system_sleep_config();
 
@@ -2402,7 +2416,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(!g_cloningInProgress)
 				{
 					reportSettings();
-// 					sb_send_string(HELP_TEXT_TXT);
 				}
 			}
 			break;
@@ -2411,7 +2424,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				if(!g_cloningInProgress)
 				{
-//					reportSettings();
 					sb_send_string(HELP_TEXT_TXT);
 				}
 			}
