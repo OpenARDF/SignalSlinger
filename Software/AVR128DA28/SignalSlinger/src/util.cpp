@@ -360,7 +360,7 @@ bool fox2Text(char* str, Fox_t fox)
 	{
 		case BEACON:
 		{
-			sprintf(str, "Finish \"MO\"");
+			sprintf(str, "Beacon \"MO\"");
 		}
 		break;
 		

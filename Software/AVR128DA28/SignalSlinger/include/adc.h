@@ -27,7 +27,7 @@
 #define ADC_H_
 
 typedef enum {
-	ADCLipoVoltage,
+	ADCInternalBatteryVoltage,
 	ADCExternalBatteryVoltage,
 	ADC12VRegulatedVoltage,
 	ADCTXAdjustableVoltage,

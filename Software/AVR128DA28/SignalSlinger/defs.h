@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.27"
+#define SW_REVISION "0.34"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -205,7 +205,8 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012C
+//#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012E
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012D
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
@@ -269,9 +270,11 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
 #define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device Disabled! Enable with 8 button presses\n"
-#define TEXT_NOT_SLEEPING_TXT (char*)"* SignalSlinger is not sleeping\n"
+#define TEXT_NOT_SLEEPING_TXT (char*)"\n* Awake\n"
+#define TEXT_POWER_OFF (char*)"\n* Power off. Press and hold pushbutton for power on\n"
+#define TEXT_SLEEPING_TXT (char*)"\n* Sleeping. Press and hold pushbutton to awaken\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
-#define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Event Frequency Settings ===\n"
+#define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
 #define MINIMUM_VALID_EPOCH ((time_t)1609459200UL)  /* 1 Jan 2021 00:00:00 */
 #define YEAR_2000_EPOCH ((time_t)946684800UL)  /* 1 Jan 2000 00:00:00 */
 #define FOREVER_EPOCH ((time_t)4294967295UL) /* 7 Feb 2106 00:00:00 */
