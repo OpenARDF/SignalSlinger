@@ -1635,7 +1635,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					Frequency_Hz f;
 					if(g_cloningInProgress)
 					{
-						if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f, 0))
+						if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f))
 						{							
 							if(freqTier == 'L')
 							{
@@ -1669,7 +1669,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						}
 					}
-					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f, 0))
+					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f))
 					{
 						if((freqTier == '1') || (freqTier == 'L'))
 						{
@@ -1692,7 +1692,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_ee_mgr.updateEEPROMVar(Frequency_Beacon, (void*)&f);
 						}
 					}
-					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f, 0))
+					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f))
 					{
 						g_frequency = f;
 						
@@ -3445,25 +3445,44 @@ void reportSettings(void)
 	{
 		sb_send_string(TEXT_EVENT_SETTINGS_TXT);
 
-		if(!frequencyString(buf, g_frequency_low))
+		if(frequencyString(buf, g_frequency_low))
+		{
+			sprintf(g_tempStr, "*   [FRE 1] Freq Low: Error\n");
+		}
+		else
 		{
 			sprintf(g_tempStr, "*   [FRE 1] Freq Low: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
-
-		if(!frequencyString(buf, g_frequency_med))
+		
+		if(g_event != EVENT_CLASSIC)
 		{
-			sprintf(g_tempStr, "*   [FRE 2] Freq Med: %s\n", buf);
-			sb_send_string(g_tempStr);
+			if(frequencyString(buf, g_frequency_med))
+			{
+				sprintf(g_tempStr, "*   [FRE 2] Error\n");
+			}
+			else
+			{
+				sprintf(g_tempStr, "*   [FRE 2] Freq Med: %s\n", buf);
+				sb_send_string(g_tempStr);
+			}
+
+			if(frequencyString(buf, g_frequency_hi))
+			{
+				sprintf(g_tempStr, "*   [FRE 3] Error\n");
+			}
+			else
+			{
+				sprintf(g_tempStr, "*   [FRE 3] Freq High: %s\n", buf);
+				sb_send_string(g_tempStr);
+			}
 		}
 
-		if(!frequencyString(buf, g_frequency_hi))
+		if(frequencyString(buf, g_frequency_beacon))
 		{
-			sprintf(g_tempStr, "*   [FRE 3] Freq High: %s\n", buf);
-			sb_send_string(g_tempStr);
+			sprintf(g_tempStr, "*   [FRE B] Error\n");
 		}
-
-		if(!frequencyString(buf, g_frequency_beacon))
+		else
 		{
 			sprintf(g_tempStr, "*   [FRE B] Beacon Freq: %s\n", buf);
 			sb_send_string(g_tempStr);

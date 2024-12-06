@@ -24,6 +24,7 @@
 
 
 #include "util.h"
+#include "transmitter.h"
 #include <avr/eeprom.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,7 +203,7 @@ bool frequencyString(char* result, uint32_t freq)
 		return(failure);
 	}
 	
-	if((freq > 3500000) && (freq < 4000000)) // Accept only a Hz value to be expressed in kHz
+	if((freq >= TX_MINIMUM_FREQUENCY) && (freq <= TX_MAXIMUM_FREQUENCY)) // Accept only a Hz value to be expressed in kHz
 	{
 		uint32_t frac = (freq % 1000)/100;		
 		sprintf(result, "%lu.%1lu kHz", freq/1000, frac);
@@ -220,100 +221,45 @@ bool frequencyString(char* result, uint32_t freq)
  * result = pointer to a Frequency_Hz variable to hold the frequency in Hz
  * Returns 1 if an error is detected
  */
-bool frequencyVal(char* str, Frequency_Hz* result, uint8_t band)
+bool frequencyVal(char* str, Frequency_Hz* result)
 {
 	bool failure = true;
 	float mhzMin, mhzMax, khzMin, khzMax, hzMin, hzMax;
 	
-	if(band == 80)
-	{
-		mhzMin = 3.5;
-		mhzMax = 4.0;
-		khzMin = 3500.;
-		khzMax = 4000.;
-		hzMin = 3500000.;
-		hzMax = 4000000.;
-	}
-	else if(band == 40)
-	{
-		mhzMin = 7.0;
-		mhzMax = 7.3;
-		khzMin = 7000.;
-		khzMax = 7300.;
-		hzMin = 7000000.;
-		hzMax = 7300000.;
-	}
-	else
-	{
-		mhzMin = 1.0;
-		mhzMax = 150.0;
-		khzMin = 1000.;
-		khzMax = 150000.;
-		hzMin = 1000000.;
-		hzMax = 150000000.;
-	}
+	mhzMin = (float)TX_MINIMUM_FREQUENCY/1000000.;
+	mhzMax = (float)TX_MAXIMUM_FREQUENCY/1000000.;
+	khzMin = (float)TX_MINIMUM_FREQUENCY/1000.;
+	khzMax = (float)TX_MAXIMUM_FREQUENCY/1000.;
+	hzMin = 3500000.;
+	hzMax = 4000000.;
 	
 	if(!str)
 	{
 		return(failure);
 	}
-	
-	int decimal = '.';
-	char* decimalLocation = strchr(str, decimal);
-	Frequency_Hz temp;
-	
-	if(decimalLocation) // Assume Hz or kHz
+		
+	float f = atof(str);
+		
+	if((f > mhzMin) && (f < mhzMax))
 	{
-		float f = atof(str);
-		
-		if((f > mhzMin) && (f < mhzMax))
-		{
-			f *= 1000000.;
-			failure = false;
-		}
-		else if((f > khzMin) && (f < khzMax))
-		{
-			f *= 1000.;
-			failure = false;
-		}
-		else if((f > hzMin) && (f < hzMax))
-		{
-			failure = false;
-		}
-		
-		if(!failure)
-		{
-			temp = (Frequency_Hz)ceilf(f);
-			temp = temp - (temp % 100);
-			if(result) *result = temp;
-			sprintf(str, "%4.1f kHz", (double)f);
-		}
+		f *= 1000000.;
+		failure = false;
 	}
-	else
+	else if((f > khzMin) && (f < khzMax))
 	{
-		Frequency_Hz f = (Frequency_Hz)atol(str);
+		f *= 1000.;
+		failure = false;
+	}
+	else if((f > hzMin) && (f < hzMax))
+	{
+		failure = false;
+	}
 		
-		if((f > (Frequency_Hz)mhzMin) && (f < (Frequency_Hz)mhzMax))
-		{
-			f *= 1000000;
-			failure = false;
-		}
-		else if((f > (Frequency_Hz)khzMin) && (f < (Frequency_Hz)khzMax))
-		{
-			f *= 1000;
-			failure = false;
-		}
-		else if((f > (Frequency_Hz)hzMin) && (f < (Frequency_Hz)hzMax))
-		{
-			f = f - (f % 100);
-			failure = false;
-		}
-		
-		if(!failure)
-		{
-			if(result) *result = f;
-			sprintf(str, "%lu.%1lu kHz", f/1000, (f % 1000)/100);
-		}
+	if(!failure)
+	{
+		Frequency_Hz temp = (Frequency_Hz)ceilf(f);
+		if(result) *result = temp;
+		sprintf(str, "%4.1f kHz", (double)f);
 	}
 	
 	return(failure);	
