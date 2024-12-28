@@ -1148,7 +1148,7 @@ int main(void)
 					{
 						RSTCTRL_reset();
 					}
-					else if((g_handle_counted_presses == 7) && txIsInitialized()) // keydown forever
+					else if((g_handle_counted_presses == 7) && txIsInitialized()) // keydown 
 					{
 						setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
 							
@@ -1157,10 +1157,12 @@ int main(void)
 							g_key_down_countdown = 0;
 							LEDS.setRed(OFF);
 							keyTransmitter(OFF);
+							powerToTransmitter(OFF);
 						}
 						else
 						{
 							g_key_down_countdown = 9000;
+							powerToTransmitter(g_device_enabled);
 							LEDS.setRed(ON);
 							keyTransmitter(ON);
 						}
@@ -2833,6 +2835,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				g_intra_cycle_delay_time = 240;
 			}
 			
+// 			init_transmitter(getFrequencySetting());
 			g_ID_period_seconds = 60;
 			g_sendID_seconds_countdown = g_ID_period_seconds;	/* wait 1 minute to send the ID */
 			g_on_air_seconds = 60;								/* on period is one minute */
@@ -2879,6 +2882,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				g_intra_cycle_delay_time = 48;
 			}
 
+// 			init_transmitter(getFrequencySetting());
 			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = 600;			/* wait 10 minutes send the ID */
 			g_on_air_seconds = 12;						/* on period is 12 seconds */
@@ -2922,6 +2926,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				g_intra_cycle_delay_time = 48;
 			}
 
+// 			init_transmitter(getFrequencySetting());
 			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = g_ID_period_seconds;	/* wait 10 minutes send the ID */
 			g_on_air_seconds = 12;								/* on period is 12 seconds */
@@ -2947,7 +2952,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		case FOXORING_FOX2:
 		case FOXORING_FOX3:
 		{
-			init_transmitter(getFrequencySetting());
+// 			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
 			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = g_ID_period_seconds;	/* wait 10 minutes send the ID */
@@ -2958,7 +2963,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		
 		case FREQUENCY_TEST_BEACON:
 		{
-			init_transmitter(getFrequencySetting());
+// 			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
 			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = g_ID_period_seconds;	/* wait 10 minutes send the ID */
@@ -2972,7 +2977,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		case BEACON:
 		default:
 		{
-			init_transmitter(getFrequencySetting());
+// 			init_transmitter(getFrequencySetting());
 			g_intra_cycle_delay_time = 0;
 			g_ID_period_seconds = 600;
 			g_sendID_seconds_countdown = g_ID_period_seconds;	/* wait 10 minutes send the ID */
@@ -2981,6 +2986,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		}
 		break;
 	}
+	
+	init_transmitter(getFrequencySetting());
 
 	if(action == START_NOTHING)
 	{
