@@ -943,7 +943,6 @@ int main(void)
 		g_frequency = getFrequencySetting();
 		txSetFrequency(&g_frequency);
 	}
-//	powerToTransmitter(g_device_enabled);
 	
 	RTC_set_calibration(g_clock_calibration);
 					
@@ -986,12 +985,14 @@ int main(void)
 					RTC_init_backup();
 				}
 
+				int tries = 5;
 				powerToTransmitter(g_device_enabled);
 				g_utility_countdown = 50;
-				while((util_delay_ms(2000)) && (buttonHeldClosed &= switchIsClosed()) && (!txIsInitialized()))
+				while(g_device_enabled && tries && (buttonHeldClosed &= switchIsClosed()) && (!txIsInitialized()))
 				{
 					if(!g_utility_countdown)
 					{
+						--tries;
 						g_utility_countdown = 50;
 						powerToTransmitter(g_device_enabled);
 					}
@@ -2829,7 +2830,6 @@ void suspendEvent()
 	g_event_commenced = false;  /* get things stopped immediately */
 	g_run_event_forever = false;
 	g_sleepshutdown_seconds = 300;
-	keyTransmitter(OFF);
 	configRedLEDforEvent();
 	powerToTransmitter(OFF);
 }

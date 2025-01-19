@@ -216,7 +216,7 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 		   initialization occurring again. */
 		if(!g_tx_initialized) 
 		{
-			init_transmitter(g_80m_frequency, false);
+			if(on) init_transmitter(g_80m_frequency, false);
 		}
 		
 		if(g_tx_initialized)
