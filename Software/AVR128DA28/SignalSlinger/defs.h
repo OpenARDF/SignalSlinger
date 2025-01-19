@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.36"
+#define SW_REVISION "0.41"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -104,7 +104,6 @@ typedef enum {
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
-	SLEEP_USER_OVERRIDE,
 	SLEEP_FOREVER
 	} SleepType;
 	
@@ -180,6 +179,14 @@ typedef unsigned char uint8_t;
 
 #define PA_VOLTAGE_MAX_MV 14100L
 #define VPA(x)((x * PA_VOLTAGE_MAX_MV) / 1023L)
+
+#define INT_BAT_PRESENT_VOLTAGE (0.5)
+#define INT_BAT_CHARGE_THRESH_LOW (4.0)
+#define INT_BAT_CHARGE_THRES_HIGH (4.2)
+#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
+#define EXT_BAT_PRESENT_VOLTAGE (6.0)
+
+
 
 typedef uint16_t BatteryLevel;  /* in milliVolts */
 

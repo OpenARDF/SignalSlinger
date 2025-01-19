@@ -62,28 +62,15 @@ typedef int16_t Attenuation;
 
 #define TX_MINIMUM_FREQUENCY (uint32_t)3500000
 #define TX_MAXIMUM_FREQUENCY (uint32_t)4000000
-
-/**
- */
- void shutdown_transmitter(void);
 	
-/**
- */
- void restart_transmitter(void);
-	
-/**
- */
-EC init_transmitter(bool leave_clock_off);
-EC init_transmitter(Frequency_Hz freq);
-EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
- 
 /** 
  */
  bool txIsInitialized(void);
 
 /**
  */
- bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
+bool txSetFrequency(Frequency_Hz *freq);
+bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
 /**
  */
@@ -101,13 +88,9 @@ bool keyTransmitter(bool on);
  */
 EC powerToTransmitter(bool on);
 
-/**
- */
-void fet_driver(bool state);
-
 /** 
  */
-void txKeyDown(bool key);
+//void txKeyDown(bool key);
 
 /**
  */
@@ -116,7 +99,7 @@ EC txMilliwattsToSettings(uint16_t* powerMW, uint16_t* powerLevel);
 /*
  * Shuts re-initializes the RF oscillator and leaves it in an off condition. Returns true if the oscillator was successfully initialized.
  */
-bool txConfirmRFisOff(void);
+// bool txConfirmRFisOff(void);
 
 
 #endif  /* TRANSMITTER_H_ */

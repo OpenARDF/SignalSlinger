@@ -26,6 +26,10 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+	
+#define FREE_RUNNING true
+#define SINGLE_CONVERSION false
+
 typedef enum {
 	ADCInternalBatteryVoltage,
 	ADCExternalBatteryVoltage,
@@ -46,5 +50,9 @@ void ADC0_startConversion(void);
 bool ADC0_conversionDone(void);
 int ADC0_read(void);
 float temperatureC(void);
+float readVoltage(ADC_Active_Channel_t chan);
+void ADC0_SYSTEM_init(bool freerun);
+void ADC0_SYSTEM_shutdown(void);
+
 
 #endif /* ADC_H_ */

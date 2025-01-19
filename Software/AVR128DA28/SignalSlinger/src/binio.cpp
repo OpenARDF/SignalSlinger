@@ -35,6 +35,9 @@ uint8_t portDpinReadings[3];
 uint8_t portDdebounced;
 uint8_t portApinReadings[3];
 uint8_t portAdebounced;
+void internal_charging(bool state);
+void v3V3_enable(bool state);
+void boost_enable(bool state);
 
 // default constructor
 binio::binio()
@@ -89,8 +92,8 @@ uint8_t portAdebouncedVals(void)
 void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
- 	PORTA_set_pin_dir(FAN_CONTR, PORT_DIR_OUT);
- 	PORTA_set_pin_level(FAN_CONTR, LOW);
+ 	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
+ 	PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
 	
  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
@@ -141,3 +144,223 @@ void BINIO_init(void)
 	/* PORTF *************************************************************************************/
 // 	PORTF_set_pin_dir(X32KHZ_SQUAREWAVE, PORT_DIR_OFF);	
 }
+
+
+static volatile bool driverCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
+/**
+ State machine to keep track of multiple controllers of the FET driver load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ */
+bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
+{
+	switch(sender)
+	{
+		case INTERNAL_BATTERY_CHARGING: // Not used
+		{
+// 			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+		}
+		break;
+		
+		case TRANSMITTER:
+		{
+			driverCallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		case INITIALIZE_LS:
+		{
+			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			driverCallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		default:
+		break;
+	}
+	
+	if(!driverCallerStates[INTERNAL_BATTERY_CHARGING] && !driverCallerStates[TRANSMITTER])
+	{
+		fet_driver(OFF);
+		return OFF;
+	}
+
+	fet_driver(ON);
+	return(ON);
+}
+
+
+static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
+/**
+ State machine to keep track of multiple controllers of the charging load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ */
+bool setChargingLoadSwitch(bool onoff, hardwareResourceClients sender)
+{
+	
+	switch(sender)
+	{
+		case INTERNAL_BATTERY_CHARGING:
+		{
+			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+		}
+		break;
+		
+		case TRANSMITTER: // Not used
+		{
+//			chargeLScallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		case INITIALIZE_LS:
+		{
+			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			chargeLScallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		default:
+		break;
+	}
+	
+	if(!chargeLScallerStates[INTERNAL_BATTERY_CHARGING] && !chargeLScallerStates[TRANSMITTER])
+	{
+		internal_charging(OFF);
+		return OFF;
+	}
+
+	internal_charging(ON);
+	return(ON);
+}
+
+static volatile bool V3V3callerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
+/**
+ State machine to keep track of multiple controllers of the charging load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ */
+bool setV3V3enable(bool onoff, hardwareResourceClients sender)
+{	
+	switch(sender)
+	{
+		case INTERNAL_BATTERY_CHARGING:
+		{
+			V3V3callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+		}
+		break;
+		
+		case TRANSMITTER:
+		{
+			V3V3callerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		case INITIALIZE_LS:
+		{
+			V3V3callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			V3V3callerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		default:
+		break;
+	}
+	
+	if(!V3V3callerStates[INTERNAL_BATTERY_CHARGING] && !V3V3callerStates[TRANSMITTER])
+	{
+		v3V3_enable(OFF);
+		return OFF;
+	}
+
+	v3V3_enable(ON);
+	return(ON);
+}
+
+
+static volatile bool boostCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
+/**
+ State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
+ */
+bool setBoostEnable(bool onoff, hardwareResourceClients sender)
+{	
+	switch(sender)
+	{
+		case INTERNAL_BATTERY_CHARGING:
+		{
+			boostCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+		}
+		break;
+		
+		case TRANSMITTER:
+		{
+			boostCallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		case INITIALIZE_LS:
+		{
+			boostCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			boostCallerStates[TRANSMITTER] = onoff;
+		}
+		break;
+		
+		default:
+		break;
+	}
+	
+	if(!boostCallerStates[INTERNAL_BATTERY_CHARGING] && !boostCallerStates[TRANSMITTER])
+	{
+		boost_enable(OFF);
+		return OFF;
+	}
+
+	boost_enable(ON);
+	return(ON);
+}
+
+	
+void fet_driver(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
+		driverCallerStates[TRANSMITTER] = ON;
+	}
+	else
+	{
+		PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
+		driverCallerStates[TRANSMITTER] = OFF;
+	}
+}
+	
+void internal_charging(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+	}
+	else
+	{
+		PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
+	}
+}
+
+void v3V3_enable(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(V3V3_PWR_ENABLE, HIGH);
+	}
+	else
+	{
+		PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
+	}
+}
+
+void boost_enable(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, HIGH);
+	}
+	else
+	{
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+	}
+}
+
