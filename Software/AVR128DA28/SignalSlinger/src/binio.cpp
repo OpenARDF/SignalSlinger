@@ -272,45 +272,13 @@ bool setV3V3enable(bool onoff, hardwareResourceClients sender)
 }
 
 
-static volatile bool boostCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 /**
  State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
  */
 bool setBoostEnable(bool onoff, hardwareResourceClients sender)
-{	
-	switch(sender)
-	{
-		case INTERNAL_BATTERY_CHARGING:
-		{
-			boostCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-		}
-		break;
-		
-		case TRANSMITTER:
-		{
-			boostCallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-		
-		case INITIALIZE_LS:
-		{
-			boostCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-			boostCallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-		
-		default:
-		break;
-	}
-	
-	if(!boostCallerStates[INTERNAL_BATTERY_CHARGING] && !boostCallerStates[TRANSMITTER])
-	{
-		boost_enable(OFF);
-		return OFF;
-	}
-
-	boost_enable(ON);
-	return(ON);
+{		
+	boost_enable(onoff);
+	return(onoff);
 }
 
 	

@@ -2702,6 +2702,9 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 	{
 		g_time_needed_for_ID = 0;   /* ID will never be sent */
 	}
+	
+	g_frequency = getFrequencySetting();
+	txSetFrequency(&g_frequency);
 
 	if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
 	{
