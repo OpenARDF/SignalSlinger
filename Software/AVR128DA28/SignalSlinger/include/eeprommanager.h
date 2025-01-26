@@ -106,6 +106,8 @@ struct EE_prom
 	uint32_t guard4_33;
 	uint8_t function;
 	uint32_t guard4_34;
+	uint8_t enable_boost_regulator;
+	uint32_t guard4_35;
 	uint8_t device_enabled;
 };
 
@@ -179,7 +181,9 @@ typedef enum
 	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 2 bytes ****/
 	Function = Guard4_33 + GUARDSIZE,   /* 1 byte */
 	Guard4_34 = Function + sizeof(uint8_t),							/**** Guard = 2 bytes ****/
-	Device_Enabled = Guard4_34 + GUARDSIZE /* 1 byte */
+	Enable_Boost_Regulator = Guard4_34 + GUARDSIZE, /* 1 byte */
+	Guard4_35 = Enable_Boost_Regulator + sizeof(uint8_t),			/**** Guard = 2 bytes ****/
+	Device_Enabled = Guard4_35 + GUARDSIZE /* 1 byte */
 } EE_var_t;
 
 

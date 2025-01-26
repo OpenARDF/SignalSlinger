@@ -119,8 +119,8 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 	0x00        //  uint8_t device_enabled
 };
 
-extern bool g_device_enabled;
-extern bool g_isMaster;
+extern volatile bool g_device_enabled;
+extern volatile bool g_isMaster;
 extern volatile Fox_t g_fox[EVENT_NUMBER_OF_EVENTS-1];
 extern volatile int8_t g_utc_offset;
 extern uint8_t g_unlockCode[];
@@ -132,6 +132,7 @@ extern volatile Frequency_Hz g_frequency_low;
 extern volatile Frequency_Hz g_frequency_med;
 extern volatile Frequency_Hz g_frequency_hi;
 extern volatile Frequency_Hz g_frequency_beacon;
+extern volatile bool g_enable_boost_regulator;
 
 extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 2];
 extern volatile time_t g_event_start_epoch;
@@ -583,6 +584,14 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		}
 		break;
 		
+		case Enable_Boost_Regulator:
+		{
+			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)))
+			{
+				avr_eeprom_write_byte(Enable_Boost_Regulator, *(uint8_t*)val);
+			}
+		}
+		break;
 		
 		case Device_Enabled:
 		{
@@ -640,6 +649,7 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
 	updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
 	updateEEPROMVar(Function, (void*)&g_function);
+	updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
 	updateEEPROMVar(Device_Enabled, (void*)&g_device_enabled);
 }
 
@@ -660,6 +670,7 @@ bool EepromManager::readNonVols(void)
  		g_frequency_med = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)), TX_MAXIMUM_FREQUENCY);
  		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_FREQUENCY);
  		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_FREQUENCY);
+		g_enable_boost_regulator = (bool)(eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)));
 		g_fox[EVENT_NONE] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5));
 		g_fox[EVENT_CLASSIC] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5));
 		g_fox[EVENT_SPRINT] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5));
@@ -877,6 +888,9 @@ bool EepromManager::readNonVols(void)
 			
 			g_function = EEPROM_FUNCTION_DEFAULT;
 			avr_eeprom_write_byte(Function, (uint8_t)g_function);
+			
+			g_enable_boost_regulator = false;
+			avr_eeprom_write_byte(Enable_Boost_Regulator, (uint8_t)g_enable_boost_regulator);
 			
 			g_device_enabled = false;
 			avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);

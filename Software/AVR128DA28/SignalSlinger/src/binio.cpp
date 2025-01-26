@@ -275,7 +275,7 @@ bool setV3V3enable(bool onoff, hardwareResourceClients sender)
 /**
  State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
  */
-bool setBoostEnable(bool onoff, hardwareResourceClients sender)
+bool setBoostEnable(bool onoff)
 {		
 	boost_enable(onoff);
 	return(onoff);

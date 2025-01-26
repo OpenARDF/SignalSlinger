@@ -41,16 +41,15 @@ volatile Frequency_Hz g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
 volatile bool g_tx_power_is_zero = true;
 
 static volatile bool g_drain_voltage_enabled = false;
-static volatile bool g_rf_output_inhibited = false;		
 static volatile bool g_transmitter_keyed = false;
 
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
-extern bool g_device_enabled;
+extern volatile bool g_device_enabled;
+volatile bool g_enable_boost_regulator = false;
 
 /**
  */
 EC init_transmitter(bool leave_clock_off);
-EC init_transmitter(Frequency_Hz freq);
 EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 /**
@@ -67,11 +66,6 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
  *       and the VFO configuration in effect. The VFO  frequency might be above or below the intended  frequency, depending on the VFO
  *       configuration setting in effect for the radio band of the frequency.
  */
-	bool txSetFrequency(Frequency_Hz *freq)
-	{
-		return(txSetFrequency(freq, false));
-	}
-	
 	bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 	{
 		bool err = true;
@@ -84,15 +78,12 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			{
 				if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
 				{
-					g_80m_frequency = *freq;
 					err = false;
 				}
 			}
 		}
-		else
-		{
-			g_80m_frequency = *freq;
-		}
+
+		g_80m_frequency = *freq;
 		
 // 		si5351_set_freq(*freq, TX_CLOCK_VHF, leaveClockOff); /* Test for quadrature */
 
@@ -106,12 +97,10 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 	EC powerToTransmitter(bool state)
 	{
-//		if((state == ON) && g_tx_initialized) return (ERROR_CODE_NO_ERROR);
-		
-		if(g_rf_output_inhibited || !g_device_enabled)
+		if(!g_device_enabled)
 		{
 			si5351_shutdown_comms();
-			setBoostEnable(OFF, TRANSMITTER);
+			setBoostEnable(OFF);
 			setFETDriverLoadSwitch(OFF, TRANSMITTER);
 			setV3V3enable(OFF, TRANSMITTER);
 			g_tx_initialized = false;
@@ -125,7 +114,7 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			}
 			
 			setV3V3enable(state, TRANSMITTER);
-			setBoostEnable(state, TRANSMITTER);
+			if(g_enable_boost_regulator) setBoostEnable(state);
 			setFETDriverLoadSwitch(state, TRANSMITTER);
 						
 			if(state)
@@ -134,10 +123,9 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 				
 				util_delay_ms(0);
 				while(util_delay_ms(100));
-				while(--tries && (init_transmitter(g_80m_frequency) != ERROR_CODE_NO_ERROR))
+				while(tries && (init_transmitter(g_80m_frequency, true) != ERROR_CODE_NO_ERROR))
 				{
-					util_delay_ms(0);
-					while(util_delay_ms(100));
+					--tries;
 				}
 				
 				si5351_start_comms();
@@ -211,14 +199,6 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 	
 	bool keyTransmitter(bool on)
 	{
-		/* The transmitter should be initialized prior to calling this function. But, just in case initialization failed for any reason,
-		   initialization can happen here. After successful initialization, subsequent calls to this function will not result in
-		   initialization occurring again. */
-		if(!g_tx_initialized) 
-		{
-			if(on) init_transmitter(g_80m_frequency, false);
-		}
-		
 		if(g_tx_initialized)
 		{			
 			int tries = 5;
@@ -244,7 +224,7 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			{
 				if(g_transmitter_keyed)
 				{
-					fet_driver(OFF);
+// 					fet_driver(OFF);
 					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
 					{
 						shutdown_transmitter();
@@ -257,6 +237,10 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 					}
 				}
 			}
+		}
+		else
+		{
+			g_transmitter_keyed = false;
 		}
 		
 		return(g_transmitter_keyed);
@@ -291,12 +275,6 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 		code = init_transmitter(leave_clock_off);
 		
 		return code;
-	}
-
-	EC init_transmitter(Frequency_Hz freq)
-	{
-		g_80m_frequency = freq;
-		return init_transmitter(true);
 	}
 	
 	EC init_transmitter(bool leave_clock_off)

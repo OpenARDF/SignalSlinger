@@ -97,7 +97,7 @@ bool setV3V3enable(bool onoff, hardwareResourceClients sender);
 
 /**
  */
-bool setBoostEnable(bool onoff, hardwareResourceClients sender);
+bool setBoostEnable(bool onoff);
 
 class binio
 {

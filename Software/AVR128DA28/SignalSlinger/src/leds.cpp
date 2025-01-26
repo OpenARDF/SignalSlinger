@@ -157,6 +157,7 @@ void leds::deactivate(void)
 	g_text_buff.reset();
 	g_enable_manual_transmissions = false;
 	timer_red_blink_inhibit = timer_green_blink_inhibit = true; /* Disable timer LED control */
+	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 	led_timeout_count = 0;
 }
 
@@ -167,6 +168,7 @@ void leds::setRed(bool on)
 //	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
 
 	timer_red_blink_inhibit = true;
+	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 
 	if(on)
 	{
@@ -242,6 +244,7 @@ void leds::sendCode(char* str)
 	}
 	
 	timer_red_blink_inhibit = true; /* Prevent timer from controlling LED */
+	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 	g_enable_manual_transmissions = holdMan;
 }
 
@@ -291,6 +294,7 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 				LED_set_RED_level(OFF);
 				red_blink_count = 0;
 				red_led_configured = false;
+				g_enable_manual_transmissions = false; /* Only the red LED can send individual characters */
 			}
 			break;
 			

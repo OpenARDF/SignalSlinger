@@ -426,7 +426,7 @@ bool fox2Text(char* str, Fox_t fox)
 		
 		case FREQUENCY_TEST_BEACON:
 		{
-			sprintf(str, "Frequency Tester Beacon");
+			sprintf(str, "Frequency Test Beacon");
 		}
 		break;
 		

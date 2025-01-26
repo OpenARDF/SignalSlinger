@@ -149,6 +149,7 @@ static volatile time_t g_time_since_wakeup = 0;
 static volatile bool g_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_charge_battery = false;
+extern bool g_enable_boost_regulator;
 
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 2
@@ -164,7 +165,8 @@ volatile uint16_t g_switch_presses_count = 0;
 volatile bool g_long_button_press = false;
 volatile uint16_t g_button_hold_countdown;
 
-volatile uint8_t g_frequency_to_test = 0;
+#define NUMBER_OF_TEST_FREQUENCIES (4)
+uint8_t g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 
 static volatile uint16_t g_programming_countdown = 0;
 static volatile uint16_t g_programming_msg_throttle = 0;
@@ -351,42 +353,7 @@ void handle_1sec_tasks(void)
 				if(g_sendID_seconds_countdown)
 				{
 					g_sendID_seconds_countdown--;
-				}
-				
- 				if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
- 				{
-					static uint8_t lastFreq = 10;
-					
-					if(g_frequency_to_test != lastFreq )
-					{
-						lastFreq = g_frequency_to_test;
-						bool repeat = true;
-						g_code_throttle = throttleValue(14);
-						
-						if(g_frequency_to_test == 0)
-						{
-							txSetFrequency(&g_frequency_low);
-							makeMorse((char*)"< E<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
-						}
-						else if(g_frequency_to_test == 1)
-						{
-							txSetFrequency(&g_frequency_med);
-							makeMorse((char*)"< EE<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
-						}
-						else if(g_frequency_to_test == 2)
-						{
-							txSetFrequency(&g_frequency_hi);
-							makeMorse((char*)"< EEE<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
-						}
-						else if(g_frequency_to_test == 3)
-						{
-							txSetFrequency(&g_frequency_beacon);
-							makeMorse((char*)"< EEEE<", &repeat, NULL, CALLER_AUTOMATED_EVENT);
-						}
-						
-						powerToTransmitter(g_device_enabled);
-					}
- 				}
+				}			
 			}
 			else /* waiting for the start time to arrive */
 			{
@@ -424,39 +391,42 @@ void handle_1sec_tasks(void)
 	/**************************************
 	* Delay before sleep
 	***************************************/
-	if(g_sleepshutdown_seconds) g_sleepshutdown_seconds--;
-
-	if(!g_sleepshutdown_seconds)
+	if(g_sleepshutdown_seconds) 
 	{
- 		if(g_isMaster || g_cloningInProgress)
- 		{
-	 		g_sleepshutdown_seconds = 300; /* Never sleep while cloning or while master */
- 		}
-		else if(g_event_commenced && g_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (g_fox[g_event] != FREQUENCY_TEST_BEACON))
+		g_sleepshutdown_seconds--;
+
+		if(!g_sleepshutdown_seconds)
 		{
-			g_sleepshutdown_seconds = 300; /* Never sleep during active transmissions */
-		}
-		else
-		{
-			if(g_sleepType == DO_NOT_SLEEP)
+ 			if(g_isMaster || g_cloningInProgress)
+ 			{
+	 			g_sleepshutdown_seconds = 300; /* Never sleep while cloning or while master */
+ 			}
+			else if(g_event_commenced && g_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (g_fox[g_event] != FREQUENCY_TEST_BEACON))
 			{
-				if(noEventWillRun()) /* Should never evaluate to true, but checking just in case */
-				{
-					g_sleepType = SLEEP_FOREVER;
-				}
+				g_sleepshutdown_seconds = 300; /* Never sleep during active transmissions */
 			}
-			else if(!g_go_to_sleep_now)
+			else
 			{
-				if(g_sleepType == SLEEP_FOREVER)
+				if(g_sleepType == DO_NOT_SLEEP)
 				{
-					if(eventScheduledForTheFuture()) /* Should never evaluate to true here, but checking just in case */
+					if(noEventWillRun()) /* Should never evaluate to true, but checking just in case */
 					{
-						g_sleepType = SLEEP_UNTIL_START_TIME;
+						g_sleepType = SLEEP_FOREVER;
 					}
 				}
+				else if(!g_go_to_sleep_now)
+				{
+					if(g_sleepType == SLEEP_FOREVER)
+					{
+						if(eventScheduledForTheFuture()) /* Should never evaluate to true here, but checking just in case */
+						{
+							g_sleepType = SLEEP_UNTIL_START_TIME;
+						}
+					}
 				
-				/* If we reach here, g_sleepType = 	SLEEP_UNTIL_START_TIME, SLEEP_UNTIL_NEXT_XMSN, or SLEEP_FOREVER */
-				g_go_to_sleep_now = true;
+					/* If we reach here, g_sleepType = 	SLEEP_UNTIL_START_TIME, SLEEP_UNTIL_NEXT_XMSN, or SLEEP_FOREVER */
+					g_go_to_sleep_now = true;
+				}
 			}
 		}
 	}
@@ -576,7 +546,7 @@ ISR(TCB0_INT_vect)
 				
 					if(!switch_closures_count_period) // Time's up - examine how many button presses were counted
 					{
-						if(g_switch_presses_count && (g_switch_presses_count < 9))
+						if(g_switch_presses_count && (g_switch_presses_count <= MAXIMUM_NUM_OF_KEYPRESSES))
 						{
 							g_handle_counted_presses = g_switch_presses_count;
 						}
@@ -594,7 +564,7 @@ ISR(TCB0_INT_vect)
 				{
 					switch_closures_count_period = 40;
 				}
-				else if(g_switch_presses_count > 8) // Too many button presses - ignore them entirely
+				else if(g_switch_presses_count > MAXIMUM_NUM_OF_KEYPRESSES) // Too many button presses - ignore them entirely
 				{
 					g_switch_presses_count = 0;
 				}
@@ -941,7 +911,7 @@ int main(void)
 	if(g_frequency == EEPROM_FREQUENCY_DEFAULT)
 	{ 
 		g_frequency = getFrequencySetting();
-		txSetFrequency(&g_frequency);
+		txSetFrequency(&g_frequency, true);
 	}
 	
 	RTC_set_calibration(g_clock_calibration);
@@ -950,71 +920,59 @@ int main(void)
 	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 	g_button_hold_countdown = 1000;
 	
-	while((util_delay_ms(2500)) && (buttonHeldClosed &= switchIsClosed())); /* Avoid possible race conditions with peripheral devices powering up */
+	while(util_delay_ms(2500)); /* Avoid possible race conditions with peripheral devices powering up */
 	
 	reportSettings();
 
-	if(buttonHeldClosed)
-	{
-		/* Check that the RTC is running */
-		set_system_time(YEAR_2000_EPOCH);
-		time_t now = time(null);
-		while((util_delay_ms(4500)) && (now == time(null)) && (buttonHeldClosed &= switchIsClosed()));
+	/* Check that the RTC is running */
+	set_system_time(YEAR_2000_EPOCH);
+	time_t now = time(null);
+	while((util_delay_ms(4500)) && (now == time(null)));
 		
-		if(buttonHeldClosed)
+	if(now == time(null))
+	{
+		LEDS.blink(LEDS_GREEN_OFF);
+		LEDS.blink(LEDS_RED_OFF);
+		while((util_delay_ms(3000)) && (now == time(null)));
+	}
+
+	sb_send_string(TEXT_RESET_OCCURRED_TXT);
+
+	if(!g_device_enabled)
+	{
+		sb_send_string(TEXT_DEVICE_DISABLED_TXT);
+	}
+
+	if(now == time(null))
+	{
+		g_hardware_error |= (int)HARDWARE_NO_RTC;
+		RTC_init_backup();
+	}
+
+	if(g_device_enabled)
+	{
+		int tries = 5;
+		powerToTransmitter(ON);
+
+		while(g_device_enabled && tries && (!txIsInitialized()))
 		{
-			if(now == time(null))
-			{
-				LEDS.blink(LEDS_GREEN_OFF);
-				LEDS.blink(LEDS_RED_OFF);
-				while((util_delay_ms(3000)) && (now == time(null)) && (buttonHeldClosed &= switchIsClosed()));
-			}
-
-			if(buttonHeldClosed)
-			{
-				sb_send_string(TEXT_RESET_OCCURRED_TXT);
-
-				if(!g_device_enabled)
-				{
-					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
-				}
-
-				if(now == time(null) && (buttonHeldClosed &= switchIsClosed()))
-				{
-					g_hardware_error |= (int)HARDWARE_NO_RTC;
-					RTC_init_backup();
-				}
-
-				int tries = 5;
-				powerToTransmitter(g_device_enabled);
-				g_utility_countdown = 50;
-				while(g_device_enabled && tries && (buttonHeldClosed &= switchIsClosed()) && (!txIsInitialized()))
-				{
-					if(!g_utility_countdown)
-					{
-						--tries;
-						g_utility_countdown = 50;
-						powerToTransmitter(g_device_enabled);
-					}
-					
-				}
-
-				if(!txIsInitialized())
-				{
-					g_hardware_error |= (int)HARDWARE_NO_SI5351;
-				}
-
-				g_run_event_forever = false;
-				g_start_event = g_device_enabled && eventEnabled(); /* Start any event stored in EEPROM */
-				sb_send_NewPrompt();
-
-				g_sleepshutdown_seconds = 300;
-				
-				buttonReleasedDuringStartup = !buttonHeldClosed;
-			}
+			--tries;
+ 			powerToTransmitter(ON);
 		}
 	}
-	
+
+	if(!txIsInitialized())
+	{
+		g_hardware_error |= (int)HARDWARE_NO_SI5351;
+	}
+
+	g_run_event_forever = false;
+	g_start_event = g_device_enabled && eventEnabled(); /* Start any event stored in EEPROM */
+	sb_send_NewPrompt();
+
+	g_sleepshutdown_seconds = 300;
+				
+	buttonReleasedDuringStartup = false;
 	
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0; /* Disable timer */
@@ -1030,7 +988,7 @@ int main(void)
 	TIMERB_init();
 	powerToTransmitter(OFF);
 
-	while (1) 
+	while(1) 
 	{
 		if(g_check_for_long_wakeup_press)
 		{
@@ -1084,31 +1042,53 @@ int main(void)
 			 ******************************/
 			if(g_go_to_sleep_now && !g_cloningInProgress && (g_function == Function_ARDF_TX))
 			{
-				if(g_sleepType == SLEEP_FOREVER)
+				if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 				{
-					g_time_to_wake_up = FOREVER_EPOCH;
-					
-					time_t now = time(null);
-
-					if(now < MINIMUM_VALID_EPOCH)
+					if(eventScheduled() && (g_sleepType != SLEEP_POWER_OFF_OVERRIDE)) /* Never sleep forever if an event is scheduled to start in the future */
 					{
-						sb_send_string(TEXT_POWER_OFF);
-						while((util_delay_ms(2000)) && serialbusTxInProgress());
-						while(util_delay_ms(200)); // Let serial xmsn finish before power off
-						if(!g_charge_battery) PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - but if charging, keep power switch on to measure internal battery level */
+						g_sleepType = SLEEP_UNTIL_START_TIME;
 					}
 					else
 					{
-						sb_send_string(TEXT_SLEEPING_TXT);
-						while((util_delay_ms(2000)) && serialbusTxInProgress());
-						while(util_delay_ms(200)); // Let serial xmsn finish before sleep
+						g_time_to_wake_up = FOREVER_EPOCH;
+					
+						time_t now = time(null);
+
+						if(now < MINIMUM_VALID_EPOCH)
+						{
+							sb_send_string(TEXT_POWER_OFF);
+							while((util_delay_ms(2000)) && serialbusTxInProgress());
+							while(util_delay_ms(200)); // Let serial xmsn finish before power off
+							if(!g_charge_battery) PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - but if charging, keep power switch on to measure internal battery level */
+						}
+						else
+						{
+							sb_send_string(TEXT_SLEEPING_TXT);
+							while((util_delay_ms(2000)) && serialbusTxInProgress());
+							while(util_delay_ms(200)); // Let serial xmsn finish before sleep
+						}
 					}
 				}
+				
+				/* If sleeping until start time, make sure everything is set up properly for when that time arrives */
+				if((g_sleepType == SLEEP_UNTIL_START_TIME) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
+				{
+					g_run_event_forever = false;
+					g_event_commenced = false;
+					g_start_event = false;
+					g_commence_transmissions = false;
+				}
+				
+				if(g_sleepType == SLEEP_POWER_OFF_OVERRIDE)
+				{
+					g_sleepType = SLEEP_FOREVER;
+				}
+
+				powerToTransmitter(OFF);
 
 				DISABLE_INTERRUPTS();
 				LEDS.deactivate();
 				serialbus_disable();
-				powerToTransmitter(OFF);
 				
 				system_sleep_config();
 
@@ -1199,7 +1179,6 @@ int main(void)
 
 				RTC_set_calibration(g_clock_calibration);
 				while(util_delay_ms(2000));
-//				init_transmitter(getFrequencySetting());
 				
 				g_sleepshutdown_seconds = 300;
 				
@@ -1207,6 +1186,13 @@ int main(void)
 				{
 					g_button_hold_countdown = 1000;
 					g_handle_counted_presses = 0;
+					
+					if(g_sleepType == SLEEP_UNTIL_START_TIME) /* User woke up the transmitter early, before the start time */
+					{
+						g_start_event = false;
+						g_event_commenced = false;
+						g_commence_transmissions = false;
+					}
 				}
 				else
 				{
@@ -1227,7 +1213,7 @@ int main(void)
 			{
 				if(g_isMaster)
 				{
-					if(g_handle_counted_presses == 3)
+					if(g_handle_counted_presses == 5)
 					{
 						if(g_key_down_countdown)
 						{
@@ -1248,11 +1234,11 @@ int main(void)
 						LEDS.blink(LEDS_RED_OFF);
 						g_text_buff.reset();					
 					}
-					else if (g_handle_counted_presses == 5) // Perform software reset
+					else if (g_handle_counted_presses == 7) // Perform software reset
 					{
 						RSTCTRL_reset();
 					}
-					else if(g_handle_counted_presses == 7) // keydown 
+					else if(g_handle_counted_presses == 9) // keydown 
 					{
 						if(!txIsInitialized())
 						{
@@ -1284,49 +1270,79 @@ int main(void)
 					{
 						if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
 						{
-							if(g_event_commenced)
+							g_sleepshutdown_seconds = 300;
+							if(!txIsInitialized()) powerToTransmitter(g_device_enabled);
+							g_code_throttle = throttleValue(getFoxCodeSpeed());
+
+							if(++g_frequency_to_test >= NUMBER_OF_TEST_FREQUENCIES) g_frequency_to_test = 0;
+						
+							if(g_frequency_to_test == 0)
 							{
-								g_frequency_to_test++;
-								if(g_frequency_to_test > 3) g_frequency_to_test = 0;
+								txSetFrequency(&g_frequency_low, true);
 							}
-							else
+							else if(g_frequency_to_test == 1)
 							{
-								setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_FOREVER); // Immediately start transmissions							
-								g_frequency_to_test = 0;
+								txSetFrequency(&g_frequency_med, true);
 							}
+							else if(g_frequency_to_test == 2)
+							{
+								txSetFrequency(&g_frequency_hi, true);
+							}
+							else if(g_frequency_to_test == 3)
+							{
+								txSetFrequency(&g_frequency_beacon, true);
+							}
+							
+							setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);		
 						}
 						else
 						{
 							if(eventScheduled())
 							{
-								g_event_enabled = false;
-						
-								if(!g_run_event_forever)
+								/* Implement special behavior if an event is scheduled to commence in the future: have a single button press toggle between
+								transmitting and slow blinking. But, in either case, the transmitter should eventually go to sleep and awaken at the
+								appointed time for the future event */
+								if(g_event_enabled && !g_run_event_forever) /* Start transmitting now, but go to sleep after a while */
 								{
+									g_event_enabled = false;
+									LEDS.blink(LEDS_RED_OFF);
 									setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_FOREVER); // Immediately start transmissions
+									g_sleepshutdown_seconds = 300; // run for 5 minutes, then sleep will configure the event to start using RTC
+									g_last_error_code = launchEvent((SC*)&g_last_status_code);
+									g_sleepType = SLEEP_UNTIL_START_TIME;
+									g_start_event = false;
 								}
-								else
+								else /* Blink to indicate a future event is programmed */
 								{
+									g_event_enabled = false;
  									startEventUsingRTC();
 								}
 							}
 							else
 							{
+								/* No future event has been configured, so just transmit forever */
 								if(!g_event_commenced) 
 								{
 									LEDS.blink(LEDS_RED_OFF);
-									startEventNow();
+									setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_FOREVER); // Immediately start transmissions
 								}
 							}
 						}
 					}
 				}
-				else if (g_handle_counted_presses == 2)
+				else if (g_handle_counted_presses == 3)
 				{
 					if(g_event_enabled) suspendEvent();
-					g_sleepType = SLEEP_FOREVER;
+					g_sleepType = eventScheduled() ? SLEEP_UNTIL_START_TIME : SLEEP_FOREVER;
+					g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+					
+					if(eventScheduled())
+					{
+						g_last_error_code = launchEvent((SC*)&g_last_status_code);
+						g_sleepshutdown_seconds = 300;
+					}
 				}
-				else if (g_handle_counted_presses == 3)
+				else if (g_handle_counted_presses == 5)
 				{
 					g_isMaster = true;
 					g_event_commenced = false;
@@ -1339,10 +1355,15 @@ int main(void)
 					LEDS.init();
 					g_text_buff.reset();
 				}
-				else if(g_handle_counted_presses == 8)
+				else if(g_handle_counted_presses == 7)
 				{
-					g_device_enabled = true;
-					g_ee_mgr.saveAllEEPROM();
+					if(!g_device_enabled)
+					{
+						g_device_enabled = true;
+						g_ee_mgr.saveAllEEPROM();
+						while(util_delay_ms(599));
+						RSTCTRL_reset();
+					}
 				}
 			
 				g_handle_counted_presses = 0;
@@ -1364,6 +1385,7 @@ int main(void)
 			{
 				g_commence_transmissions = false;
 				powerToTransmitter(g_device_enabled); // Needs to be done outside an ISR
+				g_event_enabled = true;
 				g_event_commenced = true;
 			}
 
@@ -1411,7 +1433,11 @@ int main(void)
 
 				if(g_text_buff.empty())
 				{
-					if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+					if(!g_device_enabled)
+					{
+						LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
+					}
+					else if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
 					{
 						if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 						{
@@ -1422,10 +1448,6 @@ int main(void)
 						{
 							LEDS.sendCode((char*)"5XMT");
 						}
-					}
-					else if(!g_device_enabled)
-					{
-						LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
 					}
 					else if(g_cloningInProgress)
 					{
@@ -1483,24 +1505,16 @@ int main(void)
 				}
 			}		
 		
-			if(g_long_button_press)
+			if(g_long_button_press) /* Shut things down and go to sleep or power off */
 			{
 				g_long_button_press = false;
-
-				if(eventScheduledForTheFuture())
-				{
-					g_sleepType = SLEEP_UNTIL_START_TIME;
-				}
-				else
-				{
-					g_sleepType = SLEEP_FOREVER;
-				}
-				
 				suspendEvent();
+				g_sleepType = SLEEP_FOREVER;			
 				g_go_to_sleep_now = true;
 				g_check_for_long_wakeup_press = false;
 				g_handle_counted_presses = 0;
 				LEDS.blink(LEDS_OFF);
+				g_sleepType = SLEEP_POWER_OFF_OVERRIDE;
 			}
 		
 			if(g_i2c_failure_count)
@@ -2483,13 +2497,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				char txt[6];
 
-				if(sb_buff->fields[SB_FIELD1][0])
+				if(sb_buff->fields[SB_FIELD1][0] == 'T')
 				{
 					float v = atof(sb_buff->fields[SB_FIELD1]);
 
 					if((v >= 0.1) && (v <= 15.))
 					{
- 						g_voltage_threshold = v;
+						g_voltage_threshold = v;
 						g_ee_mgr.updateEEPROMVar(Voltage_threshold, (void*)&g_voltage_threshold);
 					}
 					else
@@ -2498,10 +2512,20 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 
 				}
+				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
+				{
+					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
+
+					g_enable_boost_regulator = v;
+					g_ee_mgr.updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
+				}
+				
+				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
+				sb_send_string(g_tempStr);
 
 				dtostrf(g_internal_bat_voltage, 5, 1, txt);
 				txt[5] = '\0';
-  				sprintf(g_tempStr, "\nInt. Bat =%s Volts\n", txt);
+  				sprintf(g_tempStr, "Int. Bat =%s Volts\n", txt);
  				sb_send_string(g_tempStr);
 
 				dtostrf(g_voltage_threshold, 5, 1, txt);
@@ -2704,21 +2728,15 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 	}
 	
 	g_frequency = getFrequencySetting();
-	txSetFrequency(&g_frequency);
+	txSetFrequency(&g_frequency, true);
 
 	if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
 	{
-		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
-// 		g_code_throttle = throttleValue(getFoxCodeSpeed());
-// 		bool repeat = true;
-// 		makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
-		
+		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;		
 		powerToTransmitter(g_device_enabled);
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		g_on_the_air = g_on_air_seconds;
-//		g_sendID_seconds_countdown = 600;
 		LEDS.init();
-		g_event_enabled = true;
 		g_commence_transmissions = true;
 	}
 	else if(!g_run_event_forever && (g_event_finish_epoch < now))   /* the event has already finished */
@@ -2742,7 +2760,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 			g_on_the_air = g_on_air_seconds;
 			g_sendID_seconds_countdown = g_on_air_seconds - g_time_needed_for_ID;
 			LEDS.blink(LEDS_RED_OFF);
-			g_event_enabled = true;
+//			g_event_enabled = true;
 			g_commence_transmissions = true;
 		}
 		else
@@ -3119,6 +3137,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	}
 	else if(action == START_EVENT_NOW_AND_RUN_FOREVER)
 	{
+		powerToTransmitter(g_device_enabled);
+		makeMorse(getCurrentPatternText(), NULL, NULL, CALLER_AUTOMATED_EVENT);
 		g_run_event_forever = true;
 		g_sleepshutdown_seconds = 300;
 		g_start_event = true;
@@ -3130,7 +3150,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_run_event_forever = true;
 		g_on_the_air = g_on_air_seconds;			/* start out transmitting */
 		g_commence_transmissions = true;                   /* get things running immediately */
-		g_event_enabled = true;                     /* get things running immediately */
+//		g_event_enabled = true;                     /* get things running immediately */
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		LEDS.blink(LEDS_RED_OFF);
 	}
@@ -3984,7 +4004,22 @@ char* getCurrentPatternText(void)
 		
 		case FREQUENCY_TEST_BEACON:
 		{
-			c = (char*)"<";
+			if(g_frequency_to_test == 0)
+			{
+				c = (char*)"< E<";
+			}
+			else if(g_frequency_to_test == 1)
+			{
+				c = (char*)"< EE<";
+			}
+			else if(g_frequency_to_test == 2)
+			{
+				c = (char*)"< EEE<";
+			}
+			else // if(g_frequency_to_test == 3)
+			{
+				c = (char*)"< EEEE<";
+			}
 		}
 		break;
 		

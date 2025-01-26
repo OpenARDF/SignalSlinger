@@ -69,7 +69,6 @@ typedef int16_t Attenuation;
 
 /**
  */
-bool txSetFrequency(Frequency_Hz *freq);
 bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
 /**

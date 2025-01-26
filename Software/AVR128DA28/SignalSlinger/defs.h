@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.42"
+#define SW_REVISION "0.48"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -104,7 +104,8 @@ typedef enum {
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
-	SLEEP_FOREVER
+	SLEEP_FOREVER,
+	SLEEP_POWER_OFF_OVERRIDE
 	} SleepType;
 	
 
@@ -161,6 +162,8 @@ typedef unsigned char uint8_t;
 #define UINT16_MAX 0xFFFFU
 #endif
 
+#define MAXIMUM_NUM_OF_KEYPRESSES 9
+
 /*******************************************************/
 /*******************************************************
 * ADC Scale Factors */
@@ -212,8 +215,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-//#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012E
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012D
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012E
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
