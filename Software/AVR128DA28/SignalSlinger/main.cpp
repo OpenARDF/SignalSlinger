@@ -1040,7 +1040,7 @@ int main(void)
 			/********************************
 			 * Handle sleep
 			 ******************************/
-			if(g_go_to_sleep_now && !g_cloningInProgress && (g_function == Function_ARDF_TX))
+			if(g_go_to_sleep_now && !g_cloningInProgress)
 			{
 				if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 				{
@@ -1332,14 +1332,28 @@ int main(void)
 				}
 				else if (g_handle_counted_presses == 3)
 				{
-					if(g_event_enabled) suspendEvent();
-					g_sleepType = eventScheduled() ? SLEEP_UNTIL_START_TIME : SLEEP_FOREVER;
 					g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
 					if(eventScheduled())
 					{
-						g_last_error_code = launchEvent((SC*)&g_last_status_code);
-						g_sleepshutdown_seconds = 300;
+						if(eventScheduledForNow())
+						{
+							if((!g_event_enabled || !g_event_commenced))
+							{
+								g_last_error_code = launchEvent((SC*)&g_last_status_code);
+								g_sleepshutdown_seconds = 300;
+							}
+						}
+						else
+						{
+							g_last_error_code = launchEvent((SC*)&g_last_status_code);
+							g_sleepshutdown_seconds = 300;
+						}
+					}
+					else
+					{
+						g_sleepType = SLEEP_FOREVER;
+						if(g_event_enabled) suspendEvent();					
 					}
 				}
 				else if (g_handle_counted_presses == 5)
@@ -1449,7 +1463,7 @@ int main(void)
 							LEDS.sendCode((char*)"5XMT");
 						}
 					}
-					else if(g_cloningInProgress)
+					else if(g_cloningInProgress || g_key_down_countdown)
 					{
 						LEDS.blink(LEDS_RED_ON_CONSTANT, true);
 					}
@@ -1509,7 +1523,6 @@ int main(void)
 			{
 				g_long_button_press = false;
 				suspendEvent();
-				g_sleepType = SLEEP_FOREVER;			
 				g_go_to_sleep_now = true;
 				g_check_for_long_wakeup_press = false;
 				g_handle_counted_presses = 0;
@@ -1537,6 +1550,16 @@ int main(void)
  					LEDS.setRed(OFF);
 					setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
  					keyTransmitter(OFF);
+					
+					if(g_event_enabled) suspendEvent();
+					g_sleepType = eventScheduled() ? SLEEP_UNTIL_START_TIME : SLEEP_FOREVER;
+					g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+					
+					if(eventScheduled())
+					{
+						g_last_error_code = launchEvent((SC*)&g_last_status_code);
+						g_sleepshutdown_seconds = 300;
+					}
 				}
 			}
 		}
@@ -1959,28 +1982,25 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(sb_buff->fields[SB_FIELD1][0] == '0')    
 						{
 							g_key_down_countdown = 0;
- 							LEDS.setRed(OFF);
-							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
- 							keyTransmitter(OFF);
+							g_reset_after_keydown = true;
 						}
 						else if(sb_buff->fields[SB_FIELD1][0] == '1')  
 						{
  							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+
+							if(!txIsInitialized())
+							{
+								powerToTransmitter(g_device_enabled);
+							}
+							
+							g_key_down_countdown = 9000;
+							powerToTransmitter(g_device_enabled);
+							LEDS.init();
 							LEDS.setRed(ON);
- 							keyTransmitter(ON);
-							g_key_down_countdown = 3000;
+							keyTransmitter(ON);
+
+							g_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
 						}
-						else
-						{
-							sb_send_string((char*)"err\n");
-						}
-					}
-					else
-					{
-						LEDS.setRed(OFF);
-						LEDS.init();
- 						keyTransmitter(OFF);
-						startEventNow();
 					}
 				}
 				else
@@ -2273,42 +2293,42 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 			
-			case SB_MESSAGE_FUNCTION:
-			{
-				char fun = sb_buff->fields[SB_FIELD1][0];
-				
-				if(fun)
-				{
-					if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX) || g_cloningInProgress)
-					{
-						g_function = Function_ARDF_TX;
-						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
-					}
-					else if((fun == 'Q') || (fun == (uint8_t)Function_QRP_TX))
-					{
-						g_function = Function_QRP_TX;
-						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
-					}
-					else if((fun == 'S') || (fun == (uint8_t)Function_Signal_Gen))
-					{
-						g_function = Function_Signal_Gen;
-						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
-					}
-				}
-							 
-				if(g_cloningInProgress)
-				{
-					sprintf(g_tempStr, "FUN A\r");
-					sb_send_string(g_tempStr);
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_event_checksum += 'A';
-				}
-				else
-				{
-					reportSettings();
-				}
-			}
-			break;
+// 			case SB_MESSAGE_FUNCTION:
+// 			{
+// 				char fun = sb_buff->fields[SB_FIELD1][0];
+// 				
+// 				if(fun)
+// 				{
+// 					if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX) || g_cloningInProgress)
+// 					{
+// 						g_function = Function_ARDF_TX;
+// 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+// 					}
+// 					else if((fun == 'Q') || (fun == (uint8_t)Function_QRP_TX))
+// 					{
+// 						g_function = Function_QRP_TX;
+// 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+// 					}
+// 					else if((fun == 'S') || (fun == (uint8_t)Function_Signal_Gen))
+// 					{
+// 						g_function = Function_Signal_Gen;
+// 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+// 					}
+// 				}
+// 							 
+// 				if(g_cloningInProgress)
+// 				{
+// 					sprintf(g_tempStr, "FUN A\r");
+// 					sb_send_string(g_tempStr);
+// 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+// 					g_event_checksum += 'A';
+// 				}
+// 				else
+// 				{
+// 					reportSettings();
+// 				}
+// 			}
+// 			break;
 
 			case SB_MESSAGE_CLOCK:
 			{
@@ -3491,10 +3511,10 @@ void reportSettings(void)
 		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
 		sprintf(g_tempStr, "\n*   Function: %s\n", buf);
 	}
-	else
-	{
-		sprintf(g_tempStr, "\n*   Unknown Functionality!\n");
-	}
+// 	else
+// 	{
+// 		sprintf(g_tempStr, "\n*   Unknown Functionality!\n");
+// 	}
 	sb_send_string(g_tempStr);
 
 	// Send the current settings header.
@@ -3669,7 +3689,7 @@ void reportSettings(void)
 	{
 		sprintf(g_tempStr, "\n* Device disabled!");
 		sb_send_string(g_tempStr);
-		sprintf(g_tempStr, "\n* Press button eight (8) times to enable.");
+		sprintf(g_tempStr, "\n* Press button seven (7) times to enable.");
 		sb_send_string(g_tempStr);
 	}
 }

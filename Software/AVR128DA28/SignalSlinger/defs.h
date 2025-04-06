@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.48"
+#define SW_REVISION "0.50"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -260,7 +260,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_EVENT_SETTING_DEFAULT EVENT_FOXORING
 #define EEPROM_FOX_PATTERN_DEFAULT "MOE"
 #define EEPROM_FOXORING_PATTERN_DEFAULT "MOE"
-#define EEPROM_FREQUENCY_DEFAULT 3700000
+#define EEPROM_FREQUENCY_DEFAULT 3520000
 #define EEPROM_FREQUENCY_LOW_DEFAULT 3520000
 #define EEPROM_FREQUENCY_MED_DEFAULT 3540000
 #define EEPROM_FREQUENCY_HI_DEFAULT 3560000
