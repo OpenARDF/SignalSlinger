@@ -108,6 +108,8 @@ struct EE_prom
 	uint32_t guard4_34;
 	uint8_t enable_boost_regulator;
 	uint32_t guard4_35;
+	uint8_t enable_external_battery_control;
+	uint32_t guard4_36;
 	uint8_t device_enabled;
 };
 
@@ -174,16 +176,18 @@ typedef enum
 	Voltage_threshold =  Guard4_29 + GUARDSIZE,   /* 4 bytes */
 	Guard4_30 = Voltage_threshold + sizeof(float),					/**** Guard = 4 bytes ****/
 	Clock_calibration =  Guard4_30 + GUARDSIZE,   /* 2 bytes */
-	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 2 bytes ****/
+	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 4 bytes ****/
 	Days_to_run = Guard4_31 + GUARDSIZE,   /* 1 byte */
-	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 2 bytes ****/
+	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 4 bytes ****/
 	I2C_failure_count = Guard4_32 + GUARDSIZE,   /* 2 bytes */
-	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 2 bytes ****/
+	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 4 bytes ****/
 	Function = Guard4_33 + GUARDSIZE,   /* 1 byte */
-	Guard4_34 = Function + sizeof(uint8_t),							/**** Guard = 2 bytes ****/
+	Guard4_34 = Function + sizeof(uint8_t),							/**** Guard = 4 bytes ****/
 	Enable_Boost_Regulator = Guard4_34 + GUARDSIZE, /* 1 byte */
-	Guard4_35 = Enable_Boost_Regulator + sizeof(uint8_t),			/**** Guard = 2 bytes ****/
-	Device_Enabled = Guard4_35 + GUARDSIZE /* 1 byte */
+	Guard4_35 = Enable_Boost_Regulator + sizeof(uint8_t),			/**** Guard = 4 bytes ****/
+	Enable_External_Battery_Control = Guard4_35 + GUARDSIZE, /* 1 byte */
+	Guard4_36 = Enable_External_Battery_Control + sizeof(uint8_t),  /**** Guard = 4 bytes ****/
+	Device_Enabled = Guard4_36 + GUARDSIZE /* 1 byte */
 } EE_var_t;
 
 

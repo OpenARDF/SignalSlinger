@@ -89,15 +89,19 @@ void fet_driver(bool state);
 
 /**
  */
-bool setChargingLoadSwitch(bool onoff, hardwareResourceClients sender);
+bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender);
 
 /**
  */
-bool setV3V3enable(bool onoff, hardwareResourceClients sender);
+bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender);
 
 /**
  */
 bool setBoostEnable(bool onoff);
+
+/**
+ */
+bool setExtBatLSSetting(bool onoff);
 
 class binio
 {

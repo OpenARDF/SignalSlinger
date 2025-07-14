@@ -116,6 +116,10 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 	0x00000000, //  Guard
 	0x00,       //  uint8_t function
 	0x00000000, //  Guard
+	0x00,       //  uint8_t enable_boost_regulator
+	0x00000000, //  Guard
+	0x00,       //  uint8_t enable_external_battery_control
+	0x00000000, //  Guard
 	0x00        //  uint8_t device_enabled
 };
 
@@ -133,6 +137,7 @@ extern volatile Frequency_Hz g_frequency_med;
 extern volatile Frequency_Hz g_frequency_hi;
 extern volatile Frequency_Hz g_frequency_beacon;
 extern volatile bool g_enable_boost_regulator;
+extern volatile bool g_enable_external_battery_control;
 
 extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 2];
 extern volatile time_t g_event_start_epoch;
@@ -593,6 +598,15 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		}
 		break;
 		
+		case Enable_External_Battery_Control:
+		{
+			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_external_battery_control)))
+			{
+				avr_eeprom_write_byte(Enable_External_Battery_Control, *(uint8_t*)val);
+			}
+		}
+		break;
+		
 		case Device_Enabled:
 		{
 			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.device_enabled)))
@@ -650,6 +664,7 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
 	updateEEPROMVar(Function, (void*)&g_function);
 	updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
+	updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
 	updateEEPROMVar(Device_Enabled, (void*)&g_device_enabled);
 }
 
@@ -725,7 +740,7 @@ bool EepromManager::readNonVols(void)
 			}
 		}
 		
-		g_rtty_offset =eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset));
+		g_rtty_offset = eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset));
 		g_80m_power_level_mW = CLAMP(MIN_RF_POWER_MW, eeprom_read_word(&(EepromManager::ee_vars.rf_power)), MAX_TX_POWER_80M_MW);
 
 		g_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_codespeed))), MAX_CODE_SPEED_WPM);
@@ -745,6 +760,8 @@ bool EepromManager::readNonVols(void)
 		g_i2c_failure_count = eeprom_read_word((uint16_t*)(&(EepromManager::ee_vars.i2c_failure_count)));
 
 		g_function = (Function_t)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.function)));
+		
+		g_enable_external_battery_control = (bool)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.enable_external_battery_control)));
 		
 		g_device_enabled = (bool)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.device_enabled)));
 
@@ -891,6 +908,9 @@ bool EepromManager::readNonVols(void)
 			
 			g_enable_boost_regulator = false;
 			avr_eeprom_write_byte(Enable_Boost_Regulator, (uint8_t)g_enable_boost_regulator);
+			
+			g_enable_external_battery_control = true;
+			avr_eeprom_write_byte(Enable_External_Battery_Control, (uint8_t)g_enable_external_battery_control);
 			
 			g_device_enabled = false;
 			avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);

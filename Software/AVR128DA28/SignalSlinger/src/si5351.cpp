@@ -1291,7 +1291,7 @@ bool g_si5351_initialized = false;
 	bool si5351_write_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 	{
 		uint8_t tries = 5;
-		bool fail;
+		bool fail=true;
 		while(--tries && (fail = I2C_0_SendData(SI5351_I2C_SLAVE_ADDR, regAddr, data, bytes) != bytes));
 		return(fail);
 	}
@@ -1299,7 +1299,7 @@ bool g_si5351_initialized = false;
 	bool si5351_read_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 	{
 		uint8_t tries = 5;
-		bool fail;
+		bool fail=true;
 		while(--tries && (fail = I2C_0_GetData(SI5351_I2C_SLAVE_ADDR, regAddr, data, bytes) != bytes));
 		return(fail);
 	}

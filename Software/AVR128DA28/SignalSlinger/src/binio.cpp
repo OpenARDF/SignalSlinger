@@ -35,7 +35,7 @@ uint8_t portDpinReadings[3];
 uint8_t portDdebounced;
 uint8_t portApinReadings[3];
 uint8_t portAdebounced;
-void internal_charging(bool state);
+void setExtBatLSEnable(bool state);
 void v3V3_enable(bool state);
 void boost_enable(bool state);
 
@@ -93,7 +93,7 @@ void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
  	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
- 	PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
+ 	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
 	
  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
@@ -190,9 +190,9 @@ bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
 
 static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 /**
- State machine to keep track of multiple controllers of the charging load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ State machine to keep track of multiple controllers of the external battery load switch. This ensures that the switch is ON if any of the controllers has turned it on.
  */
-bool setChargingLoadSwitch(bool onoff, hardwareResourceClients sender)
+bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
 	
 	switch(sender)
@@ -203,9 +203,9 @@ bool setChargingLoadSwitch(bool onoff, hardwareResourceClients sender)
 		}
 		break;
 		
-		case TRANSMITTER: // Not used
+		case TRANSMITTER:
 		{
-//			chargeLScallerStates[TRANSMITTER] = onoff;
+			chargeLScallerStates[TRANSMITTER] = onoff;
 		}
 		break;
 		
@@ -222,38 +222,38 @@ bool setChargingLoadSwitch(bool onoff, hardwareResourceClients sender)
 	
 	if(!chargeLScallerStates[INTERNAL_BATTERY_CHARGING] && !chargeLScallerStates[TRANSMITTER])
 	{
-		internal_charging(OFF);
+		setExtBatLSEnable(OFF);
 		return OFF;
 	}
 
-	internal_charging(ON);
+	setExtBatLSEnable(ON);
 	return(ON);
 }
 
-static volatile bool V3V3callerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
+static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 /**
- State machine to keep track of multiple controllers of the charging load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ State machine to keep track of multiple controllers of the signal generator (VDD). This ensures that VDD is ON if any of the controllers has turned it on.
  */
-bool setV3V3enable(bool onoff, hardwareResourceClients sender)
+bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 {	
 	switch(sender)
 	{
 		case INTERNAL_BATTERY_CHARGING:
 		{
-			V3V3callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 		}
 		break;
 		
 		case TRANSMITTER:
 		{
-			V3V3callerStates[TRANSMITTER] = onoff;
+			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
 		
 		case INITIALIZE_LS:
 		{
-			V3V3callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-			V3V3callerStates[TRANSMITTER] = onoff;
+			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
 		
@@ -261,7 +261,7 @@ bool setV3V3enable(bool onoff, hardwareResourceClients sender)
 		break;
 	}
 	
-	if(!V3V3callerStates[INTERNAL_BATTERY_CHARGING] && !V3V3callerStates[TRANSMITTER])
+	if(!SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] && !SignalGeneratorCallerStates[TRANSMITTER])
 	{
 		v3V3_enable(OFF);
 		return OFF;
@@ -296,7 +296,7 @@ void fet_driver(bool state)
 	}
 }
 	
-void internal_charging(bool state)
+void setExtBatLSEnable(bool state)
 {
 	if(state == ON)
 	{

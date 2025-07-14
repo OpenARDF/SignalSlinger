@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.50"
+#define SW_REVISION "0.60"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -215,7 +215,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012E
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0131
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false

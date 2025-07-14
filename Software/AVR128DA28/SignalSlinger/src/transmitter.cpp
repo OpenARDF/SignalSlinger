@@ -46,6 +46,7 @@ static volatile bool g_transmitter_keyed = false;
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 extern volatile bool g_device_enabled;
 volatile bool g_enable_boost_regulator = false;
+volatile bool g_enable_external_battery_control = true;
 
 /**
  */
@@ -102,7 +103,7 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			si5351_shutdown_comms();
 			setBoostEnable(OFF);
 			setFETDriverLoadSwitch(OFF, TRANSMITTER);
-			setV3V3enable(OFF, TRANSMITTER);
+			setSignalGeneratorEnable(OFF, TRANSMITTER);
 			g_tx_initialized = false;
 			g_transmitter_keyed = false;
 		}
@@ -113,7 +114,8 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 				si5351_shutdown_comms();
 			}
 			
-			setV3V3enable(state, TRANSMITTER);
+			if(g_enable_external_battery_control) setExtBatLoadSwitch(state, TRANSMITTER);
+			setSignalGeneratorEnable(state, TRANSMITTER);
 			if(g_enable_boost_regulator) setBoostEnable(state);
 			setFETDriverLoadSwitch(state, TRANSMITTER);
 						
