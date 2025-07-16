@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.34"
+#define SW_REVISION "0.60"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -104,8 +104,8 @@ typedef enum {
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
-	SLEEP_USER_OVERRIDE,
-	SLEEP_FOREVER
+	SLEEP_FOREVER,
+	SLEEP_POWER_OFF_OVERRIDE
 	} SleepType;
 	
 
@@ -162,6 +162,8 @@ typedef unsigned char uint8_t;
 #define UINT16_MAX 0xFFFFU
 #endif
 
+#define MAXIMUM_NUM_OF_KEYPRESSES 9
+
 /*******************************************************/
 /*******************************************************
 * ADC Scale Factors */
@@ -180,6 +182,14 @@ typedef unsigned char uint8_t;
 
 #define PA_VOLTAGE_MAX_MV 14100L
 #define VPA(x)((x * PA_VOLTAGE_MAX_MV) / 1023L)
+
+#define INT_BAT_PRESENT_VOLTAGE (0.5)
+#define INT_BAT_CHARGE_THRESH_LOW (4.0)
+#define INT_BAT_CHARGE_THRES_HIGH (4.2)
+#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
+#define EXT_BAT_PRESENT_VOLTAGE (6.0)
+
+
 
 typedef uint16_t BatteryLevel;  /* in milliVolts */
 
@@ -205,8 +215,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 
 /******************************************************
  * EEPROM definitions */
-//#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012E
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x012D
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0131
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
@@ -251,7 +260,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_EVENT_SETTING_DEFAULT EVENT_FOXORING
 #define EEPROM_FOX_PATTERN_DEFAULT "MOE"
 #define EEPROM_FOXORING_PATTERN_DEFAULT "MOE"
-#define EEPROM_FREQUENCY_DEFAULT 3700000
+#define EEPROM_FREQUENCY_DEFAULT 3520000
 #define EEPROM_FREQUENCY_LOW_DEFAULT 3520000
 #define EEPROM_FREQUENCY_MED_DEFAULT 3540000
 #define EEPROM_FREQUENCY_HI_DEFAULT 3560000

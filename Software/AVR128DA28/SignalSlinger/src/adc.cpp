@@ -34,16 +34,11 @@ const float sampling_freq = SAMPLE_RATE;
 const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 const float y_frequencies[4] = { 697., 770., 852., 941. };
 	
-#define FREE_RUNNING true
-#define SINGLE_CONVERSION false
-	
 volatile int16_t g_adcVal;
 
 static void PORT_init(void);
 static void VREF0_init(void);
 static void ADC0_init(bool freerun);
-static void ADC0_SYSTEM_init(bool freerun);
-static void ADC0_SYSTEM_shutdown(void);
 	
 ADC_Init_t g_adc_initialization = ADC_NOT_INITIALIZED;
 
@@ -134,6 +129,52 @@ int ADC0_read()
 	return ADC0.RES; 	/* Reading the result also clears the interrupt flag */
 }
 
+uint16_t adc_reading;
+
+float readVoltage(ADC_Active_Channel_t chan)
+{
+	uint32_t wait = 10000;
+	float voltage = 0;
+//	uint8_t holdMux;
+	
+// 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
+// 	TCB0.CTRLA = 0; /* Disable timer */
+
+//	holdMux = ADC0.MUXPOS;
+//	ADC0_SYSTEM_init(SINGLE_CONVERSION);
+// 	ADC0_conversionDone(); // wait for any pending result to finish
+// 	adc_reading = ADC0.RES;
+// 	adc_reading = 0;
+	
+	// Throw away the first conversion due to potential for corrupt data
+// 	ADC0_setADCChannel(chan);
+// 	ADC0_startConversion();
+// 	
+// 	while((!ADC0_conversionDone()) && wait--);
+// 	adc_reading = ADC0.RES;
+// 	adc_reading = 0;
+// 	
+// 	for(wait=1000000; wait; wait--);
+	
+	adc_reading = ADC0.RES;
+ 	ADC0_setADCChannel(chan);
+	ADC0_startConversion();
+	
+	while((!ADC0_conversionDone()) && wait--);
+	
+	if(wait)
+	{
+		adc_reading = ADC0.RES;
+		voltage = (0.00725 * (float)adc_reading) + 0.05;
+	}
+	
+//	ADC0.MUXPOS = holdMux; /* Restore ADC registers */
+// 	TIMERB_init();
+	
+	return(voltage);
+}
+
+
 float temperatureC(void)
 {
 	uint16_t sigrow_offset = SIGROW.TEMPSENSE1; // Read unsigned value from signature row
@@ -198,20 +239,20 @@ static void ADC0_init(bool freerun)
 	}
 	else
 	{
-		ADC0.CTRLA = ADC_ENABLE_bm;  /* ADC Enable: enabled; 12-bit mode is default */
+		ADC0.CTRLA |= ADC_ENABLE_bm;  /* ADC Enable: enabled; 12-bit mode is default */
 		ADC0.INTCTRL = 0x00; /* Disable interrupt */
 		g_adc_initialization = ADC_SINGLE_CONVERSION_INITIALIZED;
 	}
 }
 
-static void ADC0_SYSTEM_init(bool freerun)
+void ADC0_SYSTEM_init(bool freerun)
 {
 	PORT_init();
 	VREF0_init();
 	ADC0_init(freerun);
 }
 
-static void ADC0_SYSTEM_shutdown(void)
+void ADC0_SYSTEM_shutdown(void)
 {
 	ADC0.INTCTRL = 0x00; /* Disable interrupt */
 	ADC0.CTRLA = ADC_RESSEL_12BIT_gc; /* Turn off ADC leaving 12-bit resolution set */

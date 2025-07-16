@@ -36,7 +36,7 @@
 #define POWER_ENABLE 3
 #define V3V3_PWR_ENABLE 2
 #define FET_DRIVER_ENABLE 1
-#define FAN_CONTR 0
+#define CHARGE_AUX_ENABLE 0
 
 /* PORTC *************************************************************************************/
 #define SI5351_SCL 3
@@ -59,11 +59,49 @@
 #define X32KHZ_SQUAREWAVE 0
 #define unusedF1 1
 
+enum hardwareResourceClients {
+	INTERNAL_BATTERY_CHARGING,
+	TRANSMITTER,
+	NUMBER_OF_LS_CONTROLLERS,
+	INITIALIZE_LS
+};
 
+/**
+ */
 void BINIO_init(void);
+
+/**
+ */
 void debounce(void);
+
+/**
+ */
 uint8_t portDdebouncedVals(void);
+
+/**
+ */
 uint8_t portAdebouncedVals(void);
+
+/**
+ */
+bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender);
+void fet_driver(bool state);
+
+/**
+ */
+bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender);
+
+/**
+ */
+bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender);
+
+/**
+ */
+bool setBoostEnable(bool onoff);
+
+/**
+ */
+bool setExtBatLSSetting(bool onoff);
 
 class binio
 {
