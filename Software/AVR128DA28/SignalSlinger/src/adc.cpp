@@ -175,10 +175,29 @@ float readVoltage(ADC_Active_Channel_t chan)
 }
 
 
-float temperatureC(void)
+bool isValidTemp(float temperatureC)
+{
+	return((temperatureC > MINIMUM_VALID_TEMP) && (temperatureC < MAXIMUM_VALID_TEMP));
+}
+
+float temperatureCfromADC(uint16_t adc_reading)
 {
 	uint16_t sigrow_offset = SIGROW.TEMPSENSE1; // Read unsigned value from signature row
 	uint16_t sigrow_slope = SIGROW.TEMPSENSE0; // Read unsigned value from signature row
+	float temperature_in_C = -273.15;
+
+	uint32_t temp = sigrow_offset - adc_reading;
+	temp *= sigrow_slope; // Result will overflow 16-bit variable
+	temp += 0x0800; // Add 4096/2 to get correct rounding on division below
+	temp >>= 12; // Round off to nearest degree in Kelvin, by dividing with 2^12 (4096)
+	temperature_in_C += (float)temp;
+	
+	return(temperature_in_C);
+}
+
+
+float temperatureC(void)
+{
 	static uint32_t wait = 10000;
 	uint16_t adc_reading;
 	float temperature_in_C = -273.15;
@@ -194,11 +213,7 @@ float temperatureC(void)
 	if(wait)
 	{
 		adc_reading = ADC0.RES;
-		uint32_t temp = sigrow_offset - adc_reading;
-		temp *= sigrow_slope; // Result will overflow 16-bit variable
-		temp += 0x0800; // Add 4096/2 to get correct rounding on division below
-		temp >>= 12; // Round off to nearest degree in Kelvin, by dividing with 2^12 (4096)
-		temperature_in_C += (float)temp;
+		temperature_in_C = temperatureCfromADC(adc_reading);
 	}
 	
 	ADC0.MUXPOS = holdMux; /* Restore ADC registers */
