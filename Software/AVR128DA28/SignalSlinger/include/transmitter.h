@@ -89,7 +89,11 @@ EC powerToTransmitter(bool on);
 
 /** 
  */
-//void txKeyDown(bool key);
+void setDisableTransmissions(bool disabled);
+
+/** 
+ */
+bool getDisableTransmissions(void);
 
 /**
  */

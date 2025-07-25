@@ -51,5 +51,9 @@ bool frequencyVal(char* str, Frequency_Hz* result);
 bool fox2Text(char* str, Fox_t fox);
 bool event2Text(char* str, Event_t evt);
 bool function2Text(char* str, Function_t fun);
+bool float_to_parts_signed(float value,
+                           int16_t  *integerPart,   /* signed  */
+                           uint16_t *fractionPart);         /* unsigned */
+
 
 #endif  /* UTIL_H_ */

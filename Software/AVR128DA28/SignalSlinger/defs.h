@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.60"
+#define SW_REVISION "0.70"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -189,6 +189,9 @@ typedef unsigned char uint8_t;
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
+#define MINIMUM_VALID_TEMP (-20.)
+#define MAXIMUM_VALID_TEMP (125.)
+
 
 
 typedef uint16_t BatteryLevel;  /* in milliVolts */
@@ -277,6 +280,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_RTC_NOT_RESPONDING_TXT (char*)"* Error: No response from clock hardware\n"
 #define TEXT_TX_NOT_RESPONDING_TXT (char*)"* Error: No response from transmit hardware\n"
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
+#define TEXT_EXCESSIVE_TEMPERATURE (char*)"* Error: High Temperature Shutdown!\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
 #define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device Disabled! Enable with 8 button presses\n"
 #define TEXT_NOT_SLEEPING_TXT (char*)"\n* Awake\n"

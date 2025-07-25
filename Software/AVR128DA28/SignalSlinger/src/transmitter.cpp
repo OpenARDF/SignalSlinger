@@ -38,10 +38,9 @@ volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
 volatile uint16_t g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
 volatile Frequency_Hz g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
 
-volatile bool g_tx_power_is_zero = true;
-
 static volatile bool g_drain_voltage_enabled = false;
 static volatile bool g_transmitter_keyed = false;
+static volatile bool g_disable_transmissions = false;
 
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 extern volatile bool g_device_enabled;
@@ -95,10 +94,28 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 	{
 		return( g_80m_frequency);
 	}
+	
+	void setDisableTransmissions(bool disabled)
+	{
+		if(disabled)
+		{
+			g_disable_transmissions = true;
+			powerToTransmitter(OFF);
+		}
+		else
+		{
+			g_disable_transmissions = false;
+		}
+	}
+	
+	bool getDisableTransmissions(void)
+	{
+		return(g_disable_transmissions);
+	}
 
 	EC powerToTransmitter(bool state)
 	{
-		if(!g_device_enabled)
+		if(!g_device_enabled || g_disable_transmissions)
 		{
 			si5351_shutdown_comms();
 			setBoostEnable(OFF);
@@ -226,7 +243,6 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			{
 				if(g_transmitter_keyed)
 				{
-// 					fet_driver(OFF);
 					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
 					{
 						shutdown_transmitter();

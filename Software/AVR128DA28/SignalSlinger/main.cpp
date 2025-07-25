@@ -128,7 +128,11 @@ volatile bool g_event_enabled = EEPROM_EVENT_ENABLED_DEFAULT;                   
 volatile bool g_event_commenced = false;
 volatile float g_voltage_threshold = EEPROM_BATTERY_THRESHOLD_V;
 volatile float g_internal_bat_voltage = 0.;
+volatile float g_internal_bat_detected = false;
 volatile float g_external_voltage = 0.;
+volatile float g_processor_temperature = MINIMUM_VALID_TEMP - 1.;
+volatile float g_processor_min_temperature = MAXIMUM_VALID_TEMP + 1.;
+volatile float g_processor_max_temperature = MINIMUM_VALID_TEMP - 1.;
 volatile bool g_restart_conversions = false;
 volatile bool g_seconds_transition = false;
 volatile bool g_sending_station_ID = false;											/* Allows a small extension of transmissions to ensure the ID is fully sent */
@@ -152,12 +156,13 @@ static volatile bool g_charge_battery = false;
 extern bool g_enable_boost_regulator;
 
 
-#define NUMBER_OF_POLLED_ADC_CHANNELS 2
-static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = { ADCInternalBatteryVoltage, ADCExternalBatteryVoltage };
-static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = { TIMER2_0_5HZ, TIMER2_0_5HZ };
-static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = { 2000, 2000 };
-static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false, false };
-static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = { 0, 0 };
+#define NUMBER_OF_POLLED_ADC_CHANNELS 3
+static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = { ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature };
+static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = { TIMER2_0_5HZ, TIMER2_0_5HZ, TIMER2_0_5HZ };
+static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = { 2000, 2000, 4000 };
+static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false, false, false };
+static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = { 0, 0, 0 };
+static volatile bool g_temperature_shutdown = false;
 
 volatile uint16_t g_switch_closed_time = 0;
 volatile uint16_t g_handle_counted_presses = 0;
@@ -848,10 +853,31 @@ ISR(TCB0_INT_vect)
 					{
 						g_internal_bat_voltage = (20. * g_internal_bat_voltage + val) / 21.;
 					}
+					
+					g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
 				}
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCExternalBatteryVoltage)
 				{
 					g_external_voltage = (0.00725 * (float)g_lastConversionResult[indexConversionInProcess]) + 0.05;
+				}
+				else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature)
+				{
+					float temp = temperatureCfromADC(hold);
+					
+					if(isValidTemp(temp))
+					{
+						g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temp)/2. : temp;
+						if(g_processor_temperature > g_processor_max_temperature) g_processor_max_temperature = g_processor_temperature;
+						if(g_processor_temperature < g_processor_min_temperature) g_processor_min_temperature = g_processor_temperature;
+						if(g_internal_bat_detected)
+						{
+							g_temperature_shutdown = g_temperature_shutdown ? !(g_processor_temperature < 55.) : g_processor_temperature > 60.;
+						}
+						else
+						{
+							g_temperature_shutdown = g_temperature_shutdown ? !(g_processor_temperature < 80.) : g_processor_temperature > 85.;
+						}
+					}
 				}
 			}
  
@@ -982,8 +1008,10 @@ int main(void)
 	TCB0.CTRLA = 0; /* Disable timer */
 	g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
 	g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+	
+	g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
 
-	if((g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) && (g_internal_bat_voltage < INT_BAT_CHARGE_THRESH_LOW) && (g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW)) // An external voltage is present and an internal battery is present & not fully charged
+	if(g_internal_bat_detected && (g_internal_bat_voltage < INT_BAT_CHARGE_THRESH_LOW) && (g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW)) // An external voltage is present and an internal battery is present & not fully charged
 	{
 		g_charge_battery = true;
 		if(g_enable_external_battery_control) setExtBatLoadSwitch(ON, INTERNAL_BATTERY_CHARGING);
@@ -2311,12 +2339,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 			
-// 			case SB_MESSAGE_FUNCTION:
-// 			{
-// 				char fun = sb_buff->fields[SB_FIELD1][0];
-// 				
-// 				if(fun)
-// 				{
+ 			case SB_MESSAGE_FUNCTION:
+ 			{
+				char fun = sb_buff->fields[SB_FIELD1][0];
+				
+				if(fun)
+				{
 // 					if((fun == 'A') || (fun == (uint8_t)Function_ARDF_TX) || g_cloningInProgress)
 // 					{
 // 						g_function = Function_ARDF_TX;
@@ -2331,22 +2359,26 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 // 					{
 // 						g_function = Function_Signal_Gen;
 // 						g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
-// 					}
-// 				}
-// 							 
-// 				if(g_cloningInProgress)
-// 				{
-// 					sprintf(g_tempStr, "FUN A\r");
-// 					sb_send_string(g_tempStr);
-// 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-// 					g_event_checksum += 'A';
-// 				}
-// 				else
-// 				{
-// 					reportSettings();
-// 				}
-// 			}
-// 			break;
+//					}
+
+					g_function = Function_ARDF_TX;
+					g_ee_mgr.updateEEPROMVar(Function, (void*)&g_function);
+				}
+				
+							 
+				if(g_cloningInProgress)
+				{
+					sprintf(g_tempStr, "FUN A\r");
+					sb_send_string(g_tempStr);
+					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					g_event_checksum += 'A';
+				}
+				else
+				{
+					reportSettings();
+				}
+ 			}
+ 			break;
 
 			case SB_MESSAGE_CLOCK:
 			{
@@ -2552,16 +2584,34 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else if(sb_buff->fields[SB_FIELD1][0] == 'X')
 				{
-					bool x = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
+					char c = (char)sb_buff->fields[SB_FIELD2][0];
+					bool updateStoredValue = false;
 					
-					g_enable_external_battery_control = x;
-					g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
+					if(c == '1')
+					{
+						setDisableTransmissions(false);
+						g_enable_external_battery_control = true;
+						updateStoredValue = true;
+					}
+					else if(c == '2')
+					{
+						setDisableTransmissions(true);
+						g_enable_external_battery_control = true;
+						updateStoredValue = true;
+					}
+					else if(c != '\0')
+					{
+						setDisableTransmissions(false);
+						g_enable_external_battery_control = false;
+						updateStoredValue = true;
+					}
+					
+					if(updateStoredValue) g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
 				}
 				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
 				{
 					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
-
-					g_enable_boost_regulator = v;
+					g_enable_boost_regulator = v;					
 					g_ee_mgr.updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
 				}
 				
@@ -2581,6 +2631,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				dtostrf(g_external_voltage, 5, 1, txt);
 				txt[5] = '\0';
 				sprintf(g_tempStr, "Ext. Bat =%s Volts\n", txt);
+				sb_send_string(g_tempStr);
+				
+				sprintf(g_tempStr, "Ext. Bat. Ctrl = %s\n", g_enable_external_battery_control ? "ON":"OFF");
+				sb_send_string(g_tempStr);
+				sprintf(g_tempStr, "Transmitter = %s\n", getDisableTransmissions() ? "Disabled":"Enabled");
 				sb_send_string(g_tempStr);
 			}
 			break;
@@ -3521,18 +3576,55 @@ void reportSettings(void)
 	{
 		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);  // Transmitter not responding.
 	}
+	
+	if(g_temperature_shutdown)
+	{
+		sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
+	}
+	
+	if(isValidTemp(g_processor_temperature))
+	{
+		int16_t integer;
+		uint16_t fractional;
+		
+		if(!float_to_parts_signed(g_processor_temperature, &integer, &fractional))
+		{
+			sprintf(g_tempStr, "\n*   Cur Temp: %d.%dC\n", integer, fractional);
+			sb_send_string(g_tempStr);
+		}
+	}
+	
+	if(isValidTemp(g_processor_max_temperature))
+	{
+		int16_t integer;
+		uint16_t fractional;
+		
+		if(!float_to_parts_signed(g_processor_max_temperature, &integer, &fractional))
+		{
+			sprintf(g_tempStr, "*   Max Temp: %d.%dC\n", integer, fractional);
+			sb_send_string(g_tempStr);
+		}
+	}
+	
+	if(isValidTemp(g_processor_min_temperature))
+	{
+		int16_t integer;
+		uint16_t fractional;
+		
+		if(!float_to_parts_signed(g_processor_min_temperature, &integer, &fractional))
+		{
+			sprintf(g_tempStr, "*   Min Temp: %d.%dC\n", integer, fractional);
+			sb_send_string(g_tempStr);
+		}
+	}
 
 	// Get and report the current functionality.
 	if(!function2Text(g_tempStr, g_function))
 	{
 		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
 		sprintf(g_tempStr, "\n*   Function: %s\n", buf);
+		sb_send_string(g_tempStr);
 	}
-// 	else
-// 	{
-// 		sprintf(g_tempStr, "\n*   Unknown Functionality!\n");
-// 	}
-	sb_send_string(g_tempStr);
 
 	// Send the current settings header.
 	sb_send_string(TEXT_CURRENT_SETTINGS_TXT);
@@ -3701,13 +3793,24 @@ void reportSettings(void)
 		}
 	}
 
-	// If the device is disabled, indicate it and provide instructions to enable.
+	// If the device is disabled, say so and provide instructions to enable.
 	if(!g_device_enabled)
 	{
 		sprintf(g_tempStr, "\n* Device disabled!");
 		sb_send_string(g_tempStr);
 		sprintf(g_tempStr, "\n* Press button seven (7) times to enable.");
 		sb_send_string(g_tempStr);
+	}
+	else
+	{
+		// Warn if transmitter disabled by BAT X command
+		if(getDisableTransmissions())
+		{
+			sprintf(g_tempStr, "\n* WARNING: TRANSMIT DISABLED");
+			sb_send_string(g_tempStr);
+			sprintf(g_tempStr, "\n* Re-enable with BAT X 1\n");
+			sb_send_string(g_tempStr);
+		}
 	}
 }
 

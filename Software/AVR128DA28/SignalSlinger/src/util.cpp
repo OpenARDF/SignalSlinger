@@ -31,6 +31,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdint-gcc.h>
+
+#ifdef __INT16_MAX__
+# undef INT16_MAX
+# define INT16_MAX __INT16_MAX__
+# undef INT16_MIN
+# define INT16_MIN (-INT16_MAX - 1)
+#endif
+
 
 /**
  * Returns a-b
@@ -485,4 +494,51 @@ bool event2Text(char* str, Event_t evt)
 	}
 	
 	return(failure);
+}
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <math.h>
+
+/*-------------------------------------------------------------
+ *  float_to_parts_signed
+ *  ---------------------
+ *  Split a float (positive or negative) into:
+ *      – characteristic : signed integer part      (-32 768 … 32 767)
+ *      – mantissa       : first decimal digit   (0 … 9)
+ *
+ *  Returns:  false  ? success
+ *            true   ? error   (bad args, NaN/Inf, out of range)
+ *------------------------------------------------------------*/
+bool float_to_parts_signed(float value,
+                           int16_t  *integerPart,   /* signed  */
+                           uint16_t *fractionPart)         /* unsigned */
+{
+    /* pointer validity */
+    if (integerPart == NULL || fractionPart == NULL)
+        return true;
+
+    /* reject NaN or ±Inf */
+    if (isnanf(value) || isinff(value))
+        return true;
+
+    /* split into integer and fractional parts */
+    float int_part_f;
+    float frac_part_f = modff(value, &int_part_f);   /* both carry the sign of value */
+
+    /* range-check integer part for int16_t */
+    if (int_part_f < (float)INT16_MIN || int_part_f > (float)INT16_MAX)
+        return true;
+
+    /* scale fractional part to 1 decimal place, keep it non-negative */
+    float scaled = roundf(fabsf(frac_part_f) * 10.0f);
+
+    if (scaled > (float)UINT16_MAX)          /* should never happen, but guard anyway */
+        return true;
+
+    /* commit results */
+    *integerPart = (int16_t)int_part_f;   /* may be negative */
+    *fractionPart = (uint16_t)scaled;      /* always positive */
+
+    return false;   /* success */
 }
