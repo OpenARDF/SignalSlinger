@@ -33,7 +33,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.70"
+#define SW_REVISION "0.72"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -184,10 +184,14 @@ typedef unsigned char uint8_t;
 #define VPA(x)((x * PA_VOLTAGE_MAX_MV) / 1023L)
 
 #define INT_BAT_PRESENT_VOLTAGE (0.5)
-#define INT_BAT_CHARGE_THRESH_LOW (4.0)
+#define INT_BAT_CHARGE_THRESH_LOW_MIN (3.0)
+#define INT_BAT_CHARGE_THRESH_LOW_MAX (4.1)
 #define INT_BAT_CHARGE_THRES_HIGH (4.2)
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
+
+#define FAN_TURN_ON_TEMP (45.)
+#define FAN_TURN_OFF_TEMP (40.)
 
 #define MINIMUM_VALID_TEMP (-20.)
 #define MAXIMUM_VALID_TEMP (125.)
@@ -244,7 +248,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_FUNCTION_DEFAULT Function_ARDF_TX
 
 #define EEPROM_CLOCK_CALIBRATION_DEFAULT 32767
-#define EEPROM_BATTERY_THRESHOLD_V (3.800)
+#define EEPROM_INT_BATTERY_LOW_THRESHOLD_V (3.800)
 #define MAX_UNLOCK_CODE_LENGTH 8
 #define EEPROM_DTMF_UNLOCK_CODE_DEFAULT "1357"
 #define MIN_UNLOCK_CODE_LENGTH 4

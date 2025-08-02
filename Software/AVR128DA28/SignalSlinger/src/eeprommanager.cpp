@@ -150,7 +150,7 @@ extern volatile int16_t g_off_air_seconds;
 extern volatile int16_t g_on_air_seconds;
 extern volatile int16_t g_ID_period_seconds;
 extern volatile int16_t g_intra_cycle_delay_time;
-extern volatile float g_voltage_threshold;
+extern volatile float g_internal_voltage_low_threshold;
 extern uint16_t g_clock_calibration;
 extern volatile uint8_t g_days_to_run;
 extern uint16_t g_i2c_failure_count;
@@ -658,7 +658,7 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(On_Air_Seconds, (void*)&g_on_air_seconds);
 	updateEEPROMVar(ID_Period_Seconds, (void*)&g_ID_period_seconds);
 	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void*)&g_intra_cycle_delay_time);
-	updateEEPROMVar(Voltage_threshold, (void*)&g_voltage_threshold);
+	updateEEPROMVar(Voltage_threshold, (void*)&g_internal_voltage_low_threshold);
 	updateEEPROMVar(Clock_calibration, (void*)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
 	updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
@@ -751,7 +751,7 @@ bool EepromManager::readNonVols(void)
 		g_ID_period_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.ID_period_seconds)), 3600);
 		g_intra_cycle_delay_time = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.intra_cycle_delay_time)), 3600);
 		
-		g_voltage_threshold = CLAMP(0.1, eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)), 15.0);
+		g_internal_voltage_low_threshold = CLAMP(3.0, eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)), 4.1);
 		
 		g_clock_calibration = eeprom_read_word(&(EepromManager::ee_vars.clock_calibration));
 
@@ -891,8 +891,8 @@ bool EepromManager::readNonVols(void)
 
 			avr_eeprom_write_byte(i, '\0');
 
-			g_voltage_threshold = EEPROM_BATTERY_THRESHOLD_V;
-			avr_eeprom_write_float(Voltage_threshold, g_voltage_threshold);
+			g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
+			avr_eeprom_write_float(Voltage_threshold, g_internal_voltage_low_threshold);
 			
 			g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
 			avr_eeprom_write_word(Clock_calibration, g_clock_calibration);

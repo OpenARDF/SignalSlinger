@@ -35,9 +35,9 @@ uint8_t portDpinReadings[3];
 uint8_t portDdebounced;
 uint8_t portApinReadings[3];
 uint8_t portAdebounced;
-void setExtBatLSEnable(bool state);
 void v3V3_enable(bool state);
 void boost_enable(bool state);
+void setExtBatLSEnable(bool state);
 
 // default constructor
 binio::binio()
@@ -192,6 +192,12 @@ static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF}
 /**
  State machine to keep track of multiple controllers of the external battery load switch. This ensures that the switch is ON if any of the controllers has turned it on.
  */
+bool setExtBatLoadSwitch(hardwareResourceClients client)
+{
+	bool currentState = setExtBatLoadSwitch(OFF, RE_APPLY_LS_STATE);
+	return currentState;
+}
+
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
 	
@@ -216,6 +222,7 @@ bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 		}
 		break;
 		
+		// case RE_APPLY_LS_STATE:
 		default:
 		break;
 	}
@@ -306,6 +313,11 @@ void setExtBatLSEnable(bool state)
 	{
 		PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
 	}
+}
+	
+bool getExtBatLSEnable(void)
+{
+	return (PORTA_get_pin_level(CHARGE_AUX_ENABLE) != LOW);
 }
 
 void v3V3_enable(bool state)

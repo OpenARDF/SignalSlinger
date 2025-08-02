@@ -63,7 +63,8 @@ enum hardwareResourceClients {
 	INTERNAL_BATTERY_CHARGING,
 	TRANSMITTER,
 	NUMBER_OF_LS_CONTROLLERS,
-	INITIALIZE_LS
+	INITIALIZE_LS,
+	RE_APPLY_LS_STATE
 };
 
 /**
@@ -89,6 +90,7 @@ void fet_driver(bool state);
 
 /**
  */
+bool setExtBatLoadSwitch(hardwareResourceClients client);
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender);
 
 /**
@@ -102,6 +104,7 @@ bool setBoostEnable(bool onoff);
 /**
  */
 bool setExtBatLSSetting(bool onoff);
+bool getExtBatLSEnable(void);
 
 class binio
 {
