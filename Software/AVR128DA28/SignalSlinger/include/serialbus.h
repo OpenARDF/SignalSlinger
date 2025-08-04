@@ -72,13 +72,13 @@
  *
  */
 
-typedef enum
+typedef enum 
 {
 	SB_MESSAGE_EMPTY = 0,
 
 	/*	ARDUCON MESSAGE FAMILY (SERIAL MESSAGING) */
 	SB_MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',			/* Set the fox role to be used to define timing and signals */
-	SB_MESSAGE_BATTERY = 'B' * 100 + 'A' * 10 + 'T',				/* Battery voltage and threshold setting */
+	SB_MESSAGE_BATTERY = 'B' * 100 + 'A' * 10 + 'T',			/* Battery voltage and threshold setting */
 	SB_MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',					/* Sets amateur radio callsign text */
 	SB_MESSAGE_GO = 'G' * 10 + 'O',								/* Start/stop transmissions */
 	SB_MESSAGE_CODE_SETTINGS = 'S' * 100 + 'P' * 10 + 'D',		/* Set Morse code speeds */
