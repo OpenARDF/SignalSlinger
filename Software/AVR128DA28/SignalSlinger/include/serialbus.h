@@ -113,23 +113,6 @@ typedef enum
 	SB_FIELD2 = 1
 } SBMessageField;
 
-typedef enum
-{
-	SB_BATTERY_BROADCAST = 0x0001,
-	SB_RSSI_BROADCAST = 0x0002,
-	SB_RF_BROADCAST = 0x0004,
-	SB_UPC_TEMP_BROADCAST = 0x0008,
-	SB_ALL_BROADCASTS = 0x000FF
-} SBbroadcastType;
-
-// typedef enum
-// {
-// 	SB_NO_ID = 0,
-// 	SB_CONTROL_HEAD_ID = 1,
-// 	SB_RECEIVER_ID = 2,
-// 	SB_TRANSMITTER_ID = 3
-// } DeviceID;
-
 typedef char SerialbusTxBuffer[SERIALBUS_MAX_TX_MSG_LENGTH];
 
 typedef struct
