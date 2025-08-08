@@ -30,10 +30,11 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdint.h>
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.73"
+#define SW_REVISION "0.74"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -118,21 +119,6 @@ typedef enum {
 #define ENUNCIATION_BLINK_WPM 8
 
 /*******************************************************/
-
-#ifndef uint16_t_defined
-#define uint16_t_defined
-typedef unsigned int uint16_t;
-#endif
-
-#ifndef uint32_t_defined
-#define uint32_t_defined
-typedef unsigned long uint32_t;
-#endif
-
-#ifndef unit8_t_defined
-#define unit8_t_defined
-typedef unsigned char uint8_t;
-#endif
 
 #ifndef null
 #define null 0
