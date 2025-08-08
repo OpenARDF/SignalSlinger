@@ -932,6 +932,7 @@ bool switchIsClosed(void)
 	return(!(portDdebouncedVals() & (1 << SWITCH)));
 }
 
+/* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
 	bool buttonHeldClosed = true;

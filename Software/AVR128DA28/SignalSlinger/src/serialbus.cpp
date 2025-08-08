@@ -66,6 +66,10 @@ static volatile bool serialbus_tx_active = false; /* volatile is required to ens
 static volatile SerialbusTxBuffer tx_buffer[SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS];
 static volatile SerialbusRxBuffer rx_buffer[SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS];
 
+/*
+ * Locate the next transmit buffer that contains a queued message.
+ * Returns a pointer to the buffer or null if no messages are waiting.
+ */
 SerialbusTxBuffer* nextFullSBTxBuffer(void)
 {
 	bool found = true;
@@ -95,6 +99,10 @@ SerialbusTxBuffer* nextFullSBTxBuffer(void)
 	return(null);
 }
 
+/*
+ * Find the next available empty transmit buffer for queuing data.
+ * Returns a pointer to the buffer or null if all buffers are in use.
+ */
 SerialbusTxBuffer* nextEmptySBTxBuffer(void)
 {
 	bool found = true;
@@ -124,6 +132,10 @@ SerialbusTxBuffer* nextEmptySBTxBuffer(void)
 	return(null);
 }
 
+/*
+ * Return a pointer to the next empty receive buffer so incoming data
+ * can be stored without overwriting unread messages.
+ */
 SerialbusRxBuffer* nextEmptySBRxBuffer(void)
 {
 	bool found = true;
@@ -158,6 +170,10 @@ SerialbusRxBuffer* nextEmptySBRxBuffer(void)
 	return(null);
 }
 
+/*
+ * Fetch the next receive buffer that has been filled with a message
+ * from the remote device.
+ */
 SerialbusRxBuffer* nextFullSBRxBuffer(void)
 {
 	bool found = true;
@@ -196,6 +212,10 @@ bool serialbusTxInProgress(void)
 	return(serialbus_tx_active);
 }
 
+/*
+ * Begin UART transmission if the interface is idle.  The first byte will
+ * be loaded by the interrupt handler once the transmitter is enabled.
+ */
 bool serialbus_start_tx(void)
 {
 	bool success = !serialbus_tx_active;
@@ -317,6 +337,10 @@ void serialbus_disable(void)
 }
 
 
+/*
+ * Queue a null-terminated string for transmission.  The routine will block
+ * briefly if no buffer is available, returning true on error.
+ */
 bool serialbus_send_text(char* text)
 {
 	bool err = true;

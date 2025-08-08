@@ -127,6 +127,7 @@ typedef struct
 
 
 /**
+ * Configure the serial bus with a baud rate and USART instance.
  */
 void serialbus_init(uint32_t baud, USART_Number_t usart);
 
@@ -136,6 +137,7 @@ void serialbus_init(uint32_t baud, USART_Number_t usart);
 void serialbus_disable(void);
 
 /**
+ * Stop any active transmission and reset transmit state.
  */
 void serialbus_end_tx(void);
 
@@ -144,47 +146,58 @@ void serialbus_end_tx(void);
 // void serialbus_reset_rx(void);
 
 /**
+ * Retrieve the next available empty transmit buffer or null if none.
  */
 SerialbusTxBuffer* nextEmptySBTxBuffer(void);
 
 /**
+ * Obtain the next transmit buffer that contains data.
  */
 SerialbusTxBuffer* nextFullSBTxBuffer(void);
 
 /**
+ * Returns true while the UART is currently sending bytes.
  */
 bool serialbusTxInProgress(void);
 
 /**
+ * Fetch the next empty receive buffer for incoming data.
  */
 SerialbusRxBuffer* nextEmptySBRxBuffer(void);
 
 /**
+ * Get the next receive buffer that has been filled with a message.
  */
 SerialbusRxBuffer* nextFullSBRxBuffer(void);
 
 /**
+ * Queue a new command prompt on the serial interface.
  */
 void sb_send_NewPrompt(void);
 
 /**
+ * Send a newline sequence to the serial bus.
  */
 void sb_send_NewLine(void);
 
 /**
+ * Echo a character back to the host terminal.
  */
 void sb_echo_char(uint8_t c);
 
 /**
+ * Queue a string for transmission.  Returns true if queued.
  */
 bool sb_send_string(char* str);
 bool sb_send_master_string(char* str);
 
 /**
+ * Send an ASCII label followed by a numeric value.
  */
 void sb_send_value(uint16_t value, char* label);
 
 /**
+ * Returns true when the serial bus has been initialized and enabled.
  */
 bool sb_enabled(void);
 

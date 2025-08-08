@@ -60,9 +60,11 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 
 /*
- *       This function sets the VFO frequency (CLK0 of the Si5351) based on the intended frequency passed in by the parameter (freq),
- *       and the VFO configuration in effect. The VFO  frequency might be above or below the intended  frequency, depending on the VFO
- *       configuration setting in effect for the radio band of the frequency.
+ * This function sets the VFO frequency (CLK0 of the Si5351) based on the intended frequency passed in by the parameter (freq),
+ * and the VFO configuration in effect. The VFO  frequency might be above or below the intended  frequency, depending on the VFO
+ * configuration setting in effect for the radio band of the frequency.
+ * Update the oscillator with a new transmit frequency.  The caller
+ * may request that the clock remain disabled after programming.
  */
 	bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 	{
@@ -87,12 +89,10 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 		return(err);
 	}
-// 
-// 	Frequency_Hz txGetFrequency(void)
-// 	{
-// 		return( g_80m_frequency);
-// 	}
 	
+/* Globally enable or disable all RF output.  When disabled the
+ * transmitter is powered down to conserve energy.
+ */
 	void setDisableTransmissions(bool disabled)
 	{
 		if(disabled)
@@ -111,6 +111,9 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 		return(g_disable_transmissions);
 	}
 
+/* Apply or remove power from the RF chain and related control lines.
+ * When enabling, the Si5351 and related peripherals are reinitialized.
+ */
 	EC powerToTransmitter(bool state)
 	{
 		if(!g_device_enabled || g_disable_transmissions)
