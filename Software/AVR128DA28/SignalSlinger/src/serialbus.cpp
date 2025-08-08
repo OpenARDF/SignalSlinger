@@ -267,7 +267,7 @@ void USART0_initialization(uint32_t baud)
 
 void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
-	memset((SerialbusRxBuffer*)rx_buffer, 0, sizeof(*(SerialbusRxBuffer*)rx_buffer));
+	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
 	serialbus_end_tx();
 
 	for(int bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
@@ -308,7 +308,7 @@ void serialbus_disable(void)
 	}
 	
 	serialbus_end_tx();
-	memset((SerialbusRxBuffer*)rx_buffer, 0, sizeof(*(SerialbusRxBuffer*)rx_buffer));
+	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
 
 	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
 	{

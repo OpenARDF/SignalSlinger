@@ -49,9 +49,9 @@ typedef enum {
 
 int8_t USART1_init(uint32_t baud, bool autobaud);
 
-void USART1_enable();
+// void USART1_enable();
 
-void USART1_enable_rx();
+// void USART1_enable_rx();
 
 void USART1_enable_tx();
 
@@ -59,24 +59,24 @@ void USART1_disable();
 
 uint8_t USART1_get_data();
 
-bool USART1_is_tx_ready();
+// bool USART1_is_tx_ready();
 
-bool USART1_is_rx_ready();
+// bool USART1_is_rx_ready();
 
-bool USART1_is_tx_busy();
+// bool USART1_is_tx_busy();
 
-uint8_t USART1_read(void);
+// uint8_t USART1_read(void);
 
-void USART1_write(const uint8_t data);
+// void USART1_write(const uint8_t data);
 
 /* Normal Mode, Baud register value */
 #define USART0_BAUD_RATE(BAUD_RATE) ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
 int8_t USART0_init(uint32_t baud, bool autobaud);
 
-void USART0_enable();
+// void USART0_enable();
 
-void USART0_enable_rx();
+// void USART0_enable_rx();
 
 void USART0_enable_tx();
 
@@ -84,15 +84,15 @@ void USART0_disable();
 
 uint8_t USART0_get_data();
 
-bool USART0_is_tx_ready();
+// bool USART0_is_tx_ready();
 
-bool USART0_is_rx_ready();
+// bool USART0_is_rx_ready();
 
-bool USART0_is_tx_busy();
+// bool USART0_is_tx_busy();
 
-uint8_t USART0_read(void);
+// uint8_t USART0_read(void);
 
-void USART0_write(const uint8_t data);
+// void USART0_write(const uint8_t data);
 
 
 #ifdef __cplusplus

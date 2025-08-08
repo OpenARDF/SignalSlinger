@@ -196,32 +196,6 @@ float temperatureCfromADC(uint16_t adc_reading)
 }
 
 
-float temperatureC(void)
-{
-	static uint32_t wait = 10000;
-	uint16_t adc_reading;
-	float temperature_in_C = -273.15;
-	uint8_t holdMux;
-	
-	holdMux = ADC0.MUXPOS;
-	ADC0_SYSTEM_init(SINGLE_CONVERSION);
-	ADC0.MUXPOS = ADC_MUXPOS_TEMPSENSE_gc;
-	ADC0_startConversion();
-	
-	while((!ADC0_conversionDone()) && wait--);
-	
-	if(wait)
-	{
-		adc_reading = ADC0.RES;
-		temperature_in_C = temperatureCfromADC(adc_reading);
-	}
-	
-	ADC0.MUXPOS = holdMux; /* Restore ADC registers */
-	
-	return(temperature_in_C);
-}
-
-
 static void PORT_init(void)
 {
 	/* Disable interrupt and digital input buffer on PD0 */

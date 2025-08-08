@@ -83,11 +83,6 @@ uint8_t portDdebouncedVals(void)
 	return portDdebounced;
 }
 
-uint8_t portAdebouncedVals(void)
-{
-	return portAdebounced;
-}
-
 
 void BINIO_init(void)
 {

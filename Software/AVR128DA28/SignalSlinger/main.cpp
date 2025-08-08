@@ -14,7 +14,6 @@
 #include "morse.h"
 #include "adc.h"
 #include "util.h"
-#include "binio.h"
 #include "eeprommanager.h"
 #include "binio.h"
 #include "leds.h"
@@ -24,8 +23,6 @@
 
 #include <cpuint.h>
 #include <ccp.h>
-#include <atomic.h>
-
 
 /***********************************************************************
  * Local Typedefs

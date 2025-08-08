@@ -81,10 +81,6 @@ uint8_t portDdebouncedVals(void);
 
 /**
  */
-uint8_t portAdebouncedVals(void);
-
-/**
- */
 bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender);
 void fet_driver(bool state);
 

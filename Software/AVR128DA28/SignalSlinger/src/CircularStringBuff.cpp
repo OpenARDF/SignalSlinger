@@ -83,16 +83,16 @@ size_t CircularStringBuff::size() const
  */
 void CircularStringBuff::put(char item)
 {
-  buf_[head_] = toupper(item);
+	buf_[head_] = toupper(static_cast<unsigned char>(item));
+	
+	if (full_)
+	{
+		tail_ = (tail_ + 1) % max_size_;
+	}
 
-  if (full_)
-  {
-    tail_ = (tail_ + 1) % max_size_;
-  }
+	head_ = (head_ + 1) % max_size_;
 
-  head_ = (head_ + 1) % max_size_;
-
-  full_ = head_ == tail_;
+	full_ = head_ == tail_;
 }
 
 /** 
@@ -100,22 +100,23 @@ void CircularStringBuff::put(char item)
  */
 char CircularStringBuff::pop()
 {
-  if (empty())
+  if(empty())
   {
-	  return ('\0');
+	return ('\0');
   }
 
   /*Read data and decrement the head (we now have one more free space) */
-  char val = buf_[head_];
-  if(head_) 
+
+  if(head_ == 0) 
   {
-	  head_--;
+    head_ = max_size_ - 1;
   }
   else
   {
-	  head_ = (max_size_-1);
+    --head_;
   }
   
+  char val = buf_[head_];
   full_ = false;
 
   return (val);

@@ -73,11 +73,11 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
 /**
  */
- Frequency_Hz txGetFrequency(void);
+//  Frequency_Hz txGetFrequency(void);
 	
 /**
  */
- uint16_t txGetPowerMw(void);
+//  uint16_t txGetPowerMw(void);
 
 /**
  */
@@ -94,15 +94,6 @@ void setDisableTransmissions(bool disabled);
 /** 
  */
 bool getDisableTransmissions(void);
-
-/**
- */
-EC txMilliwattsToSettings(uint16_t* powerMW, uint16_t* powerLevel);
-
-/*
- * Shuts re-initializes the RF oscillator and leaves it in an off condition. Returns true if the oscillator was successfully initialized.
- */
-// bool txConfirmRFisOff(void);
 
 
 #endif  /* TRANSMITTER_H_ */

@@ -30,8 +30,6 @@
 #include "port.h"
 #include "binio.h"
 #include "tcb.h"
-// #include "i2c.h"    /* DAC on 80m VGA of Rev X1 Receiver board */
-// #include "dac0.h"
 
 static volatile bool g_tx_initialized = false;
 volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -89,11 +87,11 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 		return(err);
 	}
-
-	Frequency_Hz txGetFrequency(void)
-	{
-		return( g_80m_frequency);
-	}
+// 
+// 	Frequency_Hz txGetFrequency(void)
+// 	{
+// 		return( g_80m_frequency);
+// 	}
 	
 	void setDisableTransmissions(bool disabled)
 	{
@@ -264,10 +262,10 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 		return(g_transmitter_keyed);
 	}
 
-	uint16_t txGetPowerMw(void)
-	{
-		return( g_80m_power_level_mW);
-	}
+// 	uint16_t txGetPowerMw(void)
+// 	{
+// 		return( g_80m_power_level_mW);
+// 	}
 	
 	bool txIsInitialized(void)
 	{
@@ -384,111 +382,3 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 		return( code);
 	}
-
-
-EC txMilliwattsToSettings(uint16_t* powerMW, uint16_t* driveLevel)
-{
-	EC ec = ERROR_CODE_NO_ERROR;
-	uint16_t maxPwr;
-	uint8_t index;
-
-	if(powerMW == NULL)
-	{
-		return(ERROR_CODE_SW_LOGIC_ERROR);
-	}
-
-	maxPwr = MAX_TX_POWER_80M_MW;
-
-	if(*powerMW > maxPwr)
-	{
-		ec = ERROR_CODE_POWER_LEVEL_NOT_SUPPORTED;
-	}
-
-	*powerMW = CLAMP((uint16_t)0, *powerMW, maxPwr);
-
-	if(*powerMW < 5)
-	{
-		index = 0;
-		*powerMW = 0;
-	}
-	else if(*powerMW < 50)
-	{
-		index = 1;
-		*powerMW = 10;
-	}
-	else if(*powerMW < 150)
-	{
-		index = 2;
-		*powerMW = 100;
-	}
-	else if(*powerMW < 250)
-	{
-		index = 3;
-		*powerMW = 200;
-	}
-	else if(*powerMW < 350)
-	{
-		index = 4;
-		*powerMW = 300;
-	}
-	else if(*powerMW < 450)
-	{
-		index = 5;
-		*powerMW = 400;
-	}
-	else if(*powerMW < 550)
-	{
-		index = 6;
-		*powerMW = 500;
-	}
-	else if(*powerMW < 650)
-	{
-		index = 7;
-		*powerMW = 600;
-	}
-	else if(*powerMW < 900)
-	{
-		index = 8;
-		*powerMW = 800;
-	}
-	else if(*powerMW < 1250)
-	{
-		index = 9;
-		*powerMW = 1000;
-	}
-	else if(*powerMW < 1750)
-	{
-		index = 10;
-		*powerMW = 1500;
-	}
-	else if(*powerMW < 2250)
-	{
-		index = 11;
-		*powerMW = 2000;
-	}
-	else if(*powerMW < 2750)
-	{
-		index = 12;
-		*powerMW = 2500;
-	}
-	else if(*powerMW < 3500)
-	{
-		index = 13;
-		*powerMW = 3000;
-	}
-	else if(*powerMW < 4500)
-	{
-		index = 14;
-		*powerMW = 4000;
-	}
-	else
-	{
-		index = 15;
-		*powerMW = 5000;
-	}
-
-	*driveLevel = g_80m_power_table[index];
-	*driveLevel = MIN(*driveLevel, MAX_80M_PWR_SETTING);
-
-	return(ec);
-}

@@ -240,9 +240,6 @@
     <Compile Include="include\cpuint.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\dac0.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="include\driver_init.h">
       <SubType>compile</SubType>
     </Compile>
@@ -313,9 +310,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\cpuint.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\dac0.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\driver_init.cpp">
