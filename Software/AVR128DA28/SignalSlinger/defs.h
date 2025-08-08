@@ -196,22 +196,8 @@ typedef unsigned char uint8_t;
 #define MINIMUM_VALID_TEMP (-20.)
 #define MAXIMUM_VALID_TEMP (125.)
 
-
-
 typedef uint16_t BatteryLevel;  /* in milliVolts */
 
-#define VOLTS_5 (((5000L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_3_19 (((3190L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_3_0 (((3000L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_2_4 (((2400L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-
-#define POWER_OFF_VOLT_THRESH_MV VOLTS_2_4 /* 2.4 V = 2400 mV */
-#define POWER_ON_VOLT_THRESH_MV VOLTS_3_0  /* 3.0 V = 3000 mV */
-
-#define ANTENNA_DETECT_THRESH 20
-#define ANTENNA_DETECT_DEBOUNCE 50
-
-#define NUMBER_OF_ESSENTIAL_EVENT_PARAMETERS 12
 #define TEXT_BUFF_SIZE 50
 
 /*******************************************************/
