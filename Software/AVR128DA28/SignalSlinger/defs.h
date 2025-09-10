@@ -30,10 +30,11 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdint.h>
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.70"
+#define SW_REVISION "0.74"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -119,21 +120,6 @@ typedef enum {
 
 /*******************************************************/
 
-#ifndef uint16_t_defined
-#define uint16_t_defined
-typedef unsigned int uint16_t;
-#endif
-
-#ifndef uint32_t_defined
-#define uint32_t_defined
-typedef unsigned long uint32_t;
-#endif
-
-#ifndef unit8_t_defined
-#define unit8_t_defined
-typedef unsigned char uint8_t;
-#endif
-
 #ifndef null
 #define null 0
 #endif
@@ -184,30 +170,20 @@ typedef unsigned char uint8_t;
 #define VPA(x)((x * PA_VOLTAGE_MAX_MV) / 1023L)
 
 #define INT_BAT_PRESENT_VOLTAGE (0.5)
-#define INT_BAT_CHARGE_THRESH_LOW (4.0)
+#define INT_BAT_CHARGE_THRESH_LOW_MIN (3.0)
+#define INT_BAT_CHARGE_THRESH_LOW_MAX (4.1)
 #define INT_BAT_CHARGE_THRES_HIGH (4.2)
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
+#define FAN_TURN_ON_TEMP (45.)
+#define FAN_TURN_OFF_TEMP (40.)
+
 #define MINIMUM_VALID_TEMP (-20.)
 #define MAXIMUM_VALID_TEMP (125.)
 
-
-
 typedef uint16_t BatteryLevel;  /* in milliVolts */
 
-#define VOLTS_5 (((5000L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_3_19 (((3190L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_3_0 (((3000L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-#define VOLTS_2_4 (((2400L - BATTERY_DROP) * 1023L) / BATTERY_VOLTAGE_MAX_MV)
-
-#define POWER_OFF_VOLT_THRESH_MV VOLTS_2_4 /* 2.4 V = 2400 mV */
-#define POWER_ON_VOLT_THRESH_MV VOLTS_3_0  /* 3.0 V = 3000 mV */
-
-#define ANTENNA_DETECT_THRESH 20
-#define ANTENNA_DETECT_DEBOUNCE 50
-
-#define NUMBER_OF_ESSENTIAL_EVENT_PARAMETERS 12
 #define TEXT_BUFF_SIZE 50
 
 /*******************************************************/
@@ -244,7 +220,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_FUNCTION_DEFAULT Function_ARDF_TX
 
 #define EEPROM_CLOCK_CALIBRATION_DEFAULT 32767
-#define EEPROM_BATTERY_THRESHOLD_V (3.800)
+#define EEPROM_INT_BATTERY_LOW_THRESHOLD_V (3.800)
 #define MAX_UNLOCK_CODE_LENGTH 8
 #define EEPROM_DTMF_UNLOCK_CODE_DEFAULT "1357"
 #define MIN_UNLOCK_CODE_LENGTH 4

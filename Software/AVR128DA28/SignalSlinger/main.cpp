@@ -81,7 +81,7 @@ typedef enum {
 	SYNC_Waiting_for_ACK
 } SyncState_t;
 
-#define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 9000
+#define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
 
 
 /***********************************************************************
@@ -126,9 +126,9 @@ volatile time_t g_event_start_epoch = EEPROM_START_TIME_DEFAULT;
 volatile time_t g_event_finish_epoch = EEPROM_FINISH_TIME_DEFAULT;
 volatile bool g_event_enabled = EEPROM_EVENT_ENABLED_DEFAULT;                        /* indicates that the conditions for executing the event are set */
 volatile bool g_event_commenced = false;
-volatile float g_voltage_threshold = EEPROM_BATTERY_THRESHOLD_V;
+volatile float g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
 volatile float g_internal_bat_voltage = 0.;
-volatile float g_internal_bat_detected = false;
+volatile bool g_internal_bat_detected = false;
 volatile float g_external_voltage = 0.;
 volatile float g_processor_temperature = MINIMUM_VALID_TEMP - 1.;
 volatile float g_processor_min_temperature = MAXIMUM_VALID_TEMP + 1.;
@@ -154,6 +154,7 @@ static volatile bool g_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_charge_battery = false;
 extern bool g_enable_boost_regulator;
+static volatile bool g_turn_on_fan = false;
 
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
@@ -522,13 +523,6 @@ ISR(TCB0_INT_vect)
 						{
 							g_switch_closed_time = 0;
 							buttonReleased = true;
-					
-							if(g_send_clone_success_countdown || g_cloningInProgress) 
-							{
-								g_send_clone_success_countdown = 0;
-								g_cloningInProgress = false;
-								g_programming_msg_throttle = 0;
-							}
 						}
 					
 						longPressEnabled = true;
@@ -858,7 +852,10 @@ ISR(TCB0_INT_vect)
 				}
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCExternalBatteryVoltage)
 				{
-					g_external_voltage = (0.00725 * (float)g_lastConversionResult[indexConversionInProcess]) + 0.05;
+					if(!g_enable_external_battery_control || getExtBatLSEnable()) // Don't try to read a disconnected external battery
+					{
+						g_external_voltage = (0.00725 * (float)g_lastConversionResult[indexConversionInProcess]) + 0.05;
+					}
 				}
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature)
 				{
@@ -876,6 +873,21 @@ ISR(TCB0_INT_vect)
 						else
 						{
 							g_temperature_shutdown = g_temperature_shutdown ? !(g_processor_temperature < 80.) : g_processor_temperature > 85.;
+						}
+						
+						if(g_turn_on_fan)
+						{
+							if(g_processor_temperature <= FAN_TURN_OFF_TEMP)
+							{
+								g_turn_on_fan = false;
+							}
+						}
+						else
+						{
+							if(g_processor_temperature > FAN_TURN_ON_TEMP)
+							{
+								g_turn_on_fan = true;
+							}
 						}
 					}
 				}
@@ -961,7 +973,7 @@ int main(void)
 		
 	if(now == time(null))
 	{
-		LEDS.blink(LEDS_GREEN_OFF);
+		LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
 		LEDS.blink(LEDS_RED_OFF);
 		while((util_delay_ms(3000)) && (now == time(null)));
 	}
@@ -1004,17 +1016,19 @@ int main(void)
 				
 	buttonReleasedDuringStartup = false;
 	
+	/* Disable automatic ADC readings */
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0; /* Disable timer */
+	/* The external battery control load switch is initialized to ON, so we don't need to set it here */
 	g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
 	g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
 	
 	g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
 
-	if(g_internal_bat_detected && (g_internal_bat_voltage < INT_BAT_CHARGE_THRESH_LOW) && (g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW)) // An external voltage is present and an internal battery is present & not fully charged
+	if(g_internal_bat_detected && (g_internal_bat_voltage < g_internal_voltage_low_threshold) && (g_enable_external_battery_control > 0)) // An internal battery is present & not fully charged & charging from an external battery is enabled
 	{
 		g_charge_battery = true;
-		if(g_enable_external_battery_control) setExtBatLoadSwitch(ON, INTERNAL_BATTERY_CHARGING);
+		setExtBatLoadSwitch(ON, INTERNAL_BATTERY_CHARGING);
 	}
 	g_restart_conversions = true;
 	TIMERB_init();
@@ -1060,7 +1074,7 @@ int main(void)
 			// Set internal battery charging
 			if((g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) && (g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW))
 			{
-				if(g_internal_bat_voltage < INT_BAT_CHARGE_THRESH_LOW) // An adequate external voltage is present and an internal battery is present & not fully charged
+				if(g_internal_bat_voltage < g_internal_voltage_low_threshold) // An adequate external voltage is present and an internal battery is present & not fully charged
 				{
 					g_charge_battery = true;
 				}
@@ -1074,7 +1088,27 @@ int main(void)
 				g_charge_battery = false;
 			}
 			
-			if(g_enable_external_battery_control) setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+			if(g_enable_external_battery_control) 
+			{
+				setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+			}
+			else
+			{
+				if(g_turn_on_fan)
+				{
+					if(!getExtBatLSEnable())
+					{
+						setExtBatLoadSwitch(ON, INITIALIZE_LS);
+					}
+				}
+				else
+				{
+					if(getExtBatLSEnable())
+					{
+						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+					}
+				}
+			}
 			
 			/********************************
 			 * Handle sleep
@@ -1154,12 +1188,14 @@ int main(void)
 							g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
 							g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
 							system_sleep_config();
+							setExtBatLoadSwitch(RE_APPLY_LS_STATE);
 						
-							if(g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW)
+							if(g_enable_external_battery_control)
 							{
+
 								if(g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE)
 								{
-									if(g_internal_bat_voltage < INT_BAT_CHARGE_THRESH_LOW) // An external voltage is present and an internal battery is present & not fully charged
+									if(g_internal_bat_voltage < g_internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
 									{
 										g_charge_battery = true;
 									}
@@ -1252,7 +1288,15 @@ int main(void)
 			}
 			
 			if(g_handle_counted_presses)
-			{
+			{				
+				if(g_send_clone_success_countdown || g_cloningInProgress)
+				{
+					g_send_clone_success_countdown = 0;
+					g_cloningInProgress = false;
+					g_programming_msg_throttle = 0;
+					g_handle_counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
+				}
+
 				if(g_isMaster)
 				{
 					if(g_handle_counted_presses == 5)
@@ -1488,7 +1532,7 @@ int main(void)
 			{
 				handleSerialBusMsgs();
 			
-				if(g_cloningInProgress && !g_programming_countdown)
+				if(g_cloningInProgress && !g_programming_countdown) // Cloning timed out
 				{
 					g_cloningInProgress = false;
 				}
@@ -1546,7 +1590,7 @@ int main(void)
 			
 			if(g_device_enabled)
 			{
-				internal_bat_error = ((g_internal_bat_voltage > 0.0) && (g_internal_bat_voltage <= g_voltage_threshold));
+				internal_bat_error = (g_internal_bat_detected && (g_internal_bat_voltage <= g_internal_voltage_low_threshold));
 				external_pwr_error = (g_external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 				
 				if(g_charge_battery)
@@ -1575,6 +1619,9 @@ int main(void)
 				g_check_for_long_wakeup_press = false;
 				g_handle_counted_presses = 0;
 				LEDS.blink(LEDS_OFF);
+				g_send_clone_success_countdown = 0;
+				g_cloningInProgress = false;
+				g_programming_msg_throttle = 0;
 //				g_sleepType = SLEEP_POWER_OFF_OVERRIDE; /* Uncomment to allow a long keypress to prevent a future event from running */
 			}
 		
@@ -1613,6 +1660,7 @@ int main(void)
 		}
 	}
 }
+
 
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 //void handleSerialBusMsgs()
@@ -2132,9 +2180,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							g_event_checksum += g_messages_text[STATION_ID][i];
 						}
-
-						sb_send_string((char*)"ID\r");
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
 
@@ -2145,7 +2190,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					g_time_needed_for_ID = timeNeededForID();
 				}
 				
-				if(!(g_cloningInProgress)) reportSettings();
+				if(g_cloningInProgress)
+				{				
+						sb_send_string((char*)"ID\r");
+						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+				}
+				else
+				{
+					reportSettings();
+				}
 			}
 			break;
 
@@ -2290,12 +2343,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						g_event = EVENT_NONE;
 					}
-					
-					sb_send_string((char*)"EVT\r");
-					
+								
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_event_checksum += c;
+					sb_send_string((char*)"EVT\r");
 				}
 				else
 				{
@@ -2368,10 +2420,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							 
 				if(g_cloningInProgress)
 				{
-					sprintf(g_tempStr, "FUN A\r");
-					sb_send_string(g_tempStr);
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_event_checksum += 'A';
+					sprintf(g_tempStr, "FUN A\r");
+					sb_send_string(g_tempStr);
 				}
 				else
 				{
@@ -2408,10 +2460,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							 
 							if(g_cloningInProgress)
 							{
-								sprintf(g_tempStr, "CLK T %lu\r", t);
-								sb_send_string(g_tempStr);
 								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 								g_event_checksum += t;
+								sprintf(g_tempStr, "CLK T %lu\r", t);
+								sb_send_string(g_tempStr);
 							}
 							else
 							{
@@ -2563,7 +2615,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
-			case SB_MESSAGE_VOLTS:
+			case SB_MESSAGE_BATTERY:
 			{
 				char txt[6];
 
@@ -2571,16 +2623,20 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					float v = atof(sb_buff->fields[SB_FIELD1]);
 
-					if((v >= 0.1) && (v <= 15.))
+					if((v >= INT_BAT_CHARGE_THRESH_LOW_MIN) && (v <= INT_BAT_CHARGE_THRESH_LOW_MAX))
 					{
-						g_voltage_threshold = v;
-						g_ee_mgr.updateEEPROMVar(Voltage_threshold, (void*)&g_voltage_threshold);
+						g_internal_voltage_low_threshold = v;
+						g_ee_mgr.updateEEPROMVar(Voltage_threshold, (void*)&g_internal_voltage_low_threshold);
 					}
 					else
 					{
-						sb_send_string((char*)"\nErr: 0.1 V < thresh < 15.0 V\n");
+						int16_t d1, d2;
+						uint16_t f1, f2;
+						float_to_parts_signed(INT_BAT_CHARGE_THRESH_LOW_MIN, &d1, &f1);
+						float_to_parts_signed(INT_BAT_CHARGE_THRESH_LOW_MAX, &d2, &f2);						
+  						sprintf(g_tempStr, "\nErr: %d.%u V < thresh < %d.%u V\n", d1, f1, d2, f2);
+						sb_send_string(g_tempStr);
 					}
-
 				}
 				else if(sb_buff->fields[SB_FIELD1][0] == 'X')
 				{
@@ -2606,24 +2662,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						updateStoredValue = true;
 					}
 					
-					if(updateStoredValue) g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
+					if(updateStoredValue)
+					{
+						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+						g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
+					}
 				}
-				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
-				{
-					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
-					g_enable_boost_regulator = v;					
-					g_ee_mgr.updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
-				}
+// 				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
+// 				{
+// 					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
+// 					g_enable_boost_regulator = v;					
+// 					g_ee_mgr.updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
+// 				}
 				
-				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
-				sb_send_string(g_tempStr);
+// 				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
+// 				sb_send_string(g_tempStr);
 
 				dtostrf(g_internal_bat_voltage, 5, 1, txt);
 				txt[5] = '\0';
-  				sprintf(g_tempStr, "Int. Bat =%s Volts\n", txt);
+  				sprintf(g_tempStr, "\nInt. Bat =%s Volts\n", txt);
  				sb_send_string(g_tempStr);
 
-				dtostrf(g_voltage_threshold, 5, 1, txt);
+				dtostrf(g_internal_voltage_low_threshold, 5, 1, txt);
 				txt[5] = '\0';
  				sprintf(g_tempStr, "thresh   =%s Volts\n", txt);
  				sb_send_string(g_tempStr);
@@ -3011,7 +3071,6 @@ void configRedLEDforEvent(void)
 		}
 	}
 }
-
 
 
 void setupForFox(Fox_t fox, EventAction_t action)
@@ -3626,7 +3685,7 @@ void reportSettings(void)
 		sb_send_string(g_tempStr);
 	}
 
-	// Send the current settings header.
+	// Print the current settings header.
 	sb_send_string(TEXT_CURRENT_SETTINGS_TXT);
 
 	// Report the current system time.
@@ -3808,7 +3867,7 @@ void reportSettings(void)
 		{
 			sprintf(g_tempStr, "\n* WARNING: TRANSMIT DISABLED");
 			sb_send_string(g_tempStr);
-			sprintf(g_tempStr, "\n* Re-enable with BAT X 1\n");
+			sprintf(g_tempStr, "\n* Re-enable with > BAT X 1\n");
 			sb_send_string(g_tempStr);
 		}
 	}
@@ -4274,6 +4333,7 @@ Frequency_Hz getFrequencySetting(void)
  * It uses various states to handle different stages of communication, waiting for appropriate replies
  * from the slave and adjusting timings and configurations as needed.
  */
+
 void handleSerialCloning(void)
 {
 	if(g_programming_countdown == 0)
@@ -4292,13 +4352,15 @@ void handleSerialCloning(void)
 		LEDS.init(); /* Extend or resume LED operation */
 	}
 	
-	if(!g_programming_msg_throttle && !g_cloningInProgress)
+	if(!g_programming_msg_throttle)
 	{
-		sb_send_master_string((char*)"MAS P\r"); /* Set slave to active cloning state */
-		g_programming_msg_throttle = 600;
-		g_programming_state = SYNC_Searching_for_slave;
+		if(!g_cloningInProgress)
+		{
+			sb_send_master_string((char*)"MAS P\r"); /* Set slave to active cloning state */
+			g_programming_msg_throttle = 600;
+			g_programming_state = SYNC_Searching_for_slave;
+		}
 	}
-	
 	
 	switch(g_programming_state)
 	{
@@ -4314,6 +4376,7 @@ void handleSerialCloning(void)
 					sprintf(g_tempStr, "FUN A\r"); /* Set slave to radio orienteering function */
 					sb_send_master_string(g_tempStr);
 					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
+					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				}
 			}			
@@ -4331,6 +4394,7 @@ void handleSerialCloning(void)
 					g_event_checksum += 'A';
 					g_seconds_transition = false;
 					g_programming_state = SYNC_Align_to_Second_Transition;
+					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				}
 			}
@@ -4347,6 +4411,7 @@ void handleSerialCloning(void)
 				sprintf(g_tempStr, "CLK T %lu\r", now); /* Set slave's RTC */
 				sb_send_master_string(g_tempStr);
 				g_programming_state = SYNC_Waiting_for_CLK_T_reply;
+				g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 			}
 		}
@@ -4366,6 +4431,7 @@ void handleSerialCloning(void)
 						g_programming_state = SYNC_Waiting_for_CLK_S_reply;
  						sprintf(g_tempStr, "CLK S %lu\r", g_event_start_epoch);
  						sb_send_master_string(g_tempStr);
+						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
@@ -4386,6 +4452,7 @@ void handleSerialCloning(void)
 						g_programming_state = SYNC_Waiting_for_CLK_F_reply;
  						sprintf(g_tempStr, "CLK F %lu\r", g_event_finish_epoch);
  						sb_send_master_string(g_tempStr);
+						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
@@ -4406,6 +4473,7 @@ void handleSerialCloning(void)
 						g_programming_state = SYNC_Waiting_for_CLK_D_reply;
  						sprintf(g_tempStr, "CLK D %d\r", g_days_to_run);
  						sb_send_master_string(g_tempStr);
+						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
@@ -4494,11 +4562,11 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'I')
 					{
-						g_programming_state = SYNC_Waiting_for_Pattern_CodeSpeed_reply;
 						sprintf(g_tempStr, "SPD P %u\r", g_pattern_codespeed);
 						
 						g_event_checksum += g_pattern_codespeed;
 						sb_send_master_string(g_tempStr);
+						g_programming_state = SYNC_Waiting_for_Pattern_CodeSpeed_reply;
 						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
@@ -4540,6 +4608,7 @@ void handleSerialCloning(void)
 						sprintf(g_tempStr, "EVT %c\r", c);
 						sb_send_master_string(g_tempStr); /* Set slave's event */
 						g_programming_state = SYNC_Waiting_for_EVT_reply;
+						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
@@ -4648,6 +4717,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_ACK;
 					sprintf(g_tempStr, "MAS Q %lu\r", g_event_checksum);
 					sb_send_master_string(g_tempStr);
+					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				}
 			}
 		}	
@@ -4667,11 +4738,11 @@ void handleSerialCloning(void)
 					}
 					else
 					{
-						isMasterCountdownSeconds = 600; /* Extend Master time */
 						g_programming_msg_throttle = 0;
 						g_cloningInProgress = false;
 					}
 					
+					isMasterCountdownSeconds = 600; /* Extend Master time */
 					g_programming_state = SYNC_Searching_for_slave;
 				}
 			}

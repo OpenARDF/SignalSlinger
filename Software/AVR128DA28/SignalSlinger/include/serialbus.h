@@ -72,13 +72,13 @@
  *
  */
 
-typedef enum
+typedef enum 
 {
 	SB_MESSAGE_EMPTY = 0,
 
 	/*	ARDUCON MESSAGE FAMILY (SERIAL MESSAGING) */
 	SB_MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',			/* Set the fox role to be used to define timing and signals */
-	SB_MESSAGE_VOLTS = 'B' * 100 + 'A' * 10 + 'T',				/* Battery voltage and threshold setting */
+	SB_MESSAGE_BATTERY = 'B' * 100 + 'A' * 10 + 'T',			/* Battery voltage and threshold setting */
 	SB_MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',					/* Sets amateur radio callsign text */
 	SB_MESSAGE_GO = 'G' * 10 + 'O',								/* Start/stop transmissions */
 	SB_MESSAGE_CODE_SETTINGS = 'S' * 100 + 'P' * 10 + 'D',		/* Set Morse code speeds */
@@ -113,23 +113,6 @@ typedef enum
 	SB_FIELD2 = 1
 } SBMessageField;
 
-typedef enum
-{
-	SB_BATTERY_BROADCAST = 0x0001,
-	SB_RSSI_BROADCAST = 0x0002,
-	SB_RF_BROADCAST = 0x0004,
-	SB_UPC_TEMP_BROADCAST = 0x0008,
-	SB_ALL_BROADCASTS = 0x000FF
-} SBbroadcastType;
-
-// typedef enum
-// {
-// 	SB_NO_ID = 0,
-// 	SB_CONTROL_HEAD_ID = 1,
-// 	SB_RECEIVER_ID = 2,
-// 	SB_TRANSMITTER_ID = 3
-// } DeviceID;
-
 typedef char SerialbusTxBuffer[SERIALBUS_MAX_TX_MSG_LENGTH];
 
 typedef struct
@@ -140,7 +123,7 @@ typedef struct
 } SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > ? - Report all settings\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set slave or master\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [v] - Battery volts\n\0"
+#define HELP_TEXT_TXT (char*)"\n* Commands:\n* > ? - Report all settings\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n\0"
 
 
 /**
