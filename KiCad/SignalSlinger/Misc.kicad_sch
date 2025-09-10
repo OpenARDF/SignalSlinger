@@ -1,852 +1,1813 @@
-(kicad_sch (version 20211123) (generator eeschema)
-
-  (uuid e7ff1012-142a-41e2-b318-3b62ebf56ecf)
-
-  (paper "A4")
-
-  (title_block
-    (title "SignalSlinger")
-    (date "2024-06-13")
-    (rev "3.4")
-  )
-
-  (lib_symbols
-    (symbol "Device:Battery_Cell" (pin_numbers hide) (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
-      (property "Reference" "BT" (id 0) (at 2.54 2.54 0)
-        (effects (font (size 1.27 1.27)) (justify left))
-      )
-      (property "Value" "Battery_Cell" (id 1) (at 2.54 0 0)
-        (effects (font (size 1.27 1.27)) (justify left))
-      )
-      (property "Footprint" "" (id 2) (at 0 1.524 90)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "~" (id 3) (at 0 1.524 90)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "battery cell" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "Single-cell battery" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "Battery_Cell_0_1"
-        (rectangle (start -2.286 1.778) (end 2.286 1.524)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type outline))
-        )
-        (rectangle (start -1.5748 1.1938) (end 1.4732 0.6858)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type outline))
-        )
-        (polyline
-          (pts
-            (xy 0 0.762)
-            (xy 0 0)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 0 1.778)
-            (xy 0 2.54)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 0.508 3.429)
-            (xy 1.524 3.429)
-          )
-          (stroke (width 0.254) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 1.016 3.937)
-            (xy 1.016 2.921)
-          )
-          (stroke (width 0.254) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "Battery_Cell_1_1"
-        (pin passive line (at 0 5.08 270) (length 2.54)
-          (name "+" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at 0 -2.54 90) (length 2.54)
-          (name "-" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-    (symbol "Graphic:Logo_Open_Hardware_Large" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
-      (property "Reference" "#LOGO" (id 0) (at 0 12.7 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Value" "Logo_Open_Hardware_Large" (id 1) (at 0 -10.16 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Footprint" "" (id 2) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "~" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "Logo" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "Open Hardware logo, large" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "Logo_Open_Hardware_Large_1_1"
-        (polyline
-          (pts
-            (xy 6.731 -8.7122)
-            (xy 6.6294 -8.6614)
-            (xy 6.35 -8.4836)
-            (xy 5.9944 -8.255)
-            (xy 5.5372 -7.9502)
-            (xy 5.1054 -7.6454)
-            (xy 4.7498 -7.4168)
-            (xy 4.4958 -7.239)
-            (xy 4.3942 -7.1882)
-            (xy 4.318 -7.2136)
-            (xy 4.1148 -7.3152)
-            (xy 3.81 -7.4676)
-            (xy 3.6322 -7.5692)
-            (xy 3.3528 -7.6708)
-            (xy 3.2258 -7.6962)
-            (xy 3.2004 -7.6708)
-            (xy 3.0988 -7.4676)
-            (xy 2.9464 -7.0866)
-            (xy 2.7178 -6.604)
-            (xy 2.4892 -6.0452)
-            (xy 2.2352 -5.4356)
-            (xy 1.9558 -4.826)
-            (xy 1.7272 -4.2164)
-            (xy 1.4986 -3.683)
-            (xy 1.3208 -3.2512)
-            (xy 1.2192 -2.9464)
-            (xy 1.1684 -2.8194)
-            (xy 1.1938 -2.794)
-            (xy 1.3208 -2.667)
-            (xy 1.5748 -2.4892)
-            (xy 2.0828 -2.0574)
-            (xy 2.6162 -1.397)
-            (xy 2.921 -0.6604)
-            (xy 3.048 0.1524)
-            (xy 2.9464 0.9144)
-            (xy 2.6416 1.6256)
-            (xy 2.1336 2.286)
-            (xy 1.524 2.7686)
-            (xy 0.8128 3.0734)
-            (xy 0 3.175)
-            (xy -0.762 3.0988)
-            (xy -1.4986 2.794)
-            (xy -2.159 2.286)
-            (xy -2.4384 1.9812)
-            (xy -2.8194 1.3208)
-            (xy -3.048 0.6096)
-            (xy -3.0734 0.4318)
-            (xy -3.0226 -0.3556)
-            (xy -2.794 -1.0922)
-            (xy -2.3876 -1.7526)
-            (xy -1.8288 -2.3114)
-            (xy -1.7526 -2.3622)
-            (xy -1.4732 -2.5654)
-            (xy -1.2954 -2.6924)
-            (xy -1.1684 -2.8194)
-            (xy -2.159 -5.207)
-            (xy -2.3114 -5.588)
-            (xy -2.5908 -6.2484)
-            (xy -2.8194 -6.8072)
-            (xy -3.0226 -7.2644)
-            (xy -3.1496 -7.5692)
-            (xy -3.2258 -7.6708)
-            (xy -3.2258 -7.6962)
-            (xy -3.302 -7.6962)
-            (xy -3.4798 -7.6454)
-            (xy -3.8354 -7.4676)
-            (xy -4.0386 -7.366)
-            (xy -4.2926 -7.239)
-            (xy -4.4196 -7.1882)
-            (xy -4.5212 -7.239)
-            (xy -4.7498 -7.3914)
-            (xy -5.1054 -7.6454)
-            (xy -5.5372 -7.9248)
-            (xy -5.9436 -8.2042)
-            (xy -6.3246 -8.4582)
-            (xy -6.604 -8.636)
-            (xy -6.731 -8.7122)
-            (xy -6.7564 -8.7122)
-            (xy -6.858 -8.636)
-            (xy -7.0866 -8.4582)
-            (xy -7.4168 -8.1534)
-            (xy -7.874 -7.6962)
-            (xy -7.9502 -7.62)
-            (xy -8.3312 -7.239)
-            (xy -8.636 -6.9088)
-            (xy -8.8392 -6.6802)
-            (xy -8.9154 -6.5786)
-            (xy -8.9154 -6.5786)
-            (xy -8.8392 -6.4516)
-            (xy -8.6614 -6.1722)
-            (xy -8.4328 -5.7912)
-            (xy -8.128 -5.3594)
-            (xy -7.3152 -4.191)
-            (xy -7.7724 -3.0988)
-            (xy -7.8994 -2.7686)
-            (xy -8.0772 -2.3622)
-            (xy -8.2042 -2.0828)
-            (xy -8.255 -1.9558)
-            (xy -8.382 -1.905)
-            (xy -8.6614 -1.8542)
-            (xy -9.0932 -1.7526)
-            (xy -9.6266 -1.651)
-            (xy -10.1092 -1.5748)
-            (xy -10.541 -1.4732)
-            (xy -10.8712 -1.4224)
-            (xy -11.0236 -1.397)
-            (xy -11.049 -1.3716)
-            (xy -11.0744 -1.2954)
-            (xy -11.0998 -1.143)
-            (xy -11.0998 -0.889)
-            (xy -11.1252 -0.4572)
-            (xy -11.1252 0.1524)
-            (xy -11.1252 0.2286)
-            (xy -11.0998 0.8128)
-            (xy -11.0998 1.27)
-            (xy -11.0744 1.5494)
-            (xy -11.0744 1.6764)
-            (xy -11.0744 1.6764)
-            (xy -10.922 1.7018)
-            (xy -10.6172 1.778)
-            (xy -10.16 1.8542)
-            (xy -9.652 1.9558)
-            (xy -9.6012 1.9812)
-            (xy -9.0932 2.0828)
-            (xy -8.636 2.159)
-            (xy -8.3312 2.2352)
-            (xy -8.2042 2.286)
-            (xy -8.1788 2.3114)
-            (xy -8.0772 2.5146)
-            (xy -7.9248 2.8448)
-            (xy -7.747 3.2512)
-            (xy -7.5692 3.6576)
-            (xy -7.4168 4.0386)
-            (xy -7.3152 4.318)
-            (xy -7.2898 4.445)
-            (xy -7.2898 4.445)
-            (xy -7.366 4.572)
-            (xy -7.5438 4.826)
-            (xy -7.7978 5.207)
-            (xy -8.128 5.6642)
-            (xy -8.128 5.6896)
-            (xy -8.4328 6.1468)
-            (xy -8.6868 6.5278)
-            (xy -8.8392 6.7818)
-            (xy -8.9154 6.9088)
-            (xy -8.9154 6.9088)
-            (xy -8.8138 7.0358)
-            (xy -8.5852 7.2898)
-            (xy -8.255 7.6454)
-            (xy -7.874 8.0264)
-            (xy -7.747 8.1534)
-            (xy -7.3152 8.5852)
-            (xy -7.0104 8.8646)
-            (xy -6.8326 8.9916)
-            (xy -6.731 9.0424)
-            (xy -6.731 9.0424)
-            (xy -6.604 8.9408)
-            (xy -6.3246 8.763)
-            (xy -5.9436 8.509)
-            (xy -5.4864 8.2042)
-            (xy -5.461 8.1788)
-            (xy -5.0038 7.874)
-            (xy -4.6482 7.62)
-            (xy -4.3688 7.4422)
-            (xy -4.2672 7.3914)
-            (xy -4.2418 7.3914)
-            (xy -4.064 7.4422)
-            (xy -3.7338 7.5438)
-            (xy -3.3528 7.6962)
-            (xy -2.9464 7.874)
-            (xy -2.5654 8.0264)
-            (xy -2.286 8.1534)
-            (xy -2.159 8.2296)
-            (xy -2.159 8.2296)
-            (xy -2.1082 8.382)
-            (xy -2.032 8.7122)
-            (xy -1.9304 9.1694)
-            (xy -1.8288 9.7282)
-            (xy -1.8034 9.8044)
-            (xy -1.7018 10.3378)
-            (xy -1.6256 10.7696)
-            (xy -1.5748 11.0744)
-            (xy -1.524 11.2014)
-            (xy -1.4478 11.2268)
-            (xy -1.1938 11.2522)
-            (xy -0.8128 11.2522)
-            (xy -0.3302 11.2522)
-            (xy 0.1524 11.2522)
-            (xy 0.6604 11.2522)
-            (xy 1.0668 11.2268)
-            (xy 1.3716 11.2014)
-            (xy 1.4986 11.176)
-            (xy 1.4986 11.176)
-            (xy 1.5494 11.0236)
-            (xy 1.6256 10.6934)
-            (xy 1.7018 10.2108)
-            (xy 1.8288 9.6774)
-            (xy 1.8288 9.5758)
-            (xy 1.9304 9.0424)
-            (xy 2.032 8.6106)
-            (xy 2.0828 8.3058)
-            (xy 2.1336 8.2042)
-            (xy 2.159 8.1788)
-            (xy 2.3876 8.0772)
-            (xy 2.7432 7.9248)
-            (xy 3.175 7.747)
-            (xy 4.191 7.3406)
-            (xy 5.461 8.2042)
-            (xy 5.5626 8.2804)
-            (xy 6.0198 8.5852)
-            (xy 6.3754 8.8392)
-            (xy 6.6294 8.9916)
-            (xy 6.7564 9.0424)
-            (xy 6.7564 9.0424)
-            (xy 6.8834 8.9408)
-            (xy 7.1374 8.7122)
-            (xy 7.4676 8.382)
-            (xy 7.8486 7.9756)
-            (xy 8.1534 7.6962)
-            (xy 8.4836 7.3406)
-            (xy 8.7122 7.112)
-            (xy 8.8392 6.9596)
-            (xy 8.8646 6.858)
-            (xy 8.8646 6.8072)
-            (xy 8.7884 6.6802)
-            (xy 8.6106 6.4008)
-            (xy 8.3312 6.0198)
-            (xy 8.0264 5.588)
-            (xy 7.7978 5.207)
-            (xy 7.5184 4.8006)
-            (xy 7.3406 4.4958)
-            (xy 7.2898 4.3434)
-            (xy 7.2898 4.2926)
-            (xy 7.3914 4.0386)
-            (xy 7.5184 3.683)
-            (xy 7.7216 3.2258)
-            (xy 8.1534 2.2352)
-            (xy 8.7884 2.1082)
-            (xy 9.1948 2.0574)
-            (xy 9.7536 1.9304)
-            (xy 10.2616 1.8288)
-            (xy 11.0998 1.6764)
-            (xy 11.1252 -1.3208)
-            (xy 10.9982 -1.3716)
-            (xy 10.8712 -1.397)
-            (xy 10.5664 -1.4732)
-            (xy 10.1346 -1.5494)
-            (xy 9.6266 -1.651)
-            (xy 9.1948 -1.7272)
-            (xy 8.7376 -1.8288)
-            (xy 8.4328 -1.8796)
-            (xy 8.2804 -1.905)
-            (xy 8.255 -1.9558)
-            (xy 8.1534 -2.159)
-            (xy 7.9756 -2.5146)
-            (xy 7.8232 -2.921)
-            (xy 7.6454 -3.3274)
-            (xy 7.493 -3.7338)
-            (xy 7.366 -4.0132)
-            (xy 7.3406 -4.191)
-            (xy 7.3914 -4.2926)
-            (xy 7.5692 -4.5466)
-            (xy 7.7978 -4.9276)
-            (xy 8.1026 -5.3594)
-            (xy 8.4074 -5.7912)
-            (xy 8.6614 -6.1722)
-            (xy 8.8138 -6.4262)
-            (xy 8.89 -6.5532)
-            (xy 8.8646 -6.6548)
-            (xy 8.6868 -6.858)
-            (xy 8.3566 -7.1882)
-            (xy 7.874 -7.6708)
-            (xy 7.7978 -7.747)
-            (xy 7.3914 -8.128)
-            (xy 7.0612 -8.4328)
-            (xy 6.8326 -8.636)
-            (xy 6.731 -8.7122)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type outline))
-        )
-      )
-    )
-  )
-
-
-  (no_connect (at 205.74 147.32) (uuid f21cdd0f-23b5-4a37-8dee-16a74fdf7268))
-  (no_connect (at 205.74 139.7) (uuid f21cdd0f-23b5-4a37-8dee-16a74fdf7269))
-
-  (polyline (pts (xy 48.26 38.1) (xy 48.26 101.6))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 083fe946-e982-48e1-ad71-6cbbb6edfd5a)
-  )
-  (polyline (pts (xy 255.27 163.83) (xy 195.58 163.83))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 154b32dd-165b-43e8-881d-01a88b54b7a1)
-  )
-  (polyline (pts (xy 179.07 101.6) (xy 48.26 101.6))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 1b605208-af7c-4c9c-85c0-1ee48363e4db)
-  )
-  (polyline (pts (xy 173.99 153.67) (xy 20.32 153.67))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 1e1fe0f0-9255-46f7-885e-b30b1e1cfa31)
-  )
-  (polyline (pts (xy 48.26 38.1) (xy 179.07 38.1))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 57578062-ebf7-4e4f-9365-d328a0893ed3)
-  )
-  (polyline (pts (xy 20.32 114.3) (xy 20.32 153.67))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 5df34eab-a67e-48d9-808d-424ee5198eba)
-  )
-  (polyline (pts (xy 255.27 127) (xy 255.27 163.83))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 88070ea6-c4a1-4601-b2db-5b3ce3f0f39e)
-  )
-  (polyline (pts (xy 20.32 114.3) (xy 173.99 114.3))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid b1301aa4-e73e-4c37-a7ec-af0465593124)
-  )
-  (polyline (pts (xy 195.58 127) (xy 255.27 127))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid be2b4027-0875-4b88-9390-fd4651c5ba86)
-  )
-  (polyline (pts (xy 179.07 38.1) (xy 179.07 101.6))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid c84a10f3-ac09-45cc-a71b-f9d09fdb1325)
-  )
-  (polyline (pts (xy 173.99 114.3) (xy 173.99 153.67))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid f0837eb9-9aeb-4440-a8f8-cd58bcff92c8)
-  )
-  (polyline (pts (xy 195.58 127) (xy 195.58 163.83))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid f8caba5a-2fad-42b6-8888-b66bf08e2875)
-  )
-
-  (text "FTDI Support" (at 22.86 118.11 0)
-    (effects (font (size 2 2) (thickness 0.4) bold) (justify left bottom))
-    (uuid 3ab55816-23b3-46fa-99dc-6ffdc2bffeb3)
-  )
-  (text "Core Product" (at 52.07 44.45 0)
-    (effects (font (size 2 2) (thickness 0.4) bold) (justify left bottom))
-    (uuid 4f90f2a9-2fa5-473c-8029-db6e8f2d1090)
-  )
-  (text "Internal Battery Support" (at 198.12 132.08 0)
-    (effects (font (size 2 2) (thickness 0.4) bold) (justify left bottom))
-    (uuid 7ca1634c-39cb-4d7e-9162-3f0c918bec0f)
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 127 133.35 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 0e4f16bc-5927-4c06-a6ab-48e8fdfe3a63)
-    (property "Reference" "HDWR409" (id 0) (at 127 120.65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "6-pin Angled Header" (id 1) (at 127 143.51 0))
-    (property "Footprint" "" (id 2) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN HEADER R/A 6POS 2.54MM" (id 7) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "929550-01-06-ND" (id 8) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/3m/929550-01-06-I/682149" (id 9) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "3M" (id 10) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "929550-01-06-I" (id 11) (at 127 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 69.85 58.42 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 0ea731ce-2373-4784-820a-5136c05bb580)
-    (property "Reference" "HDWR401" (id 0) (at 69.85 45.72 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "Chassis Box" (id 1) (at 69.85 68.58 0))
-    (property "Footprint" "" (id 2) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.polycase.com/sl-42p?qty=1#200=99&227=163" (id 4) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "polycase" (id 5) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "SL-42PMBT" (id 6) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs" (id 7) (at 69.85 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 95.25 133.35 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 10ea818a-48a1-40a6-8ba1-420e3b5023fd)
-    (property "Reference" "HDWR408" (id 0) (at 95.25 120.65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "9-Pin D Male" (id 1) (at 95.25 143.51 0))
-    (property "Footprint" "" (id 2) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN D-SUB PLUG 9POS SLDR CUP" (id 7) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "AE10972-ND" (id 8) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/assmann-wsw-components/A-DS-09-LL-Z/1241781" (id 9) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Assmann WSW Components" (id 10) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "A-DS 09 LL/Z" (id 11) (at 95.25 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 69.85 86.36 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 3494eef2-033d-40d4-a134-67e53a088dd6)
-    (property "Reference" "HDWR402" (id 0) (at 69.85 73.66 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "LED Light Pipes" (id 1) (at 69.85 96.52 0))
-    (property "Footprint" "" (id 2) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "LIGHT PIPE ROUND 3MM" (id 7) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "LFB063CTP-ND" (id 8) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593" (id 9) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Visual Communications Company - VCC" (id 10) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "LFB063CTP" (id 11) (at 69.85 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 38.1 133.35 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 46fcbbed-3e6c-48ff-82a5-fde33c27f66a)
-    (property "Reference" "HDWR405" (id 0) (at 38.1 120.65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "FTDI Cable" (id 1) (at 38.1 143.51 0))
-    (property "Footprint" "" (id 2) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.adafruit.com/product/70" (id 4) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Adafruit" (id 5) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "70" (id 6) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "FTDI Serial TTL-232 USB Cable" (id 7) (at 38.1 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 100.33 86.36 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 4c070fae-5d85-4b9d-8ebd-f085955e62ee)
-    (property "Reference" "HDWR404" (id 0) (at 100.33 73.66 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "Magnet Wire for RF Inductors" (id 1) (at 100.33 96.52 0))
-    (property "Footprint" "" (id 2) (at 100.33 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 100.33 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "MAGNET WIRE" (id 7) (at 100.33 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 240.03 85.09 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 6aeb2690-fe53-43d6-88ca-adfe7a09db74)
-    (property "Reference" "HDWR414" (id 0) (at 240.03 72.39 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "Shorting Jumper" (id 1) (at 240.03 95.25 0))
-    (property "Footprint" "" (id 2) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "S9345-ND" (id 4) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/short/w0p92mhw" (id 5) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "NPB02SVAN-RC" (id 7) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN JUMPER SHORTING 1.27MM GOLD" (id 8) (at 240.03 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 256.54 34.29 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 6c708673-e095-4bd6-b3ae-de6d3042cdc7)
-    (property "Reference" "HDWR411" (id 0) (at 256.54 21.59 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "TO-220 Mounting Hardware" (id 1) (at 256.54 44.45 0))
-    (property "Footprint" "" (id 2) (at 256.54 34.29 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 256.54 34.29 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "Amazon" (id 4) (at 256.54 34.29 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 153.67 133.35 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 6dd4c5c1-cbca-4eb3-9be0-3e6afa74ef4c)
-    (property "Reference" "HDWR413" (id 0) (at 153.67 120.65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "FTDI Adapter PCB" (id 1) (at 153.67 143.51 0))
-    (property "Footprint" "" (id 2) (at 153.67 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 153.67 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://oshpark.com/shared_projects/15SnDRmB" (id 4) (at 153.67 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 257.81 85.09 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 7a135176-f0e4-48f2-9141-c47828842636)
-    (property "Reference" "HDWR412" (id 0) (at 257.81 72.39 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "Shorting Jumper" (id 1) (at 257.81 95.25 0))
-    (property "Footprint" "" (id 2) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "S9345-ND" (id 4) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/short/w0p92mhw" (id 5) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Sullins Connector Solutions" (id 6) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "NPB02SVAN-RC" (id 7) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN JUMPER SHORTING 1.27MM GOLD" (id 8) (at 257.81 85.09 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 67.31 133.35 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 9bb52202-3dc6-44c6-9036-bd4e9a5608f4)
-    (property "Reference" "HDWR406" (id 0) (at 67.31 120.65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "9POS Backshell" (id 1) (at 67.31 143.51 0))
-    (property "Footprint" "" (id 2) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN BACKSHELL 9POS 180DEG GRAY" (id 7) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "AE11006-ND" (id 8) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/assmann-wsw-components/AGP-09-IDC/1241853" (id 9) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Assmann WSW Components" (id 10) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "AGP-09/IDC" (id 11) (at 67.31 133.35 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Device:Battery_Cell") (at 205.74 144.78 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid b9b57d73-b32c-4225-b589-4048e1fc6e82)
-    (property "Reference" "BT401" (id 0) (at 208.661 141.9133 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "LiPo Battery" (id 1) (at 208.661 144.4502 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "" (id 2) (at 205.74 143.256 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 205.74 143.256 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.adafruit.com/product/1570" (id 4) (at 205.74 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Adafruit" (id 5) (at 205.74 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "1570" (id 6) (at 205.74 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "Lithium Ion Polymer Battery - 3.7v 100mAh" (id 7) (at 205.74 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid b77e69c8-1871-4445-8654-88a9c6f7e42f))
-    (pin "2" (uuid 226d1b4b-850a-4804-a5c9-7479854e5700))
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 130.81 86.36 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid c68c8a52-c605-4388-8560-6b31d2e0a77e)
-    (property "Reference" "HDWR410" (id 0) (at 130.81 73.66 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "PCB_AND_ASSEMBLY" (id 1) (at 130.81 96.52 0))
-    (property "Footprint" "" (id 2) (at 130.81 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 130.81 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "Printed Circuit Board(s) plus Assembly" (id 7) (at 130.81 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 100.33 58.42 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid cac39be8-c3de-4f4c-95a5-ec7357beb43c)
-    (property "Reference" "HDWR403" (id 0) (at 100.33 45.72 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "PCB Screws" (id 1) (at 100.33 68.58 0))
-    (property "Footprint" "" (id 2) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.polycase.com/screws-mbr-100" (id 4) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "polycase" (id 5) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "SCREWS-MBR-100" (id 6) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "SCREWS-MBR-100 PCB Screws" (id 7) (at 100.33 58.42 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "Graphic:Logo_Open_Hardware_Large") (at 236.22 144.78 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid e45add93-8fce-4150-8cce-784220e59453)
-    (property "Reference" "HDWR407" (id 0) (at 236.22 132.08 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "LiPo Charger Module" (id 1) (at 236.22 154.94 0))
-    (property "Footprint" "" (id 2) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "Micro-Lipo Charger for LiPo/LiIon Batt" (id 7) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "1528-1833-ND" (id 8) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/adafruit-industries-llc/1904/5054545" (id 9) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Adafruit Industries LLC" (id 10) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "1904" (id 11) (at 236.22 144.78 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
+(kicad_sch
+	(version 20231120)
+	(generator "eeschema")
+	(generator_version "8.0")
+	(uuid "e7ff1012-142a-41e2-b318-3b62ebf56ecf")
+	(paper "A4")
+	(title_block
+		(title "SignalSlinger")
+		(date "2024-06-13")
+		(rev "3.4")
+	)
+	(lib_symbols
+		(symbol "Device:Battery_Cell"
+			(pin_numbers hide)
+			(pin_names
+				(offset 0) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "BT"
+				(at 2.54 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "Battery_Cell"
+				(at 2.54 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 1.524 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 1.524 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Single-cell battery"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "battery cell"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Battery_Cell_0_1"
+				(rectangle
+					(start -2.286 1.778)
+					(end 2.286 1.524)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start -1.5748 1.1938)
+					(end 1.4732 0.6858)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0.762) (xy 0 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 1.778) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.508 3.429) (xy 1.524 3.429)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.016 3.937) (xy 1.016 2.921)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Battery_Cell_1_1"
+				(pin passive line
+					(at 0 5.08 270)
+					(length 2.54)
+					(name "+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 2.54)
+					(name "-"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "Graphic:Logo_Open_Hardware_Large"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "#LOGO"
+				(at 0 12.7 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Value" "Logo_Open_Hardware_Large"
+				(at 0 -10.16 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Open Hardware logo, large"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "Logo"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Logo_Open_Hardware_Large_1_1"
+				(polyline
+					(pts
+						(xy 6.731 -8.7122) (xy 6.6294 -8.6614) (xy 6.35 -8.4836) (xy 5.9944 -8.255) (xy 5.5372 -7.9502)
+						(xy 5.1054 -7.6454) (xy 4.7498 -7.4168) (xy 4.4958 -7.239) (xy 4.3942 -7.1882) (xy 4.318 -7.2136)
+						(xy 4.1148 -7.3152) (xy 3.81 -7.4676) (xy 3.6322 -7.5692) (xy 3.3528 -7.6708) (xy 3.2258 -7.6962)
+						(xy 3.2004 -7.6708) (xy 3.0988 -7.4676) (xy 2.9464 -7.0866) (xy 2.7178 -6.604) (xy 2.4892 -6.0452)
+						(xy 2.2352 -5.4356) (xy 1.9558 -4.826) (xy 1.7272 -4.2164) (xy 1.4986 -3.683) (xy 1.3208 -3.2512)
+						(xy 1.2192 -2.9464) (xy 1.1684 -2.8194) (xy 1.1938 -2.794) (xy 1.3208 -2.667) (xy 1.5748 -2.4892)
+						(xy 2.0828 -2.0574) (xy 2.6162 -1.397) (xy 2.921 -0.6604) (xy 3.048 0.1524) (xy 2.9464 0.9144)
+						(xy 2.6416 1.6256) (xy 2.1336 2.286) (xy 1.524 2.7686) (xy 0.8128 3.0734) (xy 0 3.175) (xy -0.762 3.0988)
+						(xy -1.4986 2.794) (xy -2.159 2.286) (xy -2.4384 1.9812) (xy -2.8194 1.3208) (xy -3.048 0.6096)
+						(xy -3.0734 0.4318) (xy -3.0226 -0.3556) (xy -2.794 -1.0922) (xy -2.3876 -1.7526) (xy -1.8288 -2.3114)
+						(xy -1.7526 -2.3622) (xy -1.4732 -2.5654) (xy -1.2954 -2.6924) (xy -1.1684 -2.8194) (xy -2.159 -5.207)
+						(xy -2.3114 -5.588) (xy -2.5908 -6.2484) (xy -2.8194 -6.8072) (xy -3.0226 -7.2644) (xy -3.1496 -7.5692)
+						(xy -3.2258 -7.6708) (xy -3.2258 -7.6962) (xy -3.302 -7.6962) (xy -3.4798 -7.6454) (xy -3.8354 -7.4676)
+						(xy -4.0386 -7.366) (xy -4.2926 -7.239) (xy -4.4196 -7.1882) (xy -4.5212 -7.239) (xy -4.7498 -7.3914)
+						(xy -5.1054 -7.6454) (xy -5.5372 -7.9248) (xy -5.9436 -8.2042) (xy -6.3246 -8.4582) (xy -6.604 -8.636)
+						(xy -6.731 -8.7122) (xy -6.7564 -8.7122) (xy -6.858 -8.636) (xy -7.0866 -8.4582) (xy -7.4168 -8.1534)
+						(xy -7.874 -7.6962) (xy -7.9502 -7.62) (xy -8.3312 -7.239) (xy -8.636 -6.9088) (xy -8.8392 -6.6802)
+						(xy -8.9154 -6.5786) (xy -8.9154 -6.5786) (xy -8.8392 -6.4516) (xy -8.6614 -6.1722) (xy -8.4328 -5.7912)
+						(xy -8.128 -5.3594) (xy -7.3152 -4.191) (xy -7.7724 -3.0988) (xy -7.8994 -2.7686) (xy -8.0772 -2.3622)
+						(xy -8.2042 -2.0828) (xy -8.255 -1.9558) (xy -8.382 -1.905) (xy -8.6614 -1.8542) (xy -9.0932 -1.7526)
+						(xy -9.6266 -1.651) (xy -10.1092 -1.5748) (xy -10.541 -1.4732) (xy -10.8712 -1.4224) (xy -11.0236 -1.397)
+						(xy -11.049 -1.3716) (xy -11.0744 -1.2954) (xy -11.0998 -1.143) (xy -11.0998 -0.889) (xy -11.1252 -0.4572)
+						(xy -11.1252 0.1524) (xy -11.1252 0.2286) (xy -11.0998 0.8128) (xy -11.0998 1.27) (xy -11.0744 1.5494)
+						(xy -11.0744 1.6764) (xy -11.0744 1.6764) (xy -10.922 1.7018) (xy -10.6172 1.778) (xy -10.16 1.8542)
+						(xy -9.652 1.9558) (xy -9.6012 1.9812) (xy -9.0932 2.0828) (xy -8.636 2.159) (xy -8.3312 2.2352)
+						(xy -8.2042 2.286) (xy -8.1788 2.3114) (xy -8.0772 2.5146) (xy -7.9248 2.8448) (xy -7.747 3.2512)
+						(xy -7.5692 3.6576) (xy -7.4168 4.0386) (xy -7.3152 4.318) (xy -7.2898 4.445) (xy -7.2898 4.445)
+						(xy -7.366 4.572) (xy -7.5438 4.826) (xy -7.7978 5.207) (xy -8.128 5.6642) (xy -8.128 5.6896)
+						(xy -8.4328 6.1468) (xy -8.6868 6.5278) (xy -8.8392 6.7818) (xy -8.9154 6.9088) (xy -8.9154 6.9088)
+						(xy -8.8138 7.0358) (xy -8.5852 7.2898) (xy -8.255 7.6454) (xy -7.874 8.0264) (xy -7.747 8.1534)
+						(xy -7.3152 8.5852) (xy -7.0104 8.8646) (xy -6.8326 8.9916) (xy -6.731 9.0424) (xy -6.731 9.0424)
+						(xy -6.604 8.9408) (xy -6.3246 8.763) (xy -5.9436 8.509) (xy -5.4864 8.2042) (xy -5.461 8.1788)
+						(xy -5.0038 7.874) (xy -4.6482 7.62) (xy -4.3688 7.4422) (xy -4.2672 7.3914) (xy -4.2418 7.3914)
+						(xy -4.064 7.4422) (xy -3.7338 7.5438) (xy -3.3528 7.6962) (xy -2.9464 7.874) (xy -2.5654 8.0264)
+						(xy -2.286 8.1534) (xy -2.159 8.2296) (xy -2.159 8.2296) (xy -2.1082 8.382) (xy -2.032 8.7122)
+						(xy -1.9304 9.1694) (xy -1.8288 9.7282) (xy -1.8034 9.8044) (xy -1.7018 10.3378) (xy -1.6256 10.7696)
+						(xy -1.5748 11.0744) (xy -1.524 11.2014) (xy -1.4478 11.2268) (xy -1.1938 11.2522) (xy -0.8128 11.2522)
+						(xy -0.3302 11.2522) (xy 0.1524 11.2522) (xy 0.6604 11.2522) (xy 1.0668 11.2268) (xy 1.3716 11.2014)
+						(xy 1.4986 11.176) (xy 1.4986 11.176) (xy 1.5494 11.0236) (xy 1.6256 10.6934) (xy 1.7018 10.2108)
+						(xy 1.8288 9.6774) (xy 1.8288 9.5758) (xy 1.9304 9.0424) (xy 2.032 8.6106) (xy 2.0828 8.3058)
+						(xy 2.1336 8.2042) (xy 2.159 8.1788) (xy 2.3876 8.0772) (xy 2.7432 7.9248) (xy 3.175 7.747) (xy 4.191 7.3406)
+						(xy 5.461 8.2042) (xy 5.5626 8.2804) (xy 6.0198 8.5852) (xy 6.3754 8.8392) (xy 6.6294 8.9916)
+						(xy 6.7564 9.0424) (xy 6.7564 9.0424) (xy 6.8834 8.9408) (xy 7.1374 8.7122) (xy 7.4676 8.382)
+						(xy 7.8486 7.9756) (xy 8.1534 7.6962) (xy 8.4836 7.3406) (xy 8.7122 7.112) (xy 8.8392 6.9596)
+						(xy 8.8646 6.858) (xy 8.8646 6.8072) (xy 8.7884 6.6802) (xy 8.6106 6.4008) (xy 8.3312 6.0198)
+						(xy 8.0264 5.588) (xy 7.7978 5.207) (xy 7.5184 4.8006) (xy 7.3406 4.4958) (xy 7.2898 4.3434) (xy 7.2898 4.2926)
+						(xy 7.3914 4.0386) (xy 7.5184 3.683) (xy 7.7216 3.2258) (xy 8.1534 2.2352) (xy 8.7884 2.1082)
+						(xy 9.1948 2.0574) (xy 9.7536 1.9304) (xy 10.2616 1.8288) (xy 11.0998 1.6764) (xy 11.1252 -1.3208)
+						(xy 10.9982 -1.3716) (xy 10.8712 -1.397) (xy 10.5664 -1.4732) (xy 10.1346 -1.5494) (xy 9.6266 -1.651)
+						(xy 9.1948 -1.7272) (xy 8.7376 -1.8288) (xy 8.4328 -1.8796) (xy 8.2804 -1.905) (xy 8.255 -1.9558)
+						(xy 8.1534 -2.159) (xy 7.9756 -2.5146) (xy 7.8232 -2.921) (xy 7.6454 -3.3274) (xy 7.493 -3.7338)
+						(xy 7.366 -4.0132) (xy 7.3406 -4.191) (xy 7.3914 -4.2926) (xy 7.5692 -4.5466) (xy 7.7978 -4.9276)
+						(xy 8.1026 -5.3594) (xy 8.4074 -5.7912) (xy 8.6614 -6.1722) (xy 8.8138 -6.4262) (xy 8.89 -6.5532)
+						(xy 8.8646 -6.6548) (xy 8.6868 -6.858) (xy 8.3566 -7.1882) (xy 7.874 -7.6708) (xy 7.7978 -7.747)
+						(xy 7.3914 -8.128) (xy 7.0612 -8.4328) (xy 6.8326 -8.636) (xy 6.731 -8.7122)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+			)
+		)
+	)
+	(no_connect
+		(at 205.74 147.32)
+		(uuid "f21cdd0f-23b5-4a37-8dee-16a74fdf7268")
+	)
+	(no_connect
+		(at 205.74 139.7)
+		(uuid "f21cdd0f-23b5-4a37-8dee-16a74fdf7269")
+	)
+	(polyline
+		(pts
+			(xy 48.26 38.1) (xy 48.26 101.6)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "083fe946-e982-48e1-ad71-6cbbb6edfd5a")
+	)
+	(polyline
+		(pts
+			(xy 255.27 163.83) (xy 195.58 163.83)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "154b32dd-165b-43e8-881d-01a88b54b7a1")
+	)
+	(polyline
+		(pts
+			(xy 179.07 101.6) (xy 48.26 101.6)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "1b605208-af7c-4c9c-85c0-1ee48363e4db")
+	)
+	(polyline
+		(pts
+			(xy 173.99 153.67) (xy 20.32 153.67)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "1e1fe0f0-9255-46f7-885e-b30b1e1cfa31")
+	)
+	(polyline
+		(pts
+			(xy 48.26 38.1) (xy 179.07 38.1)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "57578062-ebf7-4e4f-9365-d328a0893ed3")
+	)
+	(polyline
+		(pts
+			(xy 20.32 114.3) (xy 20.32 153.67)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "5df34eab-a67e-48d9-808d-424ee5198eba")
+	)
+	(polyline
+		(pts
+			(xy 255.27 127) (xy 255.27 163.83)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "88070ea6-c4a1-4601-b2db-5b3ce3f0f39e")
+	)
+	(polyline
+		(pts
+			(xy 20.32 114.3) (xy 173.99 114.3)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "b1301aa4-e73e-4c37-a7ec-af0465593124")
+	)
+	(polyline
+		(pts
+			(xy 195.58 127) (xy 255.27 127)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "be2b4027-0875-4b88-9390-fd4651c5ba86")
+	)
+	(polyline
+		(pts
+			(xy 179.07 38.1) (xy 179.07 101.6)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "c84a10f3-ac09-45cc-a71b-f9d09fdb1325")
+	)
+	(polyline
+		(pts
+			(xy 173.99 114.3) (xy 173.99 153.67)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "f0837eb9-9aeb-4440-a8f8-cd58bcff92c8")
+	)
+	(polyline
+		(pts
+			(xy 195.58 127) (xy 195.58 163.83)
+		)
+		(stroke
+			(width 0)
+			(type dash)
+		)
+		(uuid "f8caba5a-2fad-42b6-8888-b66bf08e2875")
+	)
+	(text "FTDI Support"
+		(exclude_from_sim no)
+		(at 22.86 118.11 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "3ab55816-23b3-46fa-99dc-6ffdc2bffeb3")
+	)
+	(text "Core Product"
+		(exclude_from_sim no)
+		(at 52.07 44.45 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "4f90f2a9-2fa5-473c-8029-db6e8f2d1090")
+	)
+	(text "Internal Battery Support"
+		(exclude_from_sim no)
+		(at 198.12 132.08 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "7ca1634c-39cb-4d7e-9162-3f0c918bec0f")
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 127 133.35 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0e4f16bc-5927-4c06-a6ab-48e8fdfe3a63")
+		(property "Reference" "HDWR409"
+			(at 127 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "6-pin Angled Header"
+			(at 127 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN HEADER R/A 6POS 2.54MM"
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "929550-01-06-ND"
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/3m/929550-01-06-I/682149"
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "3M"
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "929550-01-06-I"
+			(at 127 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR409")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 69.85 58.42 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0ea731ce-2373-4784-820a-5136c05bb580")
+		(property "Reference" "HDWR401"
+			(at 69.85 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "Chassis Box"
+			(at 69.85 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs"
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.polycase.com/sl-42p?qty=1#200=99&227=163"
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "polycase"
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "SL-42PMBT"
+			(at 69.85 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR401")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 95.25 133.35 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "10ea818a-48a1-40a6-8ba1-420e3b5023fd")
+		(property "Reference" "HDWR408"
+			(at 95.25 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "9-Pin D Male"
+			(at 95.25 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN D-SUB PLUG 9POS SLDR CUP"
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "AE10972-ND"
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/assmann-wsw-components/A-DS-09-LL-Z/1241781"
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Assmann WSW Components"
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "A-DS 09 LL/Z"
+			(at 95.25 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR408")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 69.85 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "3494eef2-033d-40d4-a134-67e53a088dd6")
+		(property "Reference" "HDWR402"
+			(at 69.85 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "LED Light Pipes"
+			(at 69.85 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "LIGHT PIPE ROUND 3MM"
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "LFB063CTP-ND"
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/visual-communications-company-vcc/LFB063CTP/5723593"
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Visual Communications Company - VCC"
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "LFB063CTP"
+			(at 69.85 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR402")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 38.1 133.35 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "46fcbbed-3e6c-48ff-82a5-fde33c27f66a")
+		(property "Reference" "HDWR405"
+			(at 38.1 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "FTDI Cable"
+			(at 38.1 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "FTDI Serial TTL-232 USB Cable"
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.adafruit.com/product/70"
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Adafruit"
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "70"
+			(at 38.1 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR405")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 100.33 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4c070fae-5d85-4b9d-8ebd-f085955e62ee")
+		(property "Reference" "HDWR404"
+			(at 100.33 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "Magnet Wire for RF Inductors"
+			(at 100.33 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 100.33 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 100.33 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "MAGNET WIRE"
+			(at 100.33 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR404")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 204.47 88.9 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "6aeb2690-fe53-43d6-88ca-adfe7a09db74")
+		(property "Reference" "HDWR414"
+			(at 204.47 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "Shorting Jumper"
+			(at 204.47 99.06 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN JUMPER SHORTING 1.27MM GOLD"
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "S9345-ND"
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/short/w0p92mhw"
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Sullins Connector Solutions"
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "NPB02SVAN-RC"
+			(at 204.47 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR414")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 205.74 60.96 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "6c708673-e095-4bd6-b3ae-de6d3042cdc7")
+		(property "Reference" "HDWR411"
+			(at 205.74 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "TO-220 Mounting Hardware"
+			(at 205.74 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 205.74 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 205.74 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 205.74 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "Amazon"
+			(at 205.74 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR411")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 153.67 133.35 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "6dd4c5c1-cbca-4eb3-9be0-3e6afa74ef4c")
+		(property "Reference" "HDWR413"
+			(at 153.67 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "FTDI Adapter PCB"
+			(at 153.67 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 153.67 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 153.67 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 153.67 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://oshpark.com/shared_projects/15SnDRmB"
+			(at 153.67 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR413")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 232.41 88.9 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "7a135176-f0e4-48f2-9141-c47828842636")
+		(property "Reference" "HDWR412"
+			(at 232.41 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "Shorting Jumper"
+			(at 232.41 99.06 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN JUMPER SHORTING 1.27MM GOLD"
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "S9345-ND"
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/short/w0p92mhw"
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Sullins Connector Solutions"
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "NPB02SVAN-RC"
+			(at 232.41 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR412")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 67.31 133.35 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "9bb52202-3dc6-44c6-9036-bd4e9a5608f4")
+		(property "Reference" "HDWR406"
+			(at 67.31 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "9POS Backshell"
+			(at 67.31 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN BACKSHELL 9POS 180DEG GRAY"
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "AE11006-ND"
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/assmann-wsw-components/AGP-09-IDC/1241853"
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Assmann WSW Components"
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "AGP-09/IDC"
+			(at 67.31 133.35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR406")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:Battery_Cell")
+		(at 205.74 144.78 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b9b57d73-b32c-4225-b589-4048e1fc6e82")
+		(property "Reference" "BT401"
+			(at 208.661 141.9133 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "LiPo Battery"
+			(at 208.661 144.4502 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 205.74 143.256 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 205.74 143.256 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Lithium Ion Polymer Battery - 3.7v 100mAh"
+			(at 205.74 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.adafruit.com/product/1570"
+			(at 205.74 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Adafruit"
+			(at 205.74 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "1570"
+			(at 205.74 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "b77e69c8-1871-4445-8654-88a9c6f7e42f")
+		)
+		(pin "2"
+			(uuid "226d1b4b-850a-4804-a5c9-7479854e5700")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "BT401")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 130.81 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c68c8a52-c605-4388-8560-6b31d2e0a77e")
+		(property "Reference" "HDWR410"
+			(at 130.81 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PCB_AND_ASSEMBLY"
+			(at 130.81 96.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 130.81 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 130.81 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Printed Circuit Board(s) plus Assembly"
+			(at 130.81 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR410")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 100.33 58.42 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "cac39be8-c3de-4f4c-95a5-ec7357beb43c")
+		(property "Reference" "HDWR403"
+			(at 100.33 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PCB Screws"
+			(at 100.33 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "SCREWS-MBR-100 PCB Screws"
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.polycase.com/screws-mbr-100"
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "polycase"
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "SCREWS-MBR-100"
+			(at 100.33 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR403")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(at 236.22 144.78 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e45add93-8fce-4150-8cce-784220e59453")
+		(property "Reference" "HDWR407"
+			(at 236.22 132.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "LiPo Charger Module"
+			(at 236.22 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Micro-Lipo Charger for LiPo/LiIon Batt"
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "1528-1833-ND"
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/adafruit-industries-llc/1904/5054545"
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Adafruit Industries LLC"
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "1904"
+			(at 236.22 144.78 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/5a65e8dc-078c-4a84-92a2-c8664e602338"
+					(reference "HDWR407")
+					(unit 1)
+				)
+			)
+		)
+	)
 )

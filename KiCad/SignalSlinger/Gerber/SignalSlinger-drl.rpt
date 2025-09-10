@@ -1,5 +1,5 @@
 Drill report for SignalSlinger.kicad_pcb
-Created on 
+Created on 2025-09-08T08:44:10-0400
 
 Copper Layer Stackup:
     =============================================================
@@ -13,19 +13,20 @@ Drill file 'SignalSlinger-PTH.drl' contains
     plated through holes:
     =============================================================
     T1  0.331mm  0.0130"  (2 holes)
-    T2  0.400mm  0.0157"  (436 holes)
-    T3  0.600mm  0.0236"  (2 holes)
+    T2  0.400mm  0.0157"  (354 holes)
+    T3  0.600mm  0.0236"  (1 hole)
     T4  0.650mm  0.0256"  (5 holes)
-    T5  0.700mm  0.0276"  (10 holes)
+    T5  0.700mm  0.0276"  (6 holes)
     T6  0.890mm  0.0350"  (2 holes)
     T7  1.000mm  0.0394"  (27 holes)
     T8  1.001mm  0.0394"  (3 holes)
     T9  1.016mm  0.0400"  (8 holes)
     T10  1.100mm  0.0433"  (3 holes)
-    T11  2.010mm  0.0791"  (2 holes)
-    T12  3.500mm  0.1378"  (4 holes)
+    T11  1.200mm  0.0472"  (4 holes)
+    T12  2.010mm  0.0791"  (2 holes)
+    T13  3.500mm  0.1378"  (4 holes)
 
-    Total plated holes count 504
+    Total plated holes count 421
 
 
 Drill file 'SignalSlinger-NPTH.drl' contains
