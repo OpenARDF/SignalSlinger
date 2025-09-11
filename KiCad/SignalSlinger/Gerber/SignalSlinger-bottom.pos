@@ -1,7 +1,11 @@
-### Footprint positions - created on 2025-09-08T10:53:32-0400 ###
+### Footprint positions - created on 2025-09-11T17:58:03-0400 ###
 ### Printed by KiCad version 8.0.9
 ## Unit = mm, Angle = deg.
 ## Side : bottom
-# Ref     Val         Package                               PosX       PosY       Rot  Side
-J107      DB9_Female  DSUB-9_Female_EdgeMount_P2.77mm    48.1025   -89.4125   90.0000  bottom
+# Ref     Val               Package                               PosX       PosY       Rot  Side
+J102      Conn_01x03        PinHeader_1x03_P2.54mm_Vertical    52.0450  -114.7100  -90.0000  bottom
+J105      Conn_01x04        PinHeader_1x04_P2.54mm_Vertical    51.0525   -77.7500  -90.0000  bottom
+J107      DB9_Female        DSUB-9_Female_EdgeMount_P2.77mm    48.1025   -89.4125   90.0000  bottom
+MOD201    AdaFruit_Charger  PinHeader_1x04_P2.54mm_Vertical    70.1975   -95.8900   90.0000  bottom
+U203      TO-220_ADJ_Reg.   TO-220-3_Horizontal_TabDown       122.2400   -78.5600  -90.0000  bottom
 ## End

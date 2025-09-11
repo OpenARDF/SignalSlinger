@@ -1,4 +1,4 @@
-24712204017455651
+24713961563457323
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -64419,6 +64419,13 @@ L_Toroid, Vertical series, Radial, pin pitch=31.80mm, , length*width=67.6*36.1mm
 L_Toroid Vertical series Radial pin pitch 31.80mm  length 67.6mm width 36.1mm Vishay TJ9
 0
 2
+2
+Inductor_THT
+Toroid_T-60_2TH_Vertical2
+T-60 Toroid
+toroid inductor
+0
+4
 2
 Inductor_THT_Wurth
 L_Wurth_WE-HCFT-2012_LeadDiameter1.2mm
