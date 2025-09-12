@@ -1,4 +1,4 @@
-### Footprint positions - created on 2025-09-11T17:58:03-0400 ###
+### Footprint positions - created on 2025-09-12T08:00:40-0400 ###
 ### Printed by KiCad version 8.0.9
 ## Unit = mm, Angle = deg.
 ## Side : top
@@ -41,7 +41,7 @@ D103      Red_LED                LED_0805_2012Metric                            
 D104      Green_LED              LED_0805_2012Metric                                        74.5250  -114.3000   90.0000  top
 D105      ESD9B5.0ST5G_1         D_0603_1608Metric                                          54.2400   -90.8000  180.0000  top
 D106      ESD9B5.0ST5G_1         D_0603_1608Metric                                          54.2600   -93.5500    0.0000  top
-D107      Schottky_Diode         D_SOD-123FL                                                93.8700   -93.4400   90.0000  top
+D107      Schottky_Diode         D_SOD-123FL                                                93.8000   -93.3500   90.0000  top
 D108      ESD9B5.0ST5G_1         D_0603_1608Metric                                          54.5800   -86.0200  180.0000  top
 D109      ESD9B5.0ST5G_1         D_0603_1608Metric                                          54.6200   -83.8400  180.0000  top
 D110      ESD9B5.0ST5G_1         D_0603_1608Metric                                          54.6000   -89.0900    0.0000  top
