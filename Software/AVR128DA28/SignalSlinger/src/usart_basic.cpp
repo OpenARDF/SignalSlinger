@@ -102,10 +102,10 @@ int8_t USART1_init(uint32_t baud, bool autobaud)
  *
  * \return Nothing
  */
-void USART1_enable()
-{
-	USART1.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
-}
+// void USART1_enable()
+// {
+// 	USART1.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
+// }
 
 /**
  * \brief Enable RX in USART1
@@ -114,10 +114,10 @@ void USART1_enable()
  *
  * \return Nothing
  */
-void USART1_enable_rx()
-{
-	USART1.CTRLB |= USART_RXEN_bm;
-}
+// void USART1_enable_rx()
+// {
+// 	USART1.CTRLB |= USART_RXEN_bm;
+// }
 
 /**
  * \brief Enable TX in USART1
@@ -162,10 +162,10 @@ uint8_t USART1_get_data()
  * \retval false The USART can not receive data to be transmitted
  * \retval true The USART can receive data to be transmitted
  */
-bool USART1_is_tx_ready()
-{
-	return (USART1.STATUS & USART_DREIF_bm);
-}
+// bool USART1_is_tx_ready()
+// {
+// 	return (USART1.STATUS & USART_DREIF_bm);
+// }
 
 /**
  * \brief Check if the USART has received data
@@ -174,10 +174,10 @@ bool USART1_is_tx_ready()
  * \retval true The USART has received data
  * \retval false The USART has not received data
  */
-bool USART1_is_rx_ready()
-{
-	return (USART1.STATUS & USART_RXCIF_bm);
-}
+// bool USART1_is_rx_ready()
+// {
+// 	return (USART1.STATUS & USART_RXCIF_bm);
+// }
 
 /**
  * \brief Check if USART1 data is transmitted
@@ -186,10 +186,10 @@ bool USART1_is_rx_ready()
  * \retval true  Data is not completely shifted out of the shift register
  * \retval false Data completely shifted out if the USART shift register
  */
-bool USART1_is_tx_busy()
-{
-	return (!(USART1.STATUS & USART_TXCIF_bm));
-}
+// bool USART1_is_tx_busy()
+// {
+// 	return (!(USART1.STATUS & USART_TXCIF_bm));
+// }
 
 /**
  * \brief Read one character from USART1
@@ -198,12 +198,12 @@ bool USART1_is_tx_busy()
  *
  * \return Data read from the USART1 module
  */
-uint8_t USART1_read()
-{
-	while (!(USART1.STATUS & USART_RXCIF_bm))
-		;
-	return USART1.RXDATAL;
-}
+// uint8_t USART1_read()
+// {
+// 	while (!(USART1.STATUS & USART_RXCIF_bm))
+// 		;
+// 	return USART1.RXDATAL;
+// }
 
 /**
  * \brief Write one character to USART1
@@ -214,12 +214,12 @@ uint8_t USART1_read()
  *
  * \return Nothing
  */
-void USART1_write(const uint8_t data)
-{
-	while (!(USART1.STATUS & USART_DREIF_bm))
-		;
-	USART1.TXDATAL = data;
-}
+// void USART1_write(const uint8_t data)
+// {
+// 	while (!(USART1.STATUS & USART_DREIF_bm))
+// 		;
+// 	USART1.TXDATAL = data;
+// }
 
 
 
@@ -290,10 +290,10 @@ int8_t USART0_init(uint32_t baud, bool autobaud)
  *
  * \return Nothing
  */
-void USART0_enable()
-{
-	USART0.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
-}
+// void USART0_enable()
+// {
+// 	USART0.CTRLB |= USART_RXEN_bm | USART_TXEN_bm;
+// }
 
 /**
  * \brief Enable RX in USART0
@@ -302,10 +302,10 @@ void USART0_enable()
  *
  * \return Nothing
  */
-void USART0_enable_rx()
-{
-	USART0.CTRLB |= USART_RXEN_bm;
-}
+// void USART0_enable_rx()
+// {
+// 	USART0.CTRLB |= USART_RXEN_bm;
+// }
 
 /**
  * \brief Enable TX in USART0
@@ -350,10 +350,10 @@ uint8_t USART0_get_data()
  * \retval false The USART can not receive data to be transmitted
  * \retval true The USART can receive data to be transmitted
  */
-bool USART0_is_tx_ready()
-{
-	return (USART0.STATUS & USART_DREIF_bm);
-}
+// bool USART0_is_tx_ready()
+// {
+// 	return (USART0.STATUS & USART_DREIF_bm);
+// }
 
 /**
  * \brief Check if the USART has received data
@@ -362,10 +362,10 @@ bool USART0_is_tx_ready()
  * \retval true The USART has received data
  * \retval false The USART has not received data
  */
-bool USART0_is_rx_ready()
-{
-	return (USART0.STATUS & USART_RXCIF_bm);
-}
+// bool USART0_is_rx_ready()
+// {
+// 	return (USART0.STATUS & USART_RXCIF_bm);
+// }
 
 /**
  * \brief Check if USART0 data is transmitted
@@ -374,10 +374,10 @@ bool USART0_is_rx_ready()
  * \retval true  Data is not completely shifted out of the shift register
  * \retval false Data completely shifted out if the USART shift register
  */
-bool USART0_is_tx_busy()
-{
-	return (!(USART0.STATUS & USART_TXCIF_bm));
-}
+// bool USART0_is_tx_busy()
+// {
+// 	return (!(USART0.STATUS & USART_TXCIF_bm));
+// }
 
 /**
  * \brief Read one character from USART0
@@ -386,12 +386,12 @@ bool USART0_is_tx_busy()
  *
  * \return Data read from the USART0 module
  */
-uint8_t USART0_read()
-{
-	while (!(USART0.STATUS & USART_RXCIF_bm))
-		;
-	return USART0.RXDATAL;
-}
+// uint8_t USART0_read()
+// {
+// 	while (!(USART0.STATUS & USART_RXCIF_bm))
+// 		;
+// 	return USART0.RXDATAL;
+// }
 
 /**
  * \brief Write one character to USART0
@@ -402,10 +402,10 @@ uint8_t USART0_read()
  *
  * \return Nothing
  */
-void USART0_write(const uint8_t data)
-{
-	while (!(USART0.STATUS & USART_DREIF_bm))
-		;
-	USART0.TXDATAL = data;
-}
+// void USART0_write(const uint8_t data)
+// {
+// 	while (!(USART0.STATUS & USART_DREIF_bm))
+// 		;
+// 	USART0.TXDATAL = data;
+// }
 

@@ -32,6 +32,8 @@
 #include <ctype.h>
 #include <math.h>
 #include <stdint-gcc.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __INT16_MAX__
 # undef INT16_MAX
@@ -274,6 +276,13 @@ bool frequencyVal(char* str, Frequency_Hz* result)
 	return(failure);	
 }
 
+/**
+ * Translate a Function_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param fun Enumerated function value to describe.
+ * @return true if the function is unrecognized, false otherwise.
+ */
 bool function2Text(char* str, Function_t fun)
 {
 	bool failure = false;
@@ -307,6 +316,13 @@ bool function2Text(char* str, Function_t fun)
 	return failure;
 }
 
+/**
+ * Translate a Fox_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param fox Enumerated fox value to describe.
+ * @return true if the fox value is unrecognized, false otherwise.
+ */
 bool fox2Text(char* str, Fox_t fox)
 {
 	bool failure = false;
@@ -450,6 +466,13 @@ bool fox2Text(char* str, Fox_t fox)
 }
 
 
+/**
+ * Translate an Event_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param evt Enumerated event value to describe.
+ * @return true if the event value is unrecognized, false otherwise.
+ */
 bool event2Text(char* str, Event_t evt)
 {
 	bool failure = false;
@@ -496,15 +519,13 @@ bool event2Text(char* str, Event_t evt)
 	return(failure);
 }
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
+
 
 /*-------------------------------------------------------------
  *  float_to_parts_signed
  *  ---------------------
  *  Split a float (positive or negative) into:
- *      – characteristic : signed integer part      (-32 768 … 32 767)
+ *      – characteristic : signed integer part      (-32768 … 32767)
  *      – mantissa       : first decimal digit   (0 … 9)
  *
  *  Returns:  false  ? success

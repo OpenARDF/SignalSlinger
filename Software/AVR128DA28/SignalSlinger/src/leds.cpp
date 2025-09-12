@@ -49,7 +49,10 @@ leds::~leds()
 {
 } //~leds
 
-/* LED enunciation timer interrupt */
+/* LED enunciation timer interrupt.  This handler manages the blink state
+ * machines for the red and green LEDs and enforces the overall timeout that
+ * turns the indicators off after a period of inactivity.
+ */
 ISR(TCB1_INT_vect)
 {
 	uint8_t x = TCB1.INTFLAGS;
@@ -248,12 +251,15 @@ void leds::sendCode(char* str)
 	g_enable_manual_transmissions = holdMan;
 }
 
+/* Public wrapper that leaves the LED timeout unchanged. */
 void leds::blink(Blink_t blinkMode)
 {
 	blink(blinkMode, false);
 }
 
-void leds::blink(Blink_t blinkMode, bool resetTimeout)
+/* Core blink routine.  Selects the blink pattern and optionally resets
+ * the automatic timeout that turns off the LEDs after inactivity.
+ */void leds::blink(Blink_t blinkMode, bool resetTimeout)
 {
 	if(resetTimeout)
 	{

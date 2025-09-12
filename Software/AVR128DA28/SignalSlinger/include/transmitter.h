@@ -63,46 +63,45 @@ typedef int16_t Attenuation;
 #define TX_MINIMUM_FREQUENCY (uint32_t)3500000
 #define TX_MAXIMUM_FREQUENCY (uint32_t)4000000
 	
-/** 
+/**
+ * Indicates whether the transmitter hardware has been configured.
  */
  bool txIsInitialized(void);
 
 /**
+ * Set the VFO to a new frequency.  The clock can optionally remain disabled.
  */
 bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
 /**
+ * Return the current transmit frequency in Hertz.
  */
- Frequency_Hz txGetFrequency(void);
+//  Frequency_Hz txGetFrequency(void);
 	
 /**
+ * Return the programmed RF output power in milliwatts.
  */
- uint16_t txGetPowerMw(void);
+//  uint16_t txGetPowerMw(void);
 
 /**
+ * Key or unkey the transmitter output stage.
  */
 bool keyTransmitter(bool on);
 
 /**
+ * Apply or remove power from the transmitter hardware.
  */
 EC powerToTransmitter(bool on);
 
-/** 
+/**
+ * Globally enable or disable any RF transmissions.
  */
 void setDisableTransmissions(bool disabled);
 
-/** 
+/**
+ * Query whether transmissions are currently disabled.
  */
 bool getDisableTransmissions(void);
-
-/**
- */
-EC txMilliwattsToSettings(uint16_t* powerMW, uint16_t* powerLevel);
-
-/*
- * Shuts re-initializes the RF oscillator and leaves it in an off condition. Returns true if the oscillator was successfully initialized.
- */
-// bool txConfirmRFisOff(void);
 
 
 #endif  /* TRANSMITTER_H_ */

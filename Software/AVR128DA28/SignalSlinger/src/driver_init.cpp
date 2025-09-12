@@ -28,7 +28,6 @@
 #include <system.h>
 #include "usart_basic.h"
 #include "serialbus.h"
-#include "dac0.h"
 #include "binio.h"
 #include "rtc.h"
 #include "adc.h"
@@ -50,8 +49,6 @@ void system_init()
 	SLPCTRL_init();
 	ADC0_SYSTEM_init(SINGLE_CONVERSION);
 	
-	// DAC0_init();
-
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 
 	BOD_init();
@@ -124,8 +121,6 @@ void system_charging_config()
 
 
 //	SLPCTRL_init();
-	
-	// DAC0_init();
 
 //	serialbus_init(SB_BAUD, SERIALBUS_USART);
 
