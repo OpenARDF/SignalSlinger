@@ -162,11 +162,11 @@ static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false, fals
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = { 0, 0, 0 };
 static volatile bool g_temperature_shutdown = false;
 
-volatile uint16_t g_switch_closed_time = 0;
 volatile uint16_t g_handle_counted_presses = 0;
 volatile uint16_t g_switch_presses_count = 0;
 volatile bool g_long_button_press = false;
 volatile uint16_t g_button_hold_countdown;
+
 
 #define NUMBER_OF_TEST_FREQUENCIES (4)
 uint8_t g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
@@ -180,8 +180,6 @@ Enunciation_t g_enunciator = LED_ONLY;
 static volatile uint16_t g_key_down_countdown = 0;
 static volatile bool g_reset_after_keydown = false;
 static volatile uint32_t g_utility_countdown = 0;
-
-uint16_t g_Event_Configuration_Check = 0;
 
 leds LEDS = leds();
 CircularStringBuff g_text_buff = CircularStringBuff(TEXT_BUFF_SIZE);
@@ -464,7 +462,8 @@ ISR(TCB0_INT_vect)
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
 		static bool muteAfterID = false;				/* Inhibit any transmissions immediately after the ID has been sent */
-		
+		static uint16_t switch_closed_time = 0;
+				
 		if(g_key_down_countdown) 
 		{
 			g_key_down_countdown--;
@@ -518,7 +517,7 @@ ISR(TCB0_INT_vect)
 						}
 						else
 						{
-							g_switch_closed_time = 0;
+							switch_closed_time = 0;
 							buttonReleased = true;
 						}
 					
@@ -529,10 +528,10 @@ ISR(TCB0_INT_vect)
 				{
 					if(!g_long_button_press && longPressEnabled)
 					{
-						if(++g_switch_closed_time >= 200)
+						if(++switch_closed_time >= 200)
 						{
 							g_long_button_press = true;
-							g_switch_closed_time = 0;
+							switch_closed_time = 0;
 							g_switch_presses_count = 0;
 							longPressEnabled = false;
 						}
@@ -573,7 +572,7 @@ ISR(TCB0_INT_vect)
 		else
 		{
 			longPressEnabled = false;
-			g_switch_closed_time = 0;
+			switch_closed_time = 0;
 			g_switch_presses_count = 0;
 			switch_closures_count_period = 0;
 			g_long_button_press = false;
@@ -1188,10 +1187,9 @@ int main(void)
 							system_sleep_config();
 							setExtBatLoadSwitch(RE_APPLY_LS_STATE);
 						
-							if(g_enable_external_battery_control)
+							if(g_enable_external_battery_control) // Control of an external battery is enabled
 							{
-
-								if(g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE)
+								if(g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) // An internal battery is present
 								{
 									if(g_internal_bat_voltage < g_internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
 									{
@@ -2815,11 +2813,6 @@ EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
 }
 
 
-static int secondsIntoCycle;
-static int timeTillTransmit;
-static int cyclePeriod;
-
-
 EC activateEventUsingCurrentSettings(SC* statusCode)
 {
 	time_t now = time(null); 
@@ -2921,12 +2914,9 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 			if(dif >= 0)                                    /* start time is in the past */
 			{
 				bool turnOnTransmitter = false;
-//				int cyclePeriod;
-				cyclePeriod = g_on_air_seconds + g_off_air_seconds;
-//				int secondsIntoCycle;
-				secondsIntoCycle = dif % cyclePeriod;
-//				int timeTillTransmit;
-				timeTillTransmit = g_intra_cycle_delay_time - secondsIntoCycle;
+				int cyclePeriod = g_on_air_seconds + g_off_air_seconds;
+				int secondsIntoCycle = dif % cyclePeriod;
+				int timeTillTransmit = g_intra_cycle_delay_time - secondsIntoCycle;
 
 				if(timeTillTransmit <= 0)                       /* we should have started transmitting already in this cycle */
 				{
