@@ -1,0 +1,226 @@
+(footprint "Toroid_T-50A_TH_BF_CT_Vertical"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "T-50A Toroid")
+	(tags "toroid inductor")
+	(property "Reference" "L101"
+		(at -0.26 0.01 270)
+		(layer "F.SilkS")
+		(uuid "598cb7c6-1f65-43b8-9142-ece4b62c3af1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "9T #24 Bifilar T50-43"
+		(at 0.4445 -5.2324 0)
+		(layer "F.Fab")
+		(uuid "8fefb072-f583-4671-b198-4553be12f0b2")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "4fb0681a-2a7e-4596-9ffe-673c824f072b")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "TH"
+		(at 220.15 3.57 270)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "57874643-c28b-41f0-8529-b0a5675f86df")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Digi-Key Part No." "FT50A-43 (Amidon)"
+		(at 220.15 3.57 270)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a692351b-a355-4e45-a7a1-ac2aaa9df7f9")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Link" "http://www.amidoncorp.com/ft-50A-43/"
+		(at 220.15 3.57 270)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "f806d136-a188-4ec1-846b-5cfbeb668fe3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer" "TH"
+		(at 220.15 3.57 270)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d1f91f59-2c02-4eac-a398-063056cb2291")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer PN" "TH"
+		(at 220.15 3.57 270)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "af0cac7f-2845-468c-9bc8-d34c343c4e51")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -3.01 -2.4)
+		(end -3 -7.3)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "70f205d2-3171-4654-984f-2f399684602a")
+	)
+	(fp_line
+		(start -3 -7.3)
+		(end -2 -7.3)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ce3b12ce-eba2-4809-bd5d-6ced3c0b4335")
+	)
+	(fp_line
+		(start -3 7.3)
+		(end -3.01 2.4)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "7ab0317b-bca9-4ae2-8c3d-1ed91d259af8")
+	)
+	(fp_line
+		(start 3 -6)
+		(end 3 -2.4)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "016bcf9f-cc22-4fed-a2b6-98eb154f8845")
+	)
+	(fp_line
+		(start 3 2.4)
+		(end 3 7.3)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "7e0608c6-92d4-427d-9ad7-5587a2bfacae")
+	)
+	(fp_line
+		(start 3 7.3)
+		(end -3 7.3)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "43662ab8-1163-467b-bcc2-226a5a74d6f7")
+	)
+	(pad "1" thru_hole circle
+		(at -3 -1.25)
+		(size 2 2)
+		(drill 1.016)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(zone_connect 2)
+		(uuid "40c37d61-4a40-4f02-849d-12571facbdf0")
+	)
+	(pad "1" smd rect
+		(at -0.77 -2.19 25)
+		(size 4 1)
+		(layers "B.Cu" "B.Mask" "B.Paste")
+		(uuid "8a02692f-716b-4818-9f29-24590204ab49")
+	)
+	(pad "2" thru_hole circle
+		(at -3 1.25)
+		(size 2 2)
+		(drill 1.016)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "8807cb51-e37f-4504-8fa8-7e4c267c04c6")
+	)
+	(pad "2" smd rect
+		(at 0 0 25)
+		(size 6 1)
+		(layers "B.Cu" "B.Mask" "B.Paste")
+		(uuid "164dfd40-42c9-49b6-a571-65ec561bf801")
+	)
+	(pad "2" thru_hole circle
+		(at 3 -1.25)
+		(size 2 2)
+		(drill 1.016)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "69d05c2d-af1d-42cc-b933-3dc9171341d5")
+	)
+	(pad "3" smd rect
+		(at 0.84 2.23 25)
+		(size 4 1)
+		(layers "B.Cu" "B.Mask" "B.Paste")
+		(uuid "3dde301f-a26e-43dd-8e95-b8c4031758dc")
+	)
+	(pad "3" thru_hole circle
+		(at 3 1.25)
+		(size 2 2)
+		(drill 1.016)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "b921366c-ffd5-42b4-b681-54d23a5b5974")
+	)
+	(embedded_fonts no)
+	(model "${KICAD6_3DMODEL_DIR}/Inductor_THT.3dshapes/FT-50A-Toroid.wrl"
+		(offset
+			(xyz 3 0 8)
+		)
+		(scale
+			(xyz 0.4 0.4 0.4)
+		)
+		(rotate
+			(xyz 0 90 0)
+		)
+	)
+)

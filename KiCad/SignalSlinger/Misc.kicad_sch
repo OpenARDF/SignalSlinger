@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20231120)
+	(version 20250114)
 	(generator "eeschema")
-	(generator_version "8.0")
+	(generator_version "9.0")
 	(uuid "e7ff1012-142a-41e2-b318-3b62ebf56ecf")
 	(paper "A4")
 	(title_block
@@ -10,15 +10,19 @@
 		(rev "3.4")
 	)
 	(lib_symbols
-		(symbol "Device:Battery_Cell"
-			(pin_numbers hide)
+		(symbol "SignalSlinger Library:Battery_Cell"
+			(pin_numbers
+				(hide yes)
+			)
 			(pin_names
-				(offset 0) hide)
+				(offset 0)
+				(hide yes)
+			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "BT"
-				(at 2.54 2.54 0)
+			(property "Reference" "BT201"
+				(at 2.921 2.8667 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -26,8 +30,8 @@
 					(justify left)
 				)
 			)
-			(property "Value" "Battery_Cell"
-				(at 2.54 0 0)
+			(property "Value" "LiIon Cell"
+				(at 2.921 0.3298 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -35,7 +39,7 @@
 					(justify left)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "Connector_Wire:SolderWire-0.5sqmm_1x02_P4.6mm_D0.9mm_OD2.1mm"
 				(at 0 1.524 90)
 				(effects
 					(font
@@ -53,7 +57,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Single-cell battery"
+			(property "Description" ""
 				(at 0 0 0)
 				(effects
 					(font
@@ -96,7 +100,7 @@
 				)
 				(polyline
 					(pts
-						(xy 0 0.762) (xy 0 0)
+						(xy 0 1.778) (xy 0 2.54)
 					)
 					(stroke
 						(width 0)
@@ -108,7 +112,7 @@
 				)
 				(polyline
 					(pts
-						(xy 0 1.778) (xy 0 2.54)
+						(xy 0 0.762) (xy 0 0)
 					)
 					(stroke
 						(width 0)
@@ -181,15 +185,16 @@
 					)
 				)
 			)
+			(embedded_fonts no)
 		)
-		(symbol "Graphic:Logo_Open_Hardware_Large"
+		(symbol "SignalSlinger Library:Logo_Open_Hardware_Large"
 			(pin_names
 				(offset 1.016)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "#LOGO"
+			(property "Reference" "HDWR401"
 				(at 0 12.7 0)
 				(effects
 					(font
@@ -198,13 +203,12 @@
 					(hide yes)
 				)
 			)
-			(property "Value" "Logo_Open_Hardware_Large"
+			(property "Value" "Chassis Box"
 				(at 0 -10.16 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
-					(hide yes)
 				)
 			)
 			(property "Footprint" ""
@@ -216,7 +220,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "~"
+			(property "Datasheet" ""
 				(at 0 0 0)
 				(effects
 					(font
@@ -225,7 +229,34 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Open Hardware logo, large"
+			(property "Description" "4.25 x 2.63 x 1.27 in / 107.95 x 66.80 x 32.26 mm. / 0.15 lbs"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Link" "https://www.polycase.com/sl-42p?qty=1#200=99&227=163"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer" "polycase"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer PN" "SL-42PMBT"
 				(at 0 0 0)
 				(effects
 					(font
@@ -311,7 +342,47 @@
 					)
 				)
 			)
+			(embedded_fonts no)
 		)
+	)
+	(text "FTDI Support"
+		(exclude_from_sim no)
+		(at 22.86 118.11 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "3ab55816-23b3-46fa-99dc-6ffdc2bffeb3")
+	)
+	(text "Core Product"
+		(exclude_from_sim no)
+		(at 52.07 44.45 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "4f90f2a9-2fa5-473c-8029-db6e8f2d1090")
+	)
+	(text "Internal Battery Support"
+		(exclude_from_sim no)
+		(at 198.12 132.08 0)
+		(effects
+			(font
+				(size 2 2)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "7ca1634c-39cb-4d7e-9162-3f0c918bec0f")
 	)
 	(no_connect
 		(at 205.74 147.32)
@@ -441,47 +512,8 @@
 		)
 		(uuid "f8caba5a-2fad-42b6-8888-b66bf08e2875")
 	)
-	(text "FTDI Support"
-		(exclude_from_sim no)
-		(at 22.86 118.11 0)
-		(effects
-			(font
-				(size 2 2)
-				(thickness 0.4)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-		(uuid "3ab55816-23b3-46fa-99dc-6ffdc2bffeb3")
-	)
-	(text "Core Product"
-		(exclude_from_sim no)
-		(at 52.07 44.45 0)
-		(effects
-			(font
-				(size 2 2)
-				(thickness 0.4)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-		(uuid "4f90f2a9-2fa5-473c-8029-db6e8f2d1090")
-	)
-	(text "Internal Battery Support"
-		(exclude_from_sim no)
-		(at 198.12 132.08 0)
-		(effects
-			(font
-				(size 2 2)
-				(thickness 0.4)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-		(uuid "7ca1634c-39cb-4d7e-9162-3f0c918bec0f")
-	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 127 133.35 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -580,7 +612,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 69.85 58.42 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -670,7 +702,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 95.25 133.35 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -769,7 +801,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 69.85 86.36 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -868,7 +900,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 38.1 133.35 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -958,7 +990,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 100.33 86.36 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1021,7 +1053,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 204.47 88.9 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1120,7 +1152,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 205.74 60.96 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1192,7 +1224,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 153.67 133.35 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1264,7 +1296,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 232.41 88.9 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1363,7 +1395,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 67.31 133.35 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1462,7 +1494,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:Battery_Cell")
+		(lib_id "SignalSlinger Library:Battery_Cell")
 		(at 205.74 144.78 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1559,7 +1591,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 130.81 86.36 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1622,7 +1654,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 100.33 58.42 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1712,7 +1744,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Graphic:Logo_Open_Hardware_Large")
+		(lib_id "SignalSlinger Library:Logo_Open_Hardware_Large")
 		(at 236.22 144.78 0)
 		(unit 1)
 		(exclude_from_sim no)

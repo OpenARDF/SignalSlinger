@@ -1,0 +1,230 @@
+(footprint "TO-220_Neutral123_Vertical_LargePads"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "TO-220, Neutral, Vertical, Large Pads,")
+	(tags "TO-220, Neutral, Vertical, Large Pads,")
+	(property "Reference" "Q103"
+		(at 3.550749 -2.94027 0)
+		(layer "F.SilkS")
+		(uuid "b54afe83-79c9-458b-a746-2e6ef116645f")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.3)
+			)
+		)
+	)
+	(property "Value" "IRF610"
+		(at 0 3.81 0)
+		(layer "F.Fab")
+		(uuid "64ddddd8-9ccd-493d-ad6a-8b54588b4a20")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d0ce85ec-f370-427e-8be9-a6f4c3828868")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "TH"
+		(at 115.443073 -44.288468 310)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "88b391ce-8dca-43f8-8b56-ffa656524da9")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Digi-Key Part No." "IRF610PBF-ND"
+		(at 115.443073 -44.288468 310)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "cf942242-f162-4a72-b815-6f90473563e4")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Link" "https://www.digikey.com/products/en?keywords=IRF610PBF-ND"
+		(at 115.443073 -44.288468 310)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "b81f9b57-d19e-4984-960b-ce50ca2d69f9")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer" "TH"
+		(at 115.443073 -44.288468 310)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "10411953-7b9f-46ee-b32b-e8336e23cb60")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Manufacturer PN" "TH"
+		(at 115.443073 -44.288468 310)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a0d41848-9597-4962-babd-9f235e392bea")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr through_hole)
+	(fp_line
+		(start -3.7 -2)
+		(end 3.714 -1.96)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "3b0154d9-0977-4711-bb25-247f72360ec4")
+	)
+	(fp_line
+		(start -3.68 1.7515)
+		(end -3.68 -1.9315)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "0bc6d9cf-8647-464b-af75-fc313cb60986")
+	)
+	(fp_line
+		(start -3.5855 1.94)
+		(end 2.94 1.96)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "531ac770-4f9a-499c-979a-f99a3bc22abb")
+	)
+	(fp_line
+		(start 3.7 -1.9315)
+		(end 3.69 1)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "b4bc8632-a2cd-4dd3-afba-b357a4d8a339")
+	)
+	(fp_circle
+		(center -3.63 -1.98)
+		(end -3.53 -2.04)
+		(stroke
+			(width 0.25)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "d1f9cf66-b7c3-4bba-aaab-50adfa598d8c")
+	)
+	(fp_text user "G"
+		(at -2.6 2.77 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "07101676-23d8-406e-a7e4-00b93e7453ac")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "S"
+		(at 2.64 2.769999 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "699254ab-b015-4ec4-9466-3d8f1f12881f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "D"
+		(at 0.04 2.77 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "f9b508e2-3f4c-4b4e-8472-ded051a64bc0")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole oval
+		(at -2.54 0 90)
+		(size 3.50012 1.69926)
+		(drill 1.00076)
+		(layers "*.Cu" "*.Mask" "B.Paste")
+		(remove_unused_layers no)
+		(clearance 0.16)
+		(uuid "8f58942a-f92e-45e2-9e3a-8ea502693dc5")
+	)
+	(pad "2" thru_hole oval
+		(at 0 0 90)
+		(size 3.50012 1.69926)
+		(drill 1.00076)
+		(layers "*.Cu" "*.Mask" "B.Paste")
+		(remove_unused_layers no)
+		(clearance 0.16)
+		(uuid "9d5095f0-0a98-4509-9796-1580e0e75141")
+	)
+	(pad "3" thru_hole roundrect
+		(at 2.54 0 90)
+		(size 3.50012 1.69926)
+		(drill 1.00076)
+		(layers "*.Cu" "*.Mask" "B.Paste")
+		(remove_unused_layers no)
+		(roundrect_rratio 0.25)
+		(clearance 0.16)
+		(uuid "84ae864d-59d6-465b-9165-bb82cf7c1c4e")
+	)
+	(embedded_fonts no)
+	(model "${KICAD6_3DMODEL_DIR}/Package_TO_SOT_THT.3dshapes/TO-220-3_Horizontal_TabDown.wrl"
+		(offset
+			(xyz -2.5 0 6)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
