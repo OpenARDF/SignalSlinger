@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20231120)
+	(version 20250114)
 	(generator "eeschema")
-	(generator_version "8.0")
+	(generator_version "9.0")
 	(uuid "88415375-e68f-4e16-84eb-75795413b896")
 	(paper "A4")
 	(title_block
@@ -10,26 +10,33 @@
 		(rev "3.4")
 	)
 	(lib_symbols
-		(symbol "Connector:Conn_Coaxial"
+		(symbol "Device:C_Small"
+			(pin_numbers
+				(hide yes)
+			)
 			(pin_names
-				(offset 1.016) hide)
+				(offset 0.254)
+				(hide yes)
+			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "J"
-				(at 0.254 3.048 0)
+			(property "Reference" "C"
+				(at 0.254 1.778 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Value" "Conn_Coaxial"
-				(at 2.921 0 90)
+			(property "Value" "C_Small"
+				(at 0.254 -2.032 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
 			(property "Footprint" ""
@@ -41,7 +48,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" " ~"
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(effects
 					(font
@@ -50,7 +57,180 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+			(property "Description" "Unpolarized capacitor, small symbol"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "capacitor cap"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "C_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "C_Small_0_1"
+				(polyline
+					(pts
+						(xy -1.524 0.508) (xy 1.524 0.508)
+					)
+					(stroke
+						(width 0.3048)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.524 -0.508) (xy 1.524 -0.508)
+					)
+					(stroke
+						(width 0.3302)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "C_Small_1_1"
+				(pin passive line
+					(at 0 2.54 270)
+					(length 2.032)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 2.032)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "SignalSlinger Library:Conn_Coaxial"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J301"
+				(at 2.5401 0.5415 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "To Antenna"
+				(at 2.5401 -1.9954 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "CONN BNC JACK R/A 50 OHM PCB"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Digi-Key Part No." "ARF1065-ND"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Link" "https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer" "Amphenol RF"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer PN" "31-5431"
 				(at 0 0 0)
 				(effects
 					(font
@@ -78,18 +258,6 @@
 				)
 			)
 			(symbol "Conn_Coaxial_0_1"
-				(arc
-					(start -1.778 -0.508)
-					(mid 0.2311 -1.8066)
-					(end 1.778 0)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
 				(polyline
 					(pts
 						(xy -2.54 0) (xy -0.508 0)
@@ -102,12 +270,24 @@
 						(type none)
 					)
 				)
-				(polyline
-					(pts
-						(xy 0 -2.54) (xy 0 -1.778)
-					)
+				(arc
+					(start 1.778 0)
+					(mid 0.222 -1.8079)
+					(end -1.778 -0.508)
 					(stroke
-						(width 0)
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.778 0.508)
+					(mid 0.2221 1.8084)
+					(end 1.778 0)
+					(stroke
+						(width 0.254)
 						(type default)
 					)
 					(fill
@@ -125,12 +305,12 @@
 						(type none)
 					)
 				)
-				(arc
-					(start 1.778 0)
-					(mid 0.2099 1.8101)
-					(end -1.778 0.508)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0 -1.778)
+					)
 					(stroke
-						(width 0.254)
+						(width 0)
 						(type default)
 					)
 					(fill
@@ -176,31 +356,216 @@
 					)
 				)
 			)
+			(embedded_fonts no)
 		)
-		(symbol "Connector:TEST_SCOPE"
-			(pin_numbers hide)
+		(symbol "SignalSlinger Library:INDUCTOR_SMALL"
+			(pin_numbers
+				(hide yes)
+			)
 			(pin_names
-				(offset 0.762) hide)
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "L301"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "2.7uH"
+				(at 0 -1.27 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Digi-Key Part No." "T60-2 (Amidon)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Link" "http://www.amidoncorp.com/t60-2/"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.524 1.524)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer PN" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "INDUCTOR_SMALL_0_1"
+				(arc
+					(start -5.08 0)
+					(mid -3.81 1.2645)
+					(end -2.54 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.54 0)
+					(mid -1.27 1.2645)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 1.27 1.2645)
+					(end 2.54 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 2.54 0)
+					(mid 3.81 1.2645)
+					(end 5.08 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "INDUCTOR_SMALL_1_1"
+				(pin input line
+					(at -6.35 0 0)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at 6.35 0 180)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "SignalSlinger Library:TEST_SCOPE"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(property "Reference" "W101"
-				(at 0 5.08 90)
+				(at 5.08 0 90)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 				)
 			)
-			(property "Value" "TEST_SCOPE"
-				(at -1.27 1.27 90)
+			(property "Value" "T2"
+				(at 1.27 1.27 90)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 				)
 			)
-			(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+			(property "Footprint" "SignalSlinger_Footprints:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
 				(at 0 5.08 0)
 				(effects
 					(font
@@ -317,330 +682,16 @@
 					)
 				)
 			)
-		)
-		(symbol "Device:C_Small"
-			(pin_numbers hide)
-			(pin_names
-				(offset 0.254) hide)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "C"
-				(at 0.254 1.778 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Value" "C_Small"
-				(at 0.254 -2.032 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "~"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "Unpolarized capacitor, small symbol"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "capacitor cap"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "C_*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "C_Small_0_1"
-				(polyline
-					(pts
-						(xy -1.524 -0.508) (xy 1.524 -0.508)
-					)
-					(stroke
-						(width 0.3302)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.524 0.508) (xy 1.524 0.508)
-					)
-					(stroke
-						(width 0.3048)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "C_Small_1_1"
-				(pin passive line
-					(at 0 2.54 270)
-					(length 2.032)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 -2.54 90)
-					(length 2.032)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-		)
-		(symbol "Device:INDUCTOR_SMALL"
-			(pin_numbers hide)
-			(pin_names
-				(offset 0) hide)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "L301"
-				(at 0 2.54 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "INDUCTOR_SMALL"
-				(at 0 -1.27 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" "Inductors:Toroid_T-60_2TH"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Digi-Key Part No." "T60-2 (Amidon)"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Link" "<a href=\"http://www.amidoncorp.com/t60-2/\">Link</a>"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.524 1.524)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer" "TH"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Manufacturer PN" "TH"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description_1" "TH"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "INDUCTOR_SMALL_0_1"
-				(arc
-					(start -2.54 0)
-					(mid -3.81 1.2645)
-					(end -5.08 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 0)
-					(mid -1.27 1.2645)
-					(end -2.54 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 2.54 0)
-					(mid 1.27 1.2645)
-					(end 0 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 5.08 0)
-					(mid 3.81 1.2645)
-					(end 2.54 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "INDUCTOR_SMALL_1_1"
-				(pin input line
-					(at -6.35 0 0)
-					(length 1.27)
-					(name "1"
-						(effects
-							(font
-								(size 0.762 0.762)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 0.762 0.762)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at 6.35 0 180)
-					(length 1.27)
-					(name "2"
-						(effects
-							(font
-								(size 0.762 0.762)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 0.762 0.762)
-							)
-						)
-					)
-				)
-			)
+			(embedded_fonts no)
 		)
 		(symbol "power:GND"
 			(power)
+			(pin_numbers
+				(hide yes)
+			)
 			(pin_names
 				(offset 0)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -689,7 +740,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "power-flag"
+			(property "ki_keywords" "global power"
 				(at 0 0 0)
 				(effects
 					(font
@@ -715,8 +766,8 @@
 			(symbol "GND_1_1"
 				(pin power_in line
 					(at 0 0 270)
-					(length 0) hide
-					(name "GND"
+					(length 0)
+					(name "~"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -732,7 +783,54 @@
 					)
 				)
 			)
+			(embedded_fonts no)
 		)
+	)
+	(text "6th order Chebychev\n3.9MHz 3dB cut-off\nw/ node at 10.7MHz"
+		(exclude_from_sim no)
+		(at 127 68.58 0)
+		(effects
+			(font
+				(size 0.9906 0.9906)
+			)
+			(justify left bottom)
+		)
+		(uuid "16bbf532-f95c-4583-8055-75e4bd79b23f")
+	)
+	(text "40m LPF\n6th order Chebychev\n8MHz 3dB cut-off\nw/ node at 21.5 MHz\n\nL301 & L302 = 1.3uH\nC302 & C305 = 470pF\nC303 = 820pF\nC304 = 43pF"
+		(exclude_from_sim no)
+		(at 124.46 125.73 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "31cdb4a6-00a2-4ffd-8c35-c5b43af73f1b")
+	)
+	(text "L301 & L302:\n20T (46 cm) #24 T60-2 "
+		(exclude_from_sim no)
+		(at 121.92 97.79 0)
+		(effects
+			(font
+				(size 0.9906 0.9906)
+			)
+			(justify left bottom)
+		)
+		(uuid "42b62f6f-0b5b-4896-893d-b1f4d683ffe5")
+	)
+	(text "80m LPF"
+		(exclude_from_sim no)
+		(at 129.54 63.5 0)
+		(effects
+			(font
+				(size 2.0066 2.0066)
+				(thickness 0.4013)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "fc84fc78-5b82-4b28-aeb3-964e8b369e1a")
 	)
 	(junction
 		(at 165.1 83.82)
@@ -954,52 +1052,6 @@
 		)
 		(uuid "dd7e227d-53e3-4a19-89c8-39492bfc4d83")
 	)
-	(text "6th order Chebychev\n3.9MHz 3dB cut-off\nw/ node at 10.7MHz"
-		(exclude_from_sim no)
-		(at 127 68.58 0)
-		(effects
-			(font
-				(size 0.9906 0.9906)
-			)
-			(justify left bottom)
-		)
-		(uuid "16bbf532-f95c-4583-8055-75e4bd79b23f")
-	)
-	(text "40m LPF\n6th order Chebychev\n8MHz 3dB cut-off\nw/ node at 21.5 MHz\n\nL301 & L302 = 1.3uH\nC302 & C305 = 470pF\nC303 = 820pF\nC304 = 43pF"
-		(exclude_from_sim no)
-		(at 124.46 125.73 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "31cdb4a6-00a2-4ffd-8c35-c5b43af73f1b")
-	)
-	(text "L301 & L302:\n20T (46 cm) #24 T60-2 "
-		(exclude_from_sim no)
-		(at 121.92 97.79 0)
-		(effects
-			(font
-				(size 0.9906 0.9906)
-			)
-			(justify left bottom)
-		)
-		(uuid "42b62f6f-0b5b-4896-893d-b1f4d683ffe5")
-	)
-	(text "80m LPF"
-		(exclude_from_sim no)
-		(at 129.54 63.5 0)
-		(effects
-			(font
-				(size 2.0066 2.0066)
-				(thickness 0.4013)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-		(uuid "fc84fc78-5b82-4b28-aeb3-964e8b369e1a")
-	)
 	(global_label "RF_Raw"
 		(shape input)
 		(at 102.87 83.82 180)
@@ -1204,7 +1256,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:INDUCTOR_SMALL")
+		(lib_id "SignalSlinger Library:INDUCTOR_SMALL")
 		(at 151.13 83.82 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1228,7 +1280,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical"
+		(property "Footprint" "SignalSlinger_Footprints:Toroid_T-60_2TH_Vertical"
 			(at 151.13 83.82 0)
 			(effects
 				(font
@@ -1307,7 +1359,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:INDUCTOR_SMALL")
+		(lib_id "SignalSlinger Library:INDUCTOR_SMALL")
 		(at 125.73 83.82 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1331,7 +1383,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical"
+		(property "Footprint" "SignalSlinger_Footprints:Toroid_T-60_2TH_Vertical"
 			(at 125.73 83.82 0)
 			(effects
 				(font
@@ -1410,7 +1462,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TEST_SCOPE")
+		(lib_id "SignalSlinger Library:TEST_SCOPE")
 		(at 165.1 80.01 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1434,7 +1486,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+		(property "Footprint" "SignalSlinger_Footprints:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
 			(at 165.1 74.93 0)
 			(effects
 				(font
@@ -1762,7 +1814,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TEST_SCOPE")
+		(lib_id "SignalSlinger Library:TEST_SCOPE")
 		(at 116.84 80.01 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1786,7 +1838,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+		(property "Footprint" "SignalSlinger_Footprints:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
 			(at 116.84 74.93 0)
 			(effects
 				(font
@@ -1914,7 +1966,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TEST_SCOPE")
+		(lib_id "SignalSlinger Library:TEST_SCOPE")
 		(at 134.62 80.01 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -1938,7 +1990,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+		(property "Footprint" "SignalSlinger_Footprints:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
 			(at 134.62 74.93 0)
 			(effects
 				(font
@@ -2066,7 +2118,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:Conn_Coaxial")
+		(lib_id "SignalSlinger Library:Conn_Coaxial")
 		(at 177.8 83.82 0)
 		(unit 1)
 		(exclude_from_sim no)
