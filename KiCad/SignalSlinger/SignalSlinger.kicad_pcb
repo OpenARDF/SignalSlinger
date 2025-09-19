@@ -34854,7 +34854,7 @@
 		)
 	)
 	(gr_text "VSW"
-		(at 70.38 67.46 -0)
+		(at 80.88 67.45 -0)
 		(layer "B.SilkS")
 		(uuid "6f66d89a-d256-4c2e-9b14-90270fb1412d")
 		(effects
@@ -34915,7 +34915,7 @@
 		)
 	)
 	(gr_text "GND"
-		(at 80.98 67.46 -0)
+		(at 77.51 67.36 -0)
 		(layer "B.SilkS")
 		(uuid "8ba7edac-aa21-41b4-90f4-90905d702d9e")
 		(effects
@@ -34988,7 +34988,7 @@
 		)
 	)
 	(gr_text "+BAT"
-		(at 77.91 67.46 -0)
+		(at 74.42 67.38 -0)
 		(layer "B.SilkS")
 		(uuid "ccd89351-5595-4aa6-9071-89637a5102f5")
 		(effects
@@ -35049,7 +35049,7 @@
 		)
 	)
 	(gr_text "GND"
-		(at 73.88 67.36 -0)
+		(at 70.43 67.33 -0)
 		(layer "B.SilkS")
 		(uuid "e62ea75c-56b0-4321-889c-ebb79baf38f5")
 		(effects
@@ -49704,8 +49704,8 @@
 		(filled_areas_thickness no)
 		(keepout
 			(tracks not_allowed)
-			(vias not_allowed)
-			(pads not_allowed)
+			(vias allowed)
+			(pads allowed)
 			(copperpour not_allowed)
 			(footprints allowed)
 		)
@@ -60563,8 +60563,8 @@
 		(filled_areas_thickness no)
 		(keepout
 			(tracks not_allowed)
-			(vias not_allowed)
-			(pads not_allowed)
+			(vias allowed)
+			(pads allowed)
 			(copperpour not_allowed)
 			(footprints allowed)
 		)
@@ -60599,8 +60599,8 @@
 		(filled_areas_thickness no)
 		(keepout
 			(tracks not_allowed)
-			(vias not_allowed)
-			(pads not_allowed)
+			(vias allowed)
+			(pads allowed)
 			(copperpour not_allowed)
 			(footprints allowed)
 		)
@@ -60635,8 +60635,8 @@
 		(filled_areas_thickness no)
 		(keepout
 			(tracks not_allowed)
-			(vias not_allowed)
-			(pads not_allowed)
+			(vias allowed)
+			(pads allowed)
 			(copperpour not_allowed)
 			(footprints allowed)
 		)
