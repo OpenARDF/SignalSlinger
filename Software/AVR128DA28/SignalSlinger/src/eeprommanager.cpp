@@ -125,7 +125,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 
 extern volatile bool g_device_enabled;
 extern volatile bool g_isMaster;
-extern volatile Fox_t g_fox[EVENT_NUMBER_OF_EVENTS-1];
+extern volatile Fox_t g_fox[EVENT_NUMBER_OF_EVENTS];
 extern volatile int8_t g_utc_offset;
 extern uint8_t g_unlockCode[];
 extern Frequency_Hz g_rtty_offset;
