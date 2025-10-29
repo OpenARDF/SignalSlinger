@@ -9257,15 +9257,15 @@
 			(uuid "ec065504-4e76-4f9a-afec-336d6cbabf82")
 		)
 		(embedded_fonts no)
-		(model "${KICAD8_3DMODEL_DIR}/Connector_BarrelJack.3dshapes/BarrelJack_PJ-036AH-SMT-TR.step"
+		(model "${KICAD9_3DMODEL_DIR}/Connector_BarrelJack.3dshapes/Sky_PJ-036AH-SMT-TR.step"
 			(offset
-				(xyz 0 -10 6.6)
+				(xyz 0 -10 6.5)
 			)
 			(scale
 				(xyz 1 1 1)
 			)
 			(rotate
-				(xyz 90 180 180)
+				(xyz -90 -0 -0)
 			)
 		)
 	)
