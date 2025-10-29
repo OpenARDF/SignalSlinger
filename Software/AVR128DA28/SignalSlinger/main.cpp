@@ -188,7 +188,7 @@ EepromManager g_ee_mgr;
 
 bool g_isMaster = false;
 uint16_t isMasterCountdownSeconds = 0;
-Fox_t g_fox[] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, INVALID_FOX}; /* none, classic, sprint, foxoring */
+Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, INVALID_FOX}; /* none, classic, sprint, foxoring */
 
 Event_t g_event = EEPROM_EVENT_SETTING_DEFAULT;
 Frequency_Hz g_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -988,16 +988,13 @@ int main(void)
 		RTC_init_backup();
 	}
 
-	if(g_device_enabled)
-	{
-		int tries = 5;
-		powerToTransmitter(ON);
+	int tries = 5;
+	powerToTransmitter(ON);
 
-		while(g_device_enabled && tries && (!txIsInitialized()))
-		{
-			--tries;
- 			powerToTransmitter(ON);
-		}
+	while(tries && (!txIsInitialized()))
+	{
+		--tries;
+ 		powerToTransmitter(ON);
 	}
 
 	if(!txIsInitialized())
@@ -1178,7 +1175,7 @@ int main(void)
 						time_t now = time(null);
 						static time_t hold_now = 0;
 						
-						if((now - hold_now) > 5)
+						if((now - hold_now) > 600) // Every ten minutes check to see if the internal battery should be charged
 						{
 							hold_now = now;
 							system_charging_config();
@@ -1535,11 +1532,7 @@ int main(void)
 
 				if(g_text_buff.empty())
 				{
-					if(!g_device_enabled)
-					{
-						LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
-					}
-					else if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+					if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
 					{
 						if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 						{
@@ -1550,6 +1543,10 @@ int main(void)
 						{
 							LEDS.sendCode((char*)"5XMT");
 						}
+					}
+					else if (!g_device_enabled)
+					{
+						LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
 					}
 					else if(g_cloningInProgress || g_key_down_countdown)
 					{

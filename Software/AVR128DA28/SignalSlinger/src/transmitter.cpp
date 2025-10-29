@@ -116,7 +116,9 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
  */
 	EC powerToTransmitter(bool state)
 	{
-		if(!g_device_enabled || g_disable_transmissions)
+		EC result = ERROR_CODE_NO_ERROR;
+		
+		if(g_disable_transmissions)
 		{
 			si5351_shutdown_comms();
 			setBoostEnable(OFF);
@@ -148,6 +150,11 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 					--tries;
 				}
 				
+				if(!tries)
+				{
+					result = ERROR_CODE_RF_OSCILLATOR_ERROR;
+				}
+				
 				si5351_start_comms();
 			}
 			else
@@ -157,7 +164,7 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			}
 		}
 
-		return(ERROR_CODE_NO_ERROR);
+		return(result);
 	}
 // 	
 // 	void txKeyDown(bool key)
