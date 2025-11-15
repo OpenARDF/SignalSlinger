@@ -189,7 +189,7 @@ void serial_Rx(uint8_t rx_char)
 					{
 						if((charIndex == 0) || (textBuff[charIndex - 1] == ':')) // Meshtastic flag ": " detected
 						{	
-							rx_char = '\0';
+							// rx_char = '\0'; /* Go ahead and echo the space */
 							charIndex = 0;
 							field_len = 0;
 							msg_ID = SB_MESSAGE_EMPTY;
