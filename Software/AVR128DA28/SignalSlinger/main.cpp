@@ -1511,7 +1511,7 @@ int main(void)
 				{
 					g_enable_manual_transmissions = true; /* There is only one consumer of g_text_buff so it is always OK to enable manual transmissions */
 				}
-			
+
 				if(!isMasterCountdownSeconds)
 				{
 					g_isMaster = false;
@@ -1629,27 +1629,32 @@ int main(void)
 	// 				g_ee_mgr.updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
 	// 			}
 			}
-		
-			if(g_key_down_countdown || g_reset_after_keydown)
+
+#ifndef TEST_MODE_SOFTWARE
+			if(g_reset_after_keydown)
 			{
-				if(g_reset_after_keydown)
+				g_reset_after_keydown = false;
+ 				LEDS.setRed(OFF);
+				setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+ 				keyTransmitter(OFF);
+					
+				if(g_event_enabled) suspendEvent();
+				g_sleepType = eventScheduled() ? SLEEP_UNTIL_START_TIME : SLEEP_FOREVER;
+				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+					
+				if(eventScheduled())
 				{
-					g_reset_after_keydown = false;
- 					LEDS.setRed(OFF);
-					setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
- 					keyTransmitter(OFF);
-					
-					if(g_event_enabled) suspendEvent();
-					g_sleepType = eventScheduled() ? SLEEP_UNTIL_START_TIME : SLEEP_FOREVER;
-					g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-					
-					if(eventScheduled())
-					{
-						g_last_error_code = launchEvent((SC*)&g_last_status_code);
-						g_sleepshutdown_seconds = 300;
-					}
+					g_last_error_code = launchEvent((SC*)&g_last_status_code);
+					g_sleepshutdown_seconds = 300;
 				}
 			}
+#else
+			if(g_key_down_countdown && g_isMaster)
+			{
+				g_key_down_countdown = 9000;
+				isMasterCountdownSeconds = 9000;				
+			}
+#endif
 		}
 	}
 }
@@ -2046,10 +2051,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								strncpy(g_messages_text[FOXORING_PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
 								g_ee_mgr.updateEEPROMVar(Foxoring_pattern_text, g_messages_text[FOXORING_PATTERN_TEXT]);
 							}
-// 							else
-// 							{
-// 								strncpy(g_messages_text[PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
-// 							}
 						}
 						else
 						{

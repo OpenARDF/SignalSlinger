@@ -187,7 +187,19 @@ void serial_Rx(uint8_t rx_char)
 				{
 					if(rx_char == ' ')
 					{
-						if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
+						if((charIndex == 0) || (textBuff[charIndex - 1] == ':')) // Meshtastic flag ": " detected
+						{	
+							rx_char = '\0';
+							charIndex = 0;
+							field_len = 0;
+							msg_ID = SB_MESSAGE_EMPTY;
+
+							field_index = 0;
+							buff = NULL;
+
+							receiving_msg = false;
+						}
+						else if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
 						{
 							rx_char = '\0';
 						}
@@ -207,21 +219,29 @@ void serial_Rx(uint8_t rx_char)
 					{
 						if(field_index == 0)    /* message ID received */
 						{
-							msg_ID = msg_ID * 10 + rx_char;
-							if(field_len++ > SERIALBUS_MAX_MSG_ID_LENGTH) /* Invalid ID length = throw out everything */
+							field_len++;
+							
+							if(field_len <= SERIALBUS_MAX_MSG_ID_LENGTH) 
 							{
-								rx_char = '\0';
-								buff->id = SB_INVALID_MESSAGE; /* print help message */
-
-								charIndex = 0;
-								field_len = 0;
-								msg_ID = SB_MESSAGE_EMPTY;
-
-								field_index = 0;
-								buff = NULL;
-
-								receiving_msg = false;
+								msg_ID = msg_ID * 10 + rx_char;
 							}
+							else // /* Invalid ID length = Keep checking in case it is a Meshtastic message */
+							{
+								msg_ID = SB_MESSAGE_EMPTY;
+								
+								if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
+								{
+									rx_char = '\0';
+									buff->id = SB_INVALID_MESSAGE; /* print help message */
+
+									charIndex = 0;
+									field_len = 0;
+									field_index = 0;
+									buff = NULL;
+
+									receiving_msg = false;
+								}
+							}							
 						}
 						else
 						{
