@@ -40,7 +40,14 @@
 
 #define PRODUCT_NAME_SHORT "SignalSlinger"
 #define PRODUCT_NAME_LONG "\n* SignalSlinger 80m Radio Orienteering Transmitter"
-#define TEST_MODE_SOFTWARE true
+
+/* Caution: Do not enable test software build flag for releasable software */
+// #define TEST_MODE_SOFTWARE /* Do not define on releasable software */
+#ifdef TEST_MODE_SOFTWARE
+#define TEXT_TEST_SOFTWARE_NOTICE_TXT (char*)"\n* TEST SOFTWARE: Do not distribute! \n* Some commands disabled.\n\n"
+#undef SW_REVISION
+#define SW_REVISION "*** TEST SOFTWARE ***"
+#endif
 
 /*******************************************************/
 
@@ -259,12 +266,13 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_EXCESSIVE_TEMPERATURE (char*)"* Error: High Temperature Shutdown!\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
-#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device Disabled! Enable with 8 button presses\n"
 #define TEXT_NOT_SLEEPING_TXT (char*)"\n* Awake\n"
 #define TEXT_POWER_OFF (char*)"\n* Power off. Press and hold pushbutton for power on\n"
 #define TEXT_SLEEPING_TXT (char*)"\n* Sleeping. Press and hold pushbutton to awaken\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
+#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"
+
 #define MINIMUM_VALID_EPOCH ((time_t)1609459200UL)  /* 1 Jan 2021 00:00:00 */
 #define YEAR_2000_EPOCH ((time_t)946684800UL)  /* 1 Jan 2000 00:00:00 */
 #define FOREVER_EPOCH ((time_t)4294967295UL) /* 7 Feb 2106 00:00:00 */

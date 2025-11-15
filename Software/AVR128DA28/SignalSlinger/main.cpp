@@ -1055,6 +1055,13 @@ int main(void)
 
 				configRedLEDforEvent();
 				sb_send_string(TEXT_NOT_SLEEPING_TXT);
+				if(!g_device_enabled)
+				{
+					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
+				}
+#ifdef TEST_MODE_SOFTWARE
+				sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
+#endif
 				sb_send_NewPrompt();
 			}
 			else /* Spin your wheels waiting for above condition to test true */
@@ -2065,6 +2072,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_KEY:
 			{
+#ifndef TEST_MODE_SOFTWARE
 				if(g_device_enabled)
 				{
 					if(sb_buff->fields[SB_FIELD1][0])
@@ -2096,6 +2104,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 				}
+#else
+				sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
+#endif
 			}
 			break;
 
@@ -3841,10 +3852,7 @@ void reportSettings(void)
 	// If the device is disabled, say so and provide instructions to enable.
 	if(!g_device_enabled)
 	{
-		sprintf(g_tempStr, "\n* Device disabled!");
-		sb_send_string(g_tempStr);
-		sprintf(g_tempStr, "\n* Press button seven (7) times to enable.");
-		sb_send_string(g_tempStr);
+		sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 	}
 	else
 	{
@@ -3857,6 +3865,10 @@ void reportSettings(void)
 			sb_send_string(g_tempStr);
 		}
 	}
+	
+#ifdef TEST_MODE_SOFTWARE
+	sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
+#endif
 }
 
 /*
