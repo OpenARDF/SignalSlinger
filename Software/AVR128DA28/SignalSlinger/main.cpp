@@ -152,6 +152,8 @@ static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_charge_battery = false;
 extern bool g_enable_boost_regulator;
 static volatile bool g_turn_on_fan = false;
+static volatile bool g_report_settings = false;
+static volatile uint16_t g_report_settings_countdown = 0;
 
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
@@ -176,6 +178,7 @@ static volatile uint16_t g_programming_msg_throttle = 0;
 static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
 bool g_cloningInProgress = false;
+volatile bool g_mute_serial_responses = false;
 Enunciation_t g_enunciator = LED_ONLY;
 static volatile uint16_t g_key_down_countdown = 0;
 static volatile bool g_reset_after_keydown = false;
@@ -482,6 +485,16 @@ ISR(TCB0_INT_vect)
 		if(g_utility_countdown)
 		{
 			g_utility_countdown--;
+		}
+		
+		if(g_report_settings_countdown)
+		{
+			g_report_settings_countdown--;
+			
+			if(!g_report_settings_countdown)
+			{
+				g_report_settings = true;
+			}
 		}
 		
 		/* Handle pushbutton press detection */
@@ -1459,7 +1472,20 @@ int main(void)
 				}
 				else if(g_handle_counted_presses == 7)
 				{
-					if(!g_device_enabled)
+					if(g_device_enabled)
+					{
+						g_mute_serial_responses = !g_mute_serial_responses;
+						
+						if(g_mute_serial_responses)
+						{
+							LEDS.sendCode((char*)"mmm");
+						}
+						else
+						{
+							LEDS.sendCode((char*)"ttt");;
+						}
+					}
+					else
 					{
 						g_device_enabled = true;
 						g_ee_mgr.updateEEPROMVar(Device_Enabled, (void*)&g_device_enabled);
@@ -1493,6 +1519,15 @@ int main(void)
 				powerToTransmitter(g_device_enabled); // Needs to be done outside an ISR
 				g_event_enabled = true;
 				g_event_commenced = true;
+			}
+			
+			
+			if(g_report_settings)
+			{
+				g_report_settings = false;
+				reportSettings();
+				sb_send_NewLine();
+				sb_send_NewPrompt();
 			}
 
 		
@@ -1691,6 +1726,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_DEBUG:
 			{
+				g_report_settings_countdown = 0;
 				char c1 = (sb_buff->fields[SB_FIELD1][0]);
 				sprintf(g_tempStr, "\nI2C error count = %d\n", g_i2c_failure_count);
 				sb_send_string(g_tempStr);
@@ -1706,6 +1742,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_SET_FOX:
 			{
+				g_report_settings_countdown = 0;
 				int c1 = (int)(sb_buff->fields[SB_FIELD1][0]);
 				int c2 = (int)(sb_buff->fields[SB_FIELD1][1]);
 				
@@ -1866,6 +1903,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_SLP:
 			{
+				g_report_settings_countdown = 0;
 				if(sb_buff->fields[SB_FIELD1][0])
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == '0')    
@@ -1891,6 +1929,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 			case SB_MESSAGE_TX_FREQ:
 			{
+				g_report_settings_countdown = 0;
 				if(sb_buff->fields[SB_FIELD1][0])
 				{
 					char freqTier = sb_buff->fields[SB_FIELD1][0];
@@ -2030,6 +2069,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 			case SB_MESSAGE_PATTERN:
 			{
+				g_report_settings_countdown = 0;
 				if(g_cloningInProgress)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] && sb_buff->fields[SB_FIELD2][0])
@@ -2072,6 +2112,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_KEY:
 			{
+				g_report_settings_countdown = 0;
 #ifndef TEST_MODE_SOFTWARE
 				if(g_device_enabled)
 				{
@@ -2112,6 +2153,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_GO:
 			{
+				g_report_settings_countdown = 0;
 				if(g_device_enabled)
 				{
 					if(sb_buff->fields[SB_FIELD1][0])
@@ -2155,6 +2197,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_SET_STATION_ID:
 			{
+				g_report_settings_countdown = 0;
 				if(sb_buff->fields[SB_FIELD1][0])
 				{
 					int len = 0;
@@ -2210,6 +2253,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_CODE_SETTINGS:
 			{
+				g_report_settings_countdown = 0;
 				char c = sb_buff->fields[SB_FIELD1][0];
 				char x = sb_buff->fields[SB_FIELD2][0];
 
@@ -2279,6 +2323,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_MASTER:
 			{
+				g_report_settings_countdown = 0;
 				if(sb_buff->fields[SB_FIELD1][0] == 'P')
 				{
 					if(!g_send_clone_success_countdown)
@@ -2324,6 +2369,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_EVENT:
 			{
+				g_report_settings_countdown = 0;
 				if(g_cloningInProgress)
 				{
 					char c = sb_buff->fields[SB_FIELD1][0];
@@ -2398,6 +2444,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
  			case SB_MESSAGE_FUNCTION:
  			{
+				g_report_settings_countdown = 0;
 				char fun = sb_buff->fields[SB_FIELD1][0];
 				
 				if(fun)
@@ -2439,6 +2486,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_CLOCK:
 			{
+				g_report_settings_countdown = 0;
 				char f1 = sb_buff->fields[SB_FIELD1][0];
 				
 				if(!f1 || f1 == 'T')   /* Current time format "YYMMDDhhmmss" */
@@ -2622,6 +2670,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_BATTERY:
 			{
+				g_report_settings_countdown = 0;
 				char txt[6];
 
 				if(sb_buff->fields[SB_FIELD1][0] == 'T')
@@ -2707,6 +2756,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_VER:
 			{
+				g_report_settings_countdown = 0;
 				if(!g_cloningInProgress)
 				{
 					sb_send_string((char*)PRODUCT_NAME_LONG);
@@ -2718,6 +2768,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_HELP:
 			{
+				g_report_settings_countdown = 0;
 				if(!g_cloningInProgress)
 				{
 					reportSettings();
@@ -2730,23 +2781,25 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				if(!g_cloningInProgress)
 				{
-					reportSettings();
+					g_report_settings_countdown = 100;
 				}
 			}
 			break;
 
 			default:
 			{
-				if(!g_cloningInProgress)
+				if(!g_cloningInProgress && !g_report_settings_countdown)
 				{
 					sb_send_string(HELP_TEXT_TXT);
 				}
+								
+				g_report_settings_countdown = 0;
 			}
 			break;
 		}
 
 		sb_buff->id = SB_MESSAGE_EMPTY;
-		if(!(g_cloningInProgress) && !suppressResponse)
+		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown)
 		{
 			sb_send_NewLine();
 			sb_send_NewPrompt();
