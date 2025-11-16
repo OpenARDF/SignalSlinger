@@ -1705,6 +1705,7 @@ int main(void)
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 //void handleSerialBusMsgs()
 {
+	static bool meshConnected = false;
 	SerialbusRxBuffer* sb_buff;
 
 	while((sb_buff = nextFullSBRxBuffer()))
@@ -1718,6 +1719,21 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 		switch(msg_id)
 		{
+			case SB_MODE_MESH:
+			{
+				char c1 = (sb_buff->fields[SB_FIELD1][0]);
+				
+				if(c1 == '1')
+				{
+					meshConnected = true;
+				}
+				else
+				{
+					meshConnected = false;
+				}
+			}
+			break;
+			
 			case SB_MESSAGE_RESET:
 			{
 				RSTCTRL_reset();
@@ -2063,7 +2079,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 				}
 				
-				if(!(g_cloningInProgress)) reportSettings();
+				if(!g_cloningInProgress && !meshConnected) reportSettings();
 			}
 			break;
 				
@@ -2106,7 +2122,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 				}
 				
-				if(!(g_cloningInProgress)) reportSettings();
+				if(!g_cloningInProgress && !meshConnected) reportSettings();
 			}
 			break;
 			
@@ -2245,7 +2261,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
-					reportSettings();
+					if(!meshConnected) reportSettings();
 				}
 			}
 			break;
@@ -2317,50 +2333,53 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					sprintf(g_tempStr, "err\n");
 				}
 
-				if(!(g_cloningInProgress)) reportSettings();
+				if(!g_cloningInProgress && !meshConnected) reportSettings();
 			}
 			break;
 
 			case SB_MESSAGE_MASTER:
 			{
 				g_report_settings_countdown = 0;
-				if(sb_buff->fields[SB_FIELD1][0] == 'P')
+				if(!meshConnected)
 				{
-					if(!g_send_clone_success_countdown)
+					if(sb_buff->fields[SB_FIELD1][0] == 'P')
 					{
-						g_cloningInProgress = true;
-						suspendEvent();
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_event_checksum = 0;
-						sb_send_string((char*)"MAS\r");
+						if(!g_send_clone_success_countdown)
+						{
+							g_cloningInProgress = true;
+							suspendEvent();
+							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+							g_event_checksum = 0;
+							sb_send_string((char*)"MAS\r");
+						}
 					}
-				}
-				else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
-				{
-					uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
-					g_cloningInProgress = false;
-					g_programming_countdown = 0;
-					if(sum == g_event_checksum)
+					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
 					{
-						sb_send_string((char*)"MAS ACK\r");
-						g_send_clone_success_countdown = 18000;
-						setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
-//						g_start_event = true;
+						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
+						g_cloningInProgress = false;
+						g_programming_countdown = 0;
+						if(sum == g_event_checksum)
+						{
+							sb_send_string((char*)"MAS ACK\r");
+							g_send_clone_success_countdown = 18000;
+							setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
+	//						g_start_event = true;
+						}
+						else
+						{
+							sb_send_string((char*)"MAS NAK\r");
+						}
 					}
 					else
 					{
-						sb_send_string((char*)"MAS NAK\r");
-					}
-				}
-				else
-				{
-					if(sb_buff->fields[SB_FIELD1][0])
-					{
-						if((sb_buff->fields[SB_FIELD1][0] == 'M') || (sb_buff->fields[SB_FIELD1][0] == '1'))
+						if(sb_buff->fields[SB_FIELD1][0])
 						{
- 							g_isMaster = true;
-							g_sleepshutdown_seconds = 720;
-							isMasterCountdownSeconds = 600; /* Remain Master for 10 minutes */
+							if((sb_buff->fields[SB_FIELD1][0] == 'M') || (sb_buff->fields[SB_FIELD1][0] == '1'))
+							{
+ 								g_isMaster = true;
+								g_sleepshutdown_seconds = 720;
+								isMasterCountdownSeconds = 600; /* Remain Master for 10 minutes */
+							}
 						}
 					}
 				}
@@ -2438,7 +2457,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 				}
 				
-				if(!(g_cloningInProgress)) reportSettings();
+				if(!g_cloningInProgress)
+				{
+					// Buffer for storing temporary strings.
+					char buf[TEMP_STRING_SIZE];
+					
+					if(!meshConnected)
+					{
+						sb_send_NewLine();
+					}
+					
+					if(!event2Text(g_tempStr, g_event))
+					{
+						strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
+						sprintf(g_tempStr, "Event: %s\n", buf);
+					}
+					else
+					{
+						sprintf(g_tempStr, "Event: None Set\n");
+					}
+					
+					sb_send_string(g_tempStr);
+				}
 			}
 			break;
 			
@@ -2479,7 +2519,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
-					reportSettings();
+					if(!meshConnected) reportSettings();
 				}
  			}
  			break;
@@ -2652,7 +2692,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sprintf(g_tempStr, "\nDays to run: %d\n", g_days_to_run);
 						sb_send_string(g_tempStr);
 						suppressResponse = true;
-						sb_send_NewPrompt();
+						if(!meshConnected) sb_send_NewPrompt();
 					}
 				}
 				else if(f1 == 'C' && !g_cloningInProgress)  /* Clock calibration */
@@ -2664,7 +2704,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					RTC_set_calibration(cal);
 				}
 
-				if(!(g_cloningInProgress) && !suppressResponse) reportSettings();
+				if(!(g_cloningInProgress) && !suppressResponse && !meshConnected) reportSettings();
 			}
 			break;
 
@@ -2769,7 +2809,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_HELP:
 			{
 				g_report_settings_countdown = 0;
-				if(!g_cloningInProgress)
+				if(!g_cloningInProgress && !meshConnected)
 				{
 					reportSettings();
  					sb_send_string(HELP_TEXT_TXT);
@@ -2779,7 +2819,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_CR_NO_DATA:
 			{
-				if(!g_cloningInProgress)
+				if(!g_cloningInProgress && !meshConnected)
 				{
 					g_report_settings_countdown = 100;
 				}
@@ -2788,7 +2828,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			default:
 			{
-				if(!g_cloningInProgress && !g_report_settings_countdown)
+				if(!g_cloningInProgress && !g_report_settings_countdown && !meshConnected)
 				{
 					sb_send_string(HELP_TEXT_TXT);
 				}
@@ -2799,7 +2839,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		}
 
 		sb_buff->id = SB_MESSAGE_EMPTY;
-		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown)
+		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown && !meshConnected)
 		{
 			sb_send_NewLine();
 			sb_send_NewPrompt();
@@ -3663,7 +3703,7 @@ void reportSettings(void)
 	if(g_cloningInProgress) return;
 
 	// Buffer for storing temporary strings.
-	char buf[50];
+	char buf[TEMP_STRING_SIZE];
 
 	// Get the current time.
 	time_t now = time(NULL);
