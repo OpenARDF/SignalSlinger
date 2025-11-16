@@ -283,7 +283,7 @@ ISR(RTC_CNT_vect)
 						g_awakenedBy = AWAKENED_BY_CLOCK;
 					}
 				}
-				else
+				else if(g_sleepType == SLEEP_UNTIL_START_TIME)
 				{
 					if(g_time_to_wake_up <= time(null))
 					{
@@ -1132,7 +1132,7 @@ int main(void)
 				if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 				{
 //					if(eventScheduled() && (g_sleepType != SLEEP_POWER_OFF_OVERRIDE)) 
-					if(eventScheduled()) /* Never sleep forever if an event is scheduled to start in the future */
+					if(eventScheduledForTheFuture()) /* Never sleep forever if an event is scheduled to start in the future */
 					{
 						g_sleepType = SLEEP_UNTIL_START_TIME;
 					}
@@ -1439,15 +1439,17 @@ int main(void)
 					{
 						if(eventScheduledForNow())
 						{
-							if((!g_event_enabled || !g_event_commenced))
+							if((g_event_enabled && g_event_commenced))
 							{
-								g_last_error_code = launchEvent((SC*)&g_last_status_code);
+//								g_last_error_code = launchEvent((SC*)&g_last_status_code);
+								suspendEvent();
 								g_sleepshutdown_seconds = 300;
 							}
 						}
 						else
 						{
 							g_last_error_code = launchEvent((SC*)&g_last_status_code);
+							suspendEvent();
 							g_sleepshutdown_seconds = 300;
 						}
 					}
@@ -2176,7 +2178,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						if(sb_buff->fields[SB_FIELD1][0] == '0')       /* Stop the event. Re-sync will occur on next start */
 						{
- 							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+// 							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+							suspendEvent(); // Stop any running event
 						}
 						else if(sb_buff->fields[SB_FIELD1][0] == '1')  /* Start the event, re-syncing to a start time of now - same as a button press */
 						{
@@ -3097,6 +3100,7 @@ void suspendEvent()
 	g_sleepshutdown_seconds = 300;
 	configRedLEDforEvent();
 	powerToTransmitter(OFF);
+	g_sleepType = SLEEP_FOREVER; /* Prevent the clock from restarting an event that is in progress */
 }
 
 void startEventNow()
