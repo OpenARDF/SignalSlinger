@@ -3706,7 +3706,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_run_event_forever = true;
 		g_on_the_air = g_on_air_seconds;			/* start out transmitting */
 		g_commence_transmissions = true;                   /* get things running immediately */
-//		g_event_enabled = true;                     /* get things running immediately */
+		g_sendID_seconds_countdown = g_intra_cycle_delay_time + g_on_air_seconds - g_time_needed_for_ID;
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		LEDS.blink(LEDS_RED_OFF);
 	}
