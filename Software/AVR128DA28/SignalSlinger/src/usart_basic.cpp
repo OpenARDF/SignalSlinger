@@ -50,7 +50,7 @@ int8_t USART1_init(uint32_t baud, bool autobaud)
 	USART1.CTRLA = 0 << USART_ABEIE_bp /* Auto-baud Error Interrupt Enable: disabled */
 			 | 0 << USART_LBME_bp /* Loop-back Mode Enable: disabled */
 			 | USART_RS485_DISABLE_gc /* RS485 Mode disabled */
-			 | 0 << USART_RXSIE_bp /* Receiver Start Frame Interrupt Enable: disabled */
+			 | 1 << USART_RXSIE_bp /* Receiver Start Frame Interrupt Enable: enable */
 			 | 0 << USART_DREIE_bp /* Data Register Empty Interrupt Enable: disabled */
 			 | 0 << USART_TXCIE_bp /* Transmit Complete Interrupt Enable: disable */
 			 | 1 << USART_RXCIE_bp; /* Receive Complete Interrupt Enable: enable */

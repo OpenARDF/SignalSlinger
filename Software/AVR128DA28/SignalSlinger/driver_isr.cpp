@@ -378,5 +378,5 @@ ISR(USART1_RXC_vect)
 	if(g_serialbus_usart_number == USART_1)
 	{
 		serial_Rx(rx_char);
-	}
+    }
 }

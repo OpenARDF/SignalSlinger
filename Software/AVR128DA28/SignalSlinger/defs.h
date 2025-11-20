@@ -34,12 +34,12 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1a"
+#define SW_REVISION "1.1b"
 
 //#define TRANQUILIZE_WATCHDOG
 
 #define PRODUCT_NAME_SHORT "SignalSlinger"
-#define PRODUCT_NAME_LONG "\n* SignalSlinger 80m Radio Orienteering Transmitter"
+#define PRODUCT_NAME_LONG "SignalSlinger 80m Radio Orienteering Transmitter"
 
 /* Caution: Do not enable test software build flag for releasable software */
 // #define TEST_MODE_SOFTWARE /* Do not define on releasable software */
@@ -266,9 +266,10 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_EXCESSIVE_TEMPERATURE (char*)"* Error: High Temperature Shutdown!\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
-#define TEXT_NOT_SLEEPING_TXT (char*)"\n* Awake\n"
-#define TEXT_POWER_OFF (char*)"\n* Power off. Press and hold pushbutton for power on\n"
-#define TEXT_SLEEPING_TXT (char*)"\n* Sleeping. Press and hold pushbutton to awaken\n"
+#define TEXT_NOT_SLEEPING_TXT (char*)"* Awake\n"
+#define TEXT_POWER_OFF (char*)"* Power off. Press and hold pushbutton for power on\n"
+#define TEXT_SLEEPING_TXT (char*)"* Sleeping. Press and hold pushbutton to awaken\n"
+#define TEXT_SLEEPING_UNTIL_START_TXT (char*)"* Sleeping until start\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
 #define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"

@@ -132,6 +132,7 @@ typedef struct
  * Configure the serial bus with a baud rate and USART instance.
  */
 void serialbus_init(uint32_t baud, USART_Number_t usart);
+void serialbus_flush_rx(void);
 
 /**
  * Immediately turns off receiver and flushes receive buffer

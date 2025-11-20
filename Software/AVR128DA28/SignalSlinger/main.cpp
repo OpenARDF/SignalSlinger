@@ -41,7 +41,8 @@ typedef enum
 	AWAKENED_INIT,
 	POWER_UP_START,
 	AWAKENED_BY_CLOCK,
-	AWAKENED_BY_BUTTONPRESS
+	AWAKENED_BY_BUTTONPRESS,
+	AWAKENED_BY_SERIAL_PORT
 } Awakened_t;
 
 typedef enum
@@ -207,6 +208,8 @@ extern volatile uint16_t g_i2c_failure_count;
 extern volatile bool g_enable_external_battery_control;
 
 volatile bool g_enable_manual_transmissions = true;
+static volatile bool g_meshmode = false;
+
 
 /***********************************************************************
  * Private Function Prototypes
@@ -938,7 +941,7 @@ ISR(TCB0_INT_vect)
 }
 
 /**
-Handle switch closure interrupts
+Handle port D pushbutton interrupts
 */
 ISR(PORTD_PORT_vect)
 {
@@ -961,6 +964,31 @@ ISR(PORTD_PORT_vect)
 	}
 	
 	VPORTD.INTFLAGS = 0xFF; /* Clear all flags */
+}
+
+
+/**
+Handle port C interrupts (Serial Port during sleep)
+*/
+ISR(PORTC_PORT_vect)
+{
+	uint8_t x = VPORTC.INTFLAGS;
+	
+	if(x & (1 << SERIAL_RX))
+	{
+		PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_INTDISABLE_gc); // disable this interrupt
+
+		if(g_sleeping)
+		{
+			g_go_to_sleep_now = false;
+			g_sleeping = false;
+			g_awakenedBy = AWAKENED_BY_SERIAL_PORT;	
+			serialbus_init(SB_BAUD, SERIALBUS_USART);		
+			g_sleepshutdown_seconds = 300;
+		}
+	}
+	
+	VPORTC.INTFLAGS = 0xFF; /* Clear all flags */
 }
 
 bool switchIsClosed(void)
@@ -1095,6 +1123,7 @@ int main(void)
 				}
 
 				configRedLEDforEvent();
+				if(!g_meshmode) sb_send_NewLine();
 				sb_send_string(TEXT_NOT_SLEEPING_TXT);
 				if(!g_device_enabled)
 				{
@@ -1172,6 +1201,7 @@ int main(void)
 
 						if(now < MINIMUM_VALID_EPOCH)
 						{
+							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string(TEXT_POWER_OFF);
 							while((util_delay_ms(2000)) && serialbusTxInProgress());
 							while(util_delay_ms(200)); // Let serial xmsn finish before power off
@@ -1179,11 +1209,20 @@ int main(void)
 						}
 						else
 						{
+							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string(TEXT_SLEEPING_TXT);
 							while((util_delay_ms(2000)) && serialbusTxInProgress());
 							while(util_delay_ms(200)); // Let serial xmsn finish before sleep
 						}
 					}
+				}
+				
+				if(g_sleepType == SLEEP_UNTIL_START_TIME)
+				{
+						if(!g_meshmode) sb_send_NewLine();
+						sb_send_string(TEXT_SLEEPING_UNTIL_START_TXT);
+						while((util_delay_ms(2000)) && serialbusTxInProgress());
+						while(util_delay_ms(200)); // Let serial xmsn finish before power off
 				}
 				
 				/* If sleeping until start time, make sure everything is set up properly for when that time arrives */
@@ -1208,7 +1247,7 @@ int main(void)
 				serialbus_disable();
 				
 				system_sleep_config();
-
+				
 				SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_STDBY_gc);
 				g_sleeping = true;
 				g_awakenedBy = AWAKENED_INIT;			
@@ -1279,6 +1318,7 @@ int main(void)
 				g_sleeping = false;
 				g_time_since_wakeup = 0;
 				atmel_start_init();
+
 				if(g_enable_external_battery_control) setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
 				
 				if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
@@ -1289,14 +1329,11 @@ int main(void)
 					LEDS.blink(LEDS_RED_ON_CONSTANT);
 					LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 					buttonHeldClosed = true;
-				}
-				else
-				{
-					serialbus_disable();
+					serialbus_init(SB_BAUD, SERIALBUS_USART);
 				}
 
-				RTC_set_calibration(g_clock_calibration);
-				while(util_delay_ms(2000));
+// 				RTC_set_calibration(g_clock_calibration);
+// 				while(util_delay_ms(2000));
 				
 				g_sleepshutdown_seconds = 300;
 				
@@ -1312,6 +1349,13 @@ int main(void)
 						g_commence_transmissions = false;
 						if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS);
 					}
+				}
+				else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT)
+				{
+// 					if(g_sleepType == SLEEP_UNTIL_START_TIME)
+// 					{
+// 						serialbus_flush_rx();
+// 					}
 				}
 				else
 				{
@@ -1735,7 +1779,6 @@ int main(void)
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 //void handleSerialBusMsgs()
 {
-	static bool meshConnected = false;
 	SerialbusRxBuffer* sb_buff;
 
 	while((sb_buff = nextFullSBRxBuffer()))
@@ -1755,11 +1798,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 				if(c1 == '1')
 				{
-					meshConnected = true;
+					g_meshmode = true;
 				}
 				else
 				{
-					meshConnected = false;
+					g_meshmode = false;
 				}
 			}
 			break;
@@ -1779,7 +1822,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		
 					if(!float_to_parts_signed(g_processor_temperature, &integer, &fractional))
 					{
-						if(!meshConnected) sb_send_NewLine();
+						if(!g_meshmode) sb_send_NewLine();
 						sprintf(g_tempStr, "* Temp: %d.%dC\n", integer, fractional);
 						sb_send_string(g_tempStr);
 					}
@@ -1950,7 +1993,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
 					sprintf(g_tempStr, "* Fox:%s\n", buf);
 					
-					if(!meshConnected)
+					if(!g_meshmode)
 					{
 						sb_send_NewLine();
 					}
@@ -1981,6 +2024,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
+//					g_sleepType = SLEEP_FOREVER;
 					g_go_to_sleep_now = true;
 				}
 			}
@@ -2028,7 +2072,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							
 							g_event_checksum += f;
 					
-							sb_send_string((char*)"FRE\r");
+							sb_send_string((char*)"FRE\n");
 							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						}
 					}
@@ -2163,7 +2207,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					printFreq = 5;
 				}
 				
-				if(printFreq && !meshConnected) sb_send_NewLine();
+				if(printFreq && !g_meshmode) sb_send_NewLine();
 					
 				switch(printFreq)
 				{
@@ -2231,13 +2275,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_event_checksum += sb_buff->fields[SB_FIELD2][i];
 						}
 					
-						sb_send_string((char*)"PAT\r");
+						sb_send_string((char*)"PAT\n");
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					}
 				}
 				else
 				{
-					if(!meshConnected) sb_send_NewLine();
+					if(!g_meshmode) sb_send_NewLine();
 
 					if(sb_buff->fields[SB_FIELD1][0])
 					{					
@@ -2286,7 +2330,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							g_key_down_countdown = 0;
 							g_reset_after_keydown = true;
-							if(!meshConnected) sb_send_NewLine();
+							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string((char*)"* KEY UP\n");
 						}
 						else if(sb_buff->fields[SB_FIELD1][0] == '1')  
@@ -2302,7 +2346,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							LEDS.init();
 							LEDS.setRed(ON);
 							keyTransmitter(ON);
-							if(!meshConnected) sb_send_NewLine();
+							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string((char*)"* KEY DOWN\n");
 
 							g_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
@@ -2410,7 +2454,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 					}
 											
-					if(!meshConnected)
+					if(!g_meshmode)
 					{
 						sb_send_NewLine();
 					}
@@ -2470,14 +2514,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 				if(g_cloningInProgress)
 				{				
-						sb_send_string((char*)"ID\r");
+						sb_send_string((char*)"ID\n");
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 				}
 				else
 				{
-					sprintf(g_tempStr, "* ID:%s\r", g_messages_text[STATION_ID]);
+					sprintf(g_tempStr, "* ID:%s\n", g_messages_text[STATION_ID]);
 					
-					if(!meshConnected)
+					if(!g_meshmode)
 					{
 						sb_send_NewLine();
 					}
@@ -2513,7 +2557,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char*)"SPD I\r");
+								sb_send_string((char*)"SPD I\n");
 							}
 						}
 						else if((c == 'F') || ((g_event == EVENT_FOXORING) && !g_cloningInProgress))
@@ -2525,7 +2569,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char*)"SPD F\r");
+								sb_send_string((char*)"SPD F\n");
 							}
 						}
 						else if(c == 'P')
@@ -2536,7 +2580,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char*)"SPD P\r");
+								sb_send_string((char*)"SPD P\n");
 							}
 						}
 						else
@@ -2548,7 +2592,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					
 					if(!g_cloningInProgress && c)
 					{				
-						if(!meshConnected)
+						if(!g_meshmode)
 						{
 							sb_send_NewLine();
 						}
@@ -2578,7 +2622,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_MASTER:
 			{
-				if(!meshConnected)
+				if(!g_meshmode)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'P')
 					{
@@ -2588,7 +2632,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							suspendEvent();
 							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 							g_event_checksum = 0;
-							sb_send_string((char*)"MAS\r");
+							sb_send_string((char*)"MAS\n");
 						}
 					}
 					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
@@ -2598,14 +2642,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						g_programming_countdown = 0;
 						if(sum == g_event_checksum)
 						{
-							sb_send_string((char*)"MAS ACK\r");
+							sb_send_string((char*)"MAS ACK\n");
 							g_send_clone_success_countdown = 18000;
 							setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
 	//						g_start_event = true;
 						}
 						else
 						{
-							sb_send_string((char*)"MAS NAK\r");
+							sb_send_string((char*)"MAS NAK\n");
 						}
 					}
 					else
@@ -2630,7 +2674,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(g_cloningInProgress)
 				{
 					char c = sb_buff->fields[SB_FIELD1][0];
-					sb_send_string((char*)"EVT F\r");
+					sb_send_string((char*)"EVT F\n");
 					if(c == 'F')
 					{
 						g_event = EVENT_FOXORING;
@@ -2655,7 +2699,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_event_checksum += c;
-					sb_send_string((char*)"EVT\r");
+					sb_send_string((char*)"EVT\n");
 				}
 				else
 				{
@@ -2700,7 +2744,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					// Buffer for storing temporary strings.
 					char buf[TEMP_STRING_SIZE];
 					
-					if(!meshConnected)
+					if(!g_meshmode)
 					{
 						sb_send_NewLine();
 					}
@@ -2716,6 +2760,18 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					
 					sb_send_string(g_tempStr);
+					
+					if(eventScheduled())
+					{
+						time_t now = time(null);
+						// Report times for event start, duration, and remaining time.
+						reportTimeTill(now, g_event_start_epoch, "* Starts in: ", "* In progress\n");
+						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "* Lasts: ", null);
+						if(g_event_start_epoch < now)
+						{
+							reportTimeTill(now, g_event_finish_epoch, "* Time Remaining: ", NULL);
+						}
+					}
 				}
 			}
 			break;
@@ -2752,12 +2808,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_event_checksum += 'A';
-					sprintf(g_tempStr, "FUN A\r");
+					sprintf(g_tempStr, "FUN A\n");
 					sb_send_string(g_tempStr);
 				}
 				else
 				{
-					if(!meshConnected) reportSettings();
+					if(!g_meshmode) reportSettings();
 				}
  			}
  			break;
@@ -2793,7 +2849,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 								g_event_checksum += t;
-								sprintf(g_tempStr, "CLK T %lu\r", t);
+								sprintf(g_tempStr, "CLK T %lu\n", t);
 								sb_send_string(g_tempStr);
 							}
 							else
@@ -2810,7 +2866,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_cloningInProgress)
 					{
 						char buf[TEMP_STRING_SIZE];
-						if(!meshConnected) sb_send_NewLine();
+						if(!g_meshmode) sb_send_NewLine();
 						
 						time_t t = time(null);
 							
@@ -2818,22 +2874,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							if(t < MINIMUM_VALID_EPOCH)
 							{
-								sprintf(g_tempStr, "* Time:not set\r");		
+								sprintf(g_tempStr, "* Time:not set\n");		
 							}
 							else
 							{
-								sprintf(g_tempStr, "* Time:%s\r", convertEpochToTimeString(t, buf, TEMP_STRING_SIZE));	
+								sprintf(g_tempStr, "* Time:%s\n", convertEpochToTimeString(t, buf, TEMP_STRING_SIZE));	
 							}
 						}
 						else
 						{
 							if(t < MINIMUM_VALID_EPOCH)
 							{
-								sprintf(g_tempStr, "* Epoch:not set\r");		
+								sprintf(g_tempStr, "* Epoch:not set\n");		
 							}
 							else
 							{
-								sprintf(g_tempStr, "* Epoch:%lu\r", t);
+								sprintf(g_tempStr, "* Epoch:%lu\n", t);
 							}	
 						}
 						
@@ -2864,7 +2920,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_cloningInProgress)
 							{
-								sb_send_string((char*)"CLK S\r");
+								sb_send_string((char*)"CLK S\n");
 								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 								g_event_checksum += s;
 							}
@@ -2888,15 +2944,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_cloningInProgress)
 					{
 						char buf[TEMP_STRING_SIZE];
-						if(!meshConnected) sb_send_NewLine();
+						if(!g_meshmode) sb_send_NewLine();
 						
 						if(g_event_start_epoch < MINIMUM_VALID_EPOCH)
 						{
-							sprintf(g_tempStr, "* Start:not set\r");		
+							sprintf(g_tempStr, "* Start:not set\n");		
 						}
 						else
 						{
-							sprintf(g_tempStr, "* Start:%s\r", convertEpochToTimeString(g_event_start_epoch, buf, TEMP_STRING_SIZE));
+							sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(g_event_start_epoch, buf, TEMP_STRING_SIZE));
 						}						
 						
 						sb_send_string(g_tempStr);						
@@ -2927,7 +2983,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 												
 							if(g_cloningInProgress)
 							{
-								sb_send_string((char*)"CLK F\r");
+								sb_send_string((char*)"CLK F\n");
 								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 								g_event_checksum += f;
 							}
@@ -2948,15 +3004,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_cloningInProgress)
 					{
 						char buf[TEMP_STRING_SIZE];
-						if(!meshConnected) sb_send_NewLine();
+						if(!g_meshmode) sb_send_NewLine();
 						
 						if(g_event_finish_epoch < MINIMUM_VALID_EPOCH)
 						{
-							sprintf(g_tempStr, "* Finish:not set\r");		
+							sprintf(g_tempStr, "* Finish:not set\n");		
 						}
 						else
 						{
-							sprintf(g_tempStr, "* Finish:%s\r", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
+							sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
 						}						
 						
 						sb_send_string(g_tempStr);						
@@ -2986,7 +3042,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					
 						if(g_cloningInProgress)
 						{
-							sb_send_string((char*)"CLK D\r");
+							sb_send_string((char*)"CLK D\n");
 							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 							g_event_checksum += g_days_to_run;
 						}
@@ -3001,7 +3057,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									
 					if(!g_cloningInProgress)
 					{
-						if(!meshConnected) sb_send_NewLine();
+						if(!g_meshmode) sb_send_NewLine();
 						sprintf(g_tempStr, "* Days to run: %d\n", g_days_to_run);				
 						sb_send_string(g_tempStr);						
 					}
@@ -3080,8 +3136,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 // 				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
 // 				sb_send_string(g_tempStr);
+				g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
+				g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
 
-				if(!meshConnected) sb_send_NewLine();
+				if(!g_meshmode) sb_send_NewLine();
 				
 				dtostrf(g_internal_bat_voltage, 5, 1, txt);
 				txt[5] = '\0';
@@ -3110,6 +3168,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				g_report_settings_countdown = 0;
 				if(!g_cloningInProgress)
 				{
+					if(!g_meshmode) sb_send_NewLine();
 					sb_send_string((char*)"* ");
 					sb_send_string((char*)PRODUCT_NAME_LONG);
 					sprintf(g_tempStr, "\n* SW Ver: %s\n", SW_REVISION);
@@ -3121,7 +3180,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_HELP:
 			{
 				g_report_settings_countdown = 0;
-				if(!g_cloningInProgress && !meshConnected)
+				if(!g_cloningInProgress && !g_meshmode)
 				{
 					reportSettings();
  					sb_send_string(HELP_TEXT_TXT);
@@ -3131,7 +3190,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_CR_NO_DATA:
 			{
-				if(!g_cloningInProgress && !meshConnected)
+				if(!g_cloningInProgress && !g_meshmode)
 				{
 					g_report_settings_countdown = 100;
 				}
@@ -3140,7 +3199,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			default:
 			{
-				if(!g_cloningInProgress && !g_report_settings_countdown && !meshConnected)
+				if(!g_cloningInProgress && !g_report_settings_countdown && !g_meshmode)
 				{
 					sb_send_string(HELP_TEXT_TXT);
 				}
@@ -3151,7 +3210,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		}
 
 		sb_buff->id = SB_MESSAGE_EMPTY;
-		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown && !meshConnected)
+		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown && !g_meshmode)
 		{
 			sb_send_NewLine();
 			sb_send_NewPrompt();
@@ -4162,9 +4221,9 @@ void reportSettings(void)
 		sb_send_string((char*)"*   Freq: None set\n");
 	}
 
-	// Report the RTC calibration value.
-	sprintf(g_tempStr, "*   Cal: %d\n", RTC_get_cal());
-	sb_send_string(g_tempStr);
+// 	// Report the RTC calibration value.
+// 	sprintf(g_tempStr, "*   Cal: %d\n", RTC_get_cal());
+// 	sb_send_string(g_tempStr);
 
 	// If the event runs for more than 1 day, report the number of days remaining.
 	if(g_days_to_run > 1)
@@ -4761,7 +4820,7 @@ void handleSerialCloning(void)
 	{
 		if(!g_cloningInProgress)
 		{
-			sb_send_master_string((char*)"MAS P\r"); /* Set slave to active cloning state */
+			sb_send_master_string((char*)"MAS P\n"); /* Set slave to active cloning state */
 			g_programming_msg_throttle = 600;
 			g_programming_state = SYNC_Searching_for_slave;
 		}
@@ -4778,7 +4837,7 @@ void handleSerialCloning(void)
 				{
 					g_cloningInProgress = true;
 					g_event_checksum = 0;
-					sprintf(g_tempStr, "FUN A\r"); /* Set slave to radio orienteering function */
+					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
 					sb_send_master_string(g_tempStr);
 					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4813,7 +4872,7 @@ void handleSerialCloning(void)
 			{
 				time_t now = time(null);
 				g_event_checksum += now;
-				sprintf(g_tempStr, "CLK T %lu\r", now); /* Set slave's RTC */
+				sprintf(g_tempStr, "CLK T %lu\n", now); /* Set slave's RTC */
 				sb_send_master_string(g_tempStr);
 				g_programming_state = SYNC_Waiting_for_CLK_T_reply;
 				g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4834,7 +4893,7 @@ void handleSerialCloning(void)
 					{
 						g_event_checksum += g_event_start_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_S_reply;
- 						sprintf(g_tempStr, "CLK S %lu\r", g_event_start_epoch);
+ 						sprintf(g_tempStr, "CLK S %lu\n", g_event_start_epoch);
  						sb_send_master_string(g_tempStr);
 						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4855,7 +4914,7 @@ void handleSerialCloning(void)
 					{
 						g_event_checksum += g_event_finish_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_F_reply;
- 						sprintf(g_tempStr, "CLK F %lu\r", g_event_finish_epoch);
+ 						sprintf(g_tempStr, "CLK F %lu\n", g_event_finish_epoch);
  						sb_send_master_string(g_tempStr);
 						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4876,7 +4935,7 @@ void handleSerialCloning(void)
 					{
 						g_event_checksum += g_days_to_run;
 						g_programming_state = SYNC_Waiting_for_CLK_D_reply;
- 						sprintf(g_tempStr, "CLK D %d\r", g_days_to_run);
+ 						sprintf(g_tempStr, "CLK D %d\n", g_days_to_run);
  						sb_send_master_string(g_tempStr);
 						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4919,16 +4978,16 @@ void handleSerialCloning(void)
 								*ptr2 = '\0';
 								ptr2++;
 								
-								sprintf(g_tempStr, "ID %s %s\r", ptr1, ptr2);
+								sprintf(g_tempStr, "ID %s %s\n", ptr1, ptr2);
 							}
 							else
 							{
-								sprintf(g_tempStr, "ID %s\r", ptr1);
+								sprintf(g_tempStr, "ID %s\n", ptr1);
 							}
 						}
 						else
 						{
-							strncpy(g_tempStr, "ID \"\"\r", TEMP_STRING_SIZE);
+							strncpy(g_tempStr, "ID \"\"\n", TEMP_STRING_SIZE);
 						}
  
 						sb_send_master_string(g_tempStr);
@@ -4948,7 +5007,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_id_codespeed;
 					g_programming_state = SYNC_Waiting_for_ID_CodeSpeed_reply;
-					sprintf(g_tempStr, "SPD I %u\r", g_id_codespeed);
+					sprintf(g_tempStr, "SPD I %u\n", g_id_codespeed);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -4967,7 +5026,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'I')
 					{
-						sprintf(g_tempStr, "SPD P %u\r", g_pattern_codespeed);
+						sprintf(g_tempStr, "SPD P %u\n", g_pattern_codespeed);
 						
 						g_event_checksum += g_pattern_codespeed;
 						sb_send_master_string(g_tempStr);
@@ -5010,7 +5069,7 @@ void handleSerialCloning(void)
 						}
 						
 						g_event_checksum += c;
-						sprintf(g_tempStr, "EVT %c\r", c);
+						sprintf(g_tempStr, "EVT %c\n", c);
 						sb_send_master_string(g_tempStr); /* Set slave's event */
 						g_programming_state = SYNC_Waiting_for_EVT_reply;
 						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5031,7 +5090,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_frequency;
 					g_programming_state = SYNC_Waiting_for_NoEvent_Freq_reply;
-					sprintf(g_tempStr, "FRE X %lu\r", g_frequency);
+					sprintf(g_tempStr, "FRE X %lu\n", g_frequency);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5049,7 +5108,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_frequency_low;
 					g_programming_state = SYNC_Waiting_for_Freq_Low_reply;
-					sprintf(g_tempStr, "FRE L %lu\r", g_frequency_low);
+					sprintf(g_tempStr, "FRE L %lu\n", g_frequency_low);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5067,7 +5126,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_frequency_med;
 					g_programming_state = SYNC_Waiting_for_Freq_Med_reply;
-					sprintf(g_tempStr, "FRE M %lu\r", g_frequency_med);
+					sprintf(g_tempStr, "FRE M %lu\n", g_frequency_med);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5085,7 +5144,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_frequency_hi;
 					g_programming_state = SYNC_Waiting_for_Freq_Hi_reply;
-					sprintf(g_tempStr, "FRE H %lu\r", g_frequency_hi);
+					sprintf(g_tempStr, "FRE H %lu\n", g_frequency_hi);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5103,7 +5162,7 @@ void handleSerialCloning(void)
 				{
 					g_event_checksum += g_frequency_beacon;
 					g_programming_state = SYNC_Waiting_for_Freq_Beacon_reply;
-					sprintf(g_tempStr, "FRE B %lu\r", g_frequency_beacon);
+					sprintf(g_tempStr, "FRE B %lu\n", g_frequency_beacon);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
@@ -5120,7 +5179,7 @@ void handleSerialCloning(void)
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					g_programming_state = SYNC_Waiting_for_ACK;
-					sprintf(g_tempStr, "MAS Q %lu\r", g_event_checksum);
+					sprintf(g_tempStr, "MAS Q %lu\n", g_event_checksum);
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
