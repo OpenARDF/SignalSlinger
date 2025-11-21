@@ -274,6 +274,13 @@ bool frequencyVal(char* str, Frequency_Hz* result)
 	return(failure);	
 }
 
+/**
+ * Translate a Function_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param fun Enumerated function value to describe.
+ * @return true if the function is unrecognized, false otherwise.
+ */
 bool function2Text(char* str, Function_t fun)
 {
 	bool failure = false;
@@ -307,6 +314,13 @@ bool function2Text(char* str, Function_t fun)
 	return failure;
 }
 
+/**
+ * Translate a Fox_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param fox Enumerated fox value to describe.
+ * @return true if the fox value is unrecognized, false otherwise.
+ */
 bool fox2Text(char* str, Fox_t fox)
 {
 	bool failure = false;
@@ -450,6 +464,13 @@ bool fox2Text(char* str, Fox_t fox)
 }
 
 
+/**
+ * Translate an Event_t enum value into a descriptive string.
+ *
+ * @param str Buffer to receive the textual description.
+ * @param evt Enumerated event value to describe.
+ * @return true if the event value is unrecognized, false otherwise.
+ */
 bool event2Text(char* str, Event_t evt)
 {
 	bool failure = false;
@@ -504,8 +525,10 @@ bool event2Text(char* str, Event_t evt)
  *  float_to_parts_signed
  *  ---------------------
  *  Split a float (positive or negative) into:
- *      – characteristic : signed integer part      (-32 768 … 32 767)
- *      – mantissa       : first decimal digit   (0 … 9)
+ *      Â– characteristic : signed integer part      (-32 768 Â… 32 767)
+ *      Â– mantissa       : first decimal digit   (0 Â… 9)
+    /* reject NaN or Â±Inf */
+ 9)
  *
  *  Returns:  false  ? success
  *            true   ? error   (bad args, NaN/Inf, out of range)
@@ -518,7 +541,7 @@ bool float_to_parts_signed(float value,
     if (integerPart == NULL || fractionPart == NULL)
         return true;
 
-    /* reject NaN or ±Inf */
+    /* reject NaN or Â±Inf */
     if (isnanf(value) || isinff(value))
         return true;
 
