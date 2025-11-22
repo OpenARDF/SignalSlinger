@@ -222,8 +222,6 @@ void handleSerialBusMsgs(void);
 uint16_t throttleValue(uint8_t speed);
 EC activateEventUsingCurrentSettings(SC* statusCode);
 EC launchEvent(SC* statusCode);
-char* convertEpochToTimeString(time_t epoch, char* buf, size_t size);
-time_t String2Epoch(bool *error, char *datetime);
 void reportSettings(void);
 uint16_t timeNeededForID(void);
 Frequency_Hz getFrequencySetting(void);
@@ -1330,10 +1328,10 @@ int main(void)
 					LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 					buttonHeldClosed = true;
 					serialbus_init(SB_BAUD, SERIALBUS_USART);
+//					RTC_set_calibration(g_clock_calibration);
+					while(util_delay_ms(2000));
 				}
 
-// 				RTC_set_calibration(g_clock_calibration);
-// 				while(util_delay_ms(2000));
 				
 				g_sleepshutdown_seconds = 300;
 				
@@ -2772,6 +2770,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							reportTimeTill(now, g_event_finish_epoch, "* Time Remaining: ", NULL);
 						}
 					}
+					else
+					{
+// 						if(!g_meshmode)
+// 						{
+// 							sb_send_NewLine();
+// 						}
+
+						sb_send_string((char*)"* Not scheduled\n");
+					}
 				}
 			}
 			break;
@@ -2825,7 +2832,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 				if(!f1 || f1 == 'T')   /* Current time format "YYMMDDhhmmss" */
 				{		 
-					if(sb_buff->fields[SB_FIELD2][0])
+					if((f1 == 'T') && sb_buff->fields[SB_FIELD2][0])
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
   						time_t t;
@@ -2836,7 +2843,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{	
-							g_tempStr[12] = '\0';               /* truncate to no more than 12 characters */
+							g_tempStr[12] = '\0';
+							const char* tmp = completeTimeString(g_tempStr, null);
+							if(tmp) strncpy(g_tempStr, tmp, 13);
+
 							t = validateTimeString(g_tempStr, null);
 						}
   
@@ -2870,30 +2880,50 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						
 						time_t t = time(null);
 							
-						if(f1)
+						if(t < MINIMUM_VALID_EPOCH)
 						{
-							if(t < MINIMUM_VALID_EPOCH)
-							{
-								sprintf(g_tempStr, "* Time:not set\n");		
-							}
-							else
-							{
-								sprintf(g_tempStr, "* Time:%s\n", convertEpochToTimeString(t, buf, TEMP_STRING_SIZE));	
-							}
+							sprintf(g_tempStr, "* Time:not set\n");		
 						}
 						else
 						{
-							if(t < MINIMUM_VALID_EPOCH)
-							{
-								sprintf(g_tempStr, "* Epoch:not set\n");		
-							}
-							else
-							{
-								sprintf(g_tempStr, "* Epoch:%lu\n", t);
-							}	
+							sprintf(g_tempStr, "* Time:%s\n", convertEpochToTimeString(t, buf, TEMP_STRING_SIZE));	
 						}
 						
 						sb_send_string(g_tempStr);						
+							
+						if(!f1)
+						{
+							char buf[TEMP_STRING_SIZE];
+//							if(!g_meshmode) sb_send_NewLine();
+						
+							if(g_event_start_epoch < MINIMUM_VALID_EPOCH)
+							{
+								sprintf(g_tempStr, "* Start:not set\n");		
+							}
+							else
+							{
+								sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(g_event_start_epoch, buf, TEMP_STRING_SIZE));
+							}						
+						
+							sb_send_string(g_tempStr);		
+											
+//							if(!g_meshmode) sb_send_NewLine();
+						
+							if(g_event_finish_epoch < MINIMUM_VALID_EPOCH)
+							{
+								sprintf(g_tempStr, "* Finish:not set\n");		
+							}
+							else
+							{
+								sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
+							}						
+						
+							sb_send_string(g_tempStr);		
+											
+//							if(!g_meshmode) sb_send_NewLine();
+							sprintf(g_tempStr, "* Days to run: %d\n", g_days_to_run);				
+							sb_send_string(g_tempStr);						
+						}
 					}
 				}
 				else if(f1 == 'S')  /* Event start time */
@@ -2909,7 +2939,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{
-							g_tempStr[12] = '\0';               /* truncate to no more than 12 characters */
+							g_tempStr[12] = '\0';
+							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_start_epoch);
+							if(tmp) strncpy(g_tempStr, tmp, 13);
 							s = validateTimeString(g_tempStr, null);
 						}
  
@@ -2971,7 +3003,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{
-							g_tempStr[12] = '\0';               /* truncate to no more than 12 characters */
+							g_tempStr[12] = '\0';
+							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
+							if(tmp) strncpy(g_tempStr, tmp, 13);
 							f = validateTimeString(g_tempStr, null);
 						}					
  
@@ -3024,8 +3058,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						uint8_t days;
-					
-						days = atol(g_tempStr);
+						
+												
+						if(only_digits((char*)g_tempStr))
+						{
+							days = atoi(g_tempStr);
+						}
+						else
+						{
+							days = g_days_to_run;
+						}
 					
 						if(days > 1)
 						{
@@ -3518,19 +3560,6 @@ void configRedLEDforEvent(void)
 	else
 	{
 		LEDS.blink(LEDS_RED_OFF);
-		
-		time_t now = time(null);
-	
-		reportTimeTill(now, g_event_start_epoch, "\nStarts in: ", "\nIn progress\n");
-
-		if(g_event_start_epoch < now)
-		{
-			reportTimeTill(now, g_event_finish_epoch, "Time Remaining: ", NULL);
-		}
-		else
-		{
-			reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
-		}
 	}
 }
 
@@ -3957,9 +3986,12 @@ bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
             sb_send_string(g_tempStr);
         }
 
-        // Always report seconds.
-        sprintf(g_tempStr, "%d sec", seconds);
-        sb_send_string(g_tempStr);
+		// Report seconds if non-zero.
+		if(seconds)
+		{
+			sprintf(g_tempStr, "%d sec", seconds);
+			sb_send_string(g_tempStr);
+		}
 
         // Add a newline after reporting the time.
         sb_send_NewLine();
@@ -4336,165 +4368,6 @@ void reportSettings(void)
 #ifdef TEST_MODE_SOFTWARE
 	sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
 #endif
-}
-
-/*
- * Function: bcd2dec
- * -----------------
- * This function converts a Binary-Coded Decimal (BCD) value to a decimal value.
- * In BCD, each digit is represented by a 4-bit binary value. This function extracts
- * the tens and units portions of the BCD value and calculates the equivalent decimal value.
-
- * Parameters:
- *  - val: A uint8_t value representing a number in BCD format.
-
- * Return:
- *  - A uint8_t value representing the equivalent decimal value.
-
- * Example:
- *  If val = 0x25 (BCD for 25), the function will return 25 in decimal format.
- *
- * Conversion Steps:
- *  - The tens digit is extracted by shifting the upper 4 bits to the right (val >> 4).
- *  - The units digit is extracted by taking the lower 4 bits (val & 0x0F).
- *  - The final decimal result is calculated as: (10 * tens) + units.
- */
-uint8_t bcd2dec(uint8_t val)
-{
-	uint8_t result = 10 * (val >> 4) + (val & 0x0F);
-	return( result);
-}
-
-/*
- * Converts a value from decimal to Binary Coded Decimal (BCD)
- * @param val - the decimal value to convert (0-99)
- * @return the value converted to BCD
- */
-uint8_t dec2bcd(uint8_t val)
-{
-	uint8_t result = val % 10;
-	result |= (val / 10) << 4;
-	return (result);
-}
-
-/*
- * Converts a character array to BCD format
- * @param c - a character array representing a number
- * @return the value converted to BCD
- */
-uint8_t char2bcd(char c[])
-{
-	uint8_t result = (c[1] - '0') + ((c[0] - '0') << 4);
-	return( result);
-}
-
-/*
- * Converts a tm struct to an epoch time (seconds since 1970)
- * @param ltm - a pointer to a tm struct with time information
- * @return epoch value representing the given local time
- */
-time_t epoch_from_ltm(tm *ltm)
-{
-	time_t epoch = ltm->tm_sec + ltm->tm_min * 60 + ltm->tm_hour * 3600L + ltm->tm_yday * 86400L +
-	(ltm->tm_year - 70) * 31536000L + ((ltm->tm_year - 69) / 4) * 86400L -
-	((ltm->tm_year - 1) / 100) * 86400L + ((ltm->tm_year + 299) / 400) * 86400L;
-
-	return(epoch);
-}
-
-
-/*
- * Converts an epoch time (seconds since 1900) to a human-readable string with format "ddd dd-mon-yyyy hh:mm:ss zzz"
- * @param epoch - the epoch time to convert
- * @param buf - a buffer to store the resulting string
- * @param size - size of the buffer
- * @return pointer to the formatted time string
- */
-#define THIRTY_YEARS 946684800
-char* convertEpochToTimeString(time_t epoch, char* buf, size_t size)
- {
-   struct tm  ts;
-	time_t t = epoch;
-	
-	if(epoch >= THIRTY_YEARS)
-	{
-		t = epoch - THIRTY_YEARS;
-	}
-
-    // Format time, "ddd dd-mon-yyyy hh:mm:ss zzz"
-    ts = *localtime(&t);
-    strftime(buf, size, "%a %d-%b-%Y %H:%M:%S", &ts);
-   return buf;
- }
-
-
-
-/*
- * Converts a datetime string into an epoch value
- * @param error - pointer to an error flag, set to 1 if an error occurs
- * @param datetime - character string in the format "YYMMDDhhmmss"
- * @return epoch value representing the given date and time, or current RTC time if datetime is null
- */
-time_t String2Epoch(bool *error, char *datetime)
-{
-	time_t epoch = 0;
-	uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
-
-	struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	int16_t year = 100;                 /* start at 100 years past 1900 */
-	uint8_t month;
-	uint8_t date;
-	uint8_t hours;
-	uint8_t minutes;
-	uint8_t seconds;
-
-	if(datetime)                            /* String format "YYMMDDhhmmss" */
-	{
-		data[0] = char2bcd(&datetime[10]);  /* seconds in BCD */
-		data[1] = char2bcd(&datetime[8]);   /* minutes in BCD */
-		data[2] = char2bcd(&datetime[6]);   /* hours in BCD */
-		/* data[3] =  not used */
-		data[4] = char2bcd(&datetime[4]);   /* day of month in BCD */
-		data[5] = char2bcd(&datetime[2]);   /* month in BCD */
-		data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
-
-		hours = bcd2dec(data[2]); /* Must be calculated here */
-
-		year += (int16_t)bcd2dec(data[6]);
-		ltm.tm_year = year;                         /* year since 1900 */
-
-		year += 1900;                               /* adjust year to calendar year */
-
-		month = bcd2dec(data[5]);
-		ltm.tm_mon = month - 1;                     /* mon 0 to 11 */
-
-		date = bcd2dec(data[4]);
-		ltm.tm_mday = date;                         /* month day 1 to 31 */
-
-		ltm.tm_yday = 0;
-		for(uint8_t mon = 1; mon < month; mon++)    /* months from 1 to 11 (excludes partial month) */
-		{
-			ltm.tm_yday += month_length(year, mon);;
-		}
-
-		ltm.tm_yday += (ltm.tm_mday - 1);
-
-		seconds = bcd2dec(data[0]);
-		minutes = bcd2dec(data[1]);
-
-		ltm.tm_hour = hours;
-		ltm.tm_min = minutes;
-		ltm.tm_sec = seconds;
-
-		epoch = epoch_from_ltm(&ltm);
-	}
-
-	if(error)
-	{
-		*error = (epoch == 0);
-	}
-
-	return(epoch);
 }
 
 uint16_t timeNeededForID(void)
