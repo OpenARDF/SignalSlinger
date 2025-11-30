@@ -194,7 +194,6 @@ bool setExtBatLoadSwitch(hardwareResourceClients client)
 
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	
 	switch(sender)
 	{
 		case INTERNAL_BATTERY_CHARGING:

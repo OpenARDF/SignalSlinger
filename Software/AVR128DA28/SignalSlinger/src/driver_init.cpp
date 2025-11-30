@@ -49,7 +49,7 @@ void system_init()
 	SLPCTRL_init();
 	ADC0_SYSTEM_init(SINGLE_CONVERSION);
 	
-	serialbus_init(SB_BAUD, SERIALBUS_USART);
+//	serialbus_init(SB_BAUD, SERIALBUS_USART);
 
 	BOD_init();
 }
@@ -162,7 +162,8 @@ void system_sleep_config()
  	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
  	PORTC_set_pin_level(SERIAL_TX, LOW); /* Leave port serial line low */
  	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_IN);
-	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_FALLING_gc);
+	PORTC_set_pin_pull_mode(SERIAL_RX, PORT_PULL_UP);
+	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_BOTHEDGES_gc);
 
 	PORTC_set_pin_dir(SI5351_SDA, PORT_DIR_OUT);
 	PORTC_set_pin_level(SI5351_SDA, LOW);

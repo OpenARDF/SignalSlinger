@@ -147,7 +147,7 @@ static volatile bool g_sleeping = false;
 static volatile time_t g_time_to_wake_up = 0;
 static volatile Awakened_t g_awakenedBy = POWER_UP_START;
 static volatile SleepType g_sleepType = SLEEP_FOREVER;
-static volatile time_t g_time_since_wakeup = 0;
+static volatile time_t g_seconds_since_wakeup = 0;
 static volatile bool g_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_charge_battery = false;
@@ -314,7 +314,7 @@ void handle_1sec_tasks(void)
 {
 	time_t temp_time = 0;
 	
-	g_time_since_wakeup++;
+	g_seconds_since_wakeup++;
 	
 	if(isMasterCountdownSeconds) isMasterCountdownSeconds--;
 
@@ -555,7 +555,7 @@ ISR(TCB0_INT_vect)
 						if(!LEDS.active())
 						{
 							LEDS.init();
-							serialbus_init(SB_BAUD, SERIALBUS_USART);
+							//serialbus_init(SB_BAUD, SERIALBUS_USART);
 						}
 						else
 						{
@@ -1007,12 +1007,16 @@ int main(void)
 	bool external_pwr_error = false;
 	
 	atmel_start_init();
+	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
 	
 	g_ee_mgr.initializeEEPROMVars();
 	
 	g_ee_mgr.readNonVols();
 	g_isMaster = false; /* Never start up as master */
+	
+	if(g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
+
 
 	if(g_frequency == EEPROM_FREQUENCY_DEFAULT)
 	{ 
@@ -1091,6 +1095,7 @@ int main(void)
 		g_charge_battery = true;
 		setExtBatLoadSwitch(ON, INTERNAL_BATTERY_CHARGING);
 	}
+	
 	g_restart_conversions = true;
 	TIMERB_init();
 	powerToTransmitter(OFF);
@@ -1113,6 +1118,8 @@ int main(void)
 				LEDS.init();
 				g_long_button_press = false;
 				g_check_for_long_wakeup_press = false;
+				
+				if(g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
 
 				// If the event is disabled, schedule it to start.
 				if(eventScheduled() && !g_event_enabled && !g_start_event)
@@ -1159,7 +1166,10 @@ int main(void)
 			
 			if(g_enable_external_battery_control) 
 			{
-				setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+				if(g_seconds_since_wakeup > 10)
+				{
+					setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+				}
 			}
 			else
 			{
@@ -1203,7 +1213,10 @@ int main(void)
 							sb_send_string(TEXT_POWER_OFF);
 							while((util_delay_ms(2000)) && serialbusTxInProgress());
 							while(util_delay_ms(200)); // Let serial xmsn finish before power off
-							if(!g_charge_battery) PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - but if charging, keep power switch on to measure internal battery level */
+							if(!g_charge_battery)
+							{
+								PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - but if charging, keep power switch on to measure internal battery level */
+							}
 						}
 						else
 						{
@@ -1255,12 +1268,12 @@ int main(void)
 				
 				while(g_go_to_sleep_now)
 				{
-					if(g_sleepType == SLEEP_FOREVER)
+					if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_UNTIL_START_TIME))
 					{
-						time_t now = time(null);
-						static time_t hold_now = 0;
+						volatile time_t now = time(null);
+						static volatile time_t hold_now = 0;
 						
-						if((now - hold_now) > 600) // Every ten minutes check to see if the internal battery should be charged
+						if(timeDif(now, hold_now) > 60) //600) // Every ten minutes check to see if the internal battery should be charged
 						{
 							hold_now = now;
 							system_charging_config();
@@ -1314,8 +1327,9 @@ int main(void)
 				CLKCTRL_init();
 				/* Re-enable BOD? */
 				g_sleeping = false;
-				g_time_since_wakeup = 0;
+				g_seconds_since_wakeup = 0;
 				atmel_start_init();
+				if(!sb_enabled()) serialbus_init(SB_BAUD, SERIALBUS_USART);
 
 				if(g_enable_external_battery_control) setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
 				
@@ -1327,7 +1341,7 @@ int main(void)
 					LEDS.blink(LEDS_RED_ON_CONSTANT);
 					LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 					buttonHeldClosed = true;
-					serialbus_init(SB_BAUD, SERIALBUS_USART);
+//					serialbus_init(SB_BAUD, SERIALBUS_USART);
 //					RTC_set_calibration(g_clock_calibration);
 					while(util_delay_ms(2000));
 				}
@@ -1350,10 +1364,14 @@ int main(void)
 				}
 				else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT)
 				{
-// 					if(g_sleepType == SLEEP_UNTIL_START_TIME)
-// 					{
-// 						serialbus_flush_rx();
-// 					}
+					LEDS.init();
+					LEDS.blink(LEDS_RED_ON_CONSTANT);
+					LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+					g_sleepshutdown_seconds = MAX(300U, g_sleepshutdown_seconds);
+					if(!g_cloningInProgress && !g_meshmode)
+					{
+						g_report_settings_countdown = 100;
+					}
 				}
 				else
 				{
@@ -1646,7 +1664,7 @@ int main(void)
 
 				if(g_text_buff.empty())
 				{
-					if((g_time_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+					if((g_seconds_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
 					{
 						if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 						{

@@ -34,7 +34,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1c"
+#define SW_REVISION "1.1d"
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -181,7 +181,7 @@ typedef enum {
 #define INT_BAT_CHARGE_THRESH_LOW_MIN (3.0)
 #define INT_BAT_CHARGE_THRESH_LOW_MAX (4.1)
 #define INT_BAT_CHARGE_THRES_HIGH (4.2)
-#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
+#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (8.5)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
 #define FAN_TURN_ON_TEMP (45.)
