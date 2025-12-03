@@ -1273,7 +1273,7 @@ int main(void)
 						volatile time_t now = time(null);
 						static volatile time_t hold_now = 0;
 						
-						if(timeDif(now, hold_now) > 60) //600) // Every ten minutes check to see if the internal battery should be charged
+						if(timeDif(now, hold_now) > 90) // Periodically check to see if the internal battery should be charged
 						{
 							hold_now = now;
 							system_charging_config();
@@ -2223,57 +2223,60 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					printFreq = 5;
 				}
 				
-				if(printFreq && !g_meshmode) sb_send_NewLine();
-					
-				switch(printFreq)
+				if(!g_cloningInProgress)
 				{
-					case 0:
-					{
-					}
-					break;
-						
-					case 1:
-					{
-						frequencyString(buf, g_frequency_low);
-						sprintf(g_tempStr, "* FRE 1=%s\n", buf);
-					}
-					break;
-						
-					case 2:
-					{
-						frequencyString(buf, g_frequency_med);
-						sprintf(g_tempStr, "* FRE 2=%s\n", buf);
-					}
-					break;
-						
-					case 3:
-					{
-						frequencyString(buf, g_frequency_hi);
-						sprintf(g_tempStr, "* FRE 3=%s\n", buf);
-					}
-					break;
-						
-					case 4:
-					{
-						frequencyString(buf, g_frequency_beacon);
-						sprintf(g_tempStr, "* FRE B=%s\n", buf);
-					}
-					break;
-						
-					case 5:
-					{
-						frequencyString(buf, getFrequencySetting() );
-						sprintf(g_tempStr, "* FRE=%s\n", buf);
-					}
-					break;
+					if(printFreq && !g_meshmode) sb_send_NewLine();
 					
-					default:
+					switch(printFreq)
 					{
-						sprintf(g_tempStr, "* 3500 kHz < FRE < 4000 kHz\n");						
+						case 0:
+						{
+						}
+						break;
+						
+						case 1:
+						{
+							frequencyString(buf, g_frequency_low);
+							sprintf(g_tempStr, "* FRE 1=%s\n", buf);
+						}
+						break;
+						
+						case 2:
+						{
+							frequencyString(buf, g_frequency_med);
+							sprintf(g_tempStr, "* FRE 2=%s\n", buf);
+						}
+						break;
+						
+						case 3:
+						{
+							frequencyString(buf, g_frequency_hi);
+							sprintf(g_tempStr, "* FRE 3=%s\n", buf);
+						}
+						break;
+						
+						case 4:
+						{
+							frequencyString(buf, g_frequency_beacon);
+							sprintf(g_tempStr, "* FRE B=%s\n", buf);
+						}
+						break;
+						
+						case 5:
+						{
+							frequencyString(buf, getFrequencySetting() );
+							sprintf(g_tempStr, "* FRE=%s\n", buf);
+						}
+						break;
+					
+						default:
+						{
+							sprintf(g_tempStr, "* 3500 kHz < FRE < 4000 kHz\n");						
+						}
 					}
+					
+					sb_send_string(g_tempStr);
 				}
-					
-				sb_send_string(g_tempStr);
 			}
 			break;
 				
@@ -2619,7 +2622,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else if(c == 'P')
 						{
-							sprintf(g_tempStr, "* PAT SPD:%u WPM\n", g_pattern_codespeed);
+							sprintf(g_tempStr, "* PAT SPD:%u WPM\n", getFoxCodeSpeed());
 						}
 						else if(c == 'F')
 						{
@@ -2690,7 +2693,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(g_cloningInProgress)
 				{
 					char c = sb_buff->fields[SB_FIELD1][0];
-					sb_send_string((char*)"EVT F\n");
+
 					if(c == 'F')
 					{
 						g_event = EVENT_FOXORING;
