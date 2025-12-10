@@ -56,6 +56,7 @@ ISR(USART0_RXC_vect)
 	}
 }
 
+//void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
 void serial_Rx(uint8_t rx_char)
 {
 	static char textBuff[SERIALBUS_MAX_MSG_LENGTH];
@@ -84,8 +85,9 @@ void serial_Rx(uint8_t rx_char)
 			if(rx_char == '\r')    /* Handle carriage return */
 			{
 				ignoreAllInput = false;
-				rx_char = '\0';
 			}
+			
+			rx_char = '\0';
 		}
 		else if(ignoreCount)
 		{

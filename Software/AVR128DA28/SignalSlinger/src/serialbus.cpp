@@ -45,7 +45,6 @@
 /* Global Variables */
 extern bool g_isMaster;
 extern bool g_cloningInProgress;
-extern bool g_mute_serial_responses;
 
 volatile uint16_t g_serial_timeout_ticks = 200;
 USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
@@ -400,7 +399,7 @@ bool serialbus_send_text(char* text)
 
 void sb_send_NewPrompt(void)
 {
-	if(g_isMaster || g_cloningInProgress || g_mute_serial_responses) return;
+	if(g_isMaster || g_cloningInProgress) return;
 	
 	if(g_serialbus_disabled)
 	{
@@ -415,7 +414,7 @@ void sb_send_NewPrompt(void)
 
 void sb_send_NewLine(void)
 {
-	if(g_isMaster || g_cloningInProgress || g_mute_serial_responses) return;
+	if(g_isMaster || g_cloningInProgress) return;
 	
 	if(g_serialbus_disabled)
 	{
@@ -426,7 +425,7 @@ void sb_send_NewLine(void)
 
 void sb_echo_char(uint8_t c)
 {
-	if(g_isMaster || g_cloningInProgress || g_mute_serial_responses) return;
+	if(g_isMaster || g_cloningInProgress) return;
 	
 	if(g_serialbus_disabled)
 	{
@@ -439,7 +438,7 @@ void sb_echo_char(uint8_t c)
 
 bool sb_send_string(char* str)
 {
-	if(g_isMaster || g_mute_serial_responses) return true;
+	if(g_isMaster) return true;
 	
 	return sb_send_master_string(str);
 }
@@ -451,7 +450,7 @@ bool sb_send_master_string(char* str)
 	uint16_t length, lengthToSend, lengthSent=0;
 	bool done = false;
 
-	if(g_serialbus_disabled || g_mute_serial_responses)
+	if(g_serialbus_disabled)
 	{
 		return( true);
 	}
@@ -498,7 +497,7 @@ void sb_send_value(uint16_t value, char* label)
 {
 	bool err;
 
-	if(g_serialbus_disabled || g_mute_serial_responses)
+	if(g_serialbus_disabled)
 	{
 		return;
 	}

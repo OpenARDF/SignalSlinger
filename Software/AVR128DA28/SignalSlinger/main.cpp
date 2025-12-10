@@ -121,7 +121,9 @@ volatile int16_t g_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;               
 volatile int16_t g_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT;   /* offset time into a repeating transmit cycle */
 volatile int16_t g_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;              /* amount of time between ID/callsign transmissions */
 volatile time_t g_event_start_epoch = EEPROM_START_TIME_DEFAULT;
+volatile time_t g_start_epoch = 0;
 volatile time_t g_event_finish_epoch = EEPROM_FINISH_TIME_DEFAULT;
+volatile time_t g_finish_epoch = 0;
 volatile bool g_event_enabled = EEPROM_EVENT_ENABLED_DEFAULT;                        /* indicates that the conditions for executing the event are set */
 volatile bool g_event_commenced = false;
 volatile float g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
@@ -179,7 +181,7 @@ static volatile uint16_t g_programming_msg_throttle = 0;
 static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
 bool g_cloningInProgress = false;
-volatile bool g_mute_serial_responses = false;
+
 Enunciation_t g_enunciator = LED_ONLY;
 static volatile uint16_t g_key_down_countdown = 0;
 static volatile bool g_reset_after_keydown = false;
@@ -220,7 +222,7 @@ void handle_1sec_tasks(void);
 bool eventEnabled(void);
 void handleSerialBusMsgs(void);
 uint16_t throttleValue(uint8_t speed);
-EC activateEventUsingCurrentSettings(SC* statusCode);
+EC activateTransmissionsUsingCurrentSettings(SC* statusCode, time_t startTime, time_t finishTime);
 EC launchEvent(SC* statusCode);
 void reportSettings(void);
 uint16_t timeNeededForID(void);
@@ -235,19 +237,22 @@ bool eventScheduledForNow(void);
 bool eventScheduledForTheFuture(void);
 bool noEventWillRun(void);
 bool eventRunning(void);
+bool eventLaunchedByUser(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
+bool allClocksSet(void);
+ConfigurationState_t clockConfigurationCheck(void);
 
 /*******************************/
 /* Hardcoded event support     */
 /*******************************/
 void suspendEvent(void);
 void startEventNow(bool configOverride);
+void startSyncdEventNow(bool configOverride);
 bool startEventUsingRTC(void);
 void setupForFox(Fox_t fox, EventAction_t action);
 time_t validateTimeString(char* str, time_t* epochVar);
 bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-ConfigurationState_t clockConfigurationCheck(void);
 void reportConfigErrors(void);
 /*******************************/
 /* End hardcoded event support */
@@ -324,9 +329,9 @@ void handle_1sec_tasks(void)
 
 		if(g_event_commenced && !g_run_event_forever)
 		{		
-			if(g_event_finish_epoch) /* If a finish time has been set */
+			if(g_finish_epoch) /* If a finish time has been set */
 			{
-				if(temp_time >= g_event_finish_epoch)
+				if(temp_time >= g_finish_epoch)
 				{
 					g_last_status_code = STATUS_CODE_EVENT_FINISHED;
 					g_on_the_air = 0;
@@ -341,14 +346,16 @@ void handle_1sec_tasks(void)
 				
 					if(g_days_run < g_days_to_run)
 					{
-						g_event_start_epoch += SECONDS_24H;
-						g_event_finish_epoch += SECONDS_24H;
+						g_start_epoch += SECONDS_24H;
+						g_finish_epoch += SECONDS_24H;
 						g_sleepType = SLEEP_UNTIL_START_TIME;
 						g_go_to_sleep_now = true;
 					}
 					else
 					{
 						g_sleepType = SLEEP_FOREVER;
+						g_start_epoch = 0;
+						g_finish_epoch = 0;
 					}
 				}
 			}
@@ -392,11 +399,11 @@ void handle_1sec_tasks(void)
 			}
 			else /* waiting for the start time to arrive */
 			{
-				if(g_event_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
+				if(g_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
 				{
 					temp_time = time(null);
 
-					if(temp_time >= g_event_start_epoch) /* Time for the event to start */
+					if(temp_time >= g_start_epoch) /* Time for the event to start */
 					{
 						if(g_intra_cycle_delay_time)
 						{
@@ -718,9 +725,9 @@ ISR(TCB0_INT_vect)
 						/* Enable sleep during off-the-air periods */
 						int32_t timeRemaining = 0;
 						time_t temp_time = time(null);
-						if(temp_time < g_event_finish_epoch)
+						if(temp_time < g_finish_epoch)
 						{
-							timeRemaining = timeDif(g_event_finish_epoch, temp_time);
+							timeRemaining = timeDif(g_finish_epoch, temp_time);
 							g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
 						}
 
@@ -1196,7 +1203,6 @@ int main(void)
 			{
 				if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 				{
-//					if(eventScheduled() && (g_sleepType != SLEEP_POWER_OFF_OVERRIDE)) 
 					if(eventScheduledForTheFuture()) /* Never sleep forever if an event is scheduled to start in the future */
 					{
 						g_sleepType = SLEEP_UNTIL_START_TIME;
@@ -1243,6 +1249,16 @@ int main(void)
 					g_event_commenced = false;
 					g_start_event = false;
 					g_commence_transmissions = false;
+					 
+					if(!g_start_epoch) // should never be true
+					{
+						g_start_epoch = g_event_start_epoch;
+					}
+					
+					if(!g_finish_epoch) // should never be true
+					{
+						g_finish_epoch = g_event_finish_epoch;
+					}
 				}
 				
 				if(g_sleepType == SLEEP_POWER_OFF_OVERRIDE)
@@ -1564,9 +1580,9 @@ int main(void)
 				{
 					if(g_device_enabled)
 					{
-						g_mute_serial_responses = !g_mute_serial_responses;
-						
-						if(g_mute_serial_responses)
+						g_meshmode = !g_meshmode; // toggle mesh mode
+
+						if(g_meshmode)
 						{
 							LEDS.sendCode((char*)"mmm");
 						}
@@ -2409,7 +2425,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							suspendEvent(); // Stop any running event
 							LEDS.setRed(OFF);
 							g_event_enabled = false; /* ensure that it will run immediately */
- 							startEventNow(true);
+							startSyncdEventNow(true);
 						}
 						else if(arg == '2')  /* Start the event at the programmed start time */
 						{
@@ -2780,9 +2796,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					
 					sb_send_string(g_tempStr);
 					
-					if(eventScheduled())
+					time_t now = time(null);
+
+					if(eventLaunchedByUser())
 					{
-						time_t now = time(null);
+						reportTimeTill(now, g_finish_epoch, "* User launched. Time remaining: ", NULL);
+					}
+					else if(eventScheduled())
+					{
 						// Report times for event start, duration, and remaining time.
 						reportTimeTill(now, g_event_start_epoch, "* Starts in: ", "* In progress\n");
 						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "* Lasts: ", null);
@@ -2793,11 +2814,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else
 					{
-// 						if(!g_meshmode)
-// 						{
-// 							sb_send_NewLine();
-// 						}
-
 						sb_send_string((char*)"* Not scheduled\n");
 					}
 				}
@@ -3334,7 +3350,7 @@ uint16_t throttleValue(uint8_t speed)
 
 EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
 {
-	EC ec = activateEventUsingCurrentSettings(statusCode);
+	EC ec = activateTransmissionsUsingCurrentSettings(statusCode, g_event_start_epoch, g_event_finish_epoch);
 
 	if(ec)
 	{
@@ -3349,7 +3365,7 @@ EC __attribute__((optimize("O0"))) launchEvent(SC* statusCode)
 }
 
 
-EC activateEventUsingCurrentSettings(SC* statusCode)
+EC activateTransmissionsUsingCurrentSettings(SC* statusCode, time_t startTime, time_t finishTime)
 {
 	time_t now = time(null); 
 	
@@ -3361,12 +3377,12 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 			return( ERROR_CODE_EVENT_NOT_CONFIGURED);
 		}
 		
-		if(!g_event_start_epoch)
+		if(!startTime)
 		{
 			return( ERROR_CODE_EVENT_MISSING_START_TIME);
 		}
 
-		if(g_event_start_epoch >= g_event_finish_epoch)   /* Finish must be later than start */
+		if(startTime >= finishTime)   /* Finish must be later than start */
 		{
 			return( ERROR_CODE_EVENT_NOT_CONFIGURED);
 		}
@@ -3419,7 +3435,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 		LEDS.init();
 		g_commence_transmissions = true;
 	}
-	else if(!g_run_event_forever && (g_event_finish_epoch < now))   /* the event has already finished */
+	else if(!g_run_event_forever && (finishTime < now))   /* the event has already finished */
 	{
 		if(statusCode)
 		{
@@ -3445,7 +3461,7 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 		}
 		else
 		{		
-			int32_t dif = timeDif(now, g_event_start_epoch); /* returns arg1 - arg2 */
+			int32_t dif = timeDif(now, startTime); /* returns arg1 - arg2 */
 
 			if(dif >= 0)                                    /* start time is in the past */
 			{
@@ -3503,6 +3519,8 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 
 				powerToTransmitter(turnOnTransmitter);
 
+				g_start_epoch = startTime;
+				g_finish_epoch = finishTime;
 				g_commence_transmissions = true;
 				LEDS.init();
 			}
@@ -3514,6 +3532,8 @@ EC activateEventUsingCurrentSettings(SC* statusCode)
 				}
 				keyTransmitter(OFF);
 				powerToTransmitter(OFF);
+				g_start_epoch = startTime;
+				g_finish_epoch = finishTime;
 			}
 		}
 	}
@@ -3546,6 +3566,17 @@ void startEventNow(bool configOverride)
 	configRedLEDforEvent();
 }
 
+void startSyncdEventNow(bool configOverride)
+{
+	ConfigurationState_t conf = clockConfigurationCheck();
+	
+	if(configOverride || (conf != CONFIGURATION_ERROR))
+	{
+		setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT);                                                                  /* Let the RTC start the event */
+	}
+	
+	configRedLEDforEvent();
+}
 
 bool startEventUsingRTC(void)
 {
@@ -3795,17 +3826,34 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	{
 		g_event_commenced = false;                   /* do not get things running yet */
 		g_event_enabled = false;                     /* do not get things running yet */
-//		keyTransmitter(OFF);
 		powerToTransmitter(OFF);
 	}
-	else if(action == START_EVENT_NOW_AND_RUN_FOREVER)
+	else if((action == START_EVENT_NOW_AND_RUN_FOREVER) || (action == START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT)) /* Start the event now, and align event start to the top of the hour */
 	{
+		if(allClocksSet() && (action != START_EVENT_NOW_AND_RUN_FOREVER)) // First check if times are all valid
+		{
+			SC sc;
+			time_t now = time(null);
+			time_t time_since_midnight = now % SECONDS_24H;
+			time_t top_of_last_midnight = timeDif(now, time_since_midnight);
+			time_t newFinish = now + timeDif(g_event_finish_epoch, g_event_start_epoch);
+			activateTransmissionsUsingCurrentSettings(&sc, top_of_last_midnight, newFinish);
+			g_run_event_forever = false;
+			g_commence_transmissions = false; // override setting by activateTransmissionsUsingCurrentSettings() 
+			g_event_commenced = true;	
+			g_event_enabled = true;	
+		}
+		else
+		{
+			g_run_event_forever = true;
+			g_on_the_air = -g_intra_cycle_delay_time;
+			g_start_event = true;
+		}
+		
 		powerToTransmitter(g_device_enabled);
 		makeMorse(getCurrentPatternText(), NULL, NULL, CALLER_AUTOMATED_EVENT);
-		g_run_event_forever = true;
 		g_sleepshutdown_seconds = 300;
-		g_on_the_air = -g_intra_cycle_delay_time;
-		g_start_event = true;
+
 		LEDS.blink(LEDS_RED_OFF);
 	}
 	else if(action == START_TRANSMISSIONS_NOW)                                  /* Immediately start transmitting, regardless RTC or time slot */
@@ -3821,6 +3869,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	}
 	else         /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
+		g_start_epoch = g_event_start_epoch;
+		g_finish_epoch = g_event_finish_epoch;
 		g_run_event_forever = false;
 		g_event_commenced = false;	/* do not get things running yet */
 		g_event_enabled = false;	/* do not get things running yet */
@@ -4026,19 +4076,32 @@ bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 }
 
 
-ConfigurationState_t clockConfigurationCheck(void)
+bool allClocksSet(void)
 {
 	time_t now = time(null);
-	
+
 	if((g_event_finish_epoch <= MINIMUM_VALID_EPOCH) || (g_event_start_epoch <= MINIMUM_VALID_EPOCH) || (now <= MINIMUM_VALID_EPOCH))
+	{
+		return(false);
+	}
+	
+	if(g_event_finish_epoch <= g_event_start_epoch) /* Event configured to finish before it started */
+	{
+		return(false);
+	}
+	
+	return(true);
+}
+
+
+ConfigurationState_t clockConfigurationCheck(void)
+{
+	if(!allClocksSet())
 	{
 		return(CONFIGURATION_ERROR);
 	}
 
-	if(g_event_finish_epoch <= g_event_start_epoch) /* Event configured to finish before it started */
-	{
-		return(CONFIGURATION_ERROR);
-	}
+	time_t now = time(null);
 
 	if(now > g_event_finish_epoch)  /* The scheduled event is over */
 	{
@@ -4067,6 +4130,8 @@ ConfigurationState_t clockConfigurationCheck(void)
 void reportConfigErrors(void)
 {
 	time_t now = time(null);
+	
+	if(g_meshmode) return;
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -5167,6 +5232,22 @@ bool eventScheduledForTheFuture(void)
 	if(now > MINIMUM_VALID_EPOCH)
 	{
 		result = ((g_event_start_epoch > now) && (g_event_finish_epoch > g_event_start_epoch));
+	}
+	
+	return(result);
+}
+
+
+bool eventLaunchedByUser(void)
+{
+	bool result = false;
+	
+	if(allClocksSet())
+	{
+		time_t now = time(null);	
+		result = ((g_start_epoch < now) && (g_finish_epoch > now));
+		result = result && ((g_start_epoch != g_event_start_epoch) && (g_finish_epoch != g_event_finish_epoch));
+		result = result && eventRunning();
 	}
 	
 	return(result);
