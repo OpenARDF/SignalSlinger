@@ -1135,8 +1135,12 @@ int main(void)
 				}
 
 				configRedLEDforEvent();
-				if(!g_meshmode) sb_send_NewLine();
-				sb_send_string(TEXT_NOT_SLEEPING_TXT);
+				if(!g_meshmode) 
+				{
+					sb_send_NewLine();
+					sb_send_string(TEXT_NOT_SLEEPING_TXT);
+				}
+
 				if(!g_device_enabled)
 				{
 					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
@@ -1144,7 +1148,8 @@ int main(void)
 #ifdef TEST_MODE_SOFTWARE
 				sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
 #endif
-				sb_send_NewPrompt();
+				
+				if(!g_meshmode) sb_send_NewPrompt();
 			}
 			else /* Spin your wheels waiting for above condition to test true */
 			{
@@ -1215,18 +1220,22 @@ int main(void)
 
 						if(now < MINIMUM_VALID_EPOCH)
 						{
-							if(!g_meshmode) sb_send_NewLine();
-							sb_send_string(TEXT_POWER_OFF);
-							while((util_delay_ms(2000)) && serialbusTxInProgress());
-							while(util_delay_ms(200)); // Let serial xmsn finish before power off
+							if(!g_meshmode)
+							{
+								sb_send_NewLine();
+								sb_send_string(TEXT_POWER_OFF);
+								while((util_delay_ms(2000)) && serialbusTxInProgress());
+								while(util_delay_ms(200)); // Let serial xmsn finish before power off
+							}
+
 							if(!g_charge_battery)
 							{
 								PORTA_set_pin_level(POWER_ENABLE, LOW); /* No need to preserve current time, so power off - but if charging, keep power switch on to measure internal battery level */
 							}
 						}
-						else
+						else if(!g_meshmode)
 						{
-							if(!g_meshmode) sb_send_NewLine();
+							sb_send_NewLine();
 							sb_send_string(TEXT_SLEEPING_TXT);
 							while((util_delay_ms(2000)) && serialbusTxInProgress());
 							while(util_delay_ms(200)); // Let serial xmsn finish before sleep
@@ -1236,10 +1245,13 @@ int main(void)
 				
 				if(g_sleepType == SLEEP_UNTIL_START_TIME)
 				{
-						if(!g_meshmode) sb_send_NewLine();
+					if(!g_meshmode)
+					{
+						sb_send_NewLine();
 						sb_send_string(TEXT_SLEEPING_UNTIL_START_TXT);
 						while((util_delay_ms(2000)) && serialbusTxInProgress());
-						while(util_delay_ms(200)); // Let serial xmsn finish before power off
+						while(util_delay_ms(200)); // Let serial  finish
+					}
 				}
 				
 				/* If sleeping until start time, make sure everything is set up properly for when that time arrives */
