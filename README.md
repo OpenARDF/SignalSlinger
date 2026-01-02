@@ -5,7 +5,7 @@ SignalSlinger is an 80-meter band radio orienteering (ARDF) transmitter kit desi
 
 The SignalSlinger project is 100% Open Source. All software and hardware design documents are available for download from this GitHub repository.
 
-BOM: https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi867AKD0zTovbhvcYbqc/edit?usp=sharing
+BOM: <a href="https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi867AKD0zTovbhvcYbqc/edit?usp=sharing">Bill of Material</a>.
 
 User Manual: <a href="https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing">Online Manual</a>.
 
