@@ -7,6 +7,6 @@ The SignalSlinger project is 100% Open Source. All software and hardware design 
 
 BOM: https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi867AKD0zTovbhvcYbqc/edit?usp=sharing
 
-User Manual: https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing
+User Manual: <a href="https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing">Online Manual</a>.
 
 Also, check out SignalSlinger's sibling receiver project: <a href="https://github.com/OpenARDF/SignalSnagger">SignalSnagger</a>.
