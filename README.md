@@ -9,4 +9,6 @@ BOM: <a href="https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi86
 
 User Manual: <a href="https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing">Online Manual</a>.
 
+A matching antenna: <a href="https://github.com/OpenARDF/SignalStreamer">SignalStreamer</a>.
+
 Also, check out SignalSlinger's sibling receiver project: <a href="https://github.com/OpenARDF/SignalSnagger">SignalSnagger</a>.
