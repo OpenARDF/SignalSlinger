@@ -3259,10 +3259,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				g_report_settings_countdown = 0;
 				if(!g_cloningInProgress)
 				{
-					if(!g_meshmode) sb_send_NewLine();
-					sb_send_string((char*)"* ");
-					sb_send_string((char*)PRODUCT_NAME_LONG);
-					sprintf(g_tempStr, "\n* SW Ver: %s\n", SW_REVISION);
+					if(!g_meshmode)
+					{
+						sb_send_NewLine();
+						sb_send_string((char*)"* ");
+						sb_send_string((char*)PRODUCT_NAME_LONG);
+						sb_send_NewLine();
+					}
+					
+					sprintf(g_tempStr, "* SW Ver: %s\n", SW_REVISION);
 					sb_send_string(g_tempStr);
 				}
 			}

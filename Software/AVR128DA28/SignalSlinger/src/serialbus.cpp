@@ -335,6 +335,7 @@ void serialbus_disable(void)
 	uint8_t bufferIndex;
 
 	g_serialbus_disabled = true;
+	serialbus_end_tx();
 
 	if(g_serialbus_usart_number == USART_0)
 	{	
@@ -345,7 +346,6 @@ void serialbus_disable(void)
 		USART1_disable();
 	}
 	
-	serialbus_end_tx();
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
 
 	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)

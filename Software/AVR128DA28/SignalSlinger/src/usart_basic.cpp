@@ -142,6 +142,7 @@ void USART1_enable_tx()
  */
 void USART1_disable()
 {
+	USART1.CTRLA &= ~(USART_DREIE_bm); /* Transmit Data Ready Interrupt Enable: disable */
 	USART1.CTRLB &= ~(USART_RXEN_bm | USART_TXEN_bm);
 }
 
@@ -330,6 +331,7 @@ void USART0_enable_tx()
  */
 void USART0_disable()
 {
+	USART0.CTRLA &= ~(USART_DREIE_bm); /* Transmit Data Ready Interrupt Enable: disable */
 	USART0.CTRLB &= ~(USART_RXEN_bm | USART_TXEN_bm);
 }
 
