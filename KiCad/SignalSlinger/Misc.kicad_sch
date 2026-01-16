@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "SignalSlinger")
-		(date "2024-06-13")
-		(rev "3.4")
+		(date "2026-09-10")
+		(rev "3.5")
 	)
 	(lib_symbols
 		(symbol "SignalSlinger Library:Battery_Cell"
