@@ -1,821 +1,2611 @@
-(kicad_sch (version 20211123) (generator eeschema)
-
-  (uuid 88415375-e68f-4e16-84eb-75795413b896)
-
-  (paper "A4")
-
-  (title_block
-    (title "SignalSlinger")
-    (date "2024-06-13")
-    (rev "3.4")
-  )
-
-  (lib_symbols
-    (symbol "Connector:Conn_Coaxial" (pin_names (offset 1.016) hide) (in_bom yes) (on_board yes)
-      (property "Reference" "J" (id 0) (at 0.254 3.048 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "Conn_Coaxial" (id 1) (at 2.921 0 90)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (id 2) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" " ~" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "BNC SMA SMB SMC LEMO coaxial connector CINCH RCA" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_fp_filters" "*BNC* *SMA* *SMB* *SMC* *Cinch* *LEMO*" (id 6) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "Conn_Coaxial_0_1"
-        (arc (start -1.778 -0.508) (mid 0.2311 -1.8066) (end 1.778 0)
-          (stroke (width 0.254) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -2.54 0)
-            (xy -0.508 0)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 0 -2.54)
-            (xy 0 -1.778)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (circle (center 0 0) (radius 0.508)
-          (stroke (width 0.2032) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (arc (start 1.778 0) (mid 0.2099 1.8101) (end -1.778 0.508)
-          (stroke (width 0.254) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "Conn_Coaxial_1_1"
-        (pin passive line (at -5.08 0 0) (length 2.54)
-          (name "In" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at 0 -5.08 90) (length 2.54)
-          (name "Ext" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-    (symbol "Connector:TEST_SCOPE" (pin_numbers hide) (pin_names (offset 0.762) hide) (in_bom yes) (on_board yes)
-      (property "Reference" "W101" (id 0) (at 0 5.08 90)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "TEST_SCOPE" (id 1) (at -1.27 1.27 90)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small" (id 2) (at 0 5.08 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (id 3) (at 0 5.08 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Digi-Key Part No." "np" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Link" "np" (id 5) (at 0 0 0)
-        (effects (font (size 1.524 1.524)) hide)
-      )
-      (symbol "TEST_SCOPE_0_0"
-        (text "GND" (at 2.54 5.08 0)
-          (effects (font (size 0.9906 0.9906)))
-        )
-      )
-      (symbol "TEST_SCOPE_0_1"
-        (circle (center 0 3.302) (radius 0.762)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (circle (center 2.54 3.302) (radius 0.762)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "TEST_SCOPE_1_1"
-        (pin passive line (at 0 0 90) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin input line (at 2.54 0 90) (length 2.54)
-          (name "GND" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-    (symbol "Device:C_Small" (pin_numbers hide) (pin_names (offset 0.254) hide) (in_bom yes) (on_board yes)
-      (property "Reference" "C" (id 0) (at 0.254 1.778 0)
-        (effects (font (size 1.27 1.27)) (justify left))
-      )
-      (property "Value" "C_Small" (id 1) (at 0.254 -2.032 0)
-        (effects (font (size 1.27 1.27)) (justify left))
-      )
-      (property "Footprint" "" (id 2) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "~" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "capacitor cap" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "Unpolarized capacitor, small symbol" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_fp_filters" "C_*" (id 6) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "C_Small_0_1"
-        (polyline
-          (pts
-            (xy -1.524 -0.508)
-            (xy 1.524 -0.508)
-          )
-          (stroke (width 0.3302) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.524 0.508)
-            (xy 1.524 0.508)
-          )
-          (stroke (width 0.3048) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "C_Small_1_1"
-        (pin passive line (at 0 2.54 270) (length 2.032)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at 0 -2.54 90) (length 2.032)
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-    (symbol "Device:INDUCTOR_SMALL" (pin_numbers hide) (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
-      (property "Reference" "L301" (id 0) (at 0 2.54 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "INDUCTOR_SMALL" (id 1) (at 0 -1.27 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "Inductors:Toroid_T-60_2TH" (id 2) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Digi-Key Part No." "T60-2 (Amidon)" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Link" "<a href=\"http://www.amidoncorp.com/t60-2/\">Link</a>" (id 5) (at 0 0 0)
-        (effects (font (size 1.524 1.524)) hide)
-      )
-      (property "Manufacturer" "TH" (id 6) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Manufacturer PN" "TH" (id 7) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Description" "TH" (id 8) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "INDUCTOR_SMALL_0_1"
-        (arc (start -2.54 0) (mid -3.81 1.27) (end -5.08 0)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (arc (start 0 0) (mid -1.27 1.27) (end -2.54 0)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (arc (start 2.54 0) (mid 1.27 1.27) (end 0 0)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-        (arc (start 5.08 0) (mid 3.81 1.27) (end 2.54 0)
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "INDUCTOR_SMALL_1_1"
-        (pin input line (at -6.35 0 0) (length 1.27)
-          (name "1" (effects (font (size 0.762 0.762))))
-          (number "1" (effects (font (size 0.762 0.762))))
-        )
-        (pin input line (at 6.35 0 180) (length 1.27)
-          (name "2" (effects (font (size 0.762 0.762))))
-          (number "2" (effects (font (size 0.762 0.762))))
-        )
-      )
-    )
-    (symbol "power:GND" (power) (pin_names (offset 0)) (in_bom yes) (on_board yes)
-      (property "Reference" "#PWR" (id 0) (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Value" "GND" (id 1) (at 0 -3.81 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (id 2) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (id 3) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_keywords" "power-flag" (id 4) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "ki_description" "Power symbol creates a global label with name \"GND\" , ground" (id 5) (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "GND_0_1"
-        (polyline
-          (pts
-            (xy 0 0)
-            (xy 0 -1.27)
-            (xy 1.27 -1.27)
-            (xy 0 -2.54)
-            (xy -1.27 -1.27)
-            (xy 0 -1.27)
-          )
-          (stroke (width 0) (type default) (color 0 0 0 0))
-          (fill (type none))
-        )
-      )
-      (symbol "GND_1_1"
-        (pin power_in line (at 0 0 270) (length 0) hide
-          (name "GND" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-      )
-    )
-  )
-
-  (junction (at 165.1 83.82) (diameter 0) (color 0 0 0 0)
-    (uuid 26c4e1c6-d44a-4409-9768-41a725c6a402)
-  )
-  (junction (at 134.62 83.82) (diameter 0) (color 0 0 0 0)
-    (uuid 3a4ad39b-7d4e-401f-99ca-8fdb385c5590)
-  )
-  (junction (at 143.51 83.82) (diameter 0) (color 0 0 0 0)
-    (uuid 53ccda99-b49b-4f7e-ae27-6a07d73312c3)
-  )
-  (junction (at 116.84 83.82) (diameter 0) (color 0 0 0 0)
-    (uuid 8423b59c-cc40-427f-b41b-784eab5d8bf7)
-  )
-  (junction (at 160.02 83.82) (diameter 0) (color 0 0 0 0)
-    (uuid decc535f-0021-494c-a6ba-4d4a0dee9e5a)
-  )
-
-  (wire (pts (xy 116.84 83.82) (xy 116.84 86.36))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 2503b8bc-6b8e-4857-9257-6baba145ba38)
-  )
-  (wire (pts (xy 143.51 83.82) (xy 144.78 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 3becc704-73b4-4fa2-9d8e-c6bd3f0e1174)
-  )
-  (wire (pts (xy 116.84 80.01) (xy 116.84 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 4090ad36-eba3-4184-b899-6508876c15b7)
-  )
-  (wire (pts (xy 134.62 83.82) (xy 134.62 86.36))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 484bcccd-8105-41fb-9933-534562f240cf)
-  )
-  (wire (pts (xy 134.62 80.01) (xy 134.62 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 55a55d84-4266-4d98-b4de-fb82138691fc)
-  )
-  (wire (pts (xy 111.76 83.82) (xy 116.84 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 56803ea5-dcdd-45d6-9aec-ebfa332f2004)
-  )
-  (wire (pts (xy 157.48 83.82) (xy 160.02 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 580dd00e-d6da-48b8-87c9-44d4f8519e25)
-  )
-  (wire (pts (xy 116.84 83.82) (xy 119.38 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 5a67d829-ca5e-428b-9072-0ad313386514)
-  )
-  (wire (pts (xy 143.51 76.2) (xy 143.51 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 6263bb98-6f7a-412f-b166-06b248b436fc)
-  )
-  (wire (pts (xy 153.67 76.2) (xy 160.02 76.2))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 6bf09fea-0102-45bc-8b5e-a4d821d23a0e)
-  )
-  (wire (pts (xy 132.08 83.82) (xy 134.62 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 7785d112-f24a-419f-ab84-3cfe63a0b85f)
-  )
-  (wire (pts (xy 148.59 76.2) (xy 143.51 76.2))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 8629c473-5291-41d0-bf20-db330b6763a8)
-  )
-  (wire (pts (xy 160.02 83.82) (xy 160.02 86.36))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid 97a4dca5-3d4d-46b7-9cab-2eeb58c93dae)
-  )
-  (wire (pts (xy 102.87 83.82) (xy 106.68 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid b6018f64-0be3-403e-885e-1a77336d33cc)
-  )
-  (wire (pts (xy 160.02 83.82) (xy 165.1 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid ba256273-0a3d-414b-94f7-20fd8fc7f116)
-  )
-  (wire (pts (xy 165.1 80.01) (xy 165.1 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid c4e858a4-cf9a-4741-ac27-02c191a4edc6)
-  )
-  (wire (pts (xy 160.02 76.2) (xy 160.02 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid c96c8d1e-7512-441c-a346-b1c7b5c60c03)
-  )
-  (wire (pts (xy 165.1 83.82) (xy 172.72 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid dbf4e55b-627d-4650-93d3-af5323be5692)
-  )
-  (wire (pts (xy 134.62 83.82) (xy 143.51 83.82))
-    (stroke (width 0) (type default) (color 0 0 0 0))
-    (uuid dd7e227d-53e3-4a19-89c8-39492bfc4d83)
-  )
-
-  (text "6th order Chebychev\n3.9MHz 3dB cut-off\nw/ node at 10.7MHz"
-    (at 127 68.58 0)
-    (effects (font (size 0.9906 0.9906)) (justify left bottom))
-    (uuid 16bbf532-f95c-4583-8055-75e4bd79b23f)
-  )
-  (text "40m LPF\n6th order Chebychev\n8MHz 3dB cut-off\nw/ node at 21.5 MHz\n\nL301 & L302 = 1.3uH\nC302 & C305 = 470pF\nC303 = 820pF\nC304 = 43pF"
-    (at 124.46 125.73 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 31cdb4a6-00a2-4ffd-8c35-c5b43af73f1b)
-  )
-  (text "L301 & L302:\n20T (46 cm) #24 T60-2 " (at 121.92 97.79 0)
-    (effects (font (size 0.9906 0.9906)) (justify left bottom))
-    (uuid 42b62f6f-0b5b-4896-893d-b1f4d683ffe5)
-  )
-  (text "80m LPF" (at 129.54 63.5 0)
-    (effects (font (size 2.0066 2.0066) (thickness 0.4013) bold) (justify left bottom))
-    (uuid fc84fc78-5b82-4b28-aeb3-964e8b369e1a)
-  )
-
-  (global_label "RF_Raw" (shape input) (at 102.87 83.82 180) (fields_autoplaced)
-    (effects (font (size 1 1)) (justify right))
-    (uuid bdc87abc-6281-4cc9-9a48-004f23d2dbfd)
-    (property "Intersheet References" "${INTERSHEET_REFS}" (id 0) (at 95.3986 83.7575 0)
-      (effects (font (size 1 1)) (justify right) hide)
-    )
-  )
-
-  (symbol (lib_id "Device:C_Small") (at 134.62 88.9 180) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 0bc324fd-d7b0-4453-b5e2-c85924b63c43)
-    (property "Reference" "C303" (id 0) (at 140.97 87.63 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "1800pF" (id 1) (at 142.24 91.44 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 134.62 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 134.62 88.9 0))
-    (property "Manufacturer" "Murata Electronics" (id 6) (at 134.62 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "GCM2165C2A182GA16D" (id 7) (at 134.62 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "Multilayer Ceramic Capacitors MLCC - SMD/SMT 1800 pF 100 VDC 2% 0805 C0G (NP0) AEC-Q200" (id 8) (at 134.62 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid a11b3c7a-3900-4b41-98d2-37e6907e179b))
-    (pin "2" (uuid f2dac143-ea12-4244-934f-de72abbe57ec))
-  )
-
-  (symbol (lib_id "Device:C_Small") (at 160.02 88.9 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 2f5d0f80-d906-427a-b562-7c3210c6805d)
-    (property "Reference" "C305" (id 0) (at 160.274 87.122 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "1100pF" (id 1) (at 160.274 90.932 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 160.02 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 160.02 88.9 0))
-    (property "Manufacturer" "Murata Electronics" (id 6) (at 160.02 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "GRM2195C2A112JA01D" (id 7) (at 160.02 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)" (id 8) (at 160.02 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "GRM2195C2A112JA01D-ND" (id 9) (at 160.02 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 5e4c57df-e300-4e21-bc41-86641c28d620))
-    (pin "2" (uuid 92889b3d-c064-47fb-a5fe-b2bfc76ccbcd))
-  )
-
-  (symbol (lib_id "Device:INDUCTOR_SMALL") (at 151.13 83.82 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 3c7c03fa-c45d-43c7-83f6-def3dfa7493a)
-    (property "Reference" "L302" (id 0) (at 151.13 81.28 0))
-    (property "Value" "2.7uH" (id 1) (at 151.13 85.09 0))
-    (property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical" (id 2) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "T60-2 (Amidon)" (id 4) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "http://www.amidoncorp.com/t60-2/" (id 5) (at 151.13 83.82 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (property "Manufacturer" "TH" (id 6) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "TH" (id 7) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "TH" (id 8) (at 151.13 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 3e3f507a-955f-480f-a0c6-59e2383e0c3b))
-    (pin "2" (uuid 19ec9c23-8397-4689-956d-66ce2a16631d))
-  )
-
-  (symbol (lib_id "Device:INDUCTOR_SMALL") (at 125.73 83.82 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 4ae91697-08a6-46e6-9c5f-689ef07b11bc)
-    (property "Reference" "L301" (id 0) (at 125.73 81.28 0))
-    (property "Value" "2.7uH" (id 1) (at 125.73 85.09 0))
-    (property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical" (id 2) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "T60-2 (Amidon)" (id 4) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "http://www.amidoncorp.com/t60-2/" (id 5) (at 125.73 83.82 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (property "Manufacturer" "TH" (id 6) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "TH" (id 7) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "TH" (id 8) (at 125.73 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 211a9693-4c3a-48d2-a27d-6d86e4f0a330))
-    (pin "2" (uuid 9756fa73-ad93-4469-a567-7ecdbfa93e6c))
-  )
-
-  (symbol (lib_id "Connector:TEST_SCOPE") (at 165.1 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 50204257-e18c-4b6c-b5d3-98e234d8a9c3)
-    (property "Reference" "W303" (id 0) (at 166.37 73.66 0))
-    (property "Value" "T7" (id 1) (at 166.37 78.74 0))
-    (property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small" (id 2) (at 165.1 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 165.1 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "np" (id 4) (at 165.1 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "np" (id 5) (at 165.1 80.01 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (pin "1" (uuid 1b0c91da-2f04-4a24-a914-e5b872c4e22f))
-    (pin "2" (uuid fafa1249-525d-4c14-9584-c87c219edb0d))
-  )
-
-  (symbol (lib_id "Device:C_Small") (at 109.22 83.82 90) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 6f542a9f-17a1-4d58-b757-d062d47cb36c)
-    (property "Reference" "C301" (id 0) (at 111.76 81.28 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "470nF" (id 1) (at 111.76 87.63 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 109.22 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 109.22 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "478-9924-1-ND" (id 4) (at 109.22 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/products/en?keywords=478-9924-1-ND" (id 5) (at 109.22 83.82 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (property "Manufacturer" "AVX Corporation" (id 6) (at 109.22 83.82 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "08051C474K4Z2A" (id 7) (at 109.22 83.82 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CAP CER 0.47UF 100V X7R 0805" (id 8) (at 109.22 83.82 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "LCSC Part Number" "C342818" (id 9) (at 109.22 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 26c119cf-abeb-4cac-b170-7ead90d0e496))
-    (pin "2" (uuid ba073dc2-13c8-46f2-8052-2c448a09b60b))
-  )
-
-  (symbol (lib_id "Device:C_Small") (at 151.13 76.2 270) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 79b86b85-25cd-41f8-bccc-370b887b9cf9)
-    (property "Reference" "C304" (id 0) (at 148.59 73.66 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "91pF" (id 1) (at 148.59 78.74 90)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 151.13 76.2 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 151.13 76.2 0))
-    (property "Manufacturer" "KYOCERA AVX" (id 6) (at 151.13 76.2 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "08051A910FAT2A" (id 7) (at 151.13 76.2 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "Multilayer Ceramic Capacitors MLCC - SMD/SMT 100V 91pF C0G 0805 1%" (id 8) (at 151.13 76.2 90)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 27208dd4-564d-43aa-8a1b-dd439c858351))
-    (pin "2" (uuid 837e9a9e-c603-4965-a02f-17145db4945d))
-  )
-
-  (symbol (lib_id "power:GND") (at 160.02 91.44 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid 835b6f71-1941-4267-834a-15db1ba050aa)
-    (property "Reference" "#PWR0305" (id 0) (at 160.02 97.79 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 160.02 95.8834 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 160.02 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 160.02 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 0f027083-5612-410d-9f76-31b03d05a53f))
-  )
-
-  (symbol (lib_id "Connector:TEST_SCOPE") (at 116.84 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid ac7c2506-1310-46b6-89eb-4d4f63465226)
-    (property "Reference" "W301" (id 0) (at 118.11 72.39 0))
-    (property "Value" "T5" (id 1) (at 118.11 78.74 0))
-    (property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small" (id 2) (at 116.84 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 116.84 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "np" (id 4) (at 116.84 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "np" (id 5) (at 116.84 80.01 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (pin "1" (uuid 69e9fdea-17b2-46bd-b904-9f5d364aa773))
-    (pin "2" (uuid 3d32bc6f-e10b-4634-90e1-adddc82ea8e6))
-  )
-
-  (symbol (lib_id "power:GND") (at 116.84 91.44 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid b600cc7c-7732-4f3a-9659-2132a29c4d79)
-    (property "Reference" "#PWR0301" (id 0) (at 116.84 97.79 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 116.84 95.8834 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 116.84 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 116.84 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid cd8240d4-83be-4af5-8f4c-3a8cdef5006f))
-  )
-
-  (symbol (lib_id "Connector:TEST_SCOPE") (at 134.62 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid c9f75dcb-4e88-46c1-af82-a5772921f30e)
-    (property "Reference" "W302" (id 0) (at 135.89 72.39 0))
-    (property "Value" "T6" (id 1) (at 135.89 78.74 0))
-    (property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small" (id 2) (at 134.62 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 134.62 74.93 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "np" (id 4) (at 134.62 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "np" (id 5) (at 134.62 80.01 0)
-      (effects (font (size 1.524 1.524)) hide)
-    )
-    (pin "1" (uuid cb4ab4b2-0b60-4680-9373-2e340baa5e5a))
-    (pin "2" (uuid 7411459d-e2b0-43f4-86b5-179da0a6c29c))
-  )
-
-  (symbol (lib_id "power:GND") (at 167.64 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid d26ea72e-4b01-4e13-ad41-317591d3c00e)
-    (property "Reference" "#PWR0306" (id 0) (at 167.64 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 167.64 84.4534 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 167.64 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 167.64 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid a32e0307-f241-4d8c-a6d9-028b0a60bde1))
-  )
-
-  (symbol (lib_id "Connector:Conn_Coaxial") (at 177.8 83.82 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid d69177a2-5677-467e-9f98-c9fb5f757ff7)
-    (property "Reference" "J301" (id 0) (at 180.3401 83.2785 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "To Antenna" (id 1) (at 180.3401 85.8154 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal" (id 2) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "ARF1065-ND" (id 4) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Link" "https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB" (id 5) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer" "Amphenol RF" (id 6) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "31-5431" (id 7) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "CONN BNC JACK R/A 50 OHM PCB" (id 8) (at 177.8 83.82 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 9c9cc6a9-330a-40fc-b926-f43854419743))
-    (pin "2" (uuid 8bf51283-f355-42bb-8943-a58f970e1b6a))
-  )
-
-  (symbol (lib_id "power:GND") (at 134.62 91.44 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid d740c96e-b201-4c51-92ed-9762197c5e3b)
-    (property "Reference" "#PWR0303" (id 0) (at 134.62 97.79 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 134.62 95.8834 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 134.62 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 134.62 91.44 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid d5e998f7-1699-4004-826e-7c38956bf6b4))
-  )
-
-  (symbol (lib_id "power:GND") (at 177.8 88.9 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid e7978f1a-028b-488c-b51a-467c9ff5ca11)
-    (property "Reference" "#PWR0307" (id 0) (at 177.8 95.25 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 177.8 93.3434 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 177.8 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 177.8 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid adb5a57c-580b-43af-81cb-0aa52d894b18))
-  )
-
-  (symbol (lib_id "power:GND") (at 137.16 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid e92c71d8-1171-425e-82ee-ae36bad3bf3b)
-    (property "Reference" "#PWR0304" (id 0) (at 137.16 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 137.16 84.4534 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 137.16 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 137.16 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 1ff34a3c-cd29-4248-b798-a6726c346d51))
-  )
-
-  (symbol (lib_id "Device:C_Small") (at 116.84 88.9 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid f0d89eae-86d0-4eee-82c6-ad3daf7543e5)
-    (property "Reference" "C302" (id 0) (at 117.094 87.122 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "1100pF" (id 1) (at 117.094 90.932 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0805_2012Metric" (id 2) (at 116.84 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 116.84 88.9 0))
-    (property "Manufacturer" "Murata Electronics" (id 6) (at 116.84 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Manufacturer PN" "GRM2195C2A112JA01D" (id 7) (at 116.84 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Description" "1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)" (id 8) (at 116.84 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Digi-Key Part No." "GRM2195C2A112JA01D-ND" (id 9) (at 116.84 88.9 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 69509d56-9bb2-4b10-9d93-838acc3bc5b3))
-    (pin "2" (uuid f975e8d0-ba7c-4f37-83fb-57944dbe3050))
-  )
-
-  (symbol (lib_id "power:GND") (at 119.38 80.01 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
-    (uuid f5064328-b0ba-4353-a088-97cb9fb965e4)
-    (property "Reference" "#PWR0302" (id 0) (at 119.38 86.36 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (id 1) (at 119.38 84.4534 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "" (id 2) (at 119.38 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (id 3) (at 119.38 80.01 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid e59cf3be-14df-4a40-b172-3a7e9e3436cb))
-  )
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "88415375-e68f-4e16-84eb-75795413b896")
+	(paper "A4")
+	(title_block
+		(title "SignalSlinger")
+		(date "2024-06-13")
+		(rev "3.4")
+	)
+	(lib_symbols
+		(symbol "Connector:Conn_Coaxial"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0.254 3.048 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_Coaxial"
+				(at 2.921 0 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "coaxial connector (BNC, SMA, SMB, SMC, Cinch/RCA, LEMO, ...)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "BNC SMA SMB SMC LEMO coaxial connector CINCH RCA"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "*BNC* *SMA* *SMB* *SMC* *Cinch* *LEMO*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Conn_Coaxial_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0) (xy -0.508 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.778 0)
+					(mid 0.222 -1.8079)
+					(end -1.778 -0.508)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.778 0.508)
+					(mid 0.2221 1.8084)
+					(end 1.778 0)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 0)
+					(radius 0.508)
+					(stroke
+						(width 0.2032)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0 -1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Conn_Coaxial_1_1"
+				(pin passive line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "In"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "Ext"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Connector:TEST_SCOPE"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "W101"
+				(at 0 5.08 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TEST_SCOPE"
+				(at -1.27 1.27 90)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Digi-Key Part No." "np"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Link" "np"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.524 1.524)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TEST_SCOPE_0_0"
+				(text "GND"
+					(at 2.54 5.08 0)
+					(effects
+						(font
+							(size 0.9906 0.9906)
+						)
+					)
+				)
+			)
+			(symbol "TEST_SCOPE_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 2.54 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TEST_SCOPE_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at 2.54 0 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:C_Small"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.254)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "C"
+				(at 0.254 1.778 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "C_Small"
+				(at 0.254 -2.032 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Unpolarized capacitor, small symbol"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "capacitor cap"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "C_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "C_Small_0_1"
+				(polyline
+					(pts
+						(xy -1.524 0.508) (xy 1.524 0.508)
+					)
+					(stroke
+						(width 0.3048)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.524 -0.508) (xy 1.524 -0.508)
+					)
+					(stroke
+						(width 0.3302)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "C_Small_1_1"
+				(pin passive line
+					(at 0 2.54 270)
+					(length 2.032)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 2.032)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:INDUCTOR_SMALL"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "L301"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "INDUCTOR_SMALL"
+				(at 0 -1.27 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Inductors:Toroid_T-60_2TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Digi-Key Part No." "T60-2 (Amidon)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Link" "<a href=\"http://www.amidoncorp.com/t60-2/\">Link</a>"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.524 1.524)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Manufacturer PN" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description_1" "TH"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "INDUCTOR_SMALL_0_1"
+				(arc
+					(start -5.08 0)
+					(mid -3.81 1.2645)
+					(end -2.54 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.54 0)
+					(mid -1.27 1.2645)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 1.27 1.2645)
+					(end 2.54 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 2.54 0)
+					(mid 3.81 1.2645)
+					(end 5.08 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "INDUCTOR_SMALL_1_1"
+				(pin input line
+					(at -6.35 0 0)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at 6.35 0 180)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "power:GND"
+			(power)
+			(pin_names
+				(offset 0)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "#PWR"
+				(at 0 -6.35 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Value" "GND"
+				(at 0 -3.81 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "power-flag"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "GND_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "GND_1_1"
+				(pin power_in line
+					(at 0 0 270)
+					(length 0)
+					(hide yes)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(text "6th order Chebychev\n3.9MHz 3dB cut-off\nw/ node at 10.7MHz"
+		(exclude_from_sim no)
+		(at 127 68.58 0)
+		(effects
+			(font
+				(size 0.9906 0.9906)
+			)
+			(justify left bottom)
+		)
+		(uuid "16bbf532-f95c-4583-8055-75e4bd79b23f")
+	)
+	(text "40m LPF\n6th order Chebychev\n8MHz 3dB cut-off\nw/ node at 21.5 MHz\n\nL301 & L302 = 1.3uH\nC302 & C305 = 470pF\nC303 = 820pF\nC304 = 43pF"
+		(exclude_from_sim no)
+		(at 124.46 125.73 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "31cdb4a6-00a2-4ffd-8c35-c5b43af73f1b")
+	)
+	(text "L301 & L302:\n20T (46 cm) #24 T60-2 "
+		(exclude_from_sim no)
+		(at 121.92 97.79 0)
+		(effects
+			(font
+				(size 0.9906 0.9906)
+			)
+			(justify left bottom)
+		)
+		(uuid "42b62f6f-0b5b-4896-893d-b1f4d683ffe5")
+	)
+	(text "80m LPF"
+		(exclude_from_sim no)
+		(at 129.54 63.5 0)
+		(effects
+			(font
+				(size 2.0066 2.0066)
+				(thickness 0.4013)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "fc84fc78-5b82-4b28-aeb3-964e8b369e1a")
+	)
+	(junction
+		(at 165.1 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "26c4e1c6-d44a-4409-9768-41a725c6a402")
+	)
+	(junction
+		(at 134.62 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3a4ad39b-7d4e-401f-99ca-8fdb385c5590")
+	)
+	(junction
+		(at 143.51 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "53ccda99-b49b-4f7e-ae27-6a07d73312c3")
+	)
+	(junction
+		(at 116.84 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8423b59c-cc40-427f-b41b-784eab5d8bf7")
+	)
+	(junction
+		(at 160.02 83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "decc535f-0021-494c-a6ba-4d4a0dee9e5a")
+	)
+	(wire
+		(pts
+			(xy 116.84 83.82) (xy 116.84 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2503b8bc-6b8e-4857-9257-6baba145ba38")
+	)
+	(wire
+		(pts
+			(xy 143.51 83.82) (xy 144.78 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3becc704-73b4-4fa2-9d8e-c6bd3f0e1174")
+	)
+	(wire
+		(pts
+			(xy 116.84 80.01) (xy 116.84 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4090ad36-eba3-4184-b899-6508876c15b7")
+	)
+	(wire
+		(pts
+			(xy 134.62 83.82) (xy 134.62 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "484bcccd-8105-41fb-9933-534562f240cf")
+	)
+	(wire
+		(pts
+			(xy 134.62 80.01) (xy 134.62 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "55a55d84-4266-4d98-b4de-fb82138691fc")
+	)
+	(wire
+		(pts
+			(xy 111.76 83.82) (xy 116.84 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "56803ea5-dcdd-45d6-9aec-ebfa332f2004")
+	)
+	(wire
+		(pts
+			(xy 157.48 83.82) (xy 160.02 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "580dd00e-d6da-48b8-87c9-44d4f8519e25")
+	)
+	(wire
+		(pts
+			(xy 116.84 83.82) (xy 119.38 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5a67d829-ca5e-428b-9072-0ad313386514")
+	)
+	(wire
+		(pts
+			(xy 143.51 76.2) (xy 143.51 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6263bb98-6f7a-412f-b166-06b248b436fc")
+	)
+	(wire
+		(pts
+			(xy 153.67 76.2) (xy 160.02 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6bf09fea-0102-45bc-8b5e-a4d821d23a0e")
+	)
+	(wire
+		(pts
+			(xy 132.08 83.82) (xy 134.62 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7785d112-f24a-419f-ab84-3cfe63a0b85f")
+	)
+	(wire
+		(pts
+			(xy 148.59 76.2) (xy 143.51 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8629c473-5291-41d0-bf20-db330b6763a8")
+	)
+	(wire
+		(pts
+			(xy 160.02 83.82) (xy 160.02 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "97a4dca5-3d4d-46b7-9cab-2eeb58c93dae")
+	)
+	(wire
+		(pts
+			(xy 102.87 83.82) (xy 106.68 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b6018f64-0be3-403e-885e-1a77336d33cc")
+	)
+	(wire
+		(pts
+			(xy 160.02 83.82) (xy 165.1 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ba256273-0a3d-414b-94f7-20fd8fc7f116")
+	)
+	(wire
+		(pts
+			(xy 165.1 80.01) (xy 165.1 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c4e858a4-cf9a-4741-ac27-02c191a4edc6")
+	)
+	(wire
+		(pts
+			(xy 160.02 76.2) (xy 160.02 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c96c8d1e-7512-441c-a346-b1c7b5c60c03")
+	)
+	(wire
+		(pts
+			(xy 165.1 83.82) (xy 172.72 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dbf4e55b-627d-4650-93d3-af5323be5692")
+	)
+	(wire
+		(pts
+			(xy 134.62 83.82) (xy 143.51 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd7e227d-53e3-4a19-89c8-39492bfc4d83")
+	)
+	(global_label "RF_Raw"
+		(shape input)
+		(at 102.87 83.82 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify right)
+		)
+		(uuid "bdc87abc-6281-4cc9-9a48-004f23d2dbfd")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 95.3986 83.7575 0)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 134.62 88.9 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "0bc324fd-d7b0-4453-b5e2-c85924b63c43")
+		(property "Reference" "C303"
+			(at 140.97 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1800pF"
+			(at 142.24 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Murata Electronics"
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "GCM2165C2A182GA16D"
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Multilayer Ceramic Capacitors MLCC - SMD/SMT 1800 pF 100 VDC 2% 0805 C0G (NP0) AEC-Q200"
+			(at 134.62 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a11b3c7a-3900-4b41-98d2-37e6907e179b")
+		)
+		(pin "2"
+			(uuid "f2dac143-ea12-4244-934f-de72abbe57ec")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "C303")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 160.02 88.9 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2f5d0f80-d906-427a-b562-7c3210c6805d")
+		(property "Reference" "C305"
+			(at 160.274 87.122 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1100pF"
+			(at 160.274 90.932 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Murata Electronics"
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "GRM2195C2A112JA01D"
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "GRM2195C2A112JA01D-ND"
+			(at 160.02 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "5e4c57df-e300-4e21-bc41-86641c28d620")
+		)
+		(pin "2"
+			(uuid "92889b3d-c064-47fb-a5fe-b2bfc76ccbcd")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "C305")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:INDUCTOR_SMALL")
+		(at 151.13 83.82 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "3c7c03fa-c45d-43c7-83f6-def3dfa7493a")
+		(property "Reference" "L302"
+			(at 151.13 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "2.7uH"
+			(at 151.13 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "T60-2 (Amidon)"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "http://www.amidoncorp.com/t60-2/"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "TH"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "TH"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "TH"
+			(at 151.13 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "3e3f507a-955f-480f-a0c6-59e2383e0c3b")
+		)
+		(pin "2"
+			(uuid "19ec9c23-8397-4689-956d-66ce2a16631d")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "L302")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:INDUCTOR_SMALL")
+		(at 125.73 83.82 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "4ae91697-08a6-46e6-9c5f-689ef07b11bc")
+		(property "Reference" "L301"
+			(at 125.73 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "2.7uH"
+			(at 125.73 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Inductors:Toroid_T-60_2TH_Vertical"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "T60-2 (Amidon)"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "http://www.amidoncorp.com/t60-2/"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "TH"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "TH"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "TH"
+			(at 125.73 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "211a9693-4c3a-48d2-a27d-6d86e4f0a330")
+		)
+		(pin "2"
+			(uuid "9756fa73-ad93-4469-a567-7ecdbfa93e6c")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "L301")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TEST_SCOPE")
+		(at 165.1 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "50204257-e18c-4b6c-b5d3-98e234d8a9c3")
+		(property "Reference" "W303"
+			(at 166.37 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "T7"
+			(at 166.37 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+			(at 165.1 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 165.1 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 165.1 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "np"
+			(at 165.1 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "np"
+			(at 165.1 80.01 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "1b0c91da-2f04-4a24-a914-e5b872c4e22f")
+		)
+		(pin "2"
+			(uuid "fafa1249-525d-4c14-9584-c87c219edb0d")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "W303")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 109.22 83.82 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6f542a9f-17a1-4d58-b757-d062d47cb36c")
+		(property "Reference" "C301"
+			(at 111.76 81.28 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "470nF"
+			(at 111.76 87.63 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "478-9924-1-ND"
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/products/en?keywords=478-9924-1-ND"
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "AVX Corporation"
+			(at 109.22 83.82 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "08051C474K4Z2A"
+			(at 109.22 83.82 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CAP CER 0.47UF 100V X7R 0805"
+			(at 109.22 83.82 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC Part Number" "C342818"
+			(at 109.22 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "26c119cf-abeb-4cac-b170-7ead90d0e496")
+		)
+		(pin "2"
+			(uuid "ba073dc2-13c8-46f2-8052-2c448a09b60b")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "C301")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 151.13 76.2 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "79b86b85-25cd-41f8-bccc-370b887b9cf9")
+		(property "Reference" "C304"
+			(at 148.59 73.66 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "91pF"
+			(at 148.59 78.74 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 151.13 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 151.13 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 151.13 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "KYOCERA AVX"
+			(at 151.13 76.2 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "08051A910FAT2A"
+			(at 151.13 76.2 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Multilayer Ceramic Capacitors MLCC - SMD/SMT 100V 91pF C0G 0805 1%"
+			(at 151.13 76.2 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "27208dd4-564d-43aa-8a1b-dd439c858351")
+		)
+		(pin "2"
+			(uuid "837e9a9e-c603-4965-a02f-17145db4945d")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "C304")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 160.02 91.44 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "835b6f71-1941-4267-834a-15db1ba050aa")
+		(property "Reference" "#PWR0305"
+			(at 160.02 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 160.02 95.8834 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 160.02 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 160.02 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 160.02 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0f027083-5612-410d-9f76-31b03d05a53f")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0305")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TEST_SCOPE")
+		(at 116.84 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ac7c2506-1310-46b6-89eb-4d4f63465226")
+		(property "Reference" "W301"
+			(at 118.11 72.39 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "T5"
+			(at 118.11 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+			(at 116.84 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 116.84 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 116.84 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "np"
+			(at 116.84 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "np"
+			(at 116.84 80.01 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "69e9fdea-17b2-46bd-b904-9f5d364aa773")
+		)
+		(pin "2"
+			(uuid "3d32bc6f-e10b-4634-90e1-adddc82ea8e6")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "W301")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 116.84 91.44 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b600cc7c-7732-4f3a-9659-2132a29c4d79")
+		(property "Reference" "#PWR0301"
+			(at 116.84 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 116.84 95.8834 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 116.84 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 116.84 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 116.84 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "cd8240d4-83be-4af5-8f4c-3a8cdef5006f")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0301")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TEST_SCOPE")
+		(at 134.62 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "c9f75dcb-4e88-46c1-af82-a5772921f30e")
+		(property "Reference" "W302"
+			(at 135.89 72.39 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "T6"
+			(at 135.89 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Measurement:Measurement_Point_ScopeProbe_Round-SMD-2sides-Pad_Small"
+			(at 134.62 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 134.62 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 134.62 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "np"
+			(at 134.62 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "np"
+			(at 134.62 80.01 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "cb4ab4b2-0b60-4680-9373-2e340baa5e5a")
+		)
+		(pin "2"
+			(uuid "7411459d-e2b0-43f4-86b5-179da0a6c29c")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "W302")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 167.64 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d26ea72e-4b01-4e13-ad41-317591d3c00e")
+		(property "Reference" "#PWR0306"
+			(at 167.64 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 167.64 84.4534 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 167.64 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 167.64 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 167.64 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "a32e0307-f241-4d8c-a6d9-028b0a60bde1")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0306")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_Coaxial")
+		(at 177.8 83.82 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d69177a2-5677-467e-9f98-c9fb5f757ff7")
+		(property "Reference" "J301"
+			(at 180.3401 83.2785 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "To Antenna"
+			(at 180.3401 85.8154 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Digi-Key Part No." "ARF1065-ND"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" "https://www.digikey.com/en/products/detail/amphenol-rf/31-5431/80179?utm_adgroup=Coaxial%20Connectors%20%28RF%29&utm_source=google&utm_medium=cpc&utm_campaign=Shopping_Product_Connectors%2C%20Interconnects&utm_term=&utm_content=Coaxial%20Connectors%20%28RF%29&gclid=Cj0KCQjw1rqkBhCTARIsAAHz7K07BKQI4hz-lx2UKWOAkhojF887qRyZwSAGP9HUwnWBejkHZJLi92kaAsMsEALw_wcB"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer" "Amphenol RF"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "31-5431"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "CONN BNC JACK R/A 50 OHM PCB"
+			(at 177.8 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "9c9cc6a9-330a-40fc-b926-f43854419743")
+		)
+		(pin "2"
+			(uuid "8bf51283-f355-42bb-8943-a58f970e1b6a")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "J301")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 134.62 91.44 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d740c96e-b201-4c51-92ed-9762197c5e3b")
+		(property "Reference" "#PWR0303"
+			(at 134.62 97.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 134.62 95.8834 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 134.62 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 134.62 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 134.62 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "d5e998f7-1699-4004-826e-7c38956bf6b4")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0303")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 177.8 88.9 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e7978f1a-028b-488c-b51a-467c9ff5ca11")
+		(property "Reference" "#PWR0307"
+			(at 177.8 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 177.8 93.3434 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 177.8 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 177.8 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 177.8 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "adb5a57c-580b-43af-81cb-0aa52d894b18")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0307")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 137.16 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e92c71d8-1171-425e-82ee-ae36bad3bf3b")
+		(property "Reference" "#PWR0304"
+			(at 137.16 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 137.16 84.4534 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 137.16 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 137.16 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 137.16 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "1ff34a3c-cd29-4248-b798-a6726c346d51")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0304")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C_Small")
+		(at 116.84 88.9 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f0d89eae-86d0-4eee-82c6-ad3daf7543e5")
+		(property "Reference" "C302"
+			(at 117.094 87.122 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1100pF"
+			(at 117.094 90.932 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Murata Electronics"
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Manufacturer PN" "GRM2195C2A112JA01D"
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "1100 pF ±5% 100V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Digi-Key Part No." "GRM2195C2A112JA01D-ND"
+			(at 116.84 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "69509d56-9bb2-4b10-9d93-838acc3bc5b3")
+		)
+		(pin "2"
+			(uuid "f975e8d0-ba7c-4f37-83fb-57944dbe3050")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "C302")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 119.38 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f5064328-b0ba-4353-a088-97cb9fb965e4")
+		(property "Reference" "#PWR0302"
+			(at 119.38 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 119.38 84.4534 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 119.38 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 119.38 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 119.38 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e59cf3be-14df-4a40-b172-3a7e9e3436cb")
+		)
+		(instances
+			(project ""
+				(path "/81f08740-b548-4457-8799-0e5a04221532/da189f43-fd1f-445a-980b-345fda8b9a74"
+					(reference "#PWR0302")
+					(unit 1)
+				)
+			)
+		)
+	)
 )
