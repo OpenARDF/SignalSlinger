@@ -1,0 +1,6 @@
+Ref,Val,Package,PosX,PosY,Rot,Side
+"J102","Conn_01x03","PinHeader_1x03_P2.54mm_Vertical",-52.045000,-114.710000,-90.000000,bottom
+"J105","Conn_01x04","PinHeader_1x04_P2.54mm_Vertical",-51.052500,-77.750000,-90.000000,bottom
+"J107","DB9 Female","DSUB-9_Female_EdgeMount_P2.77mm",-48.102500,-89.412500,90.000000,bottom
+"MOD201","AdaFruit Charger","PinHeader_1x04_P2.54mm_Vertical",-70.197500,-95.890000,90.000000,bottom
+"U203","TO-220 ADJ Reg.","TO-220-3_Horizontal_TabDown",-122.240000,-78.560000,-90.000000,bottom
