@@ -63,6 +63,38 @@ bool only_digits(char *s);
  */
 uint32_t convertTimeStringToEpoch(char * s);
 
+
+char* convertEpochToTimeString(time_t epoch, char* buf, size_t size);
+
+time_t String2Epoch(bool *error, char *datetime);
+
+
+/**
+ * @brief Completes or offsets a timestamp and returns a 12-character time string.
+ *
+ * This function accepts either:
+ *  - A partial timestamp string (up to 10 characters) representing YYMMDDhhmm,
+ *    in which case missing leading fields are filled using the current local time.
+ *
+ *  - An offset string beginning with '+', such as "+5h", "+0500", "+2d", "+7m",
+ *    "+1M", or "+1y". These are interpreted as offsets from the current local
+ *    time in hours, minutes, days, months, or years. Multi-digit "+HHMM" format
+ *    (e.g., "+0530") is interpreted as +5 hours 30 minutes.
+ *
+ * The returned timestamp always consists of 12 characters in the form:
+ *
+ *        YYMMDDhhmmSS
+ *
+ * with seconds (SS) always set to "00". The caller must supply `buf`, which
+ * must be large enough to hold at least 13 bytes (12 characters + null terminator).
+ *
+ * @param partialString  A partial YYMMDDhhmm string, or an offset string.
+ *
+ * @return A pointer to the completed 12-character timestamp stored in `buf`.
+ */
+char* completeTimeString(const char* partialString, time_t* currentEpoch);
+
+
 /**
  * Parse a timestamp string formatted as "yyyy-mm-ddThh:mm:ssZ" into a tm structure.
  *

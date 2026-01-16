@@ -139,7 +139,7 @@ extern volatile Frequency_Hz g_frequency_beacon;
 extern volatile bool g_enable_boost_regulator;
 extern volatile bool g_enable_external_battery_control;
 
-extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 2];
+extern char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 extern uint16_t g_80m_power_level_mW;

@@ -115,8 +115,7 @@ void BINIO_init(void)
 	
 	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
 	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_IN);
-// 	PORTC_set_pin_dir(SI5351_SDA, PORT_DIR_OUT);
-// 	PORTC_set_pin_dir(SI5351_SCL, PORT_DIR_IN);
+	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_INTDISABLE_gc);
 	
 	/* PORTD *************************************************************************************/
 	PORTD_set_pin_dir(VBAT_INT, PORT_DIR_IN);
@@ -195,7 +194,6 @@ bool setExtBatLoadSwitch(hardwareResourceClients client)
 
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	
 	switch(sender)
 	{
 		case INTERNAL_BATTERY_CHARGING:

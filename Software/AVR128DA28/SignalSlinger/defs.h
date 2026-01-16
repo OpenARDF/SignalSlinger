@@ -34,12 +34,20 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.0"
+#define SW_REVISION "1.1h"
 
 //#define TRANQUILIZE_WATCHDOG
 
 #define PRODUCT_NAME_SHORT "SignalSlinger"
-#define PRODUCT_NAME_LONG "\n* SignalSlinger 80m Radio Orienteering Transmitter"
+#define PRODUCT_NAME_LONG "SignalSlinger 80m Radio Orienteering Transmitter"
+
+/* Caution: Do not enable test software build flag for releasable software */
+// #define TEST_MODE_SOFTWARE /* Do not define on releasable software */
+#ifdef TEST_MODE_SOFTWARE
+#define TEXT_TEST_SOFTWARE_NOTICE_TXT (char*)"\n* TEST SOFTWARE: Do not distribute! \n* Some commands disabled.\n\n"
+#undef SW_REVISION
+#define SW_REVISION "*** TEST SOFTWARE ***"
+#endif
 
 /*******************************************************/
 
@@ -173,7 +181,7 @@ typedef enum {
 #define INT_BAT_CHARGE_THRESH_LOW_MIN (3.0)
 #define INT_BAT_CHARGE_THRESH_LOW_MAX (4.1)
 #define INT_BAT_CHARGE_THRES_HIGH (4.2)
-#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (10.)
+#define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (8.5)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
 #define FAN_TURN_ON_TEMP (45.)
@@ -258,22 +266,25 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
 #define TEXT_EXCESSIVE_TEMPERATURE (char*)"* Error: High Temperature Shutdown!\n"
 #define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
-#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device Disabled! Enable with 8 button presses\n"
-#define TEXT_NOT_SLEEPING_TXT (char*)"\n* Awake\n"
-#define TEXT_POWER_OFF (char*)"\n* Power off. Press and hold pushbutton for power on\n"
-#define TEXT_SLEEPING_TXT (char*)"\n* Sleeping. Press and hold pushbutton to awaken\n"
+#define TEXT_NOT_SLEEPING_TXT (char*)"* Awake\n"
+#define TEXT_POWER_OFF (char*)"* Power off. Press and hold pushbutton for power on\n"
+#define TEXT_SLEEPING_TXT (char*)"* Sleeping. Press and hold pushbutton to awaken\n"
+#define TEXT_SLEEPING_UNTIL_START_TXT (char*)"* Sleeping until start\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
+#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"
+
 #define MINIMUM_VALID_EPOCH ((time_t)1609459200UL)  /* 1 Jan 2021 00:00:00 */
 #define YEAR_2000_EPOCH ((time_t)946684800UL)  /* 1 Jan 2000 00:00:00 */
 #define FOREVER_EPOCH ((time_t)4294967295UL) /* 7 Feb 2106 00:00:00 */
-#define SECONDS_24H 86400
+#define SECONDS_24H ((time_t)86400UL)
 
 typedef enum
 {
 	NULL_CONFIG,
 	WAITING_FOR_START,
 	CONFIGURATION_ERROR,
+	ONE_OR_MORE_CLK_SETTINGS_NOT_SET,
 	SCHEDULED_EVENT_DID_NOT_START,
 	SCHEDULED_EVENT_WILL_NEVER_RUN,
 	EVENT_IN_PROGRESS
@@ -404,7 +415,8 @@ typedef enum
 	START_NOTHING,
 	START_EVENT_NOW_AND_RUN_FOREVER,
 	START_TRANSMISSIONS_NOW,
-	START_EVENT_WITH_STARTFINISH_TIMES
+	START_EVENT_WITH_STARTFINISH_TIMES,
+	START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT
 } EventAction_t;
 
 typedef enum

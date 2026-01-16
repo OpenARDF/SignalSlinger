@@ -257,7 +257,6 @@ void serialbus_end_tx(void)
 /* configure the pins and initialize the registers */
 void USART1_initialization(uint32_t baud)
 {
-
 	// Set Rx pin direction to input
 	PC1_set_dir(PORT_DIR_IN);
 	PC1_set_pull_mode(PORT_PULL_OFF);
@@ -310,6 +309,25 @@ void serialbus_init(uint32_t baud, USART_Number_t usart)
 	}
 
 	g_serialbus_disabled = false;
+	serialbus_flush_rx();
+}
+
+void serialbus_flush_rx(void)
+{
+	if(g_serialbus_disabled) return;
+	
+	if(g_serialbus_usart_number == USART_0)
+	{
+		char c = USART0_get_data();
+		while((c = USART0_get_data())); // flush the buffer
+	}
+	else
+	{
+		char c = USART1_get_data();
+		while((c = USART1_get_data())); // flush the buffer
+	}
+	
+	return;
 }
 
 void serialbus_disable(void)
@@ -317,6 +335,7 @@ void serialbus_disable(void)
 	uint8_t bufferIndex;
 
 	g_serialbus_disabled = true;
+	serialbus_end_tx();
 
 	if(g_serialbus_usart_number == USART_0)
 	{	
@@ -327,7 +346,6 @@ void serialbus_disable(void)
 		USART1_disable();
 	}
 	
-	serialbus_end_tx();
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
 
 	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)

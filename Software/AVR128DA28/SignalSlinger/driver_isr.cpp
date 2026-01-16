@@ -56,6 +56,7 @@ ISR(USART0_RXC_vect)
 	}
 }
 
+//void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
 void serial_Rx(uint8_t rx_char)
 {
 	static char textBuff[SERIALBUS_MAX_MSG_LENGTH];
@@ -66,6 +67,7 @@ void serial_Rx(uint8_t rx_char)
 	static int msg_ID = 0;
 	static bool receiving_msg = false;
 	static bool ignoreAllInput = false;
+	static bool useMeshMode = false;
 
 	if(!buff)
 	{
@@ -83,8 +85,9 @@ void serial_Rx(uint8_t rx_char)
 			if(rx_char == '\r')    /* Handle carriage return */
 			{
 				ignoreAllInput = false;
-				rx_char = '\0';
 			}
+			
+			rx_char = '\0';
 		}
 		else if(ignoreCount)
 		{
@@ -117,7 +120,14 @@ void serial_Rx(uint8_t rx_char)
 					
 					if((charIndex == 1) && (textBuff[0] == '?'))
 					{
-						buff->id = SB_MESSAGE_HELP; /* print help message */
+						if(!useMeshMode) 
+						{
+							buff->id = SB_MESSAGE_HELP; /* print help message */
+						}
+						else
+						{
+							buff->id = SB_MESSAGE_EMPTY;
+						}
 					}
 					else
 					{
@@ -154,7 +164,7 @@ void serial_Rx(uint8_t rx_char)
 			{
 				if(rx_char == 0x7F)         /* Handle backspace */
 				{
-					charIndex--;
+					if(charIndex) charIndex--;
 					if(field_index == 0)
 					{
 						msg_ID -= textBuff[charIndex];
@@ -187,7 +197,22 @@ void serial_Rx(uint8_t rx_char)
 				{
 					if(rx_char == ' ')
 					{
-						if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
+						if(textBuff[charIndex - 1] == ':') // Meshtastic flag ": " detected
+						{	
+							useMeshMode = true;
+							buff->id = SB_MODE_MESH;
+							buff->fields[0][0] = '1';
+							buff->fields[0][1] = '\0';
+							
+							msg_ID = SB_MESSAGE_EMPTY;
+							charIndex = 0;
+							field_len = 0;
+							field_index = 0;
+							buff = NULL;
+
+							receiving_msg = false;
+						}
+						else if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
 						{
 							rx_char = '\0';
 						}
@@ -207,21 +232,37 @@ void serial_Rx(uint8_t rx_char)
 					{
 						if(field_index == 0)    /* message ID received */
 						{
-							msg_ID = msg_ID * 10 + rx_char;
-							if(field_len++ > SERIALBUS_MAX_MSG_ID_LENGTH) /* Invalid ID length = throw out everything */
+							field_len++;
+							
+							if(field_len <= SERIALBUS_MAX_MSG_ID_LENGTH) 
 							{
-								rx_char = '\0';
-								buff->id = SB_INVALID_MESSAGE; /* print help message */
-
-								charIndex = 0;
-								field_len = 0;
-								msg_ID = SB_MESSAGE_EMPTY;
-
-								field_index = 0;
-								buff = NULL;
-
-								receiving_msg = false;
+								msg_ID = msg_ID * 10 + rx_char;
 							}
+							else // /* Invalid ID length = Keep checking in case it is a Meshtastic message */
+							{
+								msg_ID = SB_MESSAGE_EMPTY;
+								
+								if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
+								{
+									rx_char = '\0';
+									
+									if(useMeshMode)
+									{
+										buff->id = SB_MESSAGE_EMPTY; /* ignore garbage */
+									}
+									else
+									{
+										buff->id = SB_INVALID_MESSAGE; /* print help message */
+									}
+
+									charIndex = 0;
+									field_len = 0;
+									field_index = 0;
+									buff = NULL;
+
+									receiving_msg = false;
+								}
+							}							
 						}
 						else
 						{
@@ -250,6 +291,22 @@ void serial_Rx(uint8_t rx_char)
 				}
 				else if(!isalnum(rx_char) && (rx_char != '?')) /* Handle Space and other non-alphanumeric characters */
 				{
+					if((rx_char == '@') && (charIndex == 0))
+					{
+						useMeshMode = false;
+						buff->id = SB_MODE_MESH;
+						buff->fields[0][0] = '0';
+						buff->fields[0][1] = '\0';
+							
+						msg_ID = SB_MESSAGE_EMPTY;
+						charIndex = 0;
+						field_len = 0;
+						field_index = 0;
+						buff = NULL;
+
+						receiving_msg = false;
+					}
+					
 					rx_char = '\0';
 				}
 				else                    /* start of new message */
@@ -272,7 +329,7 @@ void serial_Rx(uint8_t rx_char)
 
 			if(rx_char)
 			{
-				sb_echo_char(rx_char);
+				if(!useMeshMode) sb_echo_char(rx_char);
 			}
 		}
 	}	
@@ -323,5 +380,5 @@ ISR(USART1_RXC_vect)
 	if(g_serialbus_usart_number == USART_1)
 	{
 		serial_Rx(rx_char);
-	}
+    }
 }
