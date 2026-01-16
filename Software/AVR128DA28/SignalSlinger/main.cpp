@@ -102,12 +102,10 @@ static volatile bool g_battery_measurements_active = false;
 static volatile uint16_t g_maximum_battery = 0;
 
 static volatile bool g_start_event = false;
-
 static volatile int32_t g_on_the_air = 0;
 static volatile int g_sendID_seconds_countdown = 0;
 static volatile uint16_t g_code_throttle = 50;
 static volatile uint16_t g_sleepshutdown_seconds = 300;
-static volatile bool g_report_seconds = false;
 static volatile int g_hardware_error = (int)HARDWARE_OK;
 static volatile bool g_commence_transmissions = false;
 
@@ -647,6 +645,7 @@ ISR(TCB0_INT_vect)
 			if((g_on_the_air > 0) || (g_sending_station_ID && !id_timed_out) || (!g_off_air_seconds))
 			{
 				on_air_finished = true;
+				
 				transitionPrepped = false;
 				
 				/* Interrupt transmissions and send the ID under these conditions */
@@ -2432,7 +2431,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								startEventUsingRTC();
 							}
 						}
-						else if(arg == '1')  /* Start the event, syncing to a start time of now - same as a button press */
+						else if(arg == '1')  /* Start the event, syncing to the top of the hour */
 						{
 							suspendEvent(); // Stop any running event
 							LEDS.setRed(OFF);
