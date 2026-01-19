@@ -36,8 +36,11 @@ uint8_t portDdebounced;
 uint8_t portApinReadings[3];
 uint8_t portAdebounced;
 void v3V3_enable(bool state);
-void boost_enable(bool state);
 void setExtBatLSEnable(bool state);
+#ifdef HW_TARGET_3_5
+#else
+void boost_enable(bool state);
+#endif
 
 // default constructor
 binio::binio()
@@ -107,9 +110,14 @@ void BINIO_init(void)
 	
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-	
+
+#ifdef HW_TARGET_3_5
+	PORTA_set_pin_dir(COOLING_FAN_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(COOLING_FAN_ENABLE, LOW);
+#else
 	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+#endif
 	
 	/* PORTC *************************************************************************************/
 	
@@ -275,11 +283,14 @@ bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 /**
  State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
  */
+#ifdef HW_TARGET_3_5
+#else
 bool setBoostEnable(bool onoff)
 {		
 	boost_enable(onoff);
 	return(onoff);
 }
+#endif
 
 	
 void fet_driver(bool state)
@@ -325,15 +336,35 @@ void v3V3_enable(bool state)
 	}
 }
 
+#ifdef HW_TARGET_3_5
+void setCoolingFanLSEnable(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(COOLING_FAN_ENABLE, ON);
+	}
+	else
+	{
+		PORTA_set_pin_level(COOLING_FAN_ENABLE, OFF);
+	}
+}
+
+bool getCoolingFanLSEnable(void)
+{
+	return (PORTA_get_pin_level(COOLING_FAN_ENABLE) != LOW);
+}
+	
+#else
 void boost_enable(bool state)
 {
 	if(state == ON)
 	{
-		PORTA_set_pin_level(BOOST_PWR_ENABLE, HIGH);
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, ON);
 	}
 	else
 	{
-		PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, OFF);
 	}
 }
+#endif
 

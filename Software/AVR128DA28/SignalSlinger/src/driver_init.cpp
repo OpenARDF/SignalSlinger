@@ -68,7 +68,7 @@ void system_charging_config()
 //	BINIO_init();
 		/* PORTA *************************************************************************************/
   	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
-  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH); // Turn on external power source
 // 	
 //  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 // 	PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
@@ -154,8 +154,13 @@ void system_sleep_config()
  	PORTA_set_pin_pull_mode(PADDLE_DIT, PORT_PULL_OFF);
 	PORTA_set_pin_dir(PADDLE_DAH, PORT_DIR_OUT);
 	PORTA_set_pin_level(PADDLE_DAH, LOW);
+#ifdef HW_TARGET_3_5
+	PORTA_set_pin_dir(COOLING_FAN_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(COOLING_FAN_ENABLE, LOW);
+#else
 	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+#endif
 	PORTA_set_pin_dir(STRAIGHTKEY, PORT_DIR_OUT);
 	PORTA_set_pin_level(STRAIGHTKEY, LOW);
 

@@ -43,7 +43,8 @@ static volatile bool g_disable_transmissions = false;
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 extern volatile bool g_device_enabled;
 volatile bool g_enable_boost_regulator = false;
-volatile bool g_enable_external_battery_control = true;
+
+volatile bool g_enable_external_battery_control = true; // true = set the LS to control an external power source; It must be controlled to support transmissions and internal battery charging
 
 /**
  */
@@ -121,7 +122,10 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 		if(g_disable_transmissions)
 		{
 			si5351_shutdown_comms();
+#ifdef HW_TARGET_3_5
+#else
 			setBoostEnable(OFF);
+#endif
 			setFETDriverLoadSwitch(OFF, TRANSMITTER);
 			setSignalGeneratorEnable(OFF, TRANSMITTER);
 			g_tx_initialized = false;
@@ -136,7 +140,11 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 			
 			if(g_enable_external_battery_control) setExtBatLoadSwitch(state, TRANSMITTER);
 			setSignalGeneratorEnable(state, TRANSMITTER);
+			
+#ifdef HW_TARGET_3_5
+#else
 			if(g_enable_boost_regulator) setBoostEnable(state);
+#endif
 			setFETDriverLoadSwitch(state, TRANSMITTER);
 						
 			if(state)
