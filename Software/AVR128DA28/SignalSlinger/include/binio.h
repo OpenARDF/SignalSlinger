@@ -29,7 +29,12 @@
 #include "defs.h"
 
 /* PORTA *************************************************************************************/
+#ifdef HW_TARGET_3_5
+#define COOLING_FAN_ENABLE 7
+#else
 #define BOOST_PWR_ENABLE 7
+#endif
+
 #define STRAIGHTKEY 6 /* Straight key */
 #define PADDLE_DAH 5 /* Paddle Dah */
 #define PADDLE_DIT 4 /* Paddle Dit */
@@ -93,13 +98,17 @@ bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender);
  */
 bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender);
 
+#ifdef HW_TARGET_3_5
+void setCoolingFanLSEnable(bool onoff);
+bool getCoolingFanLSEnable(void);
+#else
 /**
  */
 bool setBoostEnable(bool onoff);
+#endif
 
 /**
  */
-bool setExtBatLSSetting(bool onoff);
 bool getExtBatLSEnable(void);
 
 class binio

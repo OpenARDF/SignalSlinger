@@ -164,7 +164,7 @@ static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CH
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = { 2000, 2000, 4000 };
 static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = { false, false, false };
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = { 0, 0, 0 };
-static volatile bool g_temperature_shutdown = false;
+static volatile bool g_thermal_shutdown = false;
 
 volatile uint16_t g_foreground_handle_counted_presses = 0;
 volatile uint16_t g_switch_presses_count = 0;
@@ -908,13 +908,15 @@ ISR(TCB0_INT_vect)
 						g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temp)/2. : temp;
 						if(g_processor_temperature > g_processor_max_temperature) g_processor_max_temperature = g_processor_temperature;
 						if(g_processor_temperature < g_processor_min_temperature) g_processor_min_temperature = g_processor_temperature;
+						
 						if(g_internal_bat_detected)
 						{
-							g_temperature_shutdown = g_temperature_shutdown ? !(g_processor_temperature < 55.) : g_processor_temperature > 60.;
+							g_thermal_shutdown = (g_processor_temperature > 60.) ?  true : (g_processor_temperature < 50.) ? false : g_thermal_shutdown;
 						}
 						else
 						{
-							g_temperature_shutdown = g_temperature_shutdown ? !(g_processor_temperature < 80.) : g_processor_temperature > 85.;
+							g_thermal_shutdown = (g_processor_temperature > 80.) ?  true : (g_processor_temperature < 70.) ? false : g_thermal_shutdown;
+
 						}
 						
 						if(g_turn_on_fan)
@@ -1180,6 +1182,28 @@ int main(void)
 					setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
 				}
 			}
+			
+#ifdef HW_TARGET_3_5			
+			if(g_thermal_shutdown) // Extremely high temperature detected
+			{
+				setCoolingFanLSEnable(ON); // should already be on
+				suspendEvent();
+				sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
+				g_sleepshutdown_seconds = 300;
+				g_thermal_shutdown = false; // It will probably be activated several times before sufficiently cool
+			}
+			else
+			{
+				if(g_turn_on_fan)
+				{
+					setCoolingFanLSEnable(ON);
+				}
+				else
+				{
+					setCoolingFanLSEnable(OFF);
+				}
+			}
+#else
 			else
 			{
 				if(g_turn_on_fan)
@@ -1197,6 +1221,7 @@ int main(void)
 					}
 				}
 			}
+#endif
 			
 			/********************************
 			 * Handle sleep
@@ -4299,7 +4324,7 @@ void reportSettings(void)
 		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);  // Transmitter not responding.
 	}
 	
-	if(g_temperature_shutdown)
+	if(g_thermal_shutdown)
 	{
 		sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
 	}
