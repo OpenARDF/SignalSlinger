@@ -43,7 +43,8 @@ static volatile bool g_disable_transmissions = false;
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 extern volatile bool g_device_enabled;
 volatile bool g_enable_boost_regulator = false;
-volatile bool g_enable_external_battery_control = true;
+
+volatile bool g_enable_external_battery_control = true; // true = set the LS to control an external power source; It must be controlled to support transmissions and internal battery charging
 
 /**
  */

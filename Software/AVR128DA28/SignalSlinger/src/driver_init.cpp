@@ -68,7 +68,7 @@ void system_charging_config()
 //	BINIO_init();
 		/* PORTA *************************************************************************************/
   	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
-  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH); // Turn on external power source
 // 	
 //  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 // 	PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
