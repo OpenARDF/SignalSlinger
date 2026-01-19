@@ -1,6 +1,4 @@
 # SignalSlinger
-Status: SignalSlinger is ready for its first production build. Its design and BOM are believed to be complete.
-
 SignalSlinger is an 80-meter band radio orienteering (ARDF) transmitter kit designed to operate in the Amateur Radio Service 3.5 MHz to 3.7 MHz frequency range. The transmitter supports all common radio orienteering event formats: classic, sprint, and foxoring. Using its own high-accuracy real-time clock, it keeps all transmissions closely synchronized and allows precise start and finish dates and times to be specified.
 
 The SignalSlinger project is 100% Open Source. All software and hardware design documents are available for download from this GitHub repository.
