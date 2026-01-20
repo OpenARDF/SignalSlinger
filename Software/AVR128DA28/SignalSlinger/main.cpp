@@ -251,6 +251,7 @@ void startSyncdEventNow(bool configOverride);
 bool startEventUsingRTC(void);
 void setupForFox(Fox_t fox, EventAction_t action);
 time_t validateTimeString(char* str, time_t* epochVar);
+time_t validateTimeString(char* str, time_t* epochVar, bool align5min);
 bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 void reportConfigErrors(void);
 /*******************************/
@@ -2470,15 +2471,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 					if(arg)
 					{
-						if(arg == '0')       /* Stop the event. Re-sync will occur on next start */
+						if(arg == '0')       /* Stop an event in progress. Resume countdown to any future event */
 						{
 // 							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
-							suspendEvent(); // Stop any running event
-							
-							if(eventScheduledForTheFuture()) // Don't allow GO 0 to unschedule a future event
-							{
-								startEventUsingRTC();
-							}
+							g_key_down_countdown = 0;
+							g_run_event_forever = false; // ensure that the reset will not initiate an unscheduled event
+							g_foreground_reset_after_keydown = true;
 						}
 						else if(arg == '1')  /* Start the event, syncing to the top of the hour */
 						{
@@ -3046,6 +3044,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						else
 						{
 							g_tempStr[12] = '\0';
+							g_tempStr[11] = '0'; // start time seconds are always zero
+							g_tempStr[10] = '0';
 							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_start_epoch);
 							if(tmp) strncpy(g_tempStr, tmp, 13);
 							s = validateTimeString(g_tempStr, null);
@@ -3995,6 +3995,11 @@ void setupForFox(Fox_t fox, EventAction_t action)
  *  - Returns the validated time as an epoch value (`time_t`) if valid, otherwise returns 0.
  */
 time_t validateTimeString(char* str, time_t* epochVar)
+{
+	return validateTimeString(str, epochVar, false);
+}
+
+time_t validateTimeString(char* str, time_t* epochVar, bool align5min)
 {
     time_t valid = 0;    // Initialize return value to 0 (indicating invalid by default).
     int len = strlen(str);    // Get the length of the provided string.

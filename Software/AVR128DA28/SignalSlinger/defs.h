@@ -34,7 +34,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1j"
+#define SW_REVISION "1.1k"
 //#define HW_TARGET_3_4
 //#define HW_TARGET_3_5
 
