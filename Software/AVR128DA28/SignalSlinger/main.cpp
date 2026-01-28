@@ -2618,16 +2618,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  							g_evteng_event_enabled = false;					/* Disable an event currently underway */
  							startEventUsingRTC();
 						}
-						else if(arg == '3')  /* Start the event immediately with transmissions starting now */
-						{
-							g_event_launched_by_user_action = true;
-							suspendEvent(); // Stop any running event and initialize loaded event engine settings
-							if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
-							{
-								sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
-							}
- 							setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);
-						}
+// 						else if(arg == '3')  /* Start the event immediately with transmissions starting now */
+// 						{
+// 							g_event_launched_by_user_action = true;
+// 							suspendEvent(); // Stop any running event and initialize loaded event engine settings
+// 							if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+// 							{
+// 								sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+// 							}
+//  							setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);
+// 						}
 						else if(arg)
 						{
 							sb_send_string((char*)"*err\n");
@@ -3491,7 +3491,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_NewLine();
 					}
 					
-					sprintf(g_tempStr, "* SW Ver: %s\n", SW_REVISION);
+					// Buffer for storing temporary strings.
+					char buf[10];
+					
+#ifdef HW_TARGET_3_5
+					sprintf(buf, "3.5");
+#else
+					sprintf(buf, "3.4");
+#endif
+					sprintf(g_tempStr, "* SW Ver: %s HW Build: %s\n", SW_REVISION, buf);
+
 					sb_send_string(g_tempStr);
 				}
 			}
