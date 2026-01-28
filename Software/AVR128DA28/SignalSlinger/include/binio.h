@@ -88,6 +88,11 @@ uint8_t portDdebouncedVals(void);
  */
 bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender);
 void fet_driver(bool state);
+bool get_fet_driver(void);
+
+/**
+ */
+bool get_V3V3_enable(void);
 
 /**
  */

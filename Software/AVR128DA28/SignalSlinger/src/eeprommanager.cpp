@@ -143,13 +143,13 @@ extern char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 extern uint16_t g_80m_power_level_mW;
-extern volatile uint8_t g_id_codespeed;
-extern volatile uint8_t g_pattern_codespeed;
+extern volatile uint8_t g_evteng_id_codespeed;
+extern volatile uint8_t g_evteng_pattern_codespeed;
 extern volatile uint8_t g_foxoring_pattern_codespeed;
-extern volatile int16_t g_off_air_seconds;
-extern volatile int16_t g_on_air_seconds;
-extern volatile int16_t g_ID_period_seconds;
-extern volatile int16_t g_intra_cycle_delay_time;
+extern volatile int16_t g_evteng_off_air_seconds;
+extern volatile int16_t g_evteng_on_air_seconds;
+extern volatile int16_t g_evteng_ID_period_seconds;
+extern volatile int16_t g_evteng_intra_cycle_delay_time;
 extern volatile float g_internal_voltage_low_threshold;
 extern uint16_t g_clock_calibration;
 extern volatile uint8_t g_days_to_run;
@@ -630,7 +630,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
  */
 void EepromManager::saveAllEEPROM(void)
 {
-	updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);	
+	updateEEPROMVar(Id_codespeed, (void*)&g_evteng_id_codespeed);	
 	updateEEPROMVar(Fox_setting_none, (void*)&g_fox[EVENT_NONE]);
 	updateEEPROMVar(Fox_setting_classic, (void*)&g_fox[EVENT_CLASSIC]);
 	updateEEPROMVar(Fox_setting_sprint, (void*)&g_fox[EVENT_SPRINT]);
@@ -652,12 +652,12 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Frequency, (void*)&g_frequency);
 	updateEEPROMVar(RTTY_offset, (void*)&g_rtty_offset);
 	updateEEPROMVar(RF_Power, (void*)&g_80m_power_level_mW);
-	updateEEPROMVar(Pattern_Code_Speed, (void*)&g_pattern_codespeed);
+	updateEEPROMVar(Pattern_Code_Speed, (void*)&g_evteng_pattern_codespeed);
 	updateEEPROMVar(Foxoring_Pattern_Code_Speed, (void*)&g_foxoring_pattern_codespeed);
-	updateEEPROMVar(Off_Air_Seconds, (void*)&g_off_air_seconds);
-	updateEEPROMVar(On_Air_Seconds, (void*)&g_on_air_seconds);
-	updateEEPROMVar(ID_Period_Seconds, (void*)&g_ID_period_seconds);
-	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void*)&g_intra_cycle_delay_time);
+	updateEEPROMVar(Off_Air_Seconds, (void*)&g_evteng_off_air_seconds);
+	updateEEPROMVar(On_Air_Seconds, (void*)&g_evteng_on_air_seconds);
+	updateEEPROMVar(ID_Period_Seconds, (void*)&g_evteng_ID_period_seconds);
+	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void*)&g_evteng_intra_cycle_delay_time);
 	updateEEPROMVar(Voltage_threshold, (void*)&g_internal_voltage_low_threshold);
 	updateEEPROMVar(Clock_calibration, (void*)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
@@ -678,7 +678,7 @@ bool EepromManager::readNonVols(void)
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
 	{
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT; // (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.master_setting));
-		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
+		g_evteng_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_event = (Event_t)eeprom_read_byte((const uint8_t*)&(EepromManager::ee_vars.event_setting));
 		g_frequency = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency)), TX_MAXIMUM_FREQUENCY);
 		g_frequency_low = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)), TX_MAXIMUM_FREQUENCY);
@@ -743,13 +743,13 @@ bool EepromManager::readNonVols(void)
 		g_rtty_offset = eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset));
 		g_80m_power_level_mW = CLAMP(MIN_RF_POWER_MW, eeprom_read_word(&(EepromManager::ee_vars.rf_power)), MAX_TX_POWER_80M_MW);
 
-		g_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_codespeed))), MAX_CODE_SPEED_WPM);
+		g_evteng_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_codespeed))), MAX_CODE_SPEED_WPM);
 		g_foxoring_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.foxoring_pattern_codespeed))), MAX_CODE_SPEED_WPM);
 
-		g_off_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.off_air_seconds)), 3600);
-		g_on_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.on_air_seconds)), 3600);
-		g_ID_period_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.ID_period_seconds)), 3600);
-		g_intra_cycle_delay_time = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.intra_cycle_delay_time)), 3600);
+		g_evteng_off_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.off_air_seconds)), 3600);
+		g_evteng_on_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.on_air_seconds)), 3600);
+		g_evteng_ID_period_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.ID_period_seconds)), 3600);
+		g_evteng_intra_cycle_delay_time = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.intra_cycle_delay_time)), 3600);
 		
 		g_internal_voltage_low_threshold = CLAMP(3.0, eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)), 4.1);
 		
@@ -783,8 +783,8 @@ bool EepromManager::readNonVols(void)
 
 		if(initialization_flag != EEPROM_INITIALIZED_FLAG)
 		{
-			g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-			avr_eeprom_write_byte(Id_codespeed, g_id_codespeed);
+			g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
+			avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
 			
 			g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
 			avr_eeprom_write_byte(Master_setting, g_isMaster);
@@ -871,23 +871,23 @@ bool EepromManager::readNonVols(void)
 			g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
 			avr_eeprom_write_dword(RF_Power, g_80m_power_level_mW);
 			
-			g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
-			avr_eeprom_write_byte(Pattern_Code_Speed, g_pattern_codespeed);
+			g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
+			avr_eeprom_write_byte(Pattern_Code_Speed, g_evteng_pattern_codespeed);
 			
 			g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
 			avr_eeprom_write_byte(Foxoring_Pattern_Code_Speed, g_foxoring_pattern_codespeed);
 			
-			g_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;
-			avr_eeprom_write_word(Off_Air_Seconds, g_off_air_seconds);
+			g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;
+			avr_eeprom_write_word(Off_Air_Seconds, g_evteng_off_air_seconds);
 			
-			g_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;
-			avr_eeprom_write_word(On_Air_Seconds, g_on_air_seconds);
+			g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;
+			avr_eeprom_write_word(On_Air_Seconds, g_evteng_on_air_seconds);
 		
-			g_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;
-			avr_eeprom_write_word(ID_Period_Seconds, g_ID_period_seconds);
+			g_evteng_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;
+			avr_eeprom_write_word(ID_Period_Seconds, g_evteng_ID_period_seconds);
 			
-			g_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT;
-			avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, g_intra_cycle_delay_time);
+			g_evteng_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT;
+			avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, g_evteng_intra_cycle_delay_time);
 
 			avr_eeprom_write_byte(i, '\0');
 

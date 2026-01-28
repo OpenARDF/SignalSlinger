@@ -306,6 +306,11 @@ void fet_driver(bool state)
 		driverCallerStates[TRANSMITTER] = OFF;
 	}
 }
+
+bool get_fet_driver(void)
+{
+	return (PORTA_get_pin_level(FET_DRIVER_ENABLE) != LOW);
+}
 	
 void setExtBatLSEnable(bool state)
 {
@@ -334,6 +339,11 @@ void v3V3_enable(bool state)
 	{
 		PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
 	}
+}
+
+bool get_V3V3_enable(void)
+{
+	return (PORTA_get_pin_level(V3V3_PWR_ENABLE) != LOW);
 }
 
 #ifdef HW_TARGET_3_5

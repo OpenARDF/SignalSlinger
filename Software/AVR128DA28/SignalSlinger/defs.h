@@ -34,8 +34,8 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1k"
-//#define HW_TARGET_3_4
+#define SW_REVISION "1.1m"
+#define HW_TARGET_3_4
 //#define HW_TARGET_3_5
 
 //#define TRANQUILIZE_WATCHDOG
@@ -186,8 +186,10 @@ typedef enum {
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (8.5)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
-#define FAN_TURN_ON_TEMP (45.)
-#define FAN_TURN_OFF_TEMP (40.)
+//#define FAN_TURN_ON_TEMP (45.)
+//#define FAN_TURN_OFF_TEMP (40.)
+#define FAN_TURN_ON_TEMP (35.)
+#define FAN_TURN_OFF_TEMP (30.)
 
 #define MINIMUM_VALID_TEMP (-20.)
 #define MAXIMUM_VALID_TEMP (125.)
@@ -263,6 +265,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_ERR_START_IN_PAST_TXT (char*)"* Err: Start in past!\n"
 #define TEXT_ERR_INVALID_TIME_TXT (char*)"* Err: Invalid time!\n"
 #define TEXT_ERR_TIME_IN_PAST_TXT (char*)"* Err: Time in past!\n"
+#define TEXT_ERR_ALIGNED_TO_5MIN_TXT (char*)"* Alert: Time adjusted to 5-min cycle\n"
 #define TEXT_RTC_NOT_RESPONDING_TXT (char*)"* Error: No response from clock hardware\n"
 #define TEXT_TX_NOT_RESPONDING_TXT (char*)"* Error: No response from transmit hardware\n"
 #define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
@@ -272,6 +275,7 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define TEXT_POWER_OFF (char*)"* Power off. Press and hold pushbutton for power on\n"
 #define TEXT_SLEEPING_TXT (char*)"* Sleeping. Press and hold pushbutton to awaken\n"
 #define TEXT_SLEEPING_UNTIL_START_TXT (char*)"* Sleeping until start\n"
+#define TEXT_SLEEPING_UNTIL_NEXT_XMSN (char*)"* Sleeping until next transmission\n"
 #define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
 #define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
 #define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"

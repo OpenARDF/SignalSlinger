@@ -58,7 +58,7 @@ enum {
 };
 
 volatile uint16_t g_i2c0_timeout_ticks = 200; 
-volatile uint16_t g_i2c_failure_count = 0;
+volatile uint16_t g_i2c_failure_count = 0; /* Legacy */
 
 /************************************************************************/
 /* I2C_0                                                               */
