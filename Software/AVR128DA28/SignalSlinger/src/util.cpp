@@ -997,9 +997,7 @@ bool float_to_parts_signed(float value,
 
     /* scale fractional part to 1 decimal place, keep it non-negative */
     float scaled = roundf(fabsf(frac_part_f) * 10.0f);
-
-    if (scaled > (float)UINT16_MAX)          /* should never happen, but guard anyway */
-        return true;
+	if (scaled > 9.) scaled = 9.; /* avoid potential "10" for the fractional part */
 
     /* commit results */
     *integerPart = (int16_t)int_part_f;   /* may be negative */

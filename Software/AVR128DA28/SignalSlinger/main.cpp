@@ -266,6 +266,9 @@ void reportConfigErrors(void);
 /* End hardcoded event support */
 /*******************************/
 
+/**
+1-second interrupt ISR
+*/
 ISR(RTC_CNT_vect)
 {
 	uint8_t x = RTC.INTFLAGS;
@@ -1715,7 +1718,6 @@ int main(void)
 							now++;
 							while(now >= time(null));
 							RSTCTRL_reset();
-							while(1); // Should never reach here
 						}
 					}
 				}
@@ -2022,6 +2024,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sprintf(g_tempStr, "* Temp: %d.%dC\n", integer, fractional);
 						sb_send_string(g_tempStr);
 					}
+				}
+				else
+				{
+					if(!g_meshmode) sb_send_NewLine();
+					sb_send_string((char*)"* Temp not available\n");
 				}
 			}
 			break;
@@ -3226,11 +3233,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								g_event_finish_epoch = g_evteng_loaded_finish_epoch;
 							
 								g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
- 								setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
-								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-								{
-									startEventUsingRTC();
-								}
+								startEventUsingRTC();
  							}
 						}
 					}
@@ -3266,6 +3269,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						else
 						{
 							g_tempStr[12] = '\0';
+							g_tempStr[11] = '0'; // finish time seconds are always zero
+							g_tempStr[10] = '0';
+
 							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
 							if(tmp) strncpy(g_tempStr, tmp, 13);
 							f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, false, g_tempStr);
@@ -3294,12 +3300,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								g_days_to_run = 1;
 								g_days_run = 0;
-
- 								setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
-								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-								{
-									startEventUsingRTC();
-								}
+								startEventUsingRTC();
 							}
  						}
 					}
@@ -3787,6 +3788,10 @@ EC activateTransmissionsUsingCurrentSettings(SC* statusCode, time_t startTime, t
 						g_evteng_sendID_seconds_countdown = timeTillTransmit + g_evteng_on_air_seconds - g_time_needed_for_ID;
 					}
 				}
+						
+				g_time_to_wake_up = now; // Don't sleep during the first cycle
+				g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+				g_evteng_sleepshutdown_seconds = 300;
 
 				if(powerToTransmitter(turnOnTransmitter) != ERROR_CODE_NO_ERROR)
 				{
@@ -3808,6 +3813,9 @@ EC activateTransmissionsUsingCurrentSettings(SC* statusCode, time_t startTime, t
 				g_evteng_loaded_start_epoch = startTime;
 				g_evteng_loaded_finish_epoch = finishTime;
 				g_evteng_event_commenced = false;
+				g_time_to_wake_up = (time_t)(g_evteng_loaded_start_epoch - 15); // Wake up before the event starts
+				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_sleepshutdown_seconds = 300;
 			}
 		}
 	}
