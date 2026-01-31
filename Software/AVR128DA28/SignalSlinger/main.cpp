@@ -1949,7 +1949,7 @@ int main(void)
 				
 				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
-				if(start_event_after_keydown)
+				if(start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
 				{
 					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 					{
@@ -1959,11 +1959,8 @@ int main(void)
 					else
 					{
 						g_sleepType = SLEEP_FOREVER;
-						if(start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
-						{
-							startEventNow(true); // Immediately start the event
-							if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
-						}
+						startEventNow(true); // Immediately start the event
+						if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 					}
 				}
 			
