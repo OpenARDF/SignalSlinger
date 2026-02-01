@@ -519,7 +519,7 @@ ISR(TCB0_INT_vect)
 		static int8_t indexConversionInProcess = 0;
 		static uint16_t codeInc = 0;
 		bool repeat, finished;
-		static uint16_t switch_closures_count_period = 0;
+		static uint16_t switch_closures_count_period = 40;
 		uint8_t holdSwitch = 0;
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
@@ -579,6 +579,7 @@ ISR(TCB0_INT_vect)
 						{
 							g_switch_presses_count++;
 							buttonReleased = false;
+							switch_closures_count_period = 40;
 						}
 						else
 						{
@@ -651,7 +652,7 @@ ISR(TCB0_INT_vect)
 			longPressEnabled = false;
 			switch_closed_time = 0;
 			g_switch_presses_count = 0;
-			switch_closures_count_period = 0;
+//			switch_closures_count_period = 0;
 			g_long_button_press = false;
 		}
 				
