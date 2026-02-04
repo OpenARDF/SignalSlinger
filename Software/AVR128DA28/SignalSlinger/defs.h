@@ -34,9 +34,9 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1o"
-#define HW_TARGET_3_4
-//#define HW_TARGET_3_5
+#define SW_REVISION "1.1p"
+//#define HW_TARGET_3_4
+#define HW_TARGET_3_5
 
 //#define TRANQUILIZE_WATCHDOG
 
@@ -111,7 +111,6 @@ typedef enum {
 	} SC;
 
 typedef enum {
-	DO_NOT_SLEEP,
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
@@ -295,6 +294,12 @@ typedef enum
 	SCHEDULED_EVENT_WILL_NEVER_RUN,
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
+
+typedef enum
+{
+	SAVED_SETTINGS,
+	LOADED_SETTINGS
+} Settings_t;
 
 
 typedef enum
