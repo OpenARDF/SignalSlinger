@@ -42,6 +42,9 @@
 # define INT16_MIN (-INT16_MAX - 1)
 #endif
 
+uint8_t char2bcd(char c[]);
+uint8_t bcd2dec(uint8_t val);
+time_t epoch_from_ltm(tm *ltm);
 
 /**
  * Returns a-b
@@ -161,6 +164,447 @@ bool mystrptime(char* s, struct tm* ltm) {
   return false;
 }
 
+
+/*
+ * Converts an epoch time (seconds since 1900) to a human-readable string with format "ddd dd-mon-yyyy hh:mm:ss zzz"
+ * @param epoch - the epoch time to convert
+ * @param buf - a buffer to store the resulting string
+ * @param size - size of the buffer
+ * @return pointer to the formatted time string
+ */
+#define THIRTY_YEARS 946684800
+char* convertEpochToTimeString(time_t epoch, char* buf, size_t size)
+ {
+    struct tm  ts;
+	time_t t = epoch;
+	
+	if(epoch >= THIRTY_YEARS)
+	{
+		t = epoch - THIRTY_YEARS;
+	}
+
+    // Format time, "ddd dd-mon-yyyy hh:mm:ss zzz"
+    ts = *localtime(&t);
+    strftime(buf, size, "%a %d-%b-%Y %H:%M:%S", &ts);
+   return buf;
+ }
+
+// ==========================
+// Helper: month abbreviation
+// ==========================
+static int parseMonth(const char* mon)
+{
+	static const char* months[] =
+	{
+		"Jan","Feb","Mar","Apr","May","Jun",
+		"Jul","Aug","Sep","Oct","Nov","Dec"
+	};
+
+	for (int i = 0; i < 12; i++)
+	if (months[i][0]==mon[0] && months[i][1]==mon[1] && months[i][2]==mon[2])
+	return i+1;
+
+	return 0;
+}
+
+// ======================================
+// Helper: parse convertEpochToTimeString
+// ======================================
+static void parseTimeFields(const char* tbuf,
+int* yy, int* mon, int* dd,
+int* hh, int* mm, int* ss)
+{
+	*dd = (tbuf[4]-'0')*10 + (tbuf[5]-'0');
+
+	char monStr[4];
+	monStr[0]=tbuf[7]; monStr[1]=tbuf[8]; monStr[2]=tbuf[9]; monStr[3]=0;
+	*mon = parseMonth(monStr);
+
+	int yyyy =
+	(tbuf[11]-'0')*1000 + (tbuf[12]-'0')*100 +
+	(tbuf[13]-'0')*10   + (tbuf[14]-'0');
+
+	*yy = yyyy % 100;
+
+	*hh = (tbuf[16]-'0')*10 + (tbuf[17]-'0');
+	*mm = (tbuf[19]-'0')*10 + (tbuf[20]-'0');
+	*ss = (tbuf[22]-'0')*10 + (tbuf[23]-'0');
+}
+
+// ========================================
+// Helper: produce 12-char YYMMDDhhmmss
+// ========================================
+static void formatTimestamp(char* buf,
+int yy, int mon, int dd,
+int hh, int mm, int ss)
+{
+	snprintf(buf, 13, "%02d%02d%02d%02d%02d%02d",
+	yy, mon, dd, hh, mm, ss);
+}
+
+// =====================================================
+// MAIN FUNCTION — Complete, Refactored, With New Rules
+// =====================================================
+char* completeTimeString(const char* partialString, time_t* currentEpoch)
+{
+	static char buf[13];
+	buf[0]='\0';
+
+	if (!partialString)
+	return null;
+
+	// --- validate clock ---
+	time_t epoch = time(null); // Use clock time by default
+	
+	if(currentEpoch)
+	{
+		if(*currentEpoch > MINIMUM_VALID_EPOCH)
+		{
+			epoch = *currentEpoch;
+		}
+	}
+	
+	if (epoch < MINIMUM_VALID_EPOCH)
+	return null;
+
+	// --- extract now fields ---
+	char tbuf[40];
+	convertEpochToTimeString(epoch, tbuf, sizeof(tbuf));
+
+	int yy, mon, dd, hh, mm, ss;
+	parseTimeFields(tbuf, &yy, &mon, &dd, &hh, &mm, &ss);
+
+	size_t n = strlen(partialString);
+
+	// ============================
+	// OFFSET MODE
+	// ============================
+	if(currentEpoch)
+	{
+		// ============================
+		// OFFSET MODE: + / - (h, m, d)
+		// ============================
+		if (partialString[0] == '+' || partialString[0] == '-')
+		{
+			int sign = (partialString[0] == '+') ? 1 : -1;
+			const char* p = partialString + 1;
+			time_t value = atol(p);
+			time_t newEpoch = epoch;
+
+			// ---- Case: ±HHMM  (4 digits) ----
+			if (isdigit(p[0]) && isdigit(p[1]) &&
+			isdigit(p[2]) && isdigit(p[3]) && p[4] == '\0')
+			{
+				int H = (p[0]-'0')*10 + (p[1]-'0');
+				int M = (p[2]-'0')*10 + (p[3]-'0');
+
+				newEpoch += sign * (H * 3600 + M * 60);
+			}
+			else
+			{
+				// ---- Case: ±N(unit) ----
+				// Where unit = h/H (hours), m/M (minutes), d/D (days)
+				while (*p && isdigit(*p))
+				p++;
+
+				char unit = *p;
+
+				switch (unit)
+				{
+					case 'h': case 'H':     // HOURS
+					newEpoch += sign * (value * 3600);
+					break;
+
+					case 'm': case 'M':     // MINUTES (new rule)
+					newEpoch += sign * (value * 60);
+					break;
+
+					case 'd': case 'D':     // DAYS
+					newEpoch += sign * (value * 86400);
+					break;
+
+					default:
+					// Unknown unit ? do nothing
+					break;
+				}
+			}
+
+			// ---- Recompute resulting timestamp ----
+			convertEpochToTimeString(newEpoch, tbuf, sizeof(tbuf));
+			parseTimeFields(tbuf, &yy, &mon, &dd, &hh, &mm, &ss);
+
+			// Seconds always "00" for offsets
+			formatTimestamp(buf, yy, mon, dd, hh, mm, 0);
+
+			return buf;
+		}
+	}
+	
+	if(!only_digits((char*)partialString))
+	{
+		return null;
+	}
+	
+	int AB = (partialString[0]-'0')*10 + (partialString[1]-'0');
+	int CD = (partialString[2]-'0')*10 + (partialString[3]-'0');
+	int EF = (partialString[4]-'0')*10 + (partialString[5]-'0');
+	int GH = (partialString[6]-'0')*10 + (partialString[7]-'0');
+	int IJ = (partialString[8]-'0')*10 + (partialString[9]-'0');
+	int KL = (partialString[10]-'0')*10 + (partialString[11]-'0');
+
+	// ============================
+	// 12 char ? copy as-is
+	// ============================
+	if (n == 12)
+	{
+		if(((AB >= 25) && (AB <= 99)) && ((CD >= 1) && (CD <= 12)) && ((EF >= 1) && (EF <= 31)) && (GH < 24) && (IJ < 60) && (KL < 60)) // A valid year (until 2100) and month
+		{
+			memcpy(buf, partialString, 12);
+			buf[12]='\0';
+			return buf;
+		}
+		
+		return null;
+	}
+
+	// =====================================================
+	// NEW RULE: 6-character (ABxxxx) DAY/HOUR priority
+	// =====================================================
+	if (n == 6)
+	{
+		if(EF > 59) return null;
+
+		// If hour is in the future, assume hhmmss
+		if (AB >= hh)
+		{
+			if((AB < 24) && (CD < 60))
+			{
+ 				formatTimestamp(buf, yy, mon, dd, AB, CD, EF);
+ 				return buf;
+			}
+		}
+
+		if (AB >= dd) // If greater than or equal to today, assume ddhhmm
+		{
+			if(((AB >= 1) && (AB <= 31)) && (CD < 24))
+			{
+				formatTimestamp(buf, yy, mon, AB, CD, EF, 0);
+				return buf;				
+			}
+		}
+		
+		return null; // Otherwise, it is an error
+	}
+
+	// =====================================================
+	// NEW RULE: 8-character partial (AB CD EF GH)
+	// day overrides month
+	// =====================================================
+	if (n == 8)
+	{		
+		if(GH > 59) return null;
+
+		bool matchMonth = (AB != mon);
+		bool matchDay   = (AB >= dd);
+
+		// If both ? day wins: assume ddhhmmss
+		if (matchDay)
+		{
+			if(((AB >= 1) && (AB <= 31)) && (CD < 24) && (EF < 60))
+			{
+				formatTimestamp(buf,yy,mon,AB,CD,EF,GH);
+				return buf;
+			}
+		}
+
+		if (matchMonth) // assume mmddhhmm
+		{
+			if(((AB >= 1) && (AB <= 12)) && ((CD >= 1) && (CD <= 31)) && (EF < 24))
+			{
+				formatTimestamp(buf,yy,AB,CD,EF,GH,0);
+				return buf;
+			}
+		}
+		
+		return null;
+	}
+
+	// =====================================================
+	// NEW RULE: 10-character partial
+	// month overrides year if both match prefix
+	// =====================================================
+	if (n == 10)
+	{
+		if(IJ > 59) // If invalid minutes or seconds
+		{
+			return null;
+		}
+		
+		if(((AB >= 25) && (AB <= 99)) && ((CD >= 1) && (CD <= 12)) && ((EF >= 1) && (EF <= 31)) && (GH < 24)) // A valid year (until 2100) and month
+		{
+			formatTimestamp(buf,
+			AB,
+			CD,
+			EF,
+			GH,
+			IJ,
+			0);
+			return buf;
+		}
+		else if(((AB >= 1) && (AB <= 12)) && ((CD >= 1) && (CD <= 31)) && (EF < 24) && (GH < 60)) // A valid month
+		{
+			formatTimestamp(buf,
+			yy,
+			AB,
+			CD,
+			EF,
+			GH,
+			IJ);
+			return buf;
+		}
+		
+		return null;
+	}
+
+	return null; 
+}
+
+
+
+
+/*
+ * Converts a datetime string into an epoch value
+ * @param error - pointer to an error flag, set to 1 if an error occurs
+ * @param datetime - character string in the format "YYMMDDhhmmss"
+ * @return epoch value representing the given date and time, or current RTC time if datetime is null
+ */
+time_t String2Epoch(bool *error, char *datetime)
+{
+	time_t epoch = 0;
+	uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
+
+	struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	int16_t year = 100;                 /* start at 100 years past 1900 */
+	uint8_t month;
+	uint8_t date;
+	uint8_t hours;
+	uint8_t minutes;
+	uint8_t seconds;
+
+	if(datetime)                            /* String format "YYMMDDhhmmss" */
+	{
+		data[0] = char2bcd(&datetime[10]);  /* seconds in BCD */
+		data[1] = char2bcd(&datetime[8]);   /* minutes in BCD */
+		data[2] = char2bcd(&datetime[6]);   /* hours in BCD */
+		/* data[3] =  not used */
+		data[4] = char2bcd(&datetime[4]);   /* day of month in BCD */
+		data[5] = char2bcd(&datetime[2]);   /* month in BCD */
+		data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
+
+		hours = bcd2dec(data[2]); /* Must be calculated here */
+
+		year += (int16_t)bcd2dec(data[6]);
+		ltm.tm_year = year;                         /* year since 1900 */
+
+		year += 1900;                               /* adjust year to calendar year */
+
+		month = bcd2dec(data[5]);
+		ltm.tm_mon = month - 1;                     /* mon 0 to 11 */
+
+		date = bcd2dec(data[4]);
+		ltm.tm_mday = date;                         /* month day 1 to 31 */
+
+		ltm.tm_yday = 0;
+		for(uint8_t mon = 1; mon < month; mon++)    /* months from 1 to 11 (excludes partial month) */
+		{
+			ltm.tm_yday += month_length(year, mon);;
+		}
+
+		ltm.tm_yday += (ltm.tm_mday - 1);
+
+		seconds = bcd2dec(data[0]);
+		minutes = bcd2dec(data[1]);
+
+		ltm.tm_hour = hours;
+		ltm.tm_min = minutes;
+		ltm.tm_sec = seconds;
+
+		epoch = epoch_from_ltm(&ltm);
+	}
+
+	if(error)
+	{
+		*error = (epoch == 0);
+	}
+
+	return(epoch);
+}
+
+
+
+/*
+ * Function: bcd2dec
+ * -----------------
+ * This function converts a Binary-Coded Decimal (BCD) value to a decimal value.
+ * In BCD, each digit is represented by a 4-bit binary value. This function extracts
+ * the tens and units portions of the BCD value and calculates the equivalent decimal value.
+
+ * Parameters:
+ *  - val: A uint8_t value representing a number in BCD format.
+
+ * Return:
+ *  - A uint8_t value representing the equivalent decimal value.
+
+ * Example:
+ *  If val = 0x25 (BCD for 25), the function will return 25 in decimal format.
+ *
+ * Conversion Steps:
+ *  - The tens digit is extracted by shifting the upper 4 bits to the right (val >> 4).
+ *  - The units digit is extracted by taking the lower 4 bits (val & 0x0F).
+ *  - The final decimal result is calculated as: (10 * tens) + units.
+ */
+uint8_t bcd2dec(uint8_t val)
+{
+	uint8_t result = 10 * (val >> 4) + (val & 0x0F);
+	return( result);
+}
+
+/*
+ * Converts a value from decimal to Binary Coded Decimal (BCD)
+ * @param val - the decimal value to convert (0-99)
+ * @return the value converted to BCD
+ */
+uint8_t dec2bcd(uint8_t val)
+{
+	uint8_t result = val % 10;
+	result |= (val / 10) << 4;
+	return (result);
+}
+
+/*
+ * Converts a character array to BCD format
+ * @param c - a character array representing a number
+ * @return the value converted to BCD
+ */
+uint8_t char2bcd(char c[])
+{
+	uint8_t result = (c[1] - '0') + ((c[0] - '0') << 4);
+	return( result);
+}
+
+/*
+ * Converts a tm struct to an epoch time (seconds since 1970)
+ * @param ltm - a pointer to a tm struct with time information
+ * @return epoch value representing the given local time
+ */
+time_t epoch_from_ltm(tm *ltm)
+{
+	time_t epoch = ltm->tm_sec + ltm->tm_min * 60 + ltm->tm_hour * 3600L + ltm->tm_yday * 86400L +
+	(ltm->tm_year - 70) * 31536000L + ((ltm->tm_year - 69) / 4) * 86400L -
+	((ltm->tm_year - 1) / 100) * 86400L + ((ltm->tm_year + 299) / 400) * 86400L;
+
+	return(epoch);
+}
 
 /**
  * Converts a string of format "yyyy-mm-ddThh:mm:ss" to seconds since 1900
@@ -553,9 +997,7 @@ bool float_to_parts_signed(float value,
 
     /* scale fractional part to 1 decimal place, keep it non-negative */
     float scaled = roundf(fabsf(frac_part_f) * 10.0f);
-
-    if (scaled > (float)UINT16_MAX)          /* should never happen, but guard anyway */
-        return true;
+	if (scaled > 9.) scaled = 9.; /* avoid potential "10" for the fractional part */
 
     /* commit results */
     *integerPart = (int16_t)int_part_f;   /* may be negative */

@@ -45,6 +45,7 @@
 #define SERIALBUS_MAX_TX_MSG_LENGTH 41
 #define SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS 3
 #define SERIALBUS_MAX_MSG_ID_LENGTH 3
+#define SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH 6
 
 #define SERIALBUS_MAX_COMMANDLINE_LENGTH ((1 + SERIALBUS_MAX_MSG_FIELD_LENGTH) * SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS)
 
@@ -92,8 +93,9 @@ typedef enum
 	SB_MESSAGE_VER = 'V' * 100 + 'E' * 10 + 'R',				/* Version */
 	SB_MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',				/* Software Reset */
 	SB_MESSAGE_HELP = '?',										/* Help */
-	SB_MESSAGE_DEBUG = 'D' * 100 + 'B' * 10 + 'G',				/* Debug information */
+	SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',		/* Temperature information */
 	SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',			/* Functionality setting */
+	SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',					/* Meshtastic mode setting */
 	SB_INVALID_MESSAGE = MAX_UINT16,							/* This value must never overlap a valid message ID */
 	SB_CR_NO_DATA = MAX_UINT16-1								/* This value must never overlap a valid message ID */
 } SBMessageID;
@@ -130,6 +132,7 @@ typedef struct
  * Configure the serial bus with a baud rate and USART instance.
  */
 void serialbus_init(uint32_t baud, USART_Number_t usart);
+void serialbus_flush_rx(void);
 
 /**
  * Immediately turns off receiver and flushes receive buffer

@@ -49,7 +49,7 @@ void system_init()
 	SLPCTRL_init();
 	ADC0_SYSTEM_init(SINGLE_CONVERSION);
 	
-	serialbus_init(SB_BAUD, SERIALBUS_USART);
+//	serialbus_init(SB_BAUD, SERIALBUS_USART);
 
 	BOD_init();
 }
@@ -68,7 +68,7 @@ void system_charging_config()
 //	BINIO_init();
 		/* PORTA *************************************************************************************/
   	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
-  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH); // Turn on external power source
 // 	
 //  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 // 	PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
@@ -154,15 +154,21 @@ void system_sleep_config()
  	PORTA_set_pin_pull_mode(PADDLE_DIT, PORT_PULL_OFF);
 	PORTA_set_pin_dir(PADDLE_DAH, PORT_DIR_OUT);
 	PORTA_set_pin_level(PADDLE_DAH, LOW);
+#ifdef HW_TARGET_3_5
+	PORTA_set_pin_dir(COOLING_FAN_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(COOLING_FAN_ENABLE, LOW);
+#else
 	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+#endif
 	PORTA_set_pin_dir(STRAIGHTKEY, PORT_DIR_OUT);
 	PORTA_set_pin_level(STRAIGHTKEY, LOW);
 
-	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
-	PORTC_set_pin_level(SERIAL_TX, LOW); /* Leave port serial line low */
-	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_OUT);
-	PORTC_set_pin_level(SERIAL_RX, LOW); /* Leave port serial line low */
+// 	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
+// 	PORTC_set_pin_level(SERIAL_TX, LOW); /* Leave port serial line low */
+ 	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_IN);
+	PORTC_set_pin_pull_mode(SERIAL_RX, PORT_PULL_UP);
+	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_BOTHEDGES_gc);
 
 	PORTC_set_pin_dir(SI5351_SDA, PORT_DIR_OUT);
 	PORTC_set_pin_level(SI5351_SDA, LOW);

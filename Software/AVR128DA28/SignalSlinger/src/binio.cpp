@@ -36,8 +36,11 @@ uint8_t portDdebounced;
 uint8_t portApinReadings[3];
 uint8_t portAdebounced;
 void v3V3_enable(bool state);
-void boost_enable(bool state);
 void setExtBatLSEnable(bool state);
+#ifdef HW_TARGET_3_5
+#else
+void boost_enable(bool state);
+#endif
 
 // default constructor
 binio::binio()
@@ -107,16 +110,20 @@ void BINIO_init(void)
 	
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
-	
+
+#ifdef HW_TARGET_3_5
+	PORTA_set_pin_dir(COOLING_FAN_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(COOLING_FAN_ENABLE, LOW);
+#else
 	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+#endif
 	
 	/* PORTC *************************************************************************************/
 	
 	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
 	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_IN);
-// 	PORTC_set_pin_dir(SI5351_SDA, PORT_DIR_OUT);
-// 	PORTC_set_pin_dir(SI5351_SCL, PORT_DIR_IN);
+	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_INTDISABLE_gc);
 	
 	/* PORTD *************************************************************************************/
 	PORTD_set_pin_dir(VBAT_INT, PORT_DIR_IN);
@@ -195,7 +202,6 @@ bool setExtBatLoadSwitch(hardwareResourceClients client)
 
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	
 	switch(sender)
 	{
 		case INTERNAL_BATTERY_CHARGING:
@@ -277,11 +283,14 @@ bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 /**
  State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
  */
+#ifdef HW_TARGET_3_5
+#else
 bool setBoostEnable(bool onoff)
 {		
 	boost_enable(onoff);
 	return(onoff);
 }
+#endif
 
 	
 void fet_driver(bool state)
@@ -296,6 +305,11 @@ void fet_driver(bool state)
 		PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 		driverCallerStates[TRANSMITTER] = OFF;
 	}
+}
+
+bool get_fet_driver(void)
+{
+	return (PORTA_get_pin_level(FET_DRIVER_ENABLE) != LOW);
 }
 	
 void setExtBatLSEnable(bool state)
@@ -327,15 +341,40 @@ void v3V3_enable(bool state)
 	}
 }
 
+bool get_V3V3_enable(void)
+{
+	return (PORTA_get_pin_level(V3V3_PWR_ENABLE) != LOW);
+}
+
+#ifdef HW_TARGET_3_5
+void setCoolingFanLSEnable(bool state)
+{
+	if(state == ON)
+	{
+		PORTA_set_pin_level(COOLING_FAN_ENABLE, ON);
+	}
+	else
+	{
+		PORTA_set_pin_level(COOLING_FAN_ENABLE, OFF);
+	}
+}
+
+bool getCoolingFanLSEnable(void)
+{
+	return (PORTA_get_pin_level(COOLING_FAN_ENABLE) != LOW);
+}
+	
+#else
 void boost_enable(bool state)
 {
 	if(state == ON)
 	{
-		PORTA_set_pin_level(BOOST_PWR_ENABLE, HIGH);
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, ON);
 	}
 	else
 	{
-		PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
+		PORTA_set_pin_level(BOOST_PWR_ENABLE, OFF);
 	}
 }
+#endif
 
