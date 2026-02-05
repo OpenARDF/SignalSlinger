@@ -200,7 +200,7 @@ EepromManager g_ee_mgr;
 
 bool g_isMaster = false;
 uint16_t isMasterCountdownSeconds = 0;
-Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, INVALID_FOX}; /* none, classic, sprint, foxoring */
+Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, USE_CURRENT_FOX}; /* none, classic, sprint, foxoring */
 
 Event_t g_event = EEPROM_EVENT_SETTING_DEFAULT;
 Frequency_Hz g_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -758,7 +758,8 @@ ISR(TCB0_INT_vect)
 						* the transmitter is sleeping - which can cause problems with loading the next event */
 						if(timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15))
 						{
-							if(timeIsSet() && (g_evteng_off_air_seconds > 15)) /* Don't bother to sleep if the off-air time is short or we don't know what time it is */
+//							if(timeIsSet() && (g_evteng_off_air_seconds > 15)) /* Don't bother to sleep if the off-air time is short or we don't know what time it is */
+							if(g_evteng_off_air_seconds > 15) /* Don't bother to sleep if the off-air time is short */
 							{
 								time_t seconds_to_sleep = (time_t)(g_evteng_off_air_seconds - 10); // Wake up 10 seconds before it is time to transmit again
 								g_time_to_wake_up = temp_time + seconds_to_sleep; // Set the time to wake up
@@ -1140,6 +1141,12 @@ int main(void)
 				
 				if(g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
 
+				if(!g_event_launched_by_user_action) // re-initialize event engine with stored event start and stop if it might be needed
+				{
+					g_evteng_loaded_start_epoch = g_event_start_epoch;
+					g_evteng_loaded_finish_epoch = g_event_finish_epoch;
+				}
+
 				// If the event loaded into the event engine is disabled, set it to start.
 				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
 				{
@@ -1270,7 +1277,7 @@ int main(void)
 						{
 							g_time_to_wake_up = FOREVER_EPOCH;
 
-							if(timeIsSet())
+							if(!timeIsSet())
 							{
 								if(!g_meshmode)
 								{
@@ -1575,14 +1582,14 @@ int main(void)
 									txSetFrequency(&g_frequency_beacon, true);
 								}
 							
-								setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);		
+								setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW);		
 							}
 							else
 							{
 								uint8_t inc = 0;
 							
 								start_event_after_keydown = false;
-								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+								if(eventScheduledForTheFuture(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch))
 								{
 									/* Implement special behavior if an event is scheduled to commence in the future: have a single button press toggle between
 									transmitting and slow blinking. But, in either case, the transmitter should eventually go to sleep and awaken at the
@@ -1646,11 +1653,18 @@ int main(void)
 										default: //	case 2: Start the event normally
 										{
 											suspendEvent();
+											// reinitialize event engine
+											g_evteng_initialize_event = true;
+											util_delay_ms(0);
+											while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+											
+											// Restore saved event start and finish times
 											g_event_launched_by_user_action = false;
+											g_evteng_loaded_start_epoch = g_event_start_epoch;
+											g_evteng_loaded_finish_epoch = g_event_finish_epoch;
 				
 											if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 											{
-												g_event_launched_by_user_action = false;
  												startEventUsingRTC();
 											}
 											else
@@ -1665,7 +1679,7 @@ int main(void)
 
 									g_evteng_sleepshutdown_seconds = 300; // Sleep after 5 minutes
 								}
-								else // No event scheduled
+								else // No event scheduled for the future (one might be in progress, or non is scheduled at all)
 								{
 									suspendEvent();
 
@@ -1673,15 +1687,18 @@ int main(void)
 									{
 										g_demo_event_countdown = 0;
 										g_foreground_reset_after_demo = false;
+										// Restore saved event start and finish times (though they are not needed for non-timed events)
+										g_evteng_loaded_start_epoch = g_event_start_epoch;
+										g_evteng_loaded_finish_epoch = g_event_finish_epoch;
 									}
 									
 									if(g_key_down_countdown)
 									{
-										g_key_down_countdown = 0; // Signals foreground to start the event
+										g_key_down_countdown = 0; // Cancel countdown
 										g_foreground_reset_after_keydown = false;
 										g_event_launched_by_user_action = true;
 										LEDS.init();
-										startSyncdEventNow(true); // Immediately start the event
+										startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
 										if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 									}
 									else 
@@ -1977,6 +1994,10 @@ int main(void)
 				{
 					g_sleepType = SLEEP_UNTIL_START_TIME;
 				}
+				else if(timeIsSet())
+				{
+					g_sleepType = SLEEP_FOREVER;
+				}
 				else
 				{
 					suspendEvent();
@@ -2204,10 +2225,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else
 					{
-						c1 = INVALID_FOX;
+						c1 = USE_CURRENT_FOX;
 					}
 
-					if((c1 >= BEACON) && (c1 < INVALID_FOX))
+					if((c1 >= BEACON) && (c1 < USE_CURRENT_FOX))
 					{
  						Fox_t holdFox = (Fox_t)c1;
 						 
@@ -2622,7 +2643,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else if(sb_buff->fields[SB_FIELD1][0] == '1')  
 						{
- 							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+ 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 
 							if(!txIsInitialized())
 							{
@@ -2668,7 +2689,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(arg == '0')       /* Stop an event in progress. Resume countdown to any future event */
 						{
 							suspendEvent(); // Stop any running event and initialize loaded event engine settings
-							setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;					
 							g_event_launched_by_user_action = false;
 							g_evteng_loaded_start_epoch = 0; // Allow the transmitter to sleep forever
@@ -2695,7 +2716,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 // 							{
 // 								sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 // 							}
-//  							setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);
+//  							setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW);
 // 						}
 						else if(arg)
 						{
@@ -2920,7 +2941,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							sb_send_string((char*)"MAS ACK\n");
 							g_send_clone_success_countdown = 18000;
-							setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
+							setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
 						}
 						else
 						{
@@ -3187,6 +3208,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								{
 									startEventUsingRTC();
 								}
+								else if(g_evteng_event_enabled) // An event is currently in progress
+								{
+									startSyncdEventNow(true);
+								}
+								else
+								{
+									suspendEvent();
+								}
 							}
  						}
 					}
@@ -3250,6 +3279,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						time_t s;
+						bool setSequalF = false;
 						
 						if(g_cloningInProgress)
 						{
@@ -3261,10 +3291,19 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							msg[0] = '\0';
 							g_tempStr[12] = '\0';
 							g_tempStr[11] = '0'; // start time seconds are always zero
-							g_tempStr[10] = '0';
-							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_evteng_loaded_start_epoch);
-							if(tmp) strncpy(g_tempStr, tmp, 13);
-							s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, (g_event==EVENT_CLASSIC), msg);
+							g_tempStr[10] = '0';						
+
+							if(g_tempStr[0] == '=')
+							{
+								s = g_event_finish_epoch;
+								setSequalF = true;
+							}
+							else
+							{
+								const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_evteng_loaded_start_epoch);
+								if(tmp) strncpy(g_tempStr, tmp, 13);
+								s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, (g_event==EVENT_CLASSIC), msg);
+							}
 							
 							if(msg[0] != '\0')
 							{
@@ -3290,11 +3329,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								g_days_to_run = 1;
 								g_days_run = 0;
 							
- 								g_evteng_loaded_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
-								g_event_finish_epoch = g_evteng_loaded_finish_epoch;
+								if(!setSequalF)
+								{
+									g_evteng_loaded_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
+									g_event_finish_epoch = g_evteng_loaded_finish_epoch;
 							
-								g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-								startEventUsingRTC();
+									g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
+									startEventUsingRTC();
+								}
  							}
 						}
 					}
@@ -3333,9 +3375,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_tempStr[11] = '0'; // finish time seconds are always zero
 							g_tempStr[10] = '0';
 
-							const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
-							if(tmp) strncpy(g_tempStr, tmp, 13);
-							f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, false, g_tempStr);
+							if(g_tempStr[0] == '=')
+							{
+								f = g_event_start_epoch;
+							}
+							else
+							{
+								const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
+								if(tmp) strncpy(g_tempStr, tmp, 13);
+								f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, false, g_tempStr);
+							}
 													
 							if(!f)
 							{
@@ -3889,7 +3938,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 void suspendEvent()
 {
  	keyTransmitter(OFF);
-	setupForFox(INVALID_FOX, START_NOTHING); // Stop any running event
+	setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 	LEDS.setRed(OFF);
 	g_evteng_event_enabled = false;    /* get things stopped immediately */
 	g_evteng_on_the_air = 0;           /* stop transmitting */
@@ -3910,11 +3959,11 @@ void startTransmissionsNow(bool configOverride)
 	
 	if(configOverride || (conf != CONFIGURATION_ERROR))
 	{
-		setupForFox(INVALID_FOX, START_TRANSMISSIONS_NOW);                                                                  /* Let the RTC start the event */
-		
 		g_evteng_initialize_event = true;
 		util_delay_ms(0);
 		while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+
+		setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW);                                                                  /* Let the RTC start the event */		
 	}
 	
 	configRedLEDforEvent();
@@ -3926,12 +3975,12 @@ void startEventNow(bool configOverride)
 	ConfigurationState_t conf = clockConfigurationCheck(LOADED_SETTINGS);
 	
 	if(configOverride || (conf != CONFIGURATION_ERROR))
-	{
-		setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_FOREVER);                                                                  /* Let the RTC start the event */
-		
+	{		
 		g_evteng_initialize_event = true;
 		util_delay_ms(0);
 		while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+
+		setupForFox(USE_CURRENT_FOX, START_EVENT_NOW_AND_RUN_FOREVER);                                                                  /* Let the RTC start the event */
 	}
 	
 	configRedLEDforEvent();
@@ -3943,11 +3992,11 @@ void startSyncdEventNow(bool configOverride)
 	
 	if(configOverride || (conf != CONFIGURATION_ERROR))
 	{
-		setupForFox(INVALID_FOX, START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT);                                                                  /* Let the RTC start the event */
-		
 		g_evteng_initialize_event = true;
 		util_delay_ms(0);
 		while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+
+		setupForFox(USE_CURRENT_FOX, START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT);                                                                  /* Let the RTC start the event */
 	}
 	
 	configRedLEDforEvent();
@@ -3960,7 +4009,11 @@ bool startEventUsingRTC(void)
 
 	if(conf != CONFIGURATION_ERROR)
 	{
-		setupForFox(INVALID_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
+		g_evteng_initialize_event = true;
+		util_delay_ms(0);
+		while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+
+		setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
 		if(eventScheduledForTheFuture(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch))
 		{
 			powerToTransmitter(OFF);
@@ -3972,11 +4025,6 @@ bool startEventUsingRTC(void)
 				sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 			}
 		}
-		
-		g_evteng_initialize_event = true;
-		util_delay_ms(0);
-		while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
-
 	}
 	else
 	{
@@ -4011,7 +4059,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	g_evteng_run_event_until_canceled = false;
 	g_evteng_sleepshutdown_seconds = 300;
 	
-	if(fox == INVALID_FOX)
+	if(fox == USE_CURRENT_FOX)
 	{
 		fox = getFoxSetting();
 	}

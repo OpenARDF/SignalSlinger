@@ -34,7 +34,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1p"
+#define SW_REVISION "1.1q"
 #define HW_TARGET_3_4
 //#define HW_TARGET_3_5
 
@@ -370,7 +370,7 @@ typedef enum
 	FOXORING_FOX2,
 	FOXORING_FOX3,
 	FREQUENCY_TEST_BEACON,
-	INVALID_FOX
+	USE_CURRENT_FOX
 	#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 	,
 	REPORT_BATTERY
