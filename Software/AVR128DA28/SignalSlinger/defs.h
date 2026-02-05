@@ -34,7 +34,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.1n"
+#define SW_REVISION "1.1q"
 #define HW_TARGET_3_4
 //#define HW_TARGET_3_5
 
@@ -111,7 +111,6 @@ typedef enum {
 	} SC;
 
 typedef enum {
-	DO_NOT_SLEEP,
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
@@ -296,6 +295,12 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
+typedef enum
+{
+	SAVED_SETTINGS,
+	LOADED_SETTINGS
+} Settings_t;
+
 
 typedef enum
 {
@@ -365,7 +370,7 @@ typedef enum
 	FOXORING_FOX2,
 	FOXORING_FOX3,
 	FREQUENCY_TEST_BEACON,
-	INVALID_FOX
+	USE_CURRENT_FOX
 	#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 	,
 	REPORT_BATTERY
