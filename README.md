@@ -78,15 +78,13 @@ Typical installation:
 ### Hardware revision 3.5
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 \
-        -U flash:w:SignalSlinger-v1.1-3.5.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.5.hex
 ```
 
 ### Hardware revision 3.4
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 \
-        -U flash:w:SignalSlinger-v1.1-3.4.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.4.hex
 ```
 
 Successful programming will end with:
