@@ -531,12 +531,13 @@ bool sb_send_master_string(char* str)
 		atomic_write_u16(&g_serial_timeout_ticks, 200);
 		if(!err)
 		{
-			while(serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks))
+			uint32_t spin_guard = 120000UL;
+			while(serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks) && spin_guard--)
 			{
 				;
 			}
 
-			if(!atomic_read_u16(&g_serial_timeout_ticks)) err = true;
+			if(serialbusTxInProgress() && (!spin_guard || !atomic_read_u16(&g_serial_timeout_ticks))) err = true;
 		}
 
 		lengthSent += lengthToSend;
@@ -563,9 +564,16 @@ void sb_send_value(uint16_t value, char* label)
 	}
 	
 	atomic_write_u16(&g_serial_timeout_ticks, 200);
-	while(!err && serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks))
 	{
-		;
+		uint32_t spin_guard = 120000UL;
+		while(!err && serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks) && spin_guard--)
+		{
+			;
+		}
+		if(!err && serialbusTxInProgress() && (!spin_guard || !atomic_read_u16(&g_serial_timeout_ticks)))
+		{
+			err = true;
+		}
 	}
 }
 

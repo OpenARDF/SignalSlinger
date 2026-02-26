@@ -102,6 +102,7 @@ void I2C_0_Init(void)
 static uint8_t i2c_0_WaitW(void)
 {
 	uint8_t state = I2C_INIT;
+	uint32_t spin_guard = 60000UL;
 	
 	atomic_write_u16(&g_i2c0_timeout_ticks, 50);
 	
@@ -125,9 +126,9 @@ static uint8_t i2c_0_WaitW(void)
 			/* get here only in case of bus error or arbitration lost - M4 state */
 			state = I2C_ERROR;
 		}
-	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks));
+	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks) && spin_guard--);
 	
-	if(!atomic_read_u16(&g_i2c0_timeout_ticks)) 
+	if(!state)
 	{
 		state = I2C_ERROR;
 		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
@@ -139,6 +140,7 @@ static uint8_t i2c_0_WaitW(void)
 static uint8_t i2c_0_WaitR(void)
 {
 	uint8_t state = I2C_INIT;
+	uint32_t spin_guard = 60000UL;
 	
 	atomic_write_u16(&g_i2c0_timeout_ticks, 50);
 	
@@ -153,10 +155,11 @@ static uint8_t i2c_0_WaitR(void)
 			/* get here only in case of bus error or arbitration lost - M4 state */
 			state = I2C_ERROR;
 		}
-	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks));
+	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks) && spin_guard--);
 	
-	if(!atomic_read_u16(&g_i2c0_timeout_ticks))
+	if(!state)
 	{
+		state = I2C_ERROR;
 		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
 	}
 	
