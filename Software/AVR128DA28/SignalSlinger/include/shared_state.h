@@ -119,4 +119,35 @@ static inline void messages_text_slot_publish_atomic(uint8_t slot, const char* s
 	EXIT_CRITICAL(shared_messages_text_publish);
 }
 
+static inline Fox_t fox_setting_current_atomic(void)
+{
+	Fox_t fox;
+	ENTER_CRITICAL(shared_fox_current_read);
+	fox = g_fox[g_event];
+	EXIT_CRITICAL(shared_fox_current_read);
+	return fox;
+}
+
+static inline void event_and_fox_current_atomic(Event_t* event_out, Fox_t* fox_out)
+{
+	ENTER_CRITICAL(shared_event_fox_current_read);
+	if(event_out) *event_out = g_event;
+	if(fox_out) *fox_out = g_fox[g_event];
+	EXIT_CRITICAL(shared_event_fox_current_read);
+}
+
+static inline void fox_setting_slot_write_atomic(Event_t event_slot, Fox_t fox)
+{
+	ENTER_CRITICAL(shared_fox_slot_write);
+	g_fox[event_slot] = fox;
+	EXIT_CRITICAL(shared_fox_slot_write);
+}
+
+static inline void fox_setting_current_slot_write_atomic(Fox_t fox)
+{
+	ENTER_CRITICAL(shared_fox_current_slot_write);
+	g_fox[g_event] = fox;
+	EXIT_CRITICAL(shared_fox_current_slot_write);
+}
+
 #endif /* SIGNALSLINGER_SHARED_STATE_H_ */

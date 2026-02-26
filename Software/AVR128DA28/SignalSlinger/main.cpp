@@ -499,7 +499,7 @@ void handle_1sec_tasks(void)
  			{
 	 			g_evteng_sleepshutdown_seconds = 300; /* Never sleep while cloning or while master */
  			}
-			else if(g_evteng_event_commenced && g_evteng_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (g_fox[g_event] != FREQUENCY_TEST_BEACON))
+			else if(g_evteng_event_commenced && g_evteng_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (getFoxSetting() != FREQUENCY_TEST_BEACON))
 			{
 				g_evteng_sleepshutdown_seconds = 300; /* Never sleep during active transmissions */
 			}
@@ -1617,7 +1617,7 @@ int main(void)
 					{
 						if(!g_cloningInProgress && g_device_enabled)
 						{
-							if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
+							if(getFoxSetting() == FREQUENCY_TEST_BEACON)
 							{
 								g_evteng_sleepshutdown_seconds = 300;
 								if(!txIsInitialized())
@@ -2370,7 +2370,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						 
  						if(holdFox != getFoxSetting())
  						{
-							g_fox[g_event] = holdFox;
+							fox_setting_current_slot_write_atomic(holdFox);
 							setupForFox(holdFox, START_EVENT_WITH_STARTFINISH_TIMES);
 
 							if(g_evteng_event_enabled) // try to update an event already in progress
@@ -3927,7 +3927,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 	g_frequency = getFrequencySetting();
 	txSetFrequency(&g_frequency, true);
 
-	if(g_fox[g_event] == FREQUENCY_TEST_BEACON)
+	if(getFoxSetting() == FREQUENCY_TEST_BEACON)
 	{
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;		
 		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
@@ -5189,16 +5189,19 @@ uint16_t timeNeededForID(void)
 
 Fox_t getFoxSetting(void)
 {
-	return g_fox[g_event];
+	return fox_setting_current_atomic();
 }
 
 int getFoxCodeSpeed(void)
 {
-	if(g_fox[g_event] == BEACON)
+	Fox_t fox;
+	Event_t event_snapshot;
+	event_and_fox_current_atomic(&event_snapshot, &fox);
+	if(fox == BEACON)
 	{
 		return(g_evteng_pattern_codespeed);
 	}
-	else if(g_event == EVENT_FOXORING)
+	else if(event_snapshot == EVENT_FOXORING)
 	{
 		return(g_foxoring_pattern_codespeed);
 	}
@@ -5245,7 +5248,8 @@ char* getCurrentPatternText(void)
 {
 	char* c;
 	
-	switch(g_fox[g_event])
+	Fox_t fox = getFoxSetting();
+	switch(fox)
 	{
 		case FOX_1:
 		{
@@ -5396,7 +5400,8 @@ Frequency_Hz getFrequencySetting(void)
 {
 	Frequency_Hz freq;
 	
-	switch(g_fox[g_event])
+	Fox_t fox = getFoxSetting();
+	switch(fox)
 	{
 		case BEACON:
 		{

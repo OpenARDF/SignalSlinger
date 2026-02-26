@@ -653,11 +653,11 @@ bool EepromManager::readNonVols(void)
  		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_FREQUENCY);
  		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_FREQUENCY);
 		g_enable_boost_regulator = (bool)(eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)));
-		g_fox[EVENT_NONE] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5));
-		g_fox[EVENT_CLASSIC] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5));
-		g_fox[EVENT_SPRINT] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5));
-		g_fox[EVENT_FOXORING] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)), FREQUENCY_TEST_BEACON));
-		g_fox[EVENT_BLIND_ARDF] = (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_blind)), FOX_5));
+		fox_setting_slot_write_atomic(EVENT_NONE, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5)));
+		fox_setting_slot_write_atomic(EVENT_CLASSIC, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5)));
+		fox_setting_slot_write_atomic(EVENT_SPRINT, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5)));
+		fox_setting_slot_write_atomic(EVENT_FOXORING, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)), FREQUENCY_TEST_BEACON)));
+		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_blind)), FOX_5)));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
@@ -765,19 +765,19 @@ bool EepromManager::readNonVols(void)
 			g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
 			avr_eeprom_write_byte(Master_setting, g_isMaster);
 
-			g_fox[EVENT_NONE] = EEPROM_FOX_SETTING_NONE_DEFAULT;
+			fox_setting_slot_write_atomic(EVENT_NONE, EEPROM_FOX_SETTING_NONE_DEFAULT);
 			avr_eeprom_write_byte(Fox_setting_none, (uint8_t)g_fox[EVENT_NONE]);
 			
-			g_fox[EVENT_CLASSIC] = EEPROM_FOX_SETTING_CLASSIC_DEFAULT;
+			fox_setting_slot_write_atomic(EVENT_CLASSIC, EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
 			avr_eeprom_write_byte(Fox_setting_classic, (uint8_t)g_fox[EVENT_CLASSIC]);
 			
-			g_fox[EVENT_SPRINT] = EEPROM_FOX_SETTING_SPRINT_DEFAULT;
+			fox_setting_slot_write_atomic(EVENT_SPRINT, EEPROM_FOX_SETTING_SPRINT_DEFAULT);
 			avr_eeprom_write_byte(Fox_setting_sprint, (uint8_t)g_fox[EVENT_SPRINT]);
 			
-			g_fox[EVENT_FOXORING] = EEPROM_FOX_SETTING_FOXORING_DEFAULT;
+			fox_setting_slot_write_atomic(EVENT_FOXORING, EEPROM_FOX_SETTING_FOXORING_DEFAULT);
 			avr_eeprom_write_byte(Fox_setting_foxoring, (uint8_t)g_fox[EVENT_FOXORING]);
 			
-			g_fox[EVENT_BLIND_ARDF] = EEPROM_FOX_SETTING_BLIND_DEFAULT;
+			fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, EEPROM_FOX_SETTING_BLIND_DEFAULT);
 			avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)g_fox[EVENT_BLIND_ARDF]);
 			
 			g_event = EEPROM_EVENT_SETTING_DEFAULT;
