@@ -257,12 +257,30 @@ bool startEventUsingRTC(void);
 void startTransmissionsNow(bool configOverride);
 void setupForFox(Fox_t fox, EventAction_t action);
 time_t validateTimeString(char* str, char* errMsg);
-time_t validateTimeString(char* str, time_t* epochVar, bool align5min, char* errMsh);
+time_t validateTimeString(char* str, volatile time_t* epochVar, bool align5min, char* errMsh);
 bool reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 void reportConfigErrors(Settings_t location);
 /*******************************/
 /* End hardcoded event support */
 /*******************************/
+
+static time_t atomic_read_time(const volatile time_t* src);
+static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
+
+static time_t atomic_read_time(const volatile time_t* src)
+{
+	time_t value;
+	ENTER_CRITICAL(main_time_read);
+	value = *src;
+	EXIT_CRITICAL(main_time_read);
+	return value;
+}
+
+static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch)
+{
+	time_t epoch = atomic_read_time(currentEpoch);
+	return completeTimeString(partialString, &epoch);
+}
 
 /**
 1-second interrupt ISR
@@ -3301,14 +3319,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_tempStr[0] == '=')
 							{
-								s = g_event_finish_epoch;
+									s = atomic_read_time(&g_event_finish_epoch);
 								setSequalF = true;
 							}
 							else
 							{
-								const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_evteng_loaded_start_epoch);
+								const char* tmp = completeTimeString_volatile(g_tempStr, &g_evteng_loaded_start_epoch);
 								if(tmp) strncpy(g_tempStr, tmp, 13);
-								s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, (g_event==EVENT_CLASSIC), msg);
+								s = validateTimeString(g_tempStr, &g_event_start_epoch, (g_event==EVENT_CLASSIC), msg);
 							}
 							
 							if(msg[0] != '\0')
@@ -3383,13 +3401,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_tempStr[0] == '=')
 							{
-								f = g_event_start_epoch;
+									f = atomic_read_time(&g_event_start_epoch);
 							}
 							else
 							{
-								const char* tmp = completeTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
+								const char* tmp = completeTimeString_volatile(g_tempStr, &g_event_finish_epoch);
 								if(tmp) strncpy(g_tempStr, tmp, 13);
-								f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, false, g_tempStr);
+								f = validateTimeString(g_tempStr, &g_event_finish_epoch, false, g_tempStr);
 							}
 													
 							if(!f)
@@ -4392,7 +4410,7 @@ time_t validateTimeString(char* str, char* errMsg)
 	return validateTimeString(str, null, false, errMsg);
 }
 
-time_t validateTimeString(char* str, time_t* epochVar, bool align5min, char* errMsg)
+time_t validateTimeString(char* str, volatile time_t* epochVar, bool align5min, char* errMsg)
 {
     time_t valid = 0;    // Initialize return value to 0 (indicating invalid by default).
     int len = strlen(str);    // Get the length of the provided string.
@@ -4401,16 +4419,16 @@ time_t validateTimeString(char* str, time_t* epochVar, bool align5min, char* err
     time_t now = time(NULL);    // Get the current system time.
 
     // Determine the minimum epoch and validation type based on the `epochVar`.
-    if(epochVar == (time_t*)&g_event_start_epoch)
+    if(epochVar == &g_event_start_epoch)
     {
         // For event start, ensure the minimum epoch is either now or the pre-set minimum valid epoch.
         minimumEpoch = MAX(now, MINIMUM_VALID_EPOCH);
         validationType = 1;    // Indicates start time validation.
     }
-    else if(epochVar == (time_t*)&g_event_finish_epoch)
+    else if(epochVar == &g_event_finish_epoch)
     {
         // For event finish, ensure the minimum epoch is the event start time or the current time.
-        minimumEpoch = MAX(g_event_start_epoch, now);
+        minimumEpoch = MAX(atomic_read_time(&g_event_start_epoch), now);
         validationType = 2;    // Indicates finish time validation.
     }
 
@@ -5833,7 +5851,28 @@ bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch)
  */
 bool eventIsScheduledToRun(volatile time_t* start_epoch, volatile time_t* finish_epoch)
 {
-	return eventIsScheduledToRun((time_t*) start_epoch, (time_t*)finish_epoch);
+	time_t start_local = 0;
+	time_t finish_local = 0;
+	bool result;
+
+	if(!start_epoch || !finish_epoch)
+	{
+		return false;
+	}
+
+	ENTER_CRITICAL(main_event_sched_read);
+	start_local = *start_epoch;
+	finish_local = *finish_epoch;
+	EXIT_CRITICAL(main_event_sched_read);
+
+	result = eventIsScheduledToRun(&start_local, &finish_local);
+
+	ENTER_CRITICAL(main_event_sched_write);
+	*start_epoch = start_local;
+	*finish_epoch = finish_local;
+	EXIT_CRITICAL(main_event_sched_write);
+
+	return result;
 }
 
 bool eventIsScheduledToRun(time_t* start_epoch, time_t* finish_epoch)
