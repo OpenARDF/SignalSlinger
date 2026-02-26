@@ -342,10 +342,10 @@ ISR(RTC_CNT_vect)
 					{
 						if((g_evteng_on_the_air > -6) || (time_to_wake_up <= time(null))) /* Always wake up at least 5 seconds before showtime */
 						{
-						g_go_to_sleep_now = false;
-						g_sleeping = false;
-						g_awakenedBy = AWAKENED_BY_CLOCK;
-					}
+							g_go_to_sleep_now = false;
+							g_sleeping = false;
+							g_awakenedBy = AWAKENED_BY_CLOCK;
+						}
 					}
 					else if(g_sleepType == SLEEP_UNTIL_START_TIME)
 					{
@@ -384,13 +384,13 @@ void handle_1sec_tasks(void)
 	{
 		temp_time = time(null);
 
-			if(g_evteng_event_commenced && !g_evteng_run_event_until_canceled)
-			{		
-				time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-				if(loaded_finish_epoch) /* If a finish time has been set */
+		if(g_evteng_event_commenced && !g_evteng_run_event_until_canceled)
+		{		
+			time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+			if(loaded_finish_epoch) /* If a finish time has been set */
+			{
+				if(temp_time >= loaded_finish_epoch)
 				{
-					if(temp_time >= loaded_finish_epoch)
-					{
 					g_last_status_code = STATUS_CODE_EVENT_FINISHED;
 					g_evteng_on_the_air = 0;
 					keyTransmitter(OFF);
@@ -402,15 +402,15 @@ void handle_1sec_tasks(void)
 					
 					if(!g_enable_external_battery_control) setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
 				
-						if(g_days_run < g_days_to_run)
-						{
-							time_t loaded_start_epoch;
-							time_t loaded_finish_epoch_pair;
-							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
-							g_evteng_loaded_start_epoch = loaded_start_epoch + SECONDS_24H;
-							g_evteng_loaded_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
-							g_sleepType = SLEEP_UNTIL_START_TIME;
-							g_go_to_sleep_now = true;
+					if(g_days_run < g_days_to_run)
+					{
+						time_t loaded_start_epoch;
+						time_t loaded_finish_epoch_pair;
+						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
+						g_evteng_loaded_start_epoch = loaded_start_epoch + SECONDS_24H;
+						g_evteng_loaded_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+						g_sleepType = SLEEP_UNTIL_START_TIME;
+						g_go_to_sleep_now = true;
 					}
 					else
 					{
@@ -458,15 +458,15 @@ void handle_1sec_tasks(void)
 					if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on an externally-controlled device
 				}
 			}
-				else /* waiting for the start time to arrive */
+			else /* waiting for the start time to arrive */
+			{
+				time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+				if(loaded_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
 				{
-					time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
-					if(loaded_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
-					{
-						temp_time = time(null);
+					temp_time = time(null);
 
-						if(temp_time >= loaded_start_epoch) /* Time for the event to start */
-						{
+					if(temp_time >= loaded_start_epoch) /* Time for the event to start */
+					{
 						g_evteng_event_commenced = true;
 						g_evteng_initialize_event = true;
 						g_sleepType = SLEEP_AFTER_EVENT;
@@ -526,14 +526,14 @@ void handle_1sec_tasks(void)
 				}
 				else if(!g_go_to_sleep_now)
 				{
-						if(g_sleepType == SLEEP_FOREVER)
+					if(g_sleepType == SLEEP_FOREVER)
+					{
+						time_t loaded_start_epoch;
+						time_t loaded_finish_epoch;
+						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+						if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch)) /* Should never evaluate to true here, but checking just in case */
 						{
-							time_t loaded_start_epoch;
-							time_t loaded_finish_epoch;
-							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-							if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch)) /* Should never evaluate to true here, but checking just in case */
-							{
-								g_sleepType = SLEEP_UNTIL_START_TIME;
+							g_sleepType = SLEEP_UNTIL_START_TIME;
 						}
 					}
 				
