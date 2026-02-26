@@ -36,6 +36,22 @@ static volatile int16_t green_blink_count = 0;
 static volatile bool red_led_configured = false;
 static volatile bool green_led_configured = false;
 
+static uint32_t led_timeout_count_read_atomic(void)
+{
+	uint32_t value;
+	ENTER_CRITICAL(leds_timeout_read);
+	value = led_timeout_count;
+	EXIT_CRITICAL(leds_timeout_read);
+	return value;
+}
+
+static void led_timeout_count_write_atomic(uint32_t value)
+{
+	ENTER_CRITICAL(leds_timeout_write);
+	led_timeout_count = value;
+	EXIT_CRITICAL(leds_timeout_write);
+}
+
 static void text_buff_reset_and_disable_manual_atomic(void)
 {
 	ENTER_CRITICAL(leds_text_buff_reset);
@@ -154,26 +170,28 @@ ISR(TCB1_INT_vect)
 
 bool leds::active(void)
 {
-	return(led_timeout_count && (TCB1.INTCTRL & (1 << TCB_CAPT_bp)));
+	return(led_timeout_count_read_atomic() && (TCB1.INTCTRL & (1 << TCB_CAPT_bp)));
 }
 
 void leds::deactivate(void)
 {
+	ENTER_CRITICAL(leds_deactivate);
 	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
 	LED_set_RED_level(OFF);
 	LED_set_GREEN_level(OFF);
 	text_buff_reset_and_disable_manual_atomic();
 	timer_red_blink_inhibit = timer_green_blink_inhibit = true; /* Disable timer LED control */
 	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
-	led_timeout_count = 0;
+	led_timeout_count_write_atomic(0);
+	EXIT_CRITICAL(leds_deactivate);
 }
 
 void leds::setRed(bool on)
 {
-	if(!led_timeout_count) return;
+	if(!led_timeout_count_read_atomic()) return;
 
 //	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
-
+	ENTER_CRITICAL(leds_set_red);
 	timer_red_blink_inhibit = true;
 	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 
@@ -185,14 +203,15 @@ void leds::setRed(bool on)
 	{
 		LED_set_RED_level(OFF);
 	}
+	EXIT_CRITICAL(leds_set_red);
 }
 
 void leds::setGreen(bool on)
 {
-	if(!led_timeout_count) return;
+	if(!led_timeout_count_read_atomic()) return;
 
 //	TCB1.INTCTRL &= ~TCB_CAPT_bm;   /* Capture or Timeout: disabled */
-
+	ENTER_CRITICAL(leds_set_green);
 	timer_green_blink_inhibit = true;
 
 	if(on)
@@ -203,16 +222,19 @@ void leds::setGreen(bool on)
 	{
 		LED_set_GREEN_level(OFF);
 	}
+	EXIT_CRITICAL(leds_set_green);
 }
 
 /* Turns off LEDs, resets the text buffer, and disables LED character transmissions. Re-enables LED timer blink functionality. */
 void leds::reset(void)
 {
+	ENTER_CRITICAL(leds_reset);
 	blink(LEDS_OFF);
 	text_buff_reset_and_disable_manual_atomic();
 	timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 	lastRedBlinkSetting = lastGreenBlinkSetting = lastBothBlinkSetting = LEDS_NUMBER_OF_SETTINGS; 
-	led_timeout_count = LED_TIMEOUT_DELAY;
+	led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
+	EXIT_CRITICAL(leds_reset);
 }
 
 /* Disables LED timer while resetting settings for interrupt safety. */
@@ -223,15 +245,17 @@ void leds::init(void)
 
 void leds::init(Blink_t setBlink)
 {
+	ENTER_CRITICAL(leds_init);
 	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
 	reset();
 	TCB1.INTCTRL |= TCB_CAPT_bm;   /* Capture or Timeout: enabled */
 	if(setBlink != LEDS_OFF) blink(setBlink, true);
+	EXIT_CRITICAL(leds_init);
 }
 
 void leds::sendCode(char* str)
 {
-	if(!led_timeout_count) return;
+	if(!led_timeout_count_read_atomic()) return;
 	
 	if(!str || !strlen(str))
 	{
@@ -250,12 +274,11 @@ void leds::sendCode(char* str)
 			g_text_buff.put(str[i++]);
 		}
 		
+		timer_red_blink_inhibit = true; /* Prevent timer from controlling LED */
+		lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 		g_enable_manual_transmissions = holdMan;
 	}
 	EXIT_CRITICAL(leds_send_code_text_buff);
-	
-	timer_red_blink_inhibit = true; /* Prevent timer from controlling LED */
-	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 }
 
 /* Public wrapper that leaves the LED timeout unchanged. */
@@ -270,11 +293,20 @@ void leds::blink(Blink_t blinkMode)
 {
 	if(resetTimeout)
 	{
-		led_timeout_count = LED_TIMEOUT_DELAY;
+		led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
 	}
-	
-	if(blinkMode == LEDS_NO_CHANGE) return;
-	if(!led_timeout_count && (blinkMode != LEDS_OFF)) return;
+
+	ENTER_CRITICAL(leds_blink);
+	if(blinkMode == LEDS_NO_CHANGE)
+	{
+		EXIT_CRITICAL(leds_blink);
+		return;
+	}
+	if(!led_timeout_count_read_atomic() && (blinkMode != LEDS_OFF))
+	{
+		EXIT_CRITICAL(leds_blink);
+		return;
+	}
 	
 	bool isRed = ((blinkMode == LEDS_RED_OFF) || (blinkMode == LEDS_RED_BLINK_FAST) || (blinkMode == LEDS_RED_BLINK_SLOW) || (blinkMode == LEDS_RED_ON_CONSTANT));
 	bool isGreen = ((blinkMode == LEDS_GREEN_OFF) || (blinkMode == LEDS_GREEN_BLINK_FAST) || (blinkMode == LEDS_GREEN_BLINK_SLOW) || (blinkMode == LEDS_GREEN_ON_CONSTANT));
@@ -457,4 +489,5 @@ void leds::blink(Blink_t blinkMode)
 	{
 		lastBothBlinkSetting = lastRedBlinkSetting = lastGreenBlinkSetting = blinkMode;
 	}
+	EXIT_CRITICAL(leds_blink);
 }
