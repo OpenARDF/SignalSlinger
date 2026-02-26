@@ -194,7 +194,7 @@ static volatile uint16_t g_demo_event_countdown = 0;
 static volatile bool g_foreground_reset_after_demo = false;
 
 leds LEDS = leds();
-CircularStringBuff g_text_buff = CircularStringBuff(TEXT_BUFF_SIZE);
+CircularStringBuff g_text_buff(TEXT_BUFF_SIZE);
 
 EepromManager g_ee_mgr;
 
@@ -1613,7 +1613,11 @@ int main(void)
 										case 0: /* 30 second keydown */
 										{
 											suspendEvent();
+#ifdef TEST_MODE_SOFTWARE
+											g_key_down_countdown = 36000; // 120 seconds
+#else
 											g_key_down_countdown = 9000; // 30 seconds
+#endif
 											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -1698,12 +1702,18 @@ int main(void)
 										g_foreground_reset_after_keydown = false;
 										g_event_launched_by_user_action = true;
 										LEDS.init();
+#ifndef TEST_MODE_SOFTWARE
 										startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
 										if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+#endif
 									}
 									else 
 									{
+#ifdef TEST_MODE_SOFTWARE
+										g_key_down_countdown = 36000; // 120 seconds
+#else
 										g_key_down_countdown = 9000; // 30 seconds
+#endif
 										start_event_after_keydown = true;
 										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 										{
@@ -2035,6 +2045,7 @@ int main(void)
 				
 				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
+#ifndef TEST_MODE_SOFTWARE
 				if(start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
 				{
 					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
@@ -2049,6 +2060,7 @@ int main(void)
 						if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 					}
 				}
+#endif
 			
 				start_event_after_keydown = false;
 			}
@@ -2629,7 +2641,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_KEY:
 			{
 				g_report_settings_countdown = 0;
-#ifndef TEST_MODE_SOFTWARE
+
 				if(g_device_enabled)
 				{
 					if(sb_buff->fields[SB_FIELD1][0])
@@ -2668,9 +2680,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 				}
-#else
-				sb_send_string(TEXT_TEST_SOFTWARE_NOTICE_TXT);
-#endif
 			}
 			break;
 
