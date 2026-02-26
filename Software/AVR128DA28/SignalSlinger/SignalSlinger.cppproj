@@ -286,6 +286,9 @@
     <Compile Include="include\serialbus.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\shared_state.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\si5351.h">
       <SubType>compile</SubType>
     </Compile>
