@@ -164,6 +164,7 @@ static volatile bool g_turn_on_fan = false;
 static volatile bool g_foreground_report_settings = false;
 static volatile uint16_t g_report_settings_countdown = 0;
 static bool g_event_launched_by_user_action = false;
+static bool g_start_event_after_keydown = false; /* Foreground-only: one-press keydown should launch a synced event afterward */
 
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
@@ -1067,7 +1068,6 @@ int main(void)
 	bool buttonHeldClosed = true;
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
-	static bool start_event_after_keydown = false;
 	
 	atmel_start_init();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
@@ -1667,7 +1667,7 @@ int main(void)
 									time_t loaded_start_epoch;
 									time_t loaded_finish_epoch;
 								
-									start_event_after_keydown = false;
+									g_start_event_after_keydown = false;
 									atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 									if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 									{
@@ -1707,7 +1707,7 @@ int main(void)
 											keyTransmitter(ON);
 											g_evteng_event_enabled = false; // Keydown is not controlled by the Event Engine
 											g_evteng_run_event_until_canceled = true;
-											start_event_after_keydown = true;
+											g_start_event_after_keydown = true;
 										}
 										break;
 									
@@ -1802,7 +1802,7 @@ int main(void)
 #else
 										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
-										start_event_after_keydown = true;
+										g_start_event_after_keydown = true;
 										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -1823,7 +1823,7 @@ int main(void)
 					
 						if(atomic_read_u16(&g_key_down_countdown))
 						{
-							start_event_after_keydown = false; 
+							g_start_event_after_keydown = false; 
 							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
 						}
@@ -1876,7 +1876,7 @@ int main(void)
 						
 						if(atomic_read_u16(&g_key_down_countdown))
 						{
-							start_event_after_keydown = false; 
+							g_start_event_after_keydown = false; 
 							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
 						}
@@ -2145,7 +2145,7 @@ int main(void)
 				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
 #ifndef TEST_MODE_SOFTWARE
-				if(start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
+					if(g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
 				{
 					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 					{
@@ -2161,7 +2161,7 @@ int main(void)
 				}
 #endif
 			
-				start_event_after_keydown = false;
+					g_start_event_after_keydown = false;
 			}
 		}
 	}
@@ -3316,12 +3316,29 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 							else
 							{
-  								/* Start the event if one is configured */
+								bool pending_start_after_keydown = g_start_event_after_keydown;
+								bool cancel_manual_transient_state = pending_start_after_keydown
+									|| atomic_read_u16(&g_key_down_countdown)
+									|| g_foreground_reset_after_keydown
+									|| atomic_read_u16(&g_demo_event_countdown)
+									|| g_foreground_reset_after_demo;
+
+								if(cancel_manual_transient_state)
+								{
+									/* CLK T should re-sync immediately, not after a stale keydown/demo timeout expires. */
+									atomic_write_u16(&g_key_down_countdown, 0);
+									atomic_write_u16(&g_demo_event_countdown, 0);
+									g_foreground_reset_after_keydown = false;
+									g_foreground_reset_after_demo = false;
+									g_start_event_after_keydown = false;
+								}
+
+	  								/* Start the event if one is configured */
 								if(eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch))
 								{
 									startEventUsingRTC();
 								}
-								else if(g_evteng_event_enabled) // An event is currently in progress
+								else if(g_evteng_event_enabled || pending_start_after_keydown) // keydown can imply a pending synced event start
 								{
 									startSyncdEventNow(true);
 								}
