@@ -275,6 +275,9 @@ static void text_buff_reset_atomic(void);
 static bool text_buff_try_get_atomic(char* out);
 static void messages_text_slot_clear_atomic(uint8_t slot);
 static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_t len);
+static void messages_text_slot_copy_atomic(uint8_t slot, char* dst, size_t dst_size);
+static void loadCurrentPatternMorse(bool* repeat, callerID_t caller);
+static void loadStationIDMorse(bool* repeat, callerID_t caller);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
 
 static time_t atomic_read_time(const volatile time_t* src)
@@ -370,6 +373,39 @@ static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_
 	strncpy(g_messages_text[slot], src, copy_len);
 	g_messages_text[slot][copy_len] = '\0';
 	EXIT_CRITICAL(main_messages_text_write);
+}
+
+static void messages_text_slot_copy_atomic(uint8_t slot, char* dst, size_t dst_size)
+{
+	if(!dst || !dst_size) return;
+	ENTER_CRITICAL(main_messages_text_copy);
+	strncpy(dst, g_messages_text[slot], dst_size - 1);
+	dst[dst_size - 1] = '\0';
+	EXIT_CRITICAL(main_messages_text_copy);
+}
+
+static void loadCurrentPatternMorse(bool* repeat, callerID_t caller)
+{
+	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
+	char* pattern = getCurrentPatternText();
+	if((pattern == g_messages_text[PATTERN_TEXT]) || (pattern == g_messages_text[FOXORING_PATTERN_TEXT]))
+	{
+		uint8_t slot = (pattern == g_messages_text[PATTERN_TEXT]) ? PATTERN_TEXT : FOXORING_PATTERN_TEXT;
+		messages_text_slot_copy_atomic(slot, pattern_snapshot, sizeof(pattern_snapshot));
+	}
+	else
+	{
+		strncpy(pattern_snapshot, pattern, sizeof(pattern_snapshot) - 1);
+		pattern_snapshot[sizeof(pattern_snapshot) - 1] = '\0';
+	}
+	makeMorse(pattern_snapshot, repeat, NULL, caller);
+}
+
+static void loadStationIDMorse(bool* repeat, callerID_t caller)
+{
+	static char station_id_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
+	messages_text_slot_copy_atomic(STATION_ID, station_id_snapshot, sizeof(station_id_snapshot));
+	makeMorse(station_id_snapshot, repeat, NULL, caller);
 }
 
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch)
@@ -517,7 +553,7 @@ void handle_1sec_tasks(void)
 						
 					g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 					bool repeat = true;
-					makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+					loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 						
 					g_foreground_enable_transmitter = true;
 					LEDS.init();
@@ -553,7 +589,7 @@ void handle_1sec_tasks(void)
 						
 						g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 						bool repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+						loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 						
 						g_foreground_enable_transmitter = true;
 						LEDS.init();
@@ -794,7 +830,7 @@ ISR(TCB0_INT_vect)
 					g_last_status_code = STATUS_CODE_SENDING_ID;
 					g_evteng_code_throttle = throttleValue(g_evteng_id_codespeed);
 					repeat = false;
-					makeMorse(g_messages_text[STATION_ID], &repeat, NULL, CALLER_AUTOMATED_EVENT);  /* Send only once */
+					loadStationIDMorse(&repeat, CALLER_AUTOMATED_EVENT);  /* Send only once */
 					g_evteng_sending_station_ID = true;
 					idTimeout = g_evteng_code_throttle << 2;
 					id_timed_out = false;
@@ -815,7 +851,7 @@ ISR(TCB0_INT_vect)
 							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 							g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 							repeat = true;
-							makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+							loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 							muteAfterID = g_evteng_sending_station_ID && g_evteng_off_air_seconds;
 							g_evteng_sending_station_ID = false;
 							idTimeout = 0;
@@ -900,7 +936,7 @@ ISR(TCB0_INT_vect)
 						/* Resume normal pattern */
 						g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 						repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);    /* Reset pattern to start */
+						loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);    /* Reset pattern to start */
 						LEDS.setRed(OFF);
 					}
 					else /* Off-the-air period just finished, or the event just began while off the air */
@@ -908,7 +944,7 @@ ISR(TCB0_INT_vect)
 						g_evteng_on_the_air = g_evteng_on_air_seconds;
 						g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 						repeat = true;
-						makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+						loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 						codeInc = g_evteng_code_throttle;
 					}
 				}
@@ -4031,7 +4067,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 		bool repeat = true;
-		makeMorse(getCurrentPatternText(), &repeat, NULL, CALLER_AUTOMATED_EVENT);
+		loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 		
 		if(g_evteng_run_event_until_canceled)
 		{
@@ -4538,7 +4574,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
 		
-		makeMorse(getCurrentPatternText(), NULL, NULL, CALLER_AUTOMATED_EVENT);
+		loadCurrentPatternMorse(NULL, CALLER_AUTOMATED_EVENT);
 		g_evteng_sleepshutdown_seconds = 300;
 
 		g_event_launched_by_user_action = true;
@@ -4553,7 +4589,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		LEDS.blink(LEDS_RED_OFF);
 		g_event_launched_by_user_action = true;
 		
-		makeMorse(getCurrentPatternText(), NULL, NULL, CALLER_AUTOMATED_EVENT);
+		loadCurrentPatternMorse(NULL, CALLER_AUTOMATED_EVENT);
 		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
