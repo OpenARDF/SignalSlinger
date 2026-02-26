@@ -205,17 +205,18 @@ void serial_Rx(uint8_t rx_char)
 				}
 				else
 				{
-					if(rx_char == ' ')
-					{
-						if(textBuff[charIndex - 1] == ':') // Meshtastic flag ": " detected
-						{	
-							useMeshMode = true;
-							buff->id = SB_MODE_MESH;
-							buff->fields[0][0] = '1';
-							buff->fields[0][1] = '\0';
-							
-							msg_ID = SB_MESSAGE_EMPTY;
-							charIndex = 0;
+						if(rx_char == ' ')
+						{
+							if(textBuff[charIndex - 1] == ':') // Meshtastic flag ": " detected
+							{	
+								useMeshMode = true;
+								buff->fields[0][0] = '1';
+								buff->fields[0][1] = '\0';
+								/* Publish last so foreground sees a fully-populated message buffer. */
+								buff->id = SB_MODE_MESH;
+								
+								msg_ID = SB_MESSAGE_EMPTY;
+								charIndex = 0;
 							field_len = 0;
 							field_index = 0;
 							buff = NULL;
@@ -252,25 +253,19 @@ void serial_Rx(uint8_t rx_char)
 							{
 								msg_ID = SB_MESSAGE_EMPTY;
 								
-								if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
-								{
-									rx_char = '\0';
-									
-									if(useMeshMode)
+									if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
 									{
-										buff->id = SB_MESSAGE_EMPTY; /* ignore garbage */
-									}
-									else
-									{
-										buff->id = SB_INVALID_MESSAGE; /* print help message */
-									}
+										rx_char = '\0';
+										SBMessageID publish_id = useMeshMode ? SB_MESSAGE_EMPTY : SB_INVALID_MESSAGE;
 
-									charIndex = 0;
-									field_len = 0;
-									field_index = 0;
-									buff = NULL;
+										charIndex = 0;
+										field_len = 0;
+										field_index = 0;
+										/* Publish last so foreground sees a fully-populated message buffer. */
+										buff->id = publish_id; /* ignore garbage (mesh) or print help message */
+										buff = NULL;
 
-									receiving_msg = false;
+										receiving_msg = false;
 								}
 							}							
 						}
@@ -300,16 +295,17 @@ void serial_Rx(uint8_t rx_char)
 					msg_ID = 0;
 				}
 				else if(!isalnum(rx_char) && (rx_char != '?')) /* Handle Space and other non-alphanumeric characters */
-				{
-					if((rx_char == '@') && (charIndex == 0))
 					{
-						useMeshMode = false;
-						buff->id = SB_MODE_MESH;
-						buff->fields[0][0] = '0';
-						buff->fields[0][1] = '\0';
-							
-						msg_ID = SB_MESSAGE_EMPTY;
-						charIndex = 0;
+						if((rx_char == '@') && (charIndex == 0))
+						{
+							useMeshMode = false;
+							buff->fields[0][0] = '0';
+							buff->fields[0][1] = '\0';
+							/* Publish last so foreground sees a fully-populated message buffer. */
+							buff->id = SB_MODE_MESH;
+								
+							msg_ID = SB_MESSAGE_EMPTY;
+							charIndex = 0;
 						field_len = 0;
 						field_index = 0;
 						buff = NULL;

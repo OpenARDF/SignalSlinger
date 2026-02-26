@@ -270,6 +270,29 @@ void reportConfigErrors(Settings_t location);
 static void loadCurrentPatternMorse(bool* repeat, callerID_t caller);
 static void loadStationIDMorse(bool* repeat, callerID_t caller);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
+static bool cancelManualTransientState(void);
+
+static bool cancelManualTransientState(void)
+{
+	bool pending_start_after_keydown = g_start_event_after_keydown;
+	bool had_transient_state = pending_start_after_keydown
+		|| atomic_read_u16(&g_key_down_countdown)
+		|| g_foreground_reset_after_keydown
+		|| atomic_read_u16(&g_demo_event_countdown)
+		|| g_foreground_reset_after_demo;
+
+	if(had_transient_state)
+	{
+		atomic_write_u16(&g_key_down_countdown, 0);
+		atomic_write_u16(&g_demo_event_countdown, 0);
+		g_foreground_reset_after_keydown = false;
+		g_foreground_reset_after_demo = false;
+		g_start_event_after_keydown = false;
+		g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+	}
+
+	return pending_start_after_keydown;
+}
 
 static void loadCurrentPatternMorse(bool* repeat, callerID_t caller)
 {
@@ -2744,20 +2767,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				if(g_device_enabled)
 				{
-					if(sb_buff->fields[SB_FIELD1][0])
-					{
-						if(sb_buff->fields[SB_FIELD1][0] == '0')    
+						if(sb_buff->fields[SB_FIELD1][0])
 						{
-							atomic_write_u16(&g_key_down_countdown, 0);
-							g_foreground_reset_after_keydown = true;
-							if(!g_meshmode) sb_send_NewLine();
-							sb_send_string((char*)"* KEY UP\n");
-						}
-						else if(sb_buff->fields[SB_FIELD1][0] == '1')  
-						{
- 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
+							if(sb_buff->fields[SB_FIELD1][0] == '0')    
+							{
+								cancelManualTransientState();
+								atomic_write_u16(&g_key_down_countdown, 0);
+								g_foreground_reset_after_keydown = true;
+								if(!g_meshmode) sb_send_NewLine();
+								sb_send_string((char*)"* KEY UP\n");
+							}
+							else if(sb_buff->fields[SB_FIELD1][0] == '1')  
+							{
+								cancelManualTransientState();
+	 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 
-							if(!txIsInitialized())
+								if(!txIsInitialized())
 							{
 								if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 								{
@@ -2793,11 +2818,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					char arg = sb_buff->fields[SB_FIELD1][0];
 
-					if(arg)
-					{
-						if(arg == '0')       /* Stop an event in progress. Resume countdown to any future event */
+						if(arg)
 						{
-							suspendEvent(); // Stop any running event and initialize loaded event engine settings
+							if((arg == '0') || (arg == '1') || (arg == '2'))
+							{
+								cancelManualTransientState();
+							}
+
+							if(arg == '0')       /* Stop an event in progress. Resume countdown to any future event */
+							{
+								suspendEvent(); // Stop any running event and initialize loaded event engine settings
 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;					
 							g_event_launched_by_user_action = false;
@@ -3137,11 +3167,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						validArg = true;
 					}
 					
-					if(validArg)
-					{
-						g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
-						if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+						if(validArg)
 						{
+							cancelManualTransientState();
+							g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
+							if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+							{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						}
 						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
@@ -3314,37 +3345,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								sprintf(g_tempStr, "CLK T %lu\n", t);
 								sb_send_string(g_tempStr);
 							}
-							else
-							{
-								bool pending_start_after_keydown = g_start_event_after_keydown;
-								bool cancel_manual_transient_state = pending_start_after_keydown
-									|| g_evteng_event_commenced
-									|| g_evteng_event_enabled
-									|| atomic_read_u16(&g_key_down_countdown)
-									|| g_foreground_reset_after_keydown
-									|| atomic_read_u16(&g_demo_event_countdown)
-									|| g_foreground_reset_after_demo;
+								else
+								{
+									bool pending_start_after_keydown = cancelManualTransientState();
+									bool had_active_or_pending_event = g_evteng_event_commenced
+										|| g_evteng_event_enabled
+										|| pending_start_after_keydown;
 
-								if(cancel_manual_transient_state)
-								{
-									/* CLK T should re-sync immediately, not after a stale keydown/demo timeout expires. */
-									atomic_write_u16(&g_key_down_countdown, 0);
-									atomic_write_u16(&g_demo_event_countdown, 0);
-									g_foreground_reset_after_keydown = false;
-									g_foreground_reset_after_demo = false;
-									g_start_event_after_keydown = false;
-									suspendEvent();
-								}
+									if(had_active_or_pending_event)
+									{
+										/* CLK T should re-sync immediately, not after a stale keydown/demo timeout expires. */
+										suspendEvent();
+									}
 
-	  								/* Start the event if one is configured */
-								if(eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch))
-								{
-									startEventUsingRTC();
-								}
-								else if(g_evteng_event_enabled || pending_start_after_keydown) // keydown can imply a pending synced event start
-								{
-									startSyncdEventNow(true);
-								}
+		  								/* Start the event if one is configured */
+									if(eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch))
+									{
+										startEventUsingRTC();
+									}
+									else if(had_active_or_pending_event) // keydown can imply a pending synced event start
+									{
+										startSyncdEventNow(true);
+									}
 								else
 								{
 									suspendEvent();
@@ -3457,9 +3479,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								sb_send_string((char*)"CLK S\n");
 								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += s;
-							}
+								}
 								else
 								{
+									cancelManualTransientState();
 									g_days_to_run = 1;
 									g_days_run = 0;
 								
@@ -3542,12 +3565,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								sb_send_string((char*)"CLK F\n");
 								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += f;
-							}
-							else
-							{
-								g_days_to_run = 1;
-								g_days_run = 0;
-								startEventUsingRTC();
+								}
+								else
+								{
+									cancelManualTransientState();
+									g_days_to_run = 1;
+									g_days_run = 0;
+									startEventUsingRTC();
 							}
  						}
 					}
@@ -3605,12 +3629,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							sb_send_string((char*)"CLK D\n");
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum += g_days_to_run;
-							}
-							else
-							{
-								time_t event_start_epoch;
-								time_t event_finish_epoch;
-								atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
+								}
+								else
+								{
+									cancelManualTransientState();
+									time_t event_start_epoch;
+									time_t event_finish_epoch;
+									atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
 									atomic_write_time(&g_event_finish_epoch, MIN(event_start_epoch + DAY - HOUR, event_finish_epoch));
 								
 								eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch);
