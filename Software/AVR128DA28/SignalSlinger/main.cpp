@@ -273,6 +273,8 @@ static uint32_t atomic_read_u32(const volatile uint32_t* src);
 static bool text_buff_empty_atomic(void);
 static void text_buff_reset_atomic(void);
 static bool text_buff_try_get_atomic(char* out);
+static void messages_text_slot_clear_atomic(uint8_t slot);
+static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_t len);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
 
 static time_t atomic_read_time(const volatile time_t* src)
@@ -352,6 +354,22 @@ static bool text_buff_try_get_atomic(char* out)
 	}
 	EXIT_CRITICAL(main_text_buff_get);
 	return has_char;
+}
+
+static void messages_text_slot_clear_atomic(uint8_t slot)
+{
+	ENTER_CRITICAL(main_messages_text_clear);
+	g_messages_text[slot][0] = '\0';
+	EXIT_CRITICAL(main_messages_text_clear);
+}
+
+static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_t len)
+{
+	size_t copy_len = MIN((size_t)MAX_PATTERN_TEXT_LENGTH, len);
+	ENTER_CRITICAL(main_messages_text_write);
+	strncpy(g_messages_text[slot], src, copy_len);
+	g_messages_text[slot][copy_len] = '\0';
+	EXIT_CRITICAL(main_messages_text_write);
 }
 
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch)
@@ -2764,7 +2782,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_event == EVENT_FOXORING)
 							{
 								strncpy(g_tempStr, sb_buff->fields[SB_FIELD1], MAX_PATTERN_TEXT_LENGTH);
-								strncpy(g_messages_text[FOXORING_PATTERN_TEXT], g_tempStr, MAX_PATTERN_TEXT_LENGTH);
+								messages_text_slot_write_atomic(FOXORING_PATTERN_TEXT, g_tempStr, strlen(g_tempStr));
 								g_ee_mgr.updateEEPROMVar(Foxoring_pattern_text, g_messages_text[FOXORING_PATTERN_TEXT]);
 								
 								sb_send_string((char*)"* PAT:");
@@ -2940,7 +2958,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					
 					if((sb_buff->fields[SB_FIELD1][0] == '\"') && (sb_buff->fields[SB_FIELD1][1] == '\"')) /* "" */
 					{
-						g_messages_text[STATION_ID][0] = '\0';
+						messages_text_slot_clear_atomic(STATION_ID);
 					}
 					else
 					{
@@ -2953,9 +2971,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							strcat(g_tempStr, sb_buff->fields[SB_FIELD2]);
 						}
 						
-						len = MIN(MAX_PATTERN_TEXT_LENGTH, strlen(g_tempStr));
-						strncpy((char*)g_messages_text[STATION_ID], g_tempStr, len);
-						g_messages_text[STATION_ID][len] = '\0';
+							len = MIN(MAX_PATTERN_TEXT_LENGTH, strlen(g_tempStr));
+							messages_text_slot_write_atomic(STATION_ID, g_tempStr, len);
 					}
 					
 					if(g_cloningInProgress)

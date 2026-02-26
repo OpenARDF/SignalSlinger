@@ -29,6 +29,7 @@
 #include "transmitter.h"
 #include "globals.h"
 #include <avr/pgmspace.h>
+#include <atomic.h>
 #include <string.h>
 
 #ifdef ATMEL_STUDIO_7
@@ -45,6 +46,21 @@
  * Whenever possible limit globals' scope to this file using "static"
  * Use "volatile" for globals shared between ISRs and foreground loop
  ************************************************************************/
+
+static void messages_text_slot_clear_atomic(uint8_t slot)
+{
+	ENTER_CRITICAL(eeprom_messages_text_clear);
+	g_messages_text[slot][0] = '\0';
+	EXIT_CRITICAL(eeprom_messages_text_clear);
+}
+
+static void messages_text_slot_publish_atomic(uint8_t slot, const char* src)
+{
+	ENTER_CRITICAL(eeprom_messages_text_publish);
+	strncpy(g_messages_text[slot], src, MAX_PATTERN_TEXT_LENGTH + 1);
+	g_messages_text[slot][MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
+	EXIT_CRITICAL(eeprom_messages_text_publish);
+}
 
 const struct EE_prom EEMEM EepromManager::ee_vars
 =
@@ -662,38 +678,47 @@ bool EepromManager::readNonVols(void)
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
 
 		char c;
+		char pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
+		char foxoring_pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
+		char station_id_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
 			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_text[i])));			
 			if(c==255) c=0;
-			g_messages_text[PATTERN_TEXT][i] = c;
+			pattern_text_local[i] = c;
 			if(!c)
 			{
 				break;
 			}
 		}
+		pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
+		messages_text_slot_publish_atomic(PATTERN_TEXT, pattern_text_local);
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
 			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.foxoring_pattern_text[i])));			
 			if(c==255) c=0;
-			g_messages_text[FOXORING_PATTERN_TEXT][i] = c;
+			foxoring_pattern_text_local[i] = c;
 			if(!c)
 			{
 				break;
 			}
 		}
+		foxoring_pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
+		messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, foxoring_pattern_text_local);
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
 			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.stationID_text[i])));
 			if(c == 255) c= 0;
-			g_messages_text[STATION_ID][i] = c;
+			station_id_text_local[i] = c;
 			if(!c)
 			{
 				break;
 			}
 		}
+		station_id_text_local[MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
+		messages_text_slot_publish_atomic(STATION_ID, station_id_text_local);
 
 		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
 		{
@@ -797,28 +822,28 @@ bool EepromManager::readNonVols(void)
 			g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
 			avr_eeprom_write_byte(Utc_offset, (uint8_t)g_utc_offset);
 
-			g_messages_text[STATION_ID][0] = '\0';
+			messages_text_slot_clear_atomic(STATION_ID);
 			avr_eeprom_write_byte(StationID_text, 0);
 
 			uint8_t *v = (uint8_t*)EEPROM_FOX_PATTERN_DEFAULT;
 			i = Pattern_text;
 			for(j = 0; j < strlen(EEPROM_FOX_PATTERN_DEFAULT); j++)
 			{
-				g_messages_text[PATTERN_TEXT][j] = *v;
 				avr_eeprom_write_byte(i++, *v++);
 			}
 			
 			avr_eeprom_write_byte(i, '\0');
+			messages_text_slot_publish_atomic(PATTERN_TEXT, EEPROM_FOX_PATTERN_DEFAULT);
 
 			v = (uint8_t*)EEPROM_FOXORING_PATTERN_DEFAULT;
 			i = Foxoring_pattern_text;
 			for(j = 0; j < strlen(EEPROM_FOXORING_PATTERN_DEFAULT); j++)
 			{
-				g_messages_text[FOXORING_PATTERN_TEXT][j] = *v;
 				avr_eeprom_write_byte(i++, *v++);
 			}
 			
 			avr_eeprom_write_byte(i, '\0');
+			messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, EEPROM_FOXORING_PATTERN_DEFAULT);
 
 			v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
 			i = UnlockCode;
