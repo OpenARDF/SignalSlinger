@@ -265,6 +265,8 @@ void reportConfigErrors(Settings_t location);
 /*******************************/
 
 static time_t atomic_read_time(const volatile time_t* src);
+static float atomic_read_float(const volatile float* src);
+static uint32_t atomic_read_u32(const volatile uint32_t* src);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
 
 static time_t atomic_read_time(const volatile time_t* src)
@@ -273,6 +275,24 @@ static time_t atomic_read_time(const volatile time_t* src)
 	ENTER_CRITICAL(main_time_read);
 	value = *src;
 	EXIT_CRITICAL(main_time_read);
+	return value;
+}
+
+static float atomic_read_float(const volatile float* src)
+{
+	float value;
+	ENTER_CRITICAL(main_float_read);
+	value = *src;
+	EXIT_CRITICAL(main_float_read);
+	return value;
+}
+
+static uint32_t atomic_read_u32(const volatile uint32_t* src)
+{
+	uint32_t value;
+	ENTER_CRITICAL(main_u32_read);
+	value = *src;
+	EXIT_CRITICAL(main_u32_read);
 	return value;
 }
 
@@ -1119,13 +1139,15 @@ int main(void)
 	/* Disable automatic ADC readings */
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0; /* Disable timer */
-	/* The external battery control load switch is initialized to ON, so we don't need to set it here */
-	g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
-	g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-	
-	g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
+		/* The external battery control load switch is initialized to ON, so we don't need to set it here */
+		g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
+		g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+		float internal_bat_voltage_startup = atomic_read_float(&g_internal_bat_voltage);
+		float internal_voltage_low_threshold_startup = atomic_read_float(&g_internal_voltage_low_threshold);
+		
+		g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
 
-	if(g_internal_bat_detected && (g_internal_bat_voltage < g_internal_voltage_low_threshold) && (g_enable_external_battery_control > 0)) // An internal battery is present & not fully charged & charging from an external battery is enabled
+		if(g_internal_bat_detected && (internal_bat_voltage_startup < internal_voltage_low_threshold_startup) && (g_enable_external_battery_control > 0)) // An internal battery is present & not fully charged & charging from an external battery is enabled
 	{
 		g_charge_battery = true;
 		setExtBatLoadSwitch(ON, INTERNAL_BATTERY_CHARGING);
@@ -1196,31 +1218,36 @@ int main(void)
 				LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 			}
 		}
-		else
-		{							
-			// Set internal battery charging
-			if((g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) && (g_external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW))
-			{
-				if(g_internal_bat_voltage < g_internal_voltage_low_threshold) // An adequate external voltage is present and an internal battery is present & not fully charged
+			else
+			{							
+				float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+				float external_voltage = atomic_read_float(&g_external_voltage);
+				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+				time_t seconds_since_wakeup = atomic_read_time(&g_seconds_since_wakeup);
+
+				// Set internal battery charging
+				if((internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) && (external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW))
 				{
-					g_charge_battery = true;
-				}
-				else if(g_internal_bat_voltage > INT_BAT_CHARGE_THRES_HIGH)
-				{
-					g_charge_battery = false;
-				}
+					if(internal_bat_voltage < internal_voltage_low_threshold) // An adequate external voltage is present and an internal battery is present & not fully charged
+					{
+						g_charge_battery = true;
+					}
+					else if(internal_bat_voltage > INT_BAT_CHARGE_THRES_HIGH)
+					{
+						g_charge_battery = false;
+					}
 			}
 			else
 			{
 				g_charge_battery = false;
 			}
 			
-			if(g_enable_external_battery_control) 
-			{
-				if(g_seconds_since_wakeup > 10)
+				if(g_enable_external_battery_control) 
 				{
-					setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
-				}
+					if(seconds_since_wakeup > 10)
+					{
+						setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+					}
 			}
 			
 #ifdef HW_TARGET_3_5			
@@ -1388,21 +1415,23 @@ int main(void)
 							if(timeDif(now, hold_now) > 90) // Periodically check to see if the internal battery should be charged
 							{
 								hold_now = now;
-								system_charging_config();
-								g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
-								g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-								system_sleep_config();
+									system_charging_config();
+									g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
+									g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+									float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+									float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+									system_sleep_config();
 								setExtBatLoadSwitch(RE_APPLY_LS_STATE); // Undo any charging configuration changes to the LS setting
 						
 								if(g_enable_external_battery_control) // Control of an external battery is enabled
 								{
-									if(g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) // An internal battery is present
-									{
-										if(g_internal_bat_voltage < g_internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
+										if(internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) // An internal battery is present
 										{
-											g_charge_battery = true;
-										}
-										else if(g_internal_bat_voltage >= INT_BAT_CHARGE_THRES_HIGH)
+											if(internal_bat_voltage < internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
+											{
+												g_charge_battery = true;
+											}
+											else if(internal_bat_voltage >= INT_BAT_CHARGE_THRES_HIGH)
 										{
 											g_charge_battery = false;
 
@@ -1931,10 +1960,11 @@ int main(void)
 					g_cloningInProgress = false;
 				}
 
-				if(g_text_buff.empty())
-				{
-					if((g_seconds_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+					if(g_text_buff.empty())
 					{
+						time_t seconds_since_wakeup = atomic_read_time(&g_seconds_since_wakeup);
+						if((seconds_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))
+						{
 						if(g_hardware_error & ((int)HARDWARE_NO_RTC))
 						{
 							LEDS.sendCode((char*)"5CLK");
@@ -1982,10 +2012,13 @@ int main(void)
 				}
 			}
 			
-			if(g_device_enabled)
-			{
-				internal_bat_error = (g_internal_bat_detected && (g_internal_bat_voltage <= g_internal_voltage_low_threshold));
-				external_pwr_error = (g_external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
+				if(g_device_enabled)
+				{
+					float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+					float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+					float external_voltage = atomic_read_float(&g_external_voltage);
+					internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
+					external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 				
 				if(g_charge_battery)
 				{
@@ -2121,15 +2154,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 			
-			case SB_MESSAGE_TEMPERATURE:
-			{
-				if(isValidTemp(g_processor_temperature))
+				case SB_MESSAGE_TEMPERATURE:
 				{
-					int16_t integer;
-					uint16_t fractional;
-		
-					if(!float_to_parts_signed(g_processor_temperature, &integer, &fractional))
+					float processor_temperature = atomic_read_float(&g_processor_temperature);
+					if(isValidTemp(processor_temperature))
 					{
+						int16_t integer;
+						uint16_t fractional;
+			
+						if(!float_to_parts_signed(processor_temperature, &integer, &fractional))
+						{
 						if(!g_meshmode) sb_send_NewLine();
 						sprintf(g_tempStr, "* Temp: %d.%dC\n", integer, fractional);
 						sb_send_string(g_tempStr);
@@ -2961,7 +2995,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
 						g_cloningInProgress = false;
 						g_programming_countdown = 0;
-						if(sum == g_event_checksum)
+						if(sum == atomic_read_u32(&g_event_checksum))
 						{
 							sb_send_string((char*)"MAS ACK\n");
 							g_send_clone_success_countdown = 18000;
@@ -3086,16 +3120,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					
 					time_t now = time(null);
 
-					if(g_event_launched_by_user_action)
-					{
-						sb_send_string((char*)"* User launched. \n");
+						if(g_event_launched_by_user_action)
+						{
+							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							sb_send_string((char*)"* User launched. \n");
 						if(g_evteng_run_event_until_canceled)
 						{
 							sb_send_string((char*)"* Running forever.\n");
 						}
-						else if(g_evteng_loaded_finish_epoch > now)
-						{
-							reportTimeTill(now, g_evteng_loaded_finish_epoch, "* Time remaining: ", NULL);
+							else if(loaded_finish_epoch > now)
+							{
+								reportTimeTill(now, loaded_finish_epoch, "* Time remaining: ", NULL);
 						}
 						else
 						{
@@ -3117,15 +3152,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							sb_send_string((char*)"* Event interrupted!\n");
 						}
 					}
-					else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-					{
-						// Report times for event start, duration, and remaining time.
-						reportTimeTill(now, g_evteng_loaded_start_epoch, "* Starts in: ", "* In progress\n");
-						reportTimeTill(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch, "* Lasts: ", null);
-						if(g_evteng_loaded_start_epoch < now)
+						else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 						{
-							reportTimeTill(now, g_evteng_loaded_finish_epoch, "* Time Remaining: ", NULL);
-						}
+							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							// Report times for event start, duration, and remaining time.
+							reportTimeTill(now, loaded_start_epoch, "* Starts in: ", "* In progress\n");
+							reportTimeTill(loaded_start_epoch, loaded_finish_epoch, "* Lasts: ", null);
+							if(loaded_start_epoch < now)
+							{
+								reportTimeTill(now, loaded_finish_epoch, "* Time Remaining: ", NULL);
+							}
 						
 						if(!g_evteng_event_enabled)
 						{
@@ -3263,31 +3300,33 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_string(g_tempStr);						
 							
 						if(!f1)
-						{
-							char buf[TEMP_STRING_SIZE];
-//							if(!g_meshmode) sb_send_NewLine();
-						
-							if(g_evteng_loaded_start_epoch < MINIMUM_VALID_EPOCH)
 							{
-								sprintf(g_tempStr, "* Start:not set\n");		
-							}
-							else
-							{
-								sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(g_evteng_loaded_start_epoch, buf, TEMP_STRING_SIZE));
-							}						
+								char buf[TEMP_STRING_SIZE];
+								time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+								time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	//							if(!g_meshmode) sb_send_NewLine();
+							
+								if(loaded_start_epoch < MINIMUM_VALID_EPOCH)
+								{
+									sprintf(g_tempStr, "* Start:not set\n");		
+								}
+								else
+								{
+									sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+								}						
 						
 							sb_send_string(g_tempStr);		
 											
 //							if(!g_meshmode) sb_send_NewLine();
 						
-							if(g_evteng_loaded_finish_epoch < MINIMUM_VALID_EPOCH)
-							{
-								sprintf(g_tempStr, "* Finish:not set\n");		
-							}
-							else
-							{
-								sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(g_evteng_loaded_finish_epoch, buf, TEMP_STRING_SIZE));
-							}						
+								if(loaded_finish_epoch < MINIMUM_VALID_EPOCH)
+								{
+									sprintf(g_tempStr, "* Finish:not set\n");		
+								}
+								else
+								{
+									sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(loaded_finish_epoch, buf, TEMP_STRING_SIZE));
+								}						
 						
 							sb_send_string(g_tempStr);		
 											
@@ -3365,19 +3404,20 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 					}
 					
-					if(!g_cloningInProgress)
-					{
-						char buf[TEMP_STRING_SIZE];
-						if(!g_meshmode) sb_send_NewLine();
-						
-						if(g_evteng_loaded_start_epoch < MINIMUM_VALID_EPOCH)
+						if(!g_cloningInProgress)
 						{
-							sprintf(g_tempStr, "* Start:not set\n");		
-						}
-						else
-						{
-							sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(g_evteng_loaded_start_epoch, buf, TEMP_STRING_SIZE));
-						}						
+							char buf[TEMP_STRING_SIZE];
+							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+							if(!g_meshmode) sb_send_NewLine();
+							
+							if(loaded_start_epoch < MINIMUM_VALID_EPOCH)
+							{
+								sprintf(g_tempStr, "* Start:not set\n");		
+							}
+							else
+							{
+								sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+							}						
 						
 						sb_send_string(g_tempStr);						
 					}
@@ -3439,19 +3479,20 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  						}
 					}
 					
-					if(!g_cloningInProgress)
-					{
-						char buf[TEMP_STRING_SIZE];
-						if(!g_meshmode) sb_send_NewLine();
-						
-						if(g_event_finish_epoch < MINIMUM_VALID_EPOCH)
+						if(!g_cloningInProgress)
 						{
-							sprintf(g_tempStr, "* Finish:not set\n");		
-						}
-						else
-						{
-							sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
-						}						
+							char buf[TEMP_STRING_SIZE];
+							time_t event_finish_epoch = atomic_read_time(&g_event_finish_epoch);
+							if(!g_meshmode) sb_send_NewLine();
+							
+							if(event_finish_epoch < MINIMUM_VALID_EPOCH)
+							{
+								sprintf(g_tempStr, "* Finish:not set\n");		
+							}
+							else
+							{
+								sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(event_finish_epoch, buf, TEMP_STRING_SIZE));
+							}						
 						
 						sb_send_string(g_tempStr);						
 					}
@@ -3586,22 +3627,25 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 // 				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
 // 				sb_send_string(g_tempStr);
-				g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
-				g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+					g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
+					g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+					float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+					float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+					float external_voltage = atomic_read_float(&g_external_voltage);
 
-				if(!g_meshmode) sb_send_NewLine();
-				
-				dtostrf(g_internal_bat_voltage, 5, 1, txt);
-				txt[5] = '\0';
-  				sprintf(g_tempStr, "* Int. Bat =%s Volts\n", txt);
- 				sb_send_string(g_tempStr);
+					if(!g_meshmode) sb_send_NewLine();
+					
+					dtostrf(internal_bat_voltage, 5, 1, txt);
+					txt[5] = '\0';
+	  				sprintf(g_tempStr, "* Int. Bat =%s Volts\n", txt);
+	 				sb_send_string(g_tempStr);
 
-				dtostrf(g_internal_voltage_low_threshold, 5, 1, txt);
-				txt[5] = '\0';
- 				sprintf(g_tempStr, "* thresh   =%s Volts\n", txt);
- 				sb_send_string(g_tempStr);
-				 
-				dtostrf(g_external_voltage, 5, 1, txt);
+					dtostrf(internal_voltage_low_threshold, 5, 1, txt);
+					txt[5] = '\0';
+	 				sprintf(g_tempStr, "* thresh   =%s Volts\n", txt);
+	 				sb_send_string(g_tempStr);
+					 
+					dtostrf(external_voltage, 5, 1, txt);
 				txt[5] = '\0';
 				sprintf(g_tempStr, "* Ext. Bat =%s Volts\n", txt);
 				sb_send_string(g_tempStr);
@@ -3690,6 +3734,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  ************************************************************************/
 bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 {
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	time_t time_to_wake_up;
+
 	if(g_evteng_run_event_until_canceled) 
 	{
 		g_sleepType = SLEEP_AFTER_EVENT;
@@ -3705,22 +3753,26 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 		g_evteng_sleepshutdown_seconds = 300;
 		return(false); /* completed events are never enabled */
 	}
+
+	loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+	loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	time_to_wake_up = atomic_read_time(&g_time_to_wake_up);
 	
 	time_t now = time(null);
-	int32_t dif = timeDif(now, g_evteng_loaded_start_epoch);
+	int32_t dif = timeDif(now, loaded_start_epoch);
 	
-	if(eventIsScheduledToRunNow(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch)) // An event should be running right now
+	if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch)) // An event should be running right now
 	{
 		if(g_sleepType == SLEEP_UNTIL_NEXT_XMSN)
 		{
-			if(g_time_to_wake_up > now) // Wake-up for the next transmission is scheduled for the future
+			if(time_to_wake_up > now) // Wake-up for the next transmission is scheduled for the future
 			{
 				return(true); // return without making any changes to sleep type or other settings that could affect waking up for the next transmission
 			}
 		}
 	}
 
-	g_time_to_wake_up = g_evteng_loaded_start_epoch - 15; /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
+	g_time_to_wake_up = loaded_start_epoch - 15; /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
 	
 	if(dif >= -30)  /* Don't sleep if the event starts in 30 seconds or less, or has already started */
 	{
@@ -3749,7 +3801,9 @@ uint16_t throttleValue(uint8_t speed)
 
 EC __attribute__((optimize("O0"))) launchLoadedEvent(SC* statusCode)
 {
-	EC ec = activateEventEngineUsingCurrentSettings(statusCode, g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch);
+	time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	EC ec = activateEventEngineUsingCurrentSettings(statusCode, loaded_start_epoch, loaded_finish_epoch);
 
 	if(ec)
 	{
@@ -4793,6 +4847,13 @@ void reportSettings(void)
 
 	// Get the current time.
 	time_t now = time(NULL);
+	time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	time_t event_start_epoch = atomic_read_time(&g_event_start_epoch);
+	time_t event_finish_epoch = atomic_read_time(&g_event_finish_epoch);
+	float processor_temperature = atomic_read_float(&g_processor_temperature);
+	float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
+	float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
 
 	// Send the product name.
 	sb_send_string((char*)PRODUCT_NAME_LONG);
@@ -4823,36 +4884,36 @@ void reportSettings(void)
 		sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
 	}
 	
-	if(isValidTemp(g_processor_temperature))
+	if(isValidTemp(processor_temperature))
 	{
 		int16_t integer;
 		uint16_t fractional;
 		
-		if(!float_to_parts_signed(g_processor_temperature, &integer, &fractional))
+		if(!float_to_parts_signed(processor_temperature, &integer, &fractional))
 		{
 			sprintf(g_tempStr, "\n*   Cur Temp: %d.%dC\n", integer, fractional);
 			sb_send_string(g_tempStr);
 		}
 	}
 	
-	if(isValidTemp(g_processor_max_temperature))
+	if(isValidTemp(processor_max_temperature))
 	{
 		int16_t integer;
 		uint16_t fractional;
 		
-		if(!float_to_parts_signed(g_processor_max_temperature, &integer, &fractional))
+		if(!float_to_parts_signed(processor_max_temperature, &integer, &fractional))
 		{
 			sprintf(g_tempStr, "*   Max Temp: %d.%dC\n", integer, fractional);
 			sb_send_string(g_tempStr);
 		}
 	}
 	
-	if(isValidTemp(g_processor_min_temperature))
+	if(isValidTemp(processor_min_temperature))
 	{
 		int16_t integer;
 		uint16_t fractional;
 		
-		if(!float_to_parts_signed(g_processor_min_temperature, &integer, &fractional))
+		if(!float_to_parts_signed(processor_min_temperature, &integer, &fractional))
 		{
 			sprintf(g_tempStr, "*   Min Temp: %d.%dC\n", integer, fractional);
 			sb_send_string(g_tempStr);
@@ -4957,11 +5018,11 @@ void reportSettings(void)
 	// Report the start and finish times of the event.
 // 	if(!g_evteng_loaded_start_epoch) g_evteng_loaded_start_epoch = g_event_start_epoch;
 // 	if(!g_evteng_loaded_finish_epoch) g_evteng_loaded_finish_epoch = g_event_finish_epoch;
-	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(g_event_start_epoch, buf, TEMP_STRING_SIZE));
+	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(event_start_epoch, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
-	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(g_event_finish_epoch, buf, TEMP_STRING_SIZE));
+	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(event_finish_epoch, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
-	if(g_event_finish_epoch == g_event_start_epoch)
+	if(event_finish_epoch == event_start_epoch)
 	{
 		sprintf(g_tempStr, "*   Event start disabled (Start = Finish)\n");
 		sb_send_string(g_tempStr);
@@ -5026,12 +5087,12 @@ void reportSettings(void)
 	else
 	{
 		// Report times for event start, duration, and remaining time.
-		reportTimeTill(now, g_evteng_loaded_start_epoch, "\n*   Starts in: ", "\n*   In progress\n");
-		reportTimeTill(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch, "*   Lasts: ", NULL);
-		if(g_evteng_loaded_start_epoch < now)
-		{
-			reportTimeTill(now, g_evteng_loaded_finish_epoch, "*   Time Remaining: ", NULL);
-		}
+			reportTimeTill(now, loaded_start_epoch, "\n*   Starts in: ", "\n*   In progress\n");
+			reportTimeTill(loaded_start_epoch, loaded_finish_epoch, "*   Lasts: ", NULL);
+			if(loaded_start_epoch < now)
+			{
+				reportTimeTill(now, loaded_finish_epoch, "*   Time Remaining: ", NULL);
+			}
 
 		// If the event is disabled, provide instructions to start.
 		if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
@@ -5745,7 +5806,7 @@ void handleSerialCloning(void)
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					g_programming_state = SYNC_Waiting_for_ACK;
-					sprintf(g_tempStr, "MAS Q %lu\n", g_event_checksum);
+					sprintf(g_tempStr, "MAS Q %lu\n", atomic_read_u32(&g_event_checksum));
 					sb_send_master_string(g_tempStr);
 					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
 					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
