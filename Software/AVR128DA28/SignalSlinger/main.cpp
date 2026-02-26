@@ -19,6 +19,7 @@
 #include "leds.h"
 #include "CircularStringBuff.h"
 #include "globals.h"
+#include "shared_state.h"
 #include "rtc.h"
 #include "rstctrl.h"
 
@@ -264,125 +265,9 @@ void reportConfigErrors(Settings_t location);
 /* End hardcoded event support */
 /*******************************/
 
-static time_t atomic_read_time(const volatile time_t* src);
-static void atomic_read_time_pair(const volatile time_t* a, const volatile time_t* b, time_t* out_a, time_t* out_b);
-static void atomic_write_time(volatile time_t* dst, time_t value);
-static void atomic_write_time_pair(volatile time_t* a, volatile time_t* b, time_t value_a, time_t value_b);
-static float atomic_read_float(const volatile float* src);
-static uint32_t atomic_read_u32(const volatile uint32_t* src);
-static bool text_buff_empty_atomic(void);
-static void text_buff_reset_atomic(void);
-static bool text_buff_try_get_atomic(char* out);
-static void messages_text_slot_clear_atomic(uint8_t slot);
-static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_t len);
-static void messages_text_slot_copy_atomic(uint8_t slot, char* dst, size_t dst_size);
 static void loadCurrentPatternMorse(bool* repeat, callerID_t caller);
 static void loadStationIDMorse(bool* repeat, callerID_t caller);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
-
-static time_t atomic_read_time(const volatile time_t* src)
-{
-	time_t value;
-	ENTER_CRITICAL(main_time_read);
-	value = *src;
-	EXIT_CRITICAL(main_time_read);
-	return value;
-}
-
-static void atomic_read_time_pair(const volatile time_t* a, const volatile time_t* b, time_t* out_a, time_t* out_b)
-{
-	ENTER_CRITICAL(main_time_pair_read);
-	*out_a = *a;
-	*out_b = *b;
-	EXIT_CRITICAL(main_time_pair_read);
-}
-
-static void atomic_write_time(volatile time_t* dst, time_t value)
-{
-	ENTER_CRITICAL(main_time_write);
-	*dst = value;
-	EXIT_CRITICAL(main_time_write);
-}
-
-static void atomic_write_time_pair(volatile time_t* a, volatile time_t* b, time_t value_a, time_t value_b)
-{
-	ENTER_CRITICAL(main_time_pair_write);
-	*a = value_a;
-	*b = value_b;
-	EXIT_CRITICAL(main_time_pair_write);
-}
-
-static float atomic_read_float(const volatile float* src)
-{
-	float value;
-	ENTER_CRITICAL(main_float_read);
-	value = *src;
-	EXIT_CRITICAL(main_float_read);
-	return value;
-}
-
-static uint32_t atomic_read_u32(const volatile uint32_t* src)
-{
-	uint32_t value;
-	ENTER_CRITICAL(main_u32_read);
-	value = *src;
-	EXIT_CRITICAL(main_u32_read);
-	return value;
-}
-
-static bool text_buff_empty_atomic(void)
-{
-	bool is_empty;
-	ENTER_CRITICAL(main_text_buff_empty);
-	is_empty = g_text_buff.empty();
-	EXIT_CRITICAL(main_text_buff_empty);
-	return is_empty;
-}
-
-static void text_buff_reset_atomic(void)
-{
-	ENTER_CRITICAL(main_text_buff_reset);
-	g_text_buff.reset();
-	EXIT_CRITICAL(main_text_buff_reset);
-}
-
-static bool text_buff_try_get_atomic(char* out)
-{
-	bool has_char = false;
-	ENTER_CRITICAL(main_text_buff_get);
-	if(!g_text_buff.empty())
-	{
-		*out = g_text_buff.get();
-		has_char = true;
-	}
-	EXIT_CRITICAL(main_text_buff_get);
-	return has_char;
-}
-
-static void messages_text_slot_clear_atomic(uint8_t slot)
-{
-	ENTER_CRITICAL(main_messages_text_clear);
-	g_messages_text[slot][0] = '\0';
-	EXIT_CRITICAL(main_messages_text_clear);
-}
-
-static void messages_text_slot_write_atomic(uint8_t slot, const char* src, size_t len)
-{
-	size_t copy_len = MIN((size_t)MAX_PATTERN_TEXT_LENGTH, len);
-	ENTER_CRITICAL(main_messages_text_write);
-	strncpy(g_messages_text[slot], src, copy_len);
-	g_messages_text[slot][copy_len] = '\0';
-	EXIT_CRITICAL(main_messages_text_write);
-}
-
-static void messages_text_slot_copy_atomic(uint8_t slot, char* dst, size_t dst_size)
-{
-	if(!dst || !dst_size) return;
-	ENTER_CRITICAL(main_messages_text_copy);
-	strncpy(dst, g_messages_text[slot], dst_size - 1);
-	dst[dst_size - 1] = '\0';
-	EXIT_CRITICAL(main_messages_text_copy);
-}
 
 static void loadCurrentPatternMorse(bool* repeat, callerID_t caller)
 {

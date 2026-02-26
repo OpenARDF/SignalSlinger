@@ -28,8 +28,8 @@
 #include "i2c.h"
 #include "transmitter.h"
 #include "globals.h"
+#include "shared_state.h"
 #include <avr/pgmspace.h>
-#include <atomic.h>
 #include <string.h>
 
 #ifdef ATMEL_STUDIO_7
@@ -46,21 +46,6 @@
  * Whenever possible limit globals' scope to this file using "static"
  * Use "volatile" for globals shared between ISRs and foreground loop
  ************************************************************************/
-
-static void messages_text_slot_clear_atomic(uint8_t slot)
-{
-	ENTER_CRITICAL(eeprom_messages_text_clear);
-	g_messages_text[slot][0] = '\0';
-	EXIT_CRITICAL(eeprom_messages_text_clear);
-}
-
-static void messages_text_slot_publish_atomic(uint8_t slot, const char* src)
-{
-	ENTER_CRITICAL(eeprom_messages_text_publish);
-	strncpy(g_messages_text[slot], src, MAX_PATTERN_TEXT_LENGTH + 1);
-	g_messages_text[slot][MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
-	EXIT_CRITICAL(eeprom_messages_text_publish);
-}
 
 const struct EE_prom EEMEM EepromManager::ee_vars
 =
