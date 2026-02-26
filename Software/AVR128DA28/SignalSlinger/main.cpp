@@ -270,6 +270,9 @@ static void atomic_write_time(volatile time_t* dst, time_t value);
 static void atomic_write_time_pair(volatile time_t* a, volatile time_t* b, time_t value_a, time_t value_b);
 static float atomic_read_float(const volatile float* src);
 static uint32_t atomic_read_u32(const volatile uint32_t* src);
+static bool text_buff_empty_atomic(void);
+static void text_buff_reset_atomic(void);
+static bool text_buff_try_get_atomic(char* out);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
 
 static time_t atomic_read_time(const volatile time_t* src)
@@ -320,6 +323,35 @@ static uint32_t atomic_read_u32(const volatile uint32_t* src)
 	value = *src;
 	EXIT_CRITICAL(main_u32_read);
 	return value;
+}
+
+static bool text_buff_empty_atomic(void)
+{
+	bool is_empty;
+	ENTER_CRITICAL(main_text_buff_empty);
+	is_empty = g_text_buff.empty();
+	EXIT_CRITICAL(main_text_buff_empty);
+	return is_empty;
+}
+
+static void text_buff_reset_atomic(void)
+{
+	ENTER_CRITICAL(main_text_buff_reset);
+	g_text_buff.reset();
+	EXIT_CRITICAL(main_text_buff_reset);
+}
+
+static bool text_buff_try_get_atomic(char* out)
+{
+	bool has_char = false;
+	ENTER_CRITICAL(main_text_buff_get);
+	if(!g_text_buff.empty())
+	{
+		*out = g_text_buff.get();
+		has_char = true;
+	}
+	EXIT_CRITICAL(main_text_buff_get);
+	return has_char;
 }
 
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch)
@@ -868,12 +900,12 @@ ISR(TCB0_INT_vect)
 		{
 			static bool charFinished = true;
 			static bool idle = true;
-			bool sendBuffEmpty = g_text_buff.empty();
+			bool sendBuffEmpty = text_buff_empty_atomic();
 			repeat = false;
 			
 			if(lastMorseCaller() != CALLER_MANUAL_TRANSMISSIONS)
 			{
-				g_text_buff.reset();
+				text_buff_reset_atomic();
 				sendBuffEmpty = true;
 				charFinished = true;
 				makeMorse((char*)"\0", &repeat, null, CALLER_MANUAL_TRANSMISSIONS); 
@@ -908,14 +940,15 @@ ISR(TCB0_INT_vect)
 
 						if(charFinished) /* Completed, send next char */
 						{
-							if(!g_text_buff.empty())
 							{
 								static char cc[2]; /* Must be static because makeMorse saves only a pointer to the character array */
-								g_evteng_code_throttle = throttleValue(getPatternCodeSpeed());
-								cc[0] = g_text_buff.get();
-								cc[1] = '\0';
-								makeMorse(cc, &repeat, null, CALLER_MANUAL_TRANSMISSIONS);
-								key = makeMorse(null, &repeat, &charFinished, CALLER_MANUAL_TRANSMISSIONS);
+								if(text_buff_try_get_atomic(&cc[0]))
+								{
+									g_evteng_code_throttle = throttleValue(getPatternCodeSpeed());
+									cc[1] = '\0';
+									makeMorse(cc, &repeat, null, CALLER_MANUAL_TRANSMISSIONS);
+									key = makeMorse(null, &repeat, &charFinished, CALLER_MANUAL_TRANSMISSIONS);
+								}
 							}
 						}
 
@@ -1634,7 +1667,7 @@ int main(void)
 						g_programming_countdown = 0;
 						g_send_clone_success_countdown = 0;
 						LEDS.blink(LEDS_RED_OFF);
-						g_text_buff.reset();					
+						text_buff_reset_atomic();					
 					}
 					else if (g_foreground_handle_counted_presses == 9) // Perform software reset
 					{
@@ -1892,7 +1925,7 @@ int main(void)
 						g_programming_countdown = 0;
 						g_send_clone_success_countdown = 0;
 						LEDS.init();
-						g_text_buff.reset();
+						text_buff_reset_atomic();
 						
 						if(g_key_down_countdown)
 						{
@@ -1990,7 +2023,7 @@ int main(void)
 			{
 				handleSerialCloning();
 			
-				if(g_text_buff.empty())
+				if(text_buff_empty_atomic())
 				{
 					if(!g_key_down_countdown && !g_demo_event_countdown)
 					{
@@ -2027,7 +2060,7 @@ int main(void)
 					g_cloningInProgress = false;
 				}
 
-					if(g_text_buff.empty())
+					if(text_buff_empty_atomic())
 					{
 						time_t seconds_since_wakeup = atomic_read_time(&g_seconds_since_wakeup);
 						if((seconds_since_wakeup < 60) && (g_hardware_error & ((int)HARDWARE_NO_RTC | (int)HARDWARE_NO_SI5351)))

@@ -10,6 +10,7 @@
 #include "leds.h"
 #include "CircularStringBuff.h"
 #include "globals.h"
+#include <atomic.h>
 #include <string.h>
 
 #define FAST_ON 25
@@ -34,6 +35,14 @@ static volatile int16_t red_blink_count = 0;
 static volatile int16_t green_blink_count = 0;
 static volatile bool red_led_configured = false;
 static volatile bool green_led_configured = false;
+
+static void text_buff_reset_and_disable_manual_atomic(void)
+{
+	ENTER_CRITICAL(leds_text_buff_reset);
+	g_text_buff.reset();
+	g_enable_manual_transmissions = false;
+	EXIT_CRITICAL(leds_text_buff_reset);
+}
 
 // default constructor
 leds::leds()
@@ -153,8 +162,7 @@ void leds::deactivate(void)
 	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
 	LED_set_RED_level(OFF);
 	LED_set_GREEN_level(OFF);
-	g_text_buff.reset();
-	g_enable_manual_transmissions = false;
+	text_buff_reset_and_disable_manual_atomic();
 	timer_red_blink_inhibit = timer_green_blink_inhibit = true; /* Disable timer LED control */
 	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
 	led_timeout_count = 0;
@@ -201,8 +209,7 @@ void leds::setGreen(bool on)
 void leds::reset(void)
 {
 	blink(LEDS_OFF);
-	g_text_buff.reset();
-	g_enable_manual_transmissions = false;
+	text_buff_reset_and_disable_manual_atomic();
 	timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 	lastRedBlinkSetting = lastGreenBlinkSetting = lastBothBlinkSetting = LEDS_NUMBER_OF_SETTINGS; 
 	led_timeout_count = LED_TIMEOUT_DELAY;
@@ -232,19 +239,23 @@ void leds::sendCode(char* str)
 	}
 
 	int lenstr = strlen(str);					
-	int i = 0;
-
-	bool holdMan = g_enable_manual_transmissions;
-	g_enable_manual_transmissions = false; /* simple thread collision avoidance */
-	
-	while(!g_text_buff.full() && i<lenstr && i<TEXT_BUFF_SIZE)
+	ENTER_CRITICAL(leds_send_code_text_buff);
 	{
-		g_text_buff.put(str[i++]);
+		int i = 0;
+		bool holdMan = g_enable_manual_transmissions;
+		g_enable_manual_transmissions = false; /* Prevent the TCB0 ISR manual-transmission path from consuming while mutating the shared buffer */
+		
+		while(!g_text_buff.full() && i<lenstr && i<TEXT_BUFF_SIZE)
+		{
+			g_text_buff.put(str[i++]);
+		}
+		
+		g_enable_manual_transmissions = holdMan;
 	}
+	EXIT_CRITICAL(leds_send_code_text_buff);
 	
 	timer_red_blink_inhibit = true; /* Prevent timer from controlling LED */
 	lastRedBlinkSetting = LEDS_NUMBER_OF_SETTINGS;
-	g_enable_manual_transmissions = holdMan;
 }
 
 /* Public wrapper that leaves the LED timeout unchanged. */
