@@ -383,7 +383,7 @@ bool serialbus_send_text(char* text)
 
 		if(buff)
 		{
-			sprintf(*buff, text);
+			snprintf(*buff, SERIALBUS_MAX_TX_MSG_LENGTH, "%s", text);
 			serialbus_start_tx();
 			err = false;
 		}

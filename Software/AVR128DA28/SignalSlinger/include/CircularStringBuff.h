@@ -19,26 +19,35 @@
     DEALINGS IN THE SOFTWARE.
 
 **********************************************************************************************/
+#ifndef CIRCULARSTRINGBUFF_H_
+#define CIRCULARSTRINGBUFF_H_
+
 #include <stddef.h>
 
 class CircularStringBuff {
-  public:
-    ~CircularStringBuff();
-    CircularStringBuff(size_t);
+	public:
+	~CircularStringBuff();
+	CircularStringBuff(size_t);
 
-    void put(char item);
-    char get(void);
-    void reset(void);
-    bool empty(void) const;
-    bool full(void) const;
-    size_t capacity(void) const;
-    size_t size(void) const;
+	void put(char item);
+	char get(void);
+	void reset(void);
+	bool empty(void) const;
+	bool full(void) const;
+	size_t capacity(void) const;
+	size_t size(void) const;
 	char pop(void);
 
-  private:
+	private:
+	// Non-copyable (C++98 style)
+	CircularStringBuff(const CircularStringBuff&);
+	CircularStringBuff& operator=(const CircularStringBuff&);
+
 	int head_;
 	int tail_;
 	bool full_;
 	char* buf_;
 	size_t max_size_;
 };
+
+#endif /* CIRCULARSTRINGBUFF_H_ */
