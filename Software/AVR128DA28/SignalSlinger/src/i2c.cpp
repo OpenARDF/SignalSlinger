@@ -34,6 +34,7 @@
 #include "si5351.h"
 #include "i2c.h"
 #include "port.h"
+#include "shared_state.h"
 
 #ifdef TWI_BAUD
 #undef TWI_BAUD
@@ -102,7 +103,7 @@ static uint8_t i2c_0_WaitW(void)
 {
 	uint8_t state = I2C_INIT;
 	
-	g_i2c0_timeout_ticks = 50;
+	atomic_write_u16(&g_i2c0_timeout_ticks, 50);
 	
 	do
 	{
@@ -124,9 +125,9 @@ static uint8_t i2c_0_WaitW(void)
 			/* get here only in case of bus error or arbitration lost - M4 state */
 			state = I2C_ERROR;
 		}
-	} while(!state && g_i2c0_timeout_ticks);
+	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks));
 	
-	if(!g_i2c0_timeout_ticks) 
+	if(!atomic_read_u16(&g_i2c0_timeout_ticks)) 
 	{
 		state = I2C_ERROR;
 		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
@@ -139,7 +140,7 @@ static uint8_t i2c_0_WaitR(void)
 {
 	uint8_t state = I2C_INIT;
 	
-	g_i2c0_timeout_ticks = 50;
+	atomic_write_u16(&g_i2c0_timeout_ticks, 50);
 	
 	do
 	{
@@ -152,9 +153,9 @@ static uint8_t i2c_0_WaitR(void)
 			/* get here only in case of bus error or arbitration lost - M4 state */
 			state = I2C_ERROR;
 		}
-	} while(!state && g_i2c0_timeout_ticks);
+	} while(!state && atomic_read_u16(&g_i2c0_timeout_ticks));
 	
-	if(!g_i2c0_timeout_ticks)
+	if(!atomic_read_u16(&g_i2c0_timeout_ticks))
 	{
 		if(g_i2c_failure_count < UINT16_MAX) g_i2c_failure_count++;
 	}
@@ -171,6 +172,7 @@ uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8
 	TWI0.MADDR = slaveAddr;
 	if(i2c_0_WaitW() != I2C_ACKED)
 	{
+		I2C_0_EndSession();
 		return retVal;
 	}
 	
@@ -178,6 +180,7 @@ uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8
 	TWI0.MDATA = regAddr;
 	if(i2c_0_WaitW() != I2C_ACKED)
 	{
+		I2C_0_EndSession();
 		return retVal;
 	}
 
@@ -194,10 +197,11 @@ uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8
 				if(!len) I2C_0_EndSession();
 				continue;
 			}
-			else // did not get ACK after client address
-			{
-				break;
-			}
+				else // did not get ACK after client address
+				{
+					I2C_0_EndSession();
+					break;
+				}
 		}
 	}
 	
@@ -213,6 +217,7 @@ uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_
 	TWI0.MADDR = slaveAddr;
 	if(i2c_0_WaitW() != I2C_ACKED)
 	{
+		I2C_0_EndSession();
 		return retVal;
 	}
 	
@@ -220,6 +225,7 @@ uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_
 	TWI0.MDATA = regAddr;
 	if(i2c_0_WaitW() != I2C_ACKED)
 	{
+		I2C_0_EndSession();
 		return retVal;
 	}
 	
@@ -227,6 +233,7 @@ uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_
 	TWI0.MADDR = slaveAddr | 0x01;
 	if(i2c_0_WaitW() != I2C_ACKED)
 	{
+		I2C_0_EndSession();
 		return retVal;
 	}
 	
@@ -243,10 +250,13 @@ uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_
 				pData++;
 				continue;
 			}
-			else
-			break;
+				else
+				{
+					I2C_0_EndSession();
+					break;
+				}
+			}
 		}
-	}
 	
 	return retVal;
 }
@@ -441,4 +451,3 @@ void I2C_0_EndSession(void)
 // {
 // 	TWI1.MCTRLB = TWI_MCMD_STOP_gc;
 // }
-

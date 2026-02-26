@@ -109,42 +109,53 @@ void serial_Rx(uint8_t rx_char)
 			ignoreAllInput = true;
 			rx_char = '\0';
 		}
-		else if(rx_char == '\r')    /* Handle carriage return */
-		{
-			if(receiving_msg)
+			else if(rx_char == '\r')    /* Handle carriage return */
 			{
-				if(charIndex > 0)
+				SBMessageID completed_id = SB_MESSAGE_EMPTY;
+				bool publish_msg = false;
+				if(receiving_msg)
 				{
-					buff->type = SERIALBUS_MSG_QUERY;
-					
-					if((charIndex == 1) && (textBuff[0] == '?'))
+					if(charIndex > 0)
 					{
-						if(!useMeshMode) 
+						buff->type = SERIALBUS_MSG_QUERY;
+					
+						if((charIndex == 1) && (textBuff[0] == '?'))
 						{
-							buff->id = SB_MESSAGE_HELP; /* print help message */
+							if(!useMeshMode) 
+							{
+								completed_id = SB_MESSAGE_HELP; /* print help message */
+								publish_msg = true;
+							}
+							else
+							{
+								completed_id = SB_MESSAGE_EMPTY;
+								publish_msg = true;
+							}
 						}
 						else
 						{
-							buff->id = SB_MESSAGE_EMPTY;
-						}
-					}
-					else
-					{
-						buff->id = (SBMessageID)msg_ID;
+							if(field_index > 0) /* terminate the last field */
+							{
+								buff->fields[field_index - 1][field_len] = 0;
+							}
 
-						if(field_index > 0) /* terminate the last field */
-						{
-							buff->fields[field_index - 1][field_len] = 0;
+							textBuff[charIndex] = '\0'; /* terminate last-message buffer */
+							completed_id = (SBMessageID)msg_ID;
+							publish_msg = true;
 						}
-
-						textBuff[charIndex] = '\0'; /* terminate last-message buffer */
 					}
 				}
-			}
-			else
-			{
-				buff->id = SB_CR_NO_DATA; /* handle blank line */
-			}
+				else
+				{
+					completed_id = SB_CR_NO_DATA; /* handle blank line */
+					publish_msg = true;
+				}
+
+				if(publish_msg)
+				{
+					/* Publish last so foreground sees a fully-populated message buffer. */
+					buff->id = completed_id;
+				}
 
 			charIndex = 0;
 			field_len = 0;
@@ -326,13 +337,13 @@ void serial_Rx(uint8_t rx_char)
 				}
 			}
 
-			if(rx_char)
-			{
-				if(!useMeshMode) sb_echo_char(rx_char);
+				if(rx_char && !useMeshMode)
+				{
+					(void)sb_echo_char_isr(rx_char); /* Non-blocking ISR-safe echo enqueue */
+				}
 			}
-		}
-	}	
-}
+		}	
+	}
 
 
 /**
@@ -340,18 +351,31 @@ void serial_Rx(uint8_t rx_char)
 */
 ISR(USART1_DRE_vect)
 {
-	if(g_serialbus_usart_number == USART_1)
-	{
-		static SerialbusTxBuffer* buff = 0;
-		static uint8_t charIndex = 0;
-
-		if(!buff)
+		if(g_serialbus_usart_number == USART_1)
 		{
-			buff = nextFullSBTxBuffer();
-		}
+			static SerialbusTxBuffer* buff = 0;
+			static uint8_t charIndex = 0;
 
-		if((*buff)[charIndex])
-		{
+			if(!buff)
+			{
+				buff = nextFullSBTxBuffer();
+			}
+
+			{
+				uint8_t echo_char;
+				if(serialbus_echo_try_get_isr(&echo_char))
+				{
+					USART1.TXDATAL = echo_char;
+					return;
+				}
+			}
+			if(!buff)
+			{
+				serialbus_end_tx();
+				return;
+			}
+			if((*buff)[charIndex])
+			{
 			/* Put data into buffer, sends the data */
 			USART1.TXDATAL = (*buff)[charIndex++];
 		}

@@ -57,6 +57,22 @@ static inline uint32_t atomic_read_u32(const volatile uint32_t* src)
 	return value;
 }
 
+static inline uint16_t atomic_read_u16(const volatile uint16_t* src)
+{
+	uint16_t value;
+	ENTER_CRITICAL(shared_u16_read);
+	value = *src;
+	EXIT_CRITICAL(shared_u16_read);
+	return value;
+}
+
+static inline void atomic_write_u16(volatile uint16_t* dst, uint16_t value)
+{
+	ENTER_CRITICAL(shared_u16_write);
+	*dst = value;
+	EXIT_CRITICAL(shared_u16_write);
+}
+
 static inline bool text_buff_empty_atomic(void)
 {
 	bool is_empty;

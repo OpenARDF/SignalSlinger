@@ -162,6 +162,7 @@ SerialbusTxBuffer* nextFullSBTxBuffer(void);
  * Returns true while the UART is currently sending bytes.
  */
 bool serialbusTxInProgress(void);
+bool serialbus_start_tx(void);
 
 /**
  * Fetch the next empty receive buffer for incoming data.
@@ -187,6 +188,8 @@ void sb_send_NewLine(void);
  * Echo a character back to the host terminal.
  */
 void sb_echo_char(uint8_t c);
+bool sb_echo_char_isr(uint8_t c);
+bool serialbus_echo_try_get_isr(uint8_t* c);
 
 /**
  * Queue a string for transmission.  Returns true if queued.

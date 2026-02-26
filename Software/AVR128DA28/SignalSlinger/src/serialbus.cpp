@@ -29,6 +29,8 @@
 #include "serialbus.h"
 #include "usart_basic.h"
 #include "globals.h"
+#include <atomic.h>
+#include "shared_state.h"
 #include <string.h>
 #include <stdio.h>
 #include "atmel_start_pins.h"
@@ -49,14 +51,21 @@ static volatile bool g_serialbus_disabled = true;
 static const char crlf[] = "\n";
 static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
-
-static char g_tempMsgBuff[SERIALBUS_MAX_MSG_LENGTH];
+#define SERIALBUS_ISR_ECHO_FIFO_SIZE 16
+static volatile uint8_t g_isr_echo_head = 0;
+static volatile uint8_t g_isr_echo_tail = 0;
+static volatile char g_isr_echo_fifo[SERIALBUS_ISR_ECHO_FIFO_SIZE];
 
 /* Local function prototypes */
 bool serialbus_start_tx(void);
 bool serialbus_send_text(char* text);
 static void USART1_initialization(uint32_t baud);
 static void USART0_initialization(uint32_t baud);
+static inline void serialbus_echo_fifo_reset(void)
+{
+	g_isr_echo_head = 0;
+	g_isr_echo_tail = 0;
+}
 
 /* Module global variables */
 static volatile bool serialbus_tx_active = false; /* volatile is required to ensure optimizer handles this properly */
@@ -285,6 +294,7 @@ void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
 	serialbus_end_tx();
+	serialbus_echo_fifo_reset();
 
 	for(int bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
 	{
@@ -344,6 +354,7 @@ void serialbus_disable(void)
 	}
 	
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
+	serialbus_echo_fifo_reset();
 
 	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
 	{
@@ -368,6 +379,8 @@ bool serialbus_send_text(char* text)
 	uint16_t tries;
 	if(text)
 	{
+		SerialbusTxBuffer local_copy;
+		snprintf(local_copy, SERIALBUS_MAX_TX_MSG_LENGTH, "%s", text);
 		SerialbusTxBuffer* buff = nextEmptySBTxBuffer();
 		tries = 200;
 		
@@ -380,7 +393,20 @@ bool serialbus_send_text(char* text)
 
 		if(buff)
 		{
-			snprintf(*buff, SERIALBUS_MAX_TX_MSG_LENGTH, "%s", text);
+			/* Publish buffer atomically with first byte written last so the DRE ISR
+			 * does not observe a partially formatted message as ready. */
+			ENTER_CRITICAL(serialbus_tx_publish);
+			(*buff)[0] = '\0';
+			for(uint8_t i = 1; i < SERIALBUS_MAX_TX_MSG_LENGTH; i++)
+			{
+				(*buff)[i] = local_copy[i];
+				if(local_copy[i] == '\0')
+				{
+					break;
+				}
+			}
+			(*buff)[0] = local_copy[0];
+			EXIT_CRITICAL(serialbus_tx_publish);
 			serialbus_start_tx();
 			err = false;
 		}
@@ -428,9 +454,39 @@ void sb_echo_char(uint8_t c)
 	{
 		return;
 	}
-	g_tempMsgBuff[0] = c;
-	g_tempMsgBuff[1] = '\0';
-	serialbus_send_text(g_tempMsgBuff);
+	char echo[2];
+	echo[0] = c;
+	echo[1] = '\0';
+	serialbus_send_text(echo);
+}
+
+bool sb_echo_char_isr(uint8_t c)
+{
+	uint8_t next_head;
+
+	if(g_isMaster || g_cloningInProgress) return false;
+	if(g_serialbus_disabled) return false;
+
+	next_head = (uint8_t)((g_isr_echo_head + 1U) % SERIALBUS_ISR_ECHO_FIFO_SIZE);
+	if(next_head == g_isr_echo_tail)
+	{
+		return false; /* FIFO full: drop echo char rather than block in ISR */
+	}
+
+	g_isr_echo_fifo[g_isr_echo_head] = (char)c;
+	g_isr_echo_head = next_head;
+	serialbus_start_tx(); /* Safe kick: returns false if already active */
+	return true;
+}
+
+bool serialbus_echo_try_get_isr(uint8_t* c)
+{
+	if(!c) return false;
+	if(g_isr_echo_head == g_isr_echo_tail) return false;
+
+	*c = (uint8_t)g_isr_echo_fifo[g_isr_echo_tail];
+	g_isr_echo_tail = (uint8_t)((g_isr_echo_tail + 1U) % SERIALBUS_ISR_ECHO_FIFO_SIZE);
+	return true;
 }
 
 bool sb_send_string(char* str)
@@ -472,15 +528,15 @@ bool sb_send_master_string(char* str)
 		buf[lengthToSend] = '\0';
 		err = serialbus_send_text(buf);
 		
-		g_serial_timeout_ticks = 200;
+		atomic_write_u16(&g_serial_timeout_ticks, 200);
 		if(!err)
 		{
-			while(serialbusTxInProgress() && g_serial_timeout_ticks)
+			while(serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks))
 			{
 				;
 			}
-			
-			if(!g_serial_timeout_ticks) err = true;
+
+			if(!atomic_read_u16(&g_serial_timeout_ticks)) err = true;
 		}
 
 		lengthSent += lengthToSend;
@@ -493,20 +549,21 @@ bool sb_send_master_string(char* str)
 void sb_send_value(uint16_t value, char* label)
 {
 	bool err;
+	char tempMsgBuff[SERIALBUS_MAX_MSG_LENGTH];
 
 	if(g_serialbus_disabled)
 	{
 		return;
 	}
 
-	sprintf(g_tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
-	while((err = serialbus_send_text(g_tempMsgBuff)))
+	sprintf(tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
+	while((err = serialbus_send_text(tempMsgBuff)))
 	{
 		;
 	}
 	
-	g_serial_timeout_ticks = 200;
-	while(!err && serialbusTxInProgress() && g_serial_timeout_ticks)
+	atomic_write_u16(&g_serial_timeout_ticks, 200);
+	while(!err && serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks))
 	{
 		;
 	}
