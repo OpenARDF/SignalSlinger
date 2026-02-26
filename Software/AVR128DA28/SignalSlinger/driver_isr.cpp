@@ -44,7 +44,7 @@
 void serial_Rx(uint8_t rx_char);
 void serial_Tx(uint8_t rx_char);
 
-extern USART_Number_t g_serialbus_usart_number;
+extern volatile USART_Number_t g_serialbus_usart_number;
 
 ISR(USART0_RXC_vect)
 {

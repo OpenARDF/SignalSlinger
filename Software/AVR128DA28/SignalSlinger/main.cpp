@@ -185,9 +185,9 @@ static volatile uint16_t g_programming_countdown = 0;
 static volatile uint16_t g_programming_msg_throttle = 0;
 static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
-bool g_cloningInProgress = false;
+volatile bool g_cloningInProgress = false;
 
-Enunciation_t g_enunciator = LED_ONLY;
+volatile Enunciation_t g_enunciator = LED_ONLY;
 static volatile uint16_t g_key_down_countdown = 0;
 static volatile bool g_foreground_reset_after_keydown = false;
 static volatile uint16_t g_demo_event_countdown = 0;
@@ -198,8 +198,8 @@ CircularStringBuff g_text_buff(TEXT_BUFF_SIZE);
 
 EepromManager g_ee_mgr;
 
-bool g_isMaster = false;
-uint16_t isMasterCountdownSeconds = 0;
+volatile bool g_isMaster = false;
+volatile uint16_t isMasterCountdownSeconds = 0;
 Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, USE_CURRENT_FOX}; /* none, classic, sprint, foxoring */
 
 Event_t g_event = EEPROM_EVENT_SETTING_DEFAULT;
@@ -5890,4 +5890,3 @@ bool timeIsSet(void)
 	time_t now = time(null);
 	return (now > MINIMUM_VALID_EPOCH);
 }
-

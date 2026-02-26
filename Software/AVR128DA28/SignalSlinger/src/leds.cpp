@@ -22,7 +22,7 @@
 extern volatile bool g_evteng_event_enabled;
 extern volatile bool g_enable_manual_transmissions;
 extern CircularStringBuff g_text_buff;
-extern Enunciation_t g_enunciator;
+extern volatile Enunciation_t g_enunciator;
 
 static volatile bool timer_red_blink_inhibit = false; /* disable blinking by timer */
 static volatile bool timer_green_blink_inhibit = false; /* disable blinking by timer */

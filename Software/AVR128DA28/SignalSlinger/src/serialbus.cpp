@@ -43,11 +43,11 @@
 #endif  /* ATMEL_STUDIO_7 */
 
 /* Global Variables */
-extern bool g_isMaster;
-extern bool g_cloningInProgress;
+extern volatile bool g_isMaster;
+extern volatile bool g_cloningInProgress;
 
 volatile uint16_t g_serial_timeout_ticks = 200;
-USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
+volatile USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
 static volatile bool g_serialbus_disabled = true;
 static const char crlf[] = "\n";
 static char lineTerm[8] = "\n";
