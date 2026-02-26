@@ -2402,6 +2402,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						 
  						if(holdFox != getFoxSetting())
  						{
+							if(!g_cloningInProgress)
+							{
+								cancelManualTransientState();
+							}
 							fox_setting_current_slot_write_atomic(holdFox);
 							setupForFox(holdFox, START_EVENT_WITH_STARTFINISH_TIMES);
 
@@ -3063,12 +3067,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'P')
 					{
-						if(!atomic_read_u16(&g_send_clone_success_countdown))
-						{
-							g_cloningInProgress = true;
-							suspendEvent();
-							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-							g_event_checksum = 0;
+							if(!atomic_read_u16(&g_send_clone_success_countdown))
+							{
+								g_cloningInProgress = true;
+								cancelManualTransientState();
+								suspendEvent();
+								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+								g_event_checksum = 0;
 							sb_send_string((char*)"MAS\n");
 						}
 					}
@@ -3077,12 +3082,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
 						g_cloningInProgress = false;
 						atomic_write_u16(&g_programming_countdown, 0);
-						if(sum == atomic_read_u32(&g_event_checksum))
-						{
-							sb_send_string((char*)"MAS ACK\n");
-							atomic_write_u16(&g_send_clone_success_countdown, 18000);
-							setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
-						}
+							if(sum == atomic_read_u32(&g_event_checksum))
+							{
+								sb_send_string((char*)"MAS ACK\n");
+								atomic_write_u16(&g_send_clone_success_countdown, 18000);
+								cancelManualTransientState();
+								setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
+							}
 						else
 						{
 							sb_send_string((char*)"MAS NAK\n");
