@@ -23,10 +23,9 @@
  */
 
 #include <tcb.h>
+#include "globals.h"
 
 static uint32_t g_ms_counter = 0;
-extern volatile uint16_t g_i2c0_timeout_ticks;
-extern volatile uint16_t g_serial_timeout_ticks;
 
 /**
  * \brief Initialize tcb interface
@@ -212,4 +211,3 @@ int8_t TIMERB_sleep()
 
 	return 0;
 }
-

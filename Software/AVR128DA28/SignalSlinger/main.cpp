@@ -18,6 +18,7 @@
 #include "binio.h"
 #include "leds.h"
 #include "CircularStringBuff.h"
+#include "globals.h"
 #include "rtc.h"
 #include "rstctrl.h"
 
@@ -144,7 +145,6 @@ volatile uint32_t g_event_checksum = 0;
 volatile uint8_t g_days_to_run = 1;
 volatile uint8_t g_days_run = 0;
 volatile Function_t g_function = Function_ARDF_TX;
-extern uint16_t g_clock_calibration;
 volatile uint8_t g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
 volatile uint16_t g_time_needed_for_ID = 0;
 char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
@@ -211,9 +211,6 @@ Frequency_Hz g_frequency_beacon = EEPROM_FREQUENCY_BEACON_DEFAULT;
 
 int8_t g_utc_offset;
 uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 2];
-
-extern volatile uint16_t g_i2c_failure_count;
-extern volatile bool g_enable_external_battery_control;
 
 volatile bool g_enable_manual_transmissions = true;
 static volatile bool g_meshmode = false;

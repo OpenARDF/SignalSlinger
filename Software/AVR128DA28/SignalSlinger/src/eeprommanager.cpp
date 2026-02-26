@@ -27,6 +27,7 @@
 #include "serialbus.h"
 #include "i2c.h"
 #include "transmitter.h"
+#include "globals.h"
 #include <avr/pgmspace.h>
 #include <string.h>
 
@@ -122,41 +123,6 @@ const struct EE_prom EEMEM EepromManager::ee_vars
 	0x00000000, //  Guard
 	0x00        //  uint8_t device_enabled
 };
-
-extern volatile bool g_device_enabled;
-extern volatile bool g_isMaster;
-extern volatile Fox_t g_fox[EVENT_NUMBER_OF_EVENTS];
-extern volatile int8_t g_utc_offset;
-extern uint8_t g_unlockCode[];
-extern Frequency_Hz g_rtty_offset;
-
-extern volatile Event_t g_event;
-extern volatile Frequency_Hz g_frequency;
-extern volatile Frequency_Hz g_frequency_low;
-extern volatile Frequency_Hz g_frequency_med;
-extern volatile Frequency_Hz g_frequency_hi;
-extern volatile Frequency_Hz g_frequency_beacon;
-extern volatile bool g_enable_boost_regulator;
-extern volatile bool g_enable_external_battery_control;
-
-extern char g_messages_text[STATION_ID+1][MAX_PATTERN_TEXT_LENGTH + 2];
-extern volatile time_t g_event_start_epoch;
-extern volatile time_t g_event_finish_epoch;
-extern uint16_t g_80m_power_level_mW;
-extern volatile uint8_t g_evteng_id_codespeed;
-extern volatile uint8_t g_evteng_pattern_codespeed;
-extern volatile uint8_t g_foxoring_pattern_codespeed;
-extern volatile int16_t g_evteng_off_air_seconds;
-extern volatile int16_t g_evteng_on_air_seconds;
-extern volatile int16_t g_evteng_ID_period_seconds;
-extern volatile int16_t g_evteng_intra_cycle_delay_time;
-extern volatile float g_internal_voltage_low_threshold;
-extern uint16_t g_clock_calibration;
-extern volatile uint8_t g_days_to_run;
-extern uint16_t g_i2c_failure_count;
-extern volatile Function_t g_function;
-
-extern char g_tempStr[];
 
 /* default constructor */
 EepromManager::EepromManager()
@@ -924,4 +890,3 @@ bool EepromManager::readNonVols(void)
 		
 		return(init);
 	}
-

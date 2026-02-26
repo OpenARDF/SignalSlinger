@@ -28,6 +28,7 @@
 #include "defs.h"
 #include "serialbus.h"
 #include "usart_basic.h"
+#include "globals.h"
 #include <string.h>
 #include <stdio.h>
 #include "atmel_start_pins.h"
@@ -41,10 +42,6 @@
 #include <string.h>
 #include <stdio.h>
 #endif  /* ATMEL_STUDIO_7 */
-
-/* Global Variables */
-extern volatile bool g_isMaster;
-extern volatile bool g_cloningInProgress;
 
 volatile uint16_t g_serial_timeout_ticks = 200;
 volatile USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
