@@ -29,8 +29,7 @@
 #include "rtc.h"
 #include "tcb.h"
 #include "eeprommanager.h"
-
-extern EepromManager g_ee_mgr;
+#include "globals.h"
 static bool use_backup_clock = false;
 uint16_t g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
 

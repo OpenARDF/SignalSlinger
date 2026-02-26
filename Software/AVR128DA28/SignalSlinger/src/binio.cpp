@@ -28,8 +28,7 @@
 #include "defs.h"
 #include "atmel_start_pins.h"
 #include "adc.h"
-
-extern ADC_Init_t g_adc_initialization;
+#include "globals.h"
 
 uint8_t portDpinReadings[3];
 uint8_t portDdebounced;
@@ -377,4 +376,3 @@ void boost_enable(bool state)
 	}
 }
 #endif
-

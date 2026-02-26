@@ -9,6 +9,7 @@
 #include "atmel_start_pins.h"
 #include "leds.h"
 #include "CircularStringBuff.h"
+#include "globals.h"
 #include <string.h>
 
 #define FAST_ON 25
@@ -18,11 +19,6 @@
 #define BRIEF_ON 15
 #define BRIEF_OFF 50
 #define LED_TIMEOUT_DELAY 600000
-
-extern volatile bool g_evteng_event_enabled;
-extern volatile bool g_enable_manual_transmissions;
-extern CircularStringBuff g_text_buff;
-extern volatile Enunciation_t g_enunciator;
 
 static volatile bool timer_red_blink_inhibit = false; /* disable blinking by timer */
 static volatile bool timer_green_blink_inhibit = false; /* disable blinking by timer */

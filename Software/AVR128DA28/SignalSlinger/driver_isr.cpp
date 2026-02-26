@@ -40,11 +40,10 @@
 #include "serialbus.h"
 #include "usart_basic.h"
 #include "morse.h"
+#include "globals.h"
 
 void serial_Rx(uint8_t rx_char);
 void serial_Tx(uint8_t rx_char);
-
-extern volatile USART_Number_t g_serialbus_usart_number;
 
 ISR(USART0_RXC_vect)
 {
