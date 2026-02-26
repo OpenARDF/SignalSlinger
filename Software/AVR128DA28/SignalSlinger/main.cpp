@@ -3318,6 +3318,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								bool pending_start_after_keydown = g_start_event_after_keydown;
 								bool cancel_manual_transient_state = pending_start_after_keydown
+									|| g_evteng_event_commenced
+									|| g_evteng_event_enabled
 									|| atomic_read_u16(&g_key_down_countdown)
 									|| g_foreground_reset_after_keydown
 									|| atomic_read_u16(&g_demo_event_countdown)
@@ -3331,6 +3333,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									g_foreground_reset_after_keydown = false;
 									g_foreground_reset_after_demo = false;
 									g_start_event_after_keydown = false;
+									suspendEvent();
 								}
 
 	  								/* Start the event if one is configured */
