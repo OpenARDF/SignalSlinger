@@ -266,6 +266,8 @@ void reportConfigErrors(Settings_t location);
 
 static time_t atomic_read_time(const volatile time_t* src);
 static void atomic_read_time_pair(const volatile time_t* a, const volatile time_t* b, time_t* out_a, time_t* out_b);
+static void atomic_write_time(volatile time_t* dst, time_t value);
+static void atomic_write_time_pair(volatile time_t* a, volatile time_t* b, time_t value_a, time_t value_b);
 static float atomic_read_float(const volatile float* src);
 static uint32_t atomic_read_u32(const volatile uint32_t* src);
 static const char* completeTimeString_volatile(const char* partialString, volatile time_t* currentEpoch);
@@ -285,6 +287,21 @@ static void atomic_read_time_pair(const volatile time_t* a, const volatile time_
 	*out_a = *a;
 	*out_b = *b;
 	EXIT_CRITICAL(main_time_pair_read);
+}
+
+static void atomic_write_time(volatile time_t* dst, time_t value)
+{
+	ENTER_CRITICAL(main_time_write);
+	*dst = value;
+	EXIT_CRITICAL(main_time_write);
+}
+
+static void atomic_write_time_pair(volatile time_t* a, volatile time_t* b, time_t value_a, time_t value_b)
+{
+	ENTER_CRITICAL(main_time_pair_write);
+	*a = value_a;
+	*b = value_b;
+	EXIT_CRITICAL(main_time_pair_write);
 }
 
 static float atomic_read_float(const volatile float* src)
@@ -1091,8 +1108,7 @@ int main(void)
 		time_t start_epoch;
 		time_t finish_epoch;
 		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-		g_evteng_loaded_start_epoch = start_epoch;
-		g_evteng_loaded_finish_epoch = finish_epoch;
+			atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
 	}
 	g_isMaster = false; /* Never start up as master */
 	
@@ -1209,8 +1225,7 @@ int main(void)
 						time_t start_epoch;
 						time_t finish_epoch;
 						atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-						g_evteng_loaded_start_epoch = start_epoch;
-						g_evteng_loaded_finish_epoch = finish_epoch;
+						atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
 					}
 
 				// If the event loaded into the event engine is disabled, set it to start.
@@ -1349,7 +1364,7 @@ int main(void)
 						}
 						else
 						{
-							g_time_to_wake_up = FOREVER_EPOCH;
+							atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
 
 							if(!timeIsSet())
 							{
@@ -1410,12 +1425,12 @@ int main(void)
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
 							if(loaded_start_epoch < MINIMUM_VALID_EPOCH) // should never be true
 							{
-								g_evteng_loaded_start_epoch = saved_start_epoch;
+									atomic_write_time(&g_evteng_loaded_start_epoch, saved_start_epoch);
 							}
 						
 							if(loaded_finish_epoch < MINIMUM_VALID_EPOCH) // should never be true
 							{
-								g_evteng_loaded_finish_epoch = saved_finish_epoch;
+									atomic_write_time(&g_evteng_loaded_finish_epoch, saved_finish_epoch);
 							}
 					}
 				
@@ -1753,8 +1768,7 @@ int main(void)
 													time_t start_epoch;
 													time_t finish_epoch;
 													atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-													g_evteng_loaded_start_epoch = start_epoch;
-													g_evteng_loaded_finish_epoch = finish_epoch;
+														atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
 												}
 				
 											if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
@@ -1786,8 +1800,7 @@ int main(void)
 												time_t start_epoch;
 												time_t finish_epoch;
 												atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-												g_evteng_loaded_start_epoch = start_epoch;
-												g_evteng_loaded_finish_epoch = finish_epoch;
+													atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
 											}
 									}
 									
@@ -2809,8 +2822,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;					
 							g_event_launched_by_user_action = false;
-							g_evteng_loaded_start_epoch = 0; // Allow the transmitter to sleep forever
-							g_evteng_loaded_finish_epoch = 0;
+							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0); // Allow the transmitter to sleep forever
 						}
 						else if(arg == '1')  /* Start the event, syncing to the top of the hour */
 						{
@@ -3439,8 +3451,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  
  						if(s || g_cloningInProgress)
  						{
- 							g_evteng_loaded_start_epoch = s;
-							g_event_start_epoch = s;
+	 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_event_start_epoch, s, s);
 							g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 
 							if(g_cloningInProgress)
@@ -3459,8 +3470,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 										time_t event_start_epoch;
 										time_t event_finish_epoch;
 										atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-										g_evteng_loaded_finish_epoch = MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
-										g_event_finish_epoch = g_evteng_loaded_finish_epoch;
+										time_t new_finish_epoch = MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
+										atomic_write_time_pair(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, new_finish_epoch);
 							
 									g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 									startEventUsingRTC();
@@ -3524,8 +3535,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  
  						if(f || g_cloningInProgress)
  						{
-							g_event_finish_epoch = f;
-							g_evteng_loaded_finish_epoch = f;
+								atomic_write_time_pair(&g_event_finish_epoch, &g_evteng_loaded_finish_epoch, f, f);
 
 							g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 												
@@ -3603,15 +3613,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								time_t event_start_epoch;
 								time_t event_finish_epoch;
 								atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-								g_event_finish_epoch = MIN(event_start_epoch + DAY - HOUR, event_finish_epoch);
+									atomic_write_time(&g_event_finish_epoch, MIN(event_start_epoch + DAY - HOUR, event_finish_epoch));
 								
 								eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch);
 								g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 								g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 								
 								atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-								g_evteng_loaded_start_epoch = event_start_epoch;
-								g_evteng_loaded_finish_epoch = event_finish_epoch;
+									atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_finish_epoch);
 							}
 					}
 									
@@ -3818,7 +3827,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	if(!eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* A future event has not been set, and no event is scheduled to run right now */
 	{
 		g_sleepType = SLEEP_FOREVER;
-		g_time_to_wake_up = FOREVER_EPOCH;
+			atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
 		g_evteng_sleepshutdown_seconds = 300;
 		return(false); /* completed events are never enabled */
 	}
@@ -3841,7 +3850,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 		}
 	}
 
-	g_time_to_wake_up = loaded_start_epoch - 15; /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
+	atomic_write_time(&g_time_to_wake_up, loaded_start_epoch - 15); /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
 	
 	if(dif >= -30)  /* Don't sleep if the event starts in 30 seconds or less, or has already started */
 	{
@@ -4046,7 +4055,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 					}
 				}
 						
-				g_time_to_wake_up = now; // Don't sleep during the first cycle
+					atomic_write_time(&g_time_to_wake_up, now); // Don't sleep during the first cycle
 				g_sleepType = SLEEP_AFTER_EVENT;
 				
 				g_evteng_sleepshutdown_seconds = 300;
@@ -4056,8 +4065,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 					sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				}
 
-				g_evteng_loaded_start_epoch = startTime;
-				g_evteng_loaded_finish_epoch = finishTime;
+					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, startTime, finishTime);
 				LEDS.init();
 			}
 			else    /* start time is in the future */
@@ -4068,10 +4076,9 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 				}
 				keyTransmitter(OFF);
 				powerToTransmitter(OFF);
-				g_evteng_loaded_start_epoch = startTime;
-				g_evteng_loaded_finish_epoch = finishTime;
+					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, startTime, finishTime);
 				g_evteng_event_commenced = false;
-				g_time_to_wake_up = (time_t)(g_evteng_loaded_start_epoch - 15); // Wake up before the event starts
+					atomic_write_time(&g_time_to_wake_up, (time_t)(startTime - 15)); // Wake up before the event starts
 				g_sleepType = SLEEP_UNTIL_START_TIME;
 				g_evteng_sleepshutdown_seconds = 300;
 			}
@@ -4096,8 +4103,7 @@ void suspendEvent()
 		time_t start_epoch;
 		time_t finish_epoch;
 		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-		g_evteng_loaded_start_epoch = start_epoch;
-		g_evteng_loaded_finish_epoch = finish_epoch;
+			atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
 	}
 	powerToTransmitter(OFF);
 	g_sleepType = SLEEP_FOREVER; /* Prevent the clock from restarting an event that is in progress */
@@ -4456,7 +4462,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 					atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
 					if(event_start_epoch == event_finish_epoch)
 					{
-						g_evteng_loaded_start_epoch = g_evteng_loaded_finish_epoch = event_start_epoch; // preserve the start = finish flag
+							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_start_epoch); // preserve the start = finish flag
 					}
 				}
 		}
@@ -4521,8 +4527,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				time_t loaded_start_epoch;
 				time_t loaded_finish_epoch;
 				atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-				g_evteng_loaded_start_epoch = loaded_start_epoch;
-				g_evteng_loaded_finish_epoch = loaded_finish_epoch;
+					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
 				g_evteng_run_event_until_canceled = false;
 				EC ec = activateEventEngineUsingCurrentSettings(&sc, loaded_start_epoch, loaded_finish_epoch);
 			if(ec == ERROR_CODE_NO_ERROR)
