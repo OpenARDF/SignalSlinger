@@ -158,6 +158,7 @@ static volatile SleepType g_sleepType = SLEEP_FOREVER;
 static volatile time_t g_seconds_since_wakeup = 0;
 static volatile bool g_foreground_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
+static volatile bool g_foreground_enable_serialbus = false;
 static volatile bool g_charge_battery = false;
 static volatile bool g_turn_on_fan = false;
 static volatile bool g_foreground_report_settings = false;
@@ -1015,7 +1016,7 @@ ISR(PORTD_PORT_vect)
 		}
 		else if(!sb_enabled())
 		{
-			serialbus_init(SB_BAUD, SERIALBUS_USART);
+			g_foreground_enable_serialbus = true;
 		}
 		
 		g_evteng_sleepshutdown_seconds = 300;
@@ -1051,6 +1052,8 @@ ISR(PORTC_PORT_vect)
 
 bool switchIsClosed(void)
 {
+	/* Intentionally re-prime the debounce history so stale samples from earlier runtime
+	 * do not affect this wake-qualification check. */
 	debounce();
 	debounce();
 	debounce();
@@ -1062,7 +1065,6 @@ bool switchIsClosed(void)
 int main(void)
 {
 	bool buttonHeldClosed = true;
-	bool buttonReleasedDuringStartup = false;
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
 	static bool start_event_after_keydown = false;
@@ -1095,7 +1097,7 @@ int main(void)
 					
 	LEDS.blink(LEDS_RED_ON_CONSTANT);
 	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-	g_button_hold_countdown = 1000;
+	atomic_write_u16(&g_button_hold_countdown, 1000);
 	
 	while(util_delay_ms(2500)); /* Avoid possible race conditions with peripheral devices powering up */
 	
@@ -1146,8 +1148,6 @@ int main(void)
 
 	g_evteng_sleepshutdown_seconds = 300;
 				
-	buttonReleasedDuringStartup = false;
-	
 	/* Disable automatic ADC readings */
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0; /* Disable timer */
@@ -1171,18 +1171,27 @@ int main(void)
 
 	while(1) 
 	{
+		if(g_foreground_enable_serialbus)
+		{
+			g_foreground_enable_serialbus = false;
+			if(!sb_enabled())
+			{
+				serialbus_init(SB_BAUD, SERIALBUS_USART);
+			}
+		}
+
 		if(g_foreground_check_for_long_wakeup_press)
 		{
 			buttonHeldClosed = switchIsClosed();
 			
-			if(!buttonHeldClosed || buttonReleasedDuringStartup) /* Pushbutton released early; go back to sleep */
+			if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
 			{				
 				g_go_to_sleep_now = true;
 				g_foreground_check_for_long_wakeup_press = false;
-				g_foreground_handle_counted_presses = 0;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 				LEDS.blink(LEDS_OFF);
 			}
-			else if(!g_button_hold_countdown) /* Pushbutton held down long enough; power up */
+			else if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
 			{
 				LEDS.init();
 				g_long_button_press = false;
@@ -1512,8 +1521,8 @@ int main(void)
 				
 					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~5 secs) for us to consider it 
 					{
-						g_button_hold_countdown = 1000;
-						g_foreground_handle_counted_presses = 0;
+						atomic_write_u16(&g_button_hold_countdown, 1000);
+						atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 					
 						if((g_sleepType == SLEEP_UNTIL_START_TIME) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN)) /* User woke up the transmitter early, before transmissions were to start */
 						{
@@ -1565,19 +1574,20 @@ int main(void)
 			}
 
 			
-			if(g_foreground_handle_counted_presses)
+			uint16_t counted_presses = atomic_exchange_u16(&g_foreground_handle_counted_presses, 0);
+			if(counted_presses)
 			{				
 				if(g_send_clone_success_countdown || g_cloningInProgress)
 				{
 					g_send_clone_success_countdown = 0;
 					g_cloningInProgress = false;
 					g_programming_msg_throttle = 0;
-					g_foreground_handle_counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
+					counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
 				}
 
 				if(g_isMaster)
 				{
-					if(g_foreground_handle_counted_presses == 5)
+					if(counted_presses == 5)
 					{
 						if(g_key_down_countdown)
 						{
@@ -1606,14 +1616,14 @@ int main(void)
 						LEDS.blink(LEDS_RED_OFF);
 						text_buff_reset_atomic();					
 					}
-					else if (g_foreground_handle_counted_presses == 9) // Perform software reset
+					else if (counted_presses == 9) // Perform software reset
 					{
 						RSTCTRL_reset();
 					}
 				}
 				else // not Master
 				{
-					if(g_foreground_handle_counted_presses == 1)
+					if(counted_presses == 1)
 					{
 						if(!g_cloningInProgress && g_device_enabled)
 						{
@@ -1807,7 +1817,7 @@ int main(void)
 							}
 						}
 					}
-					else if (g_foreground_handle_counted_presses == 3)
+					else if (counted_presses == 3)
 					{
 						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
@@ -1851,7 +1861,7 @@ int main(void)
 							suspendEvent();	
 						}
 					}
-					else if (g_foreground_handle_counted_presses == 5)
+					else if (counted_presses == 5)
 					{
 						g_isMaster = true;
 						g_evteng_event_commenced = false;
@@ -1877,7 +1887,7 @@ int main(void)
 							g_foreground_reset_after_demo = false;
 						}
 					}
-					else if(g_foreground_handle_counted_presses == 7)
+					else if(counted_presses == 7)
 					{
 						if(!g_device_enabled)
 						{
@@ -1891,7 +1901,6 @@ int main(void)
 					}
 				}
 			
-				g_foreground_handle_counted_presses = 0;
 			}
 			
 					
@@ -2079,7 +2088,7 @@ int main(void)
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
-				g_foreground_handle_counted_presses = 0;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 				LEDS.blink(LEDS_OFF);
 				g_send_clone_success_countdown = 0;
 				g_cloningInProgress = false;

@@ -73,6 +73,16 @@ static inline void atomic_write_u16(volatile uint16_t* dst, uint16_t value)
 	EXIT_CRITICAL(shared_u16_write);
 }
 
+static inline uint16_t atomic_exchange_u16(volatile uint16_t* dst, uint16_t value)
+{
+	uint16_t prev;
+	ENTER_CRITICAL(shared_u16_exchange);
+	prev = *dst;
+	*dst = value;
+	EXIT_CRITICAL(shared_u16_exchange);
+	return prev;
+}
+
 static inline bool text_buff_empty_atomic(void)
 {
 	bool is_empty;
