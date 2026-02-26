@@ -83,6 +83,16 @@ static inline uint16_t atomic_exchange_u16(volatile uint16_t* dst, uint16_t valu
 	return prev;
 }
 
+static inline void atomic_max_u16(volatile uint16_t* dst, uint16_t min_value)
+{
+	ENTER_CRITICAL(shared_u16_max);
+	if(*dst < min_value)
+	{
+		*dst = min_value;
+	}
+	EXIT_CRITICAL(shared_u16_max);
+}
+
 static inline bool text_buff_empty_atomic(void)
 {
 	bool is_empty;

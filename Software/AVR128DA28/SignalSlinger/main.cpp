@@ -387,7 +387,7 @@ void handle_1sec_tasks(void)
 					g_evteng_event_commenced = false;
 					LEDS.init();
 					g_days_run++;
-					g_evteng_sleepshutdown_seconds = 3;
+					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
 					
 					if(!g_enable_external_battery_control) setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
 				
@@ -498,11 +498,11 @@ void handle_1sec_tasks(void)
 		{
  			if(g_isMaster || g_cloningInProgress)
  			{
-	 			g_evteng_sleepshutdown_seconds = 300; /* Never sleep while cloning or while master */
+	 			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep while cloning or while master */
  			}
 			else if(g_evteng_event_commenced && g_evteng_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (getFoxSetting() != FREQUENCY_TEST_BEACON))
 			{
-				g_evteng_sleepshutdown_seconds = 300; /* Never sleep during active transmissions */
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep during active transmissions */
 			}
 			else
 			{
@@ -1019,7 +1019,7 @@ ISR(PORTD_PORT_vect)
 			g_foreground_enable_serialbus = true;
 		}
 		
-		g_evteng_sleepshutdown_seconds = 300;
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	}
 	
 	VPORTD.INTFLAGS = 0xFF; /* Clear all flags */
@@ -1042,8 +1042,8 @@ ISR(PORTC_PORT_vect)
 			g_go_to_sleep_now = false;
 			g_sleeping = false;
 			g_awakenedBy = AWAKENED_BY_SERIAL_PORT;	
-			serialbus_init(SB_BAUD, SERIALBUS_USART);		
-			g_evteng_sleepshutdown_seconds = 300;
+			g_foreground_enable_serialbus = true;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 		}
 	}
 	
@@ -1146,7 +1146,7 @@ int main(void)
 	g_foreground_start_event = g_device_enabled && loadedEventShouldBeEnabled(); /* Start any event stored in EEPROM */
 	sb_send_NewPrompt();
 
-	g_evteng_sleepshutdown_seconds = 300;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 				
 	/* Disable automatic ADC readings */
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */
@@ -1213,9 +1213,9 @@ int main(void)
 					g_foreground_start_event = true;
 				}
 				
-				g_demo_event_countdown = 0;
+				atomic_write_u16(&g_demo_event_countdown, 0);
 				g_foreground_reset_after_demo = false;
-				g_key_down_countdown = 0;
+				atomic_write_u16(&g_key_down_countdown, 0);
 				g_foreground_reset_after_keydown = false;
 
 				configRedLEDforEvent();
@@ -1279,7 +1279,7 @@ int main(void)
 				setCoolingFanLSEnable(ON); // should already be on
 				suspendEvent();
 				sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
-				g_evteng_sleepshutdown_seconds = 300;
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 				g_thermal_shutdown = false; // It will probably be activated several times before sufficiently cool
 			}
 			else
@@ -1326,7 +1326,7 @@ int main(void)
 					{
 						enterSleep = false;
 						g_go_to_sleep_now = false;
-						g_evteng_sleepshutdown_seconds = 300; // check again later
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // check again later
 					}
 				} 
 				
@@ -1421,9 +1421,9 @@ int main(void)
 					powerToTransmitter(OFF);
 					if(!g_enable_external_battery_control) setExtBatLoadSwitch(OFF, INITIALIZE_LS);
 				
-					g_demo_event_countdown = 0;
+					atomic_write_u16(&g_demo_event_countdown, 0);
 					g_foreground_reset_after_demo = false;
-					g_key_down_countdown = 0;
+					atomic_write_u16(&g_key_down_countdown, 0);
 					g_foreground_reset_after_keydown = false;
 
 					DISABLE_INTERRUPTS();
@@ -1517,7 +1517,7 @@ int main(void)
 						while(util_delay_ms(2000));
 					}
 				
-					g_evteng_sleepshutdown_seconds = 300;
+					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 				
 					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~5 secs) for us to consider it 
 					{
@@ -1534,12 +1534,12 @@ int main(void)
 					else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT) // Similar to being awakened by a button press, but without the 5-second "hold down the button" timing constraint
 					{
 						LEDS.init();
-						g_evteng_sleepshutdown_seconds = MAX(300U, g_evteng_sleepshutdown_seconds);
+						atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
 						if(!g_cloningInProgress && !g_meshmode)
 						{
 							configRedLEDforEvent();
 							LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-							g_report_settings_countdown = 100;
+							atomic_write_u16(&g_report_settings_countdown, 100);
 						}
 					}
 					else // Awakened by = AWAKENED_BY_CLOCK (AWAKENED_INIT and POWER_UP_START should not be possibilities here)
@@ -1577,11 +1577,11 @@ int main(void)
 			uint16_t counted_presses = atomic_exchange_u16(&g_foreground_handle_counted_presses, 0);
 			if(counted_presses)
 			{				
-				if(g_send_clone_success_countdown || g_cloningInProgress)
+				if(atomic_read_u16(&g_send_clone_success_countdown) || g_cloningInProgress)
 				{
-					g_send_clone_success_countdown = 0;
+					atomic_write_u16(&g_send_clone_success_countdown, 0);
 					g_cloningInProgress = false;
-					g_programming_msg_throttle = 0;
+					atomic_write_u16(&g_programming_msg_throttle, 0);
 					counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
 				}
 
@@ -1589,30 +1589,30 @@ int main(void)
 				{
 					if(counted_presses == 5)
 					{
-						if(g_key_down_countdown)
+						if(atomic_read_u16(&g_key_down_countdown))
 						{
-							g_key_down_countdown = 0;
+							atomic_write_u16(&g_key_down_countdown, 0);
 							LEDS.setRed(OFF);
 							keyTransmitter(OFF);
 							powerToTransmitter(OFF);
 						}
 						
-						if(g_demo_event_countdown)
+						if(atomic_read_u16(&g_demo_event_countdown))
 						{
-							g_demo_event_countdown = 0;
+							atomic_write_u16(&g_demo_event_countdown, 0);
 							LEDS.setRed(OFF);
 							keyTransmitter(OFF);
 							powerToTransmitter(OFF);
 						}
 
-						isMasterCountdownSeconds = 0;
-						g_evteng_sleepshutdown_seconds = 300;
+						atomic_write_u16(&isMasterCountdownSeconds, 0);
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 						sb_send_NewPrompt();
 						g_evteng_event_commenced = false;
 						g_foreground_start_event = true;
 						g_cloningInProgress = false;
-						g_programming_countdown = 0;
-						g_send_clone_success_countdown = 0;
+						atomic_write_u16(&g_programming_countdown, 0);
+						atomic_write_u16(&g_send_clone_success_countdown, 0);
 						LEDS.blink(LEDS_RED_OFF);
 						text_buff_reset_atomic();					
 					}
@@ -1629,7 +1629,7 @@ int main(void)
 						{
 							if(getFoxSetting() == FREQUENCY_TEST_BEACON)
 							{
-								g_evteng_sleepshutdown_seconds = 300;
+								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 								if(!txIsInitialized())
 								{
 									if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
@@ -1674,16 +1674,16 @@ int main(void)
 											/* Implement special behavior if an event is scheduled to commence in the future: have a single button press toggle between
 											 * transmitting and slow blinking. But, in either case, the transmitter should eventually go to sleep and awaken at the
 											 * appointed time for the future event */
-											if(g_key_down_countdown)
+											if(atomic_read_u16(&g_key_down_countdown))
 											{
-												g_key_down_countdown = 0;
+												atomic_write_u16(&g_key_down_countdown, 0);
 												g_foreground_reset_after_keydown = false;
 												inc = 1;
 											}
 											
-											if(g_demo_event_countdown)
+											if(atomic_read_u16(&g_demo_event_countdown))
 											{
-												g_demo_event_countdown = 0;
+												atomic_write_u16(&g_demo_event_countdown, 0);
 												g_foreground_reset_after_demo = false;
 												inc = 2;
 											}
@@ -1694,9 +1694,9 @@ int main(void)
 										{
 											suspendEvent();
 #ifdef TEST_MODE_SOFTWARE
-											g_key_down_countdown = 36000; // 120 seconds
+											atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
 #else
-											g_key_down_countdown = 9000; // 30 seconds
+											atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 											{
@@ -1717,11 +1717,11 @@ int main(void)
 											
 											if(g_evteng_on_air_seconds < 30)
 											{
-												g_demo_event_countdown = g_evteng_on_air_seconds * 300; // transmit seconds
+												atomic_write_u16(&g_demo_event_countdown, g_evteng_on_air_seconds * 300); // transmit seconds
 											}
 											else
 											{
-												g_demo_event_countdown = 9000; // 30 seconds
+												atomic_write_u16(&g_demo_event_countdown, 9000); // 30 seconds
 											}
 											
 											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
@@ -1765,15 +1765,15 @@ int main(void)
 										break;
 									}
 
-									g_evteng_sleepshutdown_seconds = 300; // Sleep after 5 minutes
+									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // Sleep after 5 minutes
 								}
 								else // No event scheduled for the future (one might be in progress, or non is scheduled at all)
 								{
 									suspendEvent();
 
-									if(g_demo_event_countdown)
+									if(atomic_read_u16(&g_demo_event_countdown))
 										{
-											g_demo_event_countdown = 0;
+											atomic_write_u16(&g_demo_event_countdown, 0);
 											g_foreground_reset_after_demo = false;
 											// Restore saved event start and finish times (though they are not needed for non-timed events)
 											{
@@ -1784,9 +1784,9 @@ int main(void)
 											}
 										}
 									
-									if(g_key_down_countdown)
+									if(atomic_read_u16(&g_key_down_countdown))
 									{
-										g_key_down_countdown = 0; // Cancel countdown
+										atomic_write_u16(&g_key_down_countdown, 0); // Cancel countdown
 										g_foreground_reset_after_keydown = false;
 										g_event_launched_by_user_action = true;
 										LEDS.init();
@@ -1798,9 +1798,9 @@ int main(void)
 									else 
 									{
 #ifdef TEST_MODE_SOFTWARE
-										g_key_down_countdown = 36000; // 120 seconds
+										atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
 #else
-										g_key_down_countdown = 9000; // 30 seconds
+										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 										start_event_after_keydown = true;
 										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
@@ -1821,16 +1821,16 @@ int main(void)
 					{
 						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 					
-						if(g_key_down_countdown)
+						if(atomic_read_u16(&g_key_down_countdown))
 						{
 							start_event_after_keydown = false; 
-							g_key_down_countdown = 0;
+							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
 						}
 						
-						if(g_demo_event_countdown)
+						if(atomic_read_u16(&g_demo_event_countdown))
 						{
-							g_demo_event_countdown = 0;
+							atomic_write_u16(&g_demo_event_countdown, 0);
 							g_foreground_reset_after_demo = false;
 						}
 
@@ -1846,14 +1846,14 @@ int main(void)
 									if((g_evteng_event_enabled && g_evteng_event_commenced)) // if it is currently running, stop it
 									{
 										suspendEvent();
-										g_evteng_sleepshutdown_seconds = 300;
+										atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 									}
 								}
 								else // the event is scheduled for the future, so set it up to start (transmissions will stop for now)
 								{
 									suspendEvent();
 									startEventUsingRTC();
-									g_evteng_sleepshutdown_seconds = 300;
+									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 								}
 						}
 						else
@@ -1865,25 +1865,25 @@ int main(void)
 					{
 						g_isMaster = true;
 						g_evteng_event_commenced = false;
-						isMasterCountdownSeconds = 600; /* Remain Master for 10 minutes */
-						g_evteng_sleepshutdown_seconds = 720;
+						atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720);
 									
 						g_cloningInProgress = false;
-						g_programming_countdown = 0;
-						g_send_clone_success_countdown = 0;
+						atomic_write_u16(&g_programming_countdown, 0);
+						atomic_write_u16(&g_send_clone_success_countdown, 0);
 						LEDS.init();
 						text_buff_reset_atomic();
 						
-						if(g_key_down_countdown)
+						if(atomic_read_u16(&g_key_down_countdown))
 						{
 							start_event_after_keydown = false; 
-							g_key_down_countdown = 0;
+							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
 						}
 						
-						if(g_demo_event_countdown)
+						if(atomic_read_u16(&g_demo_event_countdown))
 						{
-							g_demo_event_countdown = 0;
+							atomic_write_u16(&g_demo_event_countdown, 0);
 							g_foreground_reset_after_demo = false;
 						}
 					}
@@ -1928,7 +1928,7 @@ int main(void)
 					}
 					
 					LEDS.init();
-					g_evteng_sleepshutdown_seconds = 300;
+					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 					if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS);  // Turn on power to externally-controlled device
 				}
 			}
@@ -1971,9 +1971,9 @@ int main(void)
 			
 				if(text_buff_empty_atomic())
 				{
-					if(!g_key_down_countdown && !g_demo_event_countdown)
+					if(!atomic_read_u16(&g_key_down_countdown) && !atomic_read_u16(&g_demo_event_countdown))
 					{
-						if(g_send_clone_success_countdown)
+						if(atomic_read_u16(&g_send_clone_success_countdown))
 						{
 							LEDS.sendCode((char*)"X ");
 						}
@@ -1988,11 +1988,11 @@ int main(void)
 					g_enable_manual_transmissions = true; /* There is only one consumer of g_text_buff so it is always OK to enable manual transmissions */
 				}
 
-				if(!isMasterCountdownSeconds)
+				if(!atomic_read_u16(&isMasterCountdownSeconds))
 				{
 					g_isMaster = false;
-					g_evteng_sleepshutdown_seconds = 300; /* Ensure sleep occurs */
-					g_send_clone_success_countdown = 0;
+					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Ensure sleep occurs */
+					atomic_write_u16(&g_send_clone_success_countdown, 0);
 					g_foreground_start_event = loadedEventShouldBeEnabled(); /* Start any event stored in EEPROM */
 					LEDS.init();
 				}
@@ -2001,7 +2001,7 @@ int main(void)
 			{
 				handleSerialBusMsgs();
 			
-				if(g_cloningInProgress && !g_programming_countdown) // Cloning timed out
+				if(g_cloningInProgress && !atomic_read_u16(&g_programming_countdown)) // Cloning timed out
 				{
 					g_cloningInProgress = false;
 				}
@@ -2025,13 +2025,13 @@ int main(void)
 						{
 							LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
 						}
-						else if(g_cloningInProgress || g_key_down_countdown)
+						else if(g_cloningInProgress || atomic_read_u16(&g_key_down_countdown))
 						{
 							LEDS.blink(LEDS_RED_ON_CONSTANT, true);
 						}
 						else if(!g_evteng_event_commenced)
 						{
-							if(g_send_clone_success_countdown)
+							if(atomic_read_u16(&g_send_clone_success_countdown))
 							{
 								LEDS.sendCode((char*)"X ");
 							}
@@ -2090,9 +2090,9 @@ int main(void)
 				g_foreground_check_for_long_wakeup_press = false;
 				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 				LEDS.blink(LEDS_OFF);
-				g_send_clone_success_countdown = 0;
+				atomic_write_u16(&g_send_clone_success_countdown, 0);
 				g_cloningInProgress = false;
-				g_programming_msg_throttle = 0;
+				atomic_write_u16(&g_programming_msg_throttle, 0);
 				
 				{
 					time_t loaded_start_epoch;
@@ -2117,7 +2117,7 @@ int main(void)
 			
 			if(g_foreground_reset_after_demo)
 			{
-				g_demo_event_countdown = 0;
+				atomic_write_u16(&g_demo_event_countdown, 0);
 				g_foreground_reset_after_demo = false;
 				
 				suspendEvent();
@@ -2137,7 +2137,7 @@ int main(void)
 
 			if(g_foreground_reset_after_keydown)
 			{
-				g_key_down_countdown = 0;
+				atomic_write_u16(&g_key_down_countdown, 0);
 				g_foreground_reset_after_keydown = false;
  					
 				suspendEvent();
@@ -2177,7 +2177,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 	{
 		bool suppressResponse = false;
 		
-		g_evteng_sleepshutdown_seconds = MAX(300U, g_evteng_sleepshutdown_seconds);
+		atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
 		LEDS.blink(LEDS_NO_CHANGE, true);
 
 		SBMessageID msg_id = sb_buff->id;
@@ -2230,7 +2230,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_SET_FOX:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				int c1 = (int)(sb_buff->fields[SB_FIELD1][0]);
 				int c2 = (int)(sb_buff->fields[SB_FIELD1][1]);
 				
@@ -2422,7 +2422,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_SLP:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(sb_buff->fields[SB_FIELD1][0])
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == '0')    
@@ -2436,7 +2436,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					else
 					{
 //						g_sleepType = SLEEP_FOREVER;
-						g_evteng_sleepshutdown_seconds = 3;
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
 					}
 				}
 				else
@@ -2450,7 +2450,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_TX_FREQ:
 			{
 				uint8_t printFreq = 0;
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				char freqTier = sb_buff->fields[SB_FIELD1][0];
 				char buf[TEMP_STRING_SIZE];
 				
@@ -2490,7 +2490,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_event_checksum += f;
 					
 							sb_send_string((char*)"FRE\n");
-							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 						}
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f)) // set freq based on first argument
@@ -2683,7 +2683,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				
 			case SB_MESSAGE_PATTERN:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(g_cloningInProgress)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] && sb_buff->fields[SB_FIELD2][0])
@@ -2696,7 +2696,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 					
 						sb_send_string((char*)"PAT\n");
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 				else
@@ -2740,7 +2740,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_KEY:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 
 				if(g_device_enabled)
 				{
@@ -2748,7 +2748,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						if(sb_buff->fields[SB_FIELD1][0] == '0')    
 						{
-							g_key_down_countdown = 0;
+							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = true;
 							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string((char*)"* KEY UP\n");
@@ -2765,14 +2765,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								}
 							}
 							
-							g_key_down_countdown = 9000;
+							atomic_write_u16(&g_key_down_countdown, 9000);
 							LEDS.init();
 							LEDS.setRed(ON);
 							keyTransmitter(ON);
 							if(!g_meshmode) sb_send_NewLine();
 							sb_send_string((char*)"* KEY DOWN\n");
 
-							g_evteng_sleepshutdown_seconds = 300; // Shut things down after 5 minutes
+							atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // Shut things down after 5 minutes
 						}
 					}
 				}
@@ -2787,7 +2787,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				if(g_cloningInProgress || g_isMaster) break;
 				
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				
 				if(g_device_enabled)
 				{
@@ -2879,7 +2879,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_SET_STATION_ID:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(sb_buff->fields[SB_FIELD1][0])
 				{
 					int len = 0;
@@ -2922,7 +2922,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(g_cloningInProgress)
 				{
 					sb_send_string((char*)"ID\n");
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 				else
 				{
@@ -2941,7 +2941,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_CODE_SETTINGS:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				char c = sb_buff->fields[SB_FIELD1][0];
 				char x = sb_buff->fields[SB_FIELD2][0];
 
@@ -3033,11 +3033,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'P')
 					{
-						if(!g_send_clone_success_countdown)
+						if(!atomic_read_u16(&g_send_clone_success_countdown))
 						{
 							g_cloningInProgress = true;
 							suspendEvent();
-							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum = 0;
 							sb_send_string((char*)"MAS\n");
 						}
@@ -3046,11 +3046,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
 						g_cloningInProgress = false;
-						g_programming_countdown = 0;
+						atomic_write_u16(&g_programming_countdown, 0);
 						if(sum == atomic_read_u32(&g_event_checksum))
 						{
 							sb_send_string((char*)"MAS ACK\n");
-							g_send_clone_success_countdown = 18000;
+							atomic_write_u16(&g_send_clone_success_countdown, 18000);
 							setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
 						}
 						else
@@ -3065,8 +3065,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if((sb_buff->fields[SB_FIELD1][0] == 'M') || (sb_buff->fields[SB_FIELD1][0] == '1'))
 							{
  								g_isMaster = true;
-								g_evteng_sleepshutdown_seconds = 720;
-								isMasterCountdownSeconds = 600; /* Remain Master for 10 minutes */
+								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720);
+								atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 							}
 						}
 					}
@@ -3076,7 +3076,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_EVENT:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(g_cloningInProgress)
 				{
 					char c = sb_buff->fields[SB_FIELD1][0];
@@ -3103,7 +3103,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 								
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void*)&g_event);
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += c;
 					sb_send_string((char*)"EVT\n");
 				}
@@ -3231,7 +3231,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
  			case SB_MESSAGE_FUNCTION:
  			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				char fun = sb_buff->fields[SB_FIELD1][0];
 				
 				if(fun)
@@ -3259,7 +3259,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							 
 				if(g_cloningInProgress)
 				{
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += 'A';
 					sprintf(g_tempStr, "FUN A\n");
 					sb_send_string(g_tempStr);
@@ -3273,7 +3273,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_CLOCK:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				char f1 = sb_buff->fields[SB_FIELD1][0];
 				
 				if(!f1 || f1 == 'T')   /* Current time format "YYMMDDhhmmss" */
@@ -3309,7 +3309,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							 
 							if(g_cloningInProgress)
 							{
-								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += t;
 								sprintf(g_tempStr, "CLK T %lu\n", t);
 								sb_send_string(g_tempStr);
@@ -3435,7 +3435,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								sb_send_string((char*)"CLK S\n");
-								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += s;
 							}
 								else
@@ -3520,7 +3520,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								sb_send_string((char*)"CLK F\n");
-								g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += f;
 							}
 							else
@@ -3583,7 +3583,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(g_cloningInProgress)
 						{
 							sb_send_string((char*)"CLK D\n");
-							g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum += g_days_to_run;
 							}
 							else
@@ -3622,7 +3622,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 			case SB_MESSAGE_BATTERY:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				char txt[6];
 
 				if(sb_buff->fields[SB_FIELD1][0] == 'T')
@@ -3715,7 +3715,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_VER:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(!g_cloningInProgress)
 				{
 					if(!g_meshmode)
@@ -3743,7 +3743,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			
 			case SB_MESSAGE_HELP:
 			{
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(!g_cloningInProgress && !g_meshmode)
 				{
 					reportSettings();
@@ -3756,25 +3756,25 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				if(!g_cloningInProgress && !g_meshmode)
 				{
-					g_report_settings_countdown = 100;
+					atomic_write_u16(&g_report_settings_countdown, 100);
 				}
 			}
 			break;
 
 			default:
 			{
-				if(!g_cloningInProgress && !g_report_settings_countdown && !g_meshmode)
+				if(!g_cloningInProgress && !atomic_read_u16(&g_report_settings_countdown) && !g_meshmode)
 				{
 					sb_send_string(HELP_TEXT_TXT);
 				}
 								
-				g_report_settings_countdown = 0;
+				atomic_write_u16(&g_report_settings_countdown, 0);
 			}
 			break;
 		}
 
 		sb_buff->id = SB_MESSAGE_EMPTY;
-		if(!g_cloningInProgress && !suppressResponse && !g_report_settings_countdown && !g_meshmode)
+		if(!g_cloningInProgress && !suppressResponse && !atomic_read_u16(&g_report_settings_countdown) && !g_meshmode)
 		{
 			sb_send_NewLine();
 			sb_send_NewPrompt();
@@ -3806,7 +3806,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	{
 		g_sleepType = SLEEP_FOREVER;
 			atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
-		g_evteng_sleepshutdown_seconds = 300;
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 		return(false); /* completed events are never enabled */
 	}
 
@@ -3837,7 +3837,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
 		g_sleepType = SLEEP_AFTER_EVENT;
-		g_evteng_sleepshutdown_seconds = 300;
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 		return( true);
 	}
 
@@ -4036,7 +4036,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 					atomic_write_time(&g_time_to_wake_up, now); // Don't sleep during the first cycle
 				g_sleepType = SLEEP_AFTER_EVENT;
 				
-				g_evteng_sleepshutdown_seconds = 300;
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
 				if(powerToTransmitter(turnOnTransmitter) != ERROR_CODE_NO_ERROR)
 				{
@@ -4058,7 +4058,7 @@ EC activateEventEngineUsingCurrentSettings(SC* statusCode, time_t startTime, tim
 				g_evteng_event_commenced = false;
 					atomic_write_time(&g_time_to_wake_up, (time_t)(startTime - 15)); // Wake up before the event starts
 				g_sleepType = SLEEP_UNTIL_START_TIME;
-				g_evteng_sleepshutdown_seconds = 300;
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 			}
 		}
 	}
@@ -4076,7 +4076,7 @@ void suspendEvent()
 	g_evteng_on_the_air = 0;           /* stop transmitting */
 	g_evteng_event_commenced = false;  /* get things stopped immediately */
 	g_evteng_run_event_until_canceled = false;
-	g_evteng_sleepshutdown_seconds = 300;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	{
 		time_t start_epoch;
 		time_t finish_epoch;
@@ -4198,7 +4198,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	bool delayNotSet = true;
 	
 	g_evteng_run_event_until_canceled = false;
-	g_evteng_sleepshutdown_seconds = 300;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	
 	if(fox == USE_CURRENT_FOX)
 	{
@@ -4381,7 +4381,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;	/* wait 10 minutes send the ID */
 			g_evteng_on_air_seconds = 600;								/* on period 10 minutes */
 			g_evteng_off_air_seconds = 0;								/* off period is very short */
-			g_evteng_sleepshutdown_seconds = 300;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 		}
 		break;
 		
@@ -4467,7 +4467,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		}
 		
 		loadCurrentPatternMorse(NULL, CALLER_AUTOMATED_EVENT);
-		g_evteng_sleepshutdown_seconds = 300;
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
 		g_event_launched_by_user_action = true;
 		LEDS.blink(LEDS_RED_OFF);
@@ -4490,7 +4490,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_evteng_event_commenced = true;	
 		g_evteng_event_enabled = true;	
 		
-		g_evteng_sleepshutdown_seconds = 300;
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	}
 	else         /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
@@ -5499,11 +5499,11 @@ Frequency_Hz getFrequencySetting(void)
 
 void handleSerialCloning(void)
 {
-	if(g_programming_countdown == 0)
+	if(atomic_read_u16(&g_programming_countdown) == 0)
 	{
 		g_programming_state = SYNC_Searching_for_slave;
 		g_cloningInProgress = false;
-		g_programming_countdown = -1;
+		atomic_write_u16(&g_programming_countdown, (uint16_t)-1);
 	}
 	
 	SerialbusRxBuffer* sb_buff = nextFullSBRxBuffer();
@@ -5511,16 +5511,16 @@ void handleSerialCloning(void)
 	
 	if(sb_buff)
 	{
-		isMasterCountdownSeconds = 600; /* Extend Master time */
+		atomic_write_u16(&isMasterCountdownSeconds, 600); /* Extend Master time */
 		LEDS.init(); /* Extend or resume LED operation */
 	}
 	
-	if(!g_programming_msg_throttle)
+	if(!atomic_read_u16(&g_programming_msg_throttle))
 	{
 		if(!g_cloningInProgress)
 		{
 			sb_send_master_string((char*)"MAS P\n"); /* Set slave to active cloning state */
-			g_programming_msg_throttle = 600;
+			atomic_write_u16(&g_programming_msg_throttle, 600);
 			g_programming_state = SYNC_Searching_for_slave;
 		}
 	}
@@ -5539,8 +5539,8 @@ void handleSerialCloning(void)
 					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
 					sb_send_master_string(g_tempStr);
 					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}			
 		}
@@ -5557,8 +5557,8 @@ void handleSerialCloning(void)
 					g_event_checksum += 'A';
 					g_seconds_transition = false;
 					g_programming_state = SYNC_Align_to_Second_Transition;
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}
@@ -5574,8 +5574,8 @@ void handleSerialCloning(void)
 				sprintf(g_tempStr, "CLK T %lu\n", now); /* Set slave's RTC */
 				sb_send_master_string(g_tempStr);
 				g_programming_state = SYNC_Waiting_for_CLK_T_reply;
-				g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-				g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+				atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+				atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 			}
 		}
 		break;
@@ -5595,8 +5595,8 @@ void handleSerialCloning(void)
 							g_programming_state = SYNC_Waiting_for_CLK_S_reply;
 	 						sprintf(g_tempStr, "CLK S %lu\n", event_start_epoch);
 	 						sb_send_master_string(g_tempStr);
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5617,8 +5617,8 @@ void handleSerialCloning(void)
 							g_programming_state = SYNC_Waiting_for_CLK_F_reply;
 	 						sprintf(g_tempStr, "CLK F %lu\n", event_finish_epoch);
 	 						sb_send_master_string(g_tempStr);
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5638,8 +5638,8 @@ void handleSerialCloning(void)
 						g_programming_state = SYNC_Waiting_for_CLK_D_reply;
  						sprintf(g_tempStr, "CLK D %d\n", g_days_to_run);
  						sb_send_master_string(g_tempStr);
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5655,7 +5655,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'D')
 					{
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 						g_programming_state = SYNC_Waiting_for_ID_reply;
 						
 						char* ptr1=NULL;
@@ -5692,7 +5692,7 @@ void handleSerialCloning(void)
 						}
  
 						sb_send_master_string(g_tempStr);
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5710,8 +5710,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_ID_CodeSpeed_reply;
 					sprintf(g_tempStr, "SPD I %u\n", g_evteng_id_codespeed);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}	
@@ -5732,8 +5732,8 @@ void handleSerialCloning(void)
 						g_event_checksum += g_evteng_pattern_codespeed;
 						sb_send_master_string(g_tempStr);
 						g_programming_state = SYNC_Waiting_for_Pattern_CodeSpeed_reply;
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5773,8 +5773,8 @@ void handleSerialCloning(void)
 						sprintf(g_tempStr, "EVT %c\n", c);
 						sb_send_master_string(g_tempStr); /* Set slave's event */
 						g_programming_state = SYNC_Waiting_for_EVT_reply;
-						g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-						g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					}
 				}
 			}
@@ -5793,8 +5793,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_NoEvent_Freq_reply;
 					sprintf(g_tempStr, "FRE X %lu\n", g_frequency);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}
@@ -5811,8 +5811,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_Freq_Low_reply;
 					sprintf(g_tempStr, "FRE L %lu\n", g_frequency_low);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}
@@ -5829,8 +5829,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_Freq_Med_reply;
 					sprintf(g_tempStr, "FRE M %lu\n", g_frequency_med);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}	
@@ -5847,8 +5847,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_Freq_Hi_reply;
 					sprintf(g_tempStr, "FRE H %lu\n", g_frequency_hi);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}	
@@ -5865,8 +5865,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_Freq_Beacon_reply;
 					sprintf(g_tempStr, "FRE B %lu\n", g_frequency_beacon);
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}	
@@ -5882,8 +5882,8 @@ void handleSerialCloning(void)
 					g_programming_state = SYNC_Waiting_for_ACK;
 					sprintf(g_tempStr, "MAS Q %lu\n", atomic_read_u32(&g_event_checksum));
 					sb_send_master_string(g_tempStr);
-					g_programming_msg_throttle = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
-					g_programming_countdown = PROGRAMMING_MESSAGE_TIMEOUT_PERIOD;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
 		}	
@@ -5899,15 +5899,15 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'A')
 					{
-						g_send_clone_success_countdown = 18000;
+						atomic_write_u16(&g_send_clone_success_countdown, 18000);
 					}
 					else
 					{
-						g_programming_msg_throttle = 0;
+						atomic_write_u16(&g_programming_msg_throttle, 0);
 						g_cloningInProgress = false;
 					}
 					
-					isMasterCountdownSeconds = 600; /* Extend Master time */
+					atomic_write_u16(&isMasterCountdownSeconds, 600); /* Extend Master time */
 					g_programming_state = SYNC_Searching_for_slave;
 				}
 			}
