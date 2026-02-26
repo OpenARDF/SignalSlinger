@@ -259,6 +259,9 @@
     <Compile Include="include\eeprommanager.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\globals.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\i2c.h">
       <SubType>compile</SubType>
     </Compile>
