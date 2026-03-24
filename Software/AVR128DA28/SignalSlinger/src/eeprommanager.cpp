@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#endif  /* ATMEL_STUDIO_7 */
+#endif /* ATMEL_STUDIO_7 */
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -47,93 +47,92 @@
  * Use "volatile" for globals shared between ISRs and foreground loop
  ************************************************************************/
 
-const struct EE_prom EEMEM EepromManager::ee_vars
-=
-{
-	0x00, // 	uint16_t eeprom_initialization_flag; 
-	0x00000000, // 	Guard
-	0x00000000, // 	time_t event_start_epoch;
-	0x00000000, // 	Guard
-	0x00000000, //  time_t event_finish_epoch; 
-	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
-	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",  // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
-	0x00000000, // 	Guard
-	"\0\0\0\0\0\0\0\0\0", // 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2]; 
-	0x00000000, // 	Guard
-	(Fox_t)0x00, // Fox_t fox_setting_none;
-	0x00000000, // 	Guard
-	(Fox_t)0x00, // Fox_t fox_setting_classic;
-	0x00000000, // 	Guard
-	(Fox_t)0x00, // Fox_t fox_setting_sprint;
-	0x00000000, // 	Guard
-	(Fox_t)0x00, // Fox_t fox_setting_foxoring;
-	0x00000000, // 	Guard
-	(Fox_t)0x00, // Fox_t fox_setting_blind;
-	0x00000000, // 	Guard
-	0x00, // 	uint8_t utc_offset; 
-	0x00000000, // 	Guard
-	0x00000000, // 	uint32_t rtty_offset; 
-	0x00000000, // 	Guard
-	0x0000, // 	uint16_t rf_power; 
-	0x00000000, // 	Guard
-	0x00, // 	uint8_t id_codespeed;
-	0x00000000, // 	Guard
-	0x00, // 	uint8_t pattern_codespeed;
-	0x00000000, // 	Guard
-	0x00, // 	uint8_t foxoring_pattern_codespeed;
-	0x00000000, // 	Guard
-	0x0000, // 	int16_t off_air_seconds; 
-	0x00000000, // 	Guard
-	0x0000, // 	int16_t on_air_seconds; 
-	0x00000000, // 	Guard
-	0x0000, // 	int16_t ID_period_seconds; 
-	0x00000000, // 	Guard
-	0x0000, // 	int16_t intra_cycle_delay_time; 
-	0x00000000, // 	Guard
-	(Event_t)0x00, // Event_t event_setting;
-	0x00000000, // 	Guard
-	0x00000000,  // uint32_t frequency;
-	0x00000000, // 	Guard
-	0x00000000,  // uint32_t frequency_low;
-	0x00000000, // 	Guard
-	0x00000000,	//	uint32_t frequency_med; 
-	0x00000000, // 	Guard
-	0x00000000,	// uint32_t frequency_hi;
-	0x00000000,	// 	Guard
-	0x00000000,	// uint32_t frequency_beacon;
-	0x00000000,	// 	Guard
-	0x00,		// 	uint8_t master_setting;
-	0x00000000, // 	Guard
-	0x00000000, //  float voltage_threshold
-	0x00000000, // 	Guard
-	0x0000,		//  uint16_t clock_calibration
-	0x00000000, //  Guard
-	0x00,       //  uint8_t days_to_run
-	0x00000000, //  Guard
-	0x0000,     // uint16_t i2c_failure_count;
-	0x00000000, //  Guard
-	0x00,       //  uint8_t function
-	0x00000000, //  Guard
-	0x00,       //  uint8_t enable_boost_regulator
-	0x00000000, //  Guard
-	0x00,       //  uint8_t enable_external_battery_control
-	0x00000000, //  Guard
-	0x00        //  uint8_t device_enabled
+const struct EE_prom EEMEM EepromManager::ee_vars =
+    {
+        0x00,                                         // 	uint16_t eeprom_initialization_flag;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	time_t event_start_epoch;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   //  time_t event_finish_epoch;
+        0x00000000,                                   // 	Guard
+        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
+        0x00000000,                                   // 	Guard
+        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
+        0x00000000,                                   // 	Guard
+        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
+        0x00000000,                                   // 	Guard
+        "\0\0\0\0\0\0\0\0\0",                         // 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
+        0x00000000,                                   // 	Guard
+        (Fox_t)0x00,                                  // Fox_t fox_setting_none;
+        0x00000000,                                   // 	Guard
+        (Fox_t)0x00,                                  // Fox_t fox_setting_classic;
+        0x00000000,                                   // 	Guard
+        (Fox_t)0x00,                                  // Fox_t fox_setting_sprint;
+        0x00000000,                                   // 	Guard
+        (Fox_t)0x00,                                  // Fox_t fox_setting_foxoring;
+        0x00000000,                                   // 	Guard
+        (Fox_t)0x00,                                  // Fox_t fox_setting_blind;
+        0x00000000,                                   // 	Guard
+        0x00,                                         // 	uint8_t utc_offset;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	uint32_t rtty_offset;
+        0x00000000,                                   // 	Guard
+        0x0000,                                       // 	uint16_t rf_power;
+        0x00000000,                                   // 	Guard
+        0x00,                                         // 	uint8_t id_codespeed;
+        0x00000000,                                   // 	Guard
+        0x00,                                         // 	uint8_t pattern_codespeed;
+        0x00000000,                                   // 	Guard
+        0x00,                                         // 	uint8_t foxoring_pattern_codespeed;
+        0x00000000,                                   // 	Guard
+        0x0000,                                       // 	int16_t off_air_seconds;
+        0x00000000,                                   // 	Guard
+        0x0000,                                       // 	int16_t on_air_seconds;
+        0x00000000,                                   // 	Guard
+        0x0000,                                       // 	int16_t ID_period_seconds;
+        0x00000000,                                   // 	Guard
+        0x0000,                                       // 	int16_t intra_cycle_delay_time;
+        0x00000000,                                   // 	Guard
+        (Event_t)0x00,                                // Event_t event_setting;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // uint32_t frequency;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // uint32_t frequency_low;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   //	uint32_t frequency_med;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // uint32_t frequency_hi;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   // uint32_t frequency_beacon;
+        0x00000000,                                   // 	Guard
+        0x00,                                         // 	uint8_t master_setting;
+        0x00000000,                                   // 	Guard
+        0x00000000,                                   //  float voltage_threshold
+        0x00000000,                                   // 	Guard
+        0x0000,                                       //  uint16_t clock_calibration
+        0x00000000,                                   //  Guard
+        0x00,                                         //  uint8_t days_to_run
+        0x00000000,                                   //  Guard
+        0x0000,                                       // uint16_t i2c_failure_count;
+        0x00000000,                                   //  Guard
+        0x00,                                         //  uint8_t function
+        0x00000000,                                   //  Guard
+        0x00,                                         //  uint8_t enable_boost_regulator
+        0x00000000,                                   //  Guard
+        0x00,                                         //  uint8_t enable_external_battery_control
+        0x00000000,                                   //  Guard
+        0x00                                          //  uint8_t device_enabled
 };
 
 /* default constructor */
 EepromManager::EepromManager()
 {
-}   /*EepromManager */
+} /*EepromManager */
 
 /* default destructor */
 EepromManager::~EepromManager()
 {
-}   /*~EepromManager */
+} /*~EepromManager */
 
 #include <inttypes.h>
 #include <avr/eeprom.h>
@@ -142,35 +141,43 @@ EepromManager::~EepromManager()
 typedef uint16_t eeprom_addr_t;
 
 // to write
-void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in) {
-	while (NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm);
+void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
+		;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint8_t*)(eeprom_addr_t)(MAPPED_EEPROM_START+index) = in;
+	*(uint8_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
-void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in) {
-	while (NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm);
+void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
+		;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint16_t*)(eeprom_addr_t)(MAPPED_EEPROM_START+index) = in;
+	*(uint16_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
-void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in) {
-	while (NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm);
+void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
+		;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint32_t*)(eeprom_addr_t)(MAPPED_EEPROM_START+index) = in;
+	*(uint32_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
-void avr_eeprom_write_float(eeprom_addr_t index, float in) {
-	while (NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm);
+void avr_eeprom_write_float(eeprom_addr_t index, float in)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
+		;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(float*)(eeprom_addr_t)(MAPPED_EEPROM_START+index) = in;
+	*(float *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
-void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
+void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 {
 	if(!val)
 	{
@@ -181,39 +188,39 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 	{
 		case RTTY_offset:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset)))
 			{
-				avr_eeprom_write_dword(RTTY_offset, *(uint32_t*)val);
+				avr_eeprom_write_dword(RTTY_offset, *(uint32_t *)val);
 			}
 		}
 		break;
-		
+
 		case RF_Power:
 		{
-			if(*(uint16_t*)val != eeprom_read_word(&(EepromManager::ee_vars.rf_power)))
+			if(*(uint16_t *)val != eeprom_read_word(&(EepromManager::ee_vars.rf_power)))
 			{
-				avr_eeprom_write_word(RF_Power, *(uint16_t*)val);
-			}			
+				avr_eeprom_write_word(RF_Power, *(uint16_t *)val);
+			}
 		}
 		break;
-		
+
 		case StationID_text:
 		{
 			int cnt = 0;
-			char* char_addr = (char*)val;
+			char *char_addr = (char *)val;
 			char c = *char_addr++;
 			char q;
-			
+
 			eeprom_addr_t j = (eeprom_addr_t)StationID_text;
 
-			while(c && (cnt<MAX_PATTERN_TEXT_LENGTH))
+			while(c && (cnt < MAX_PATTERN_TEXT_LENGTH))
 			{
-				q = (char)eeprom_read_byte((uint8_t*)j);
+				q = (char)eeprom_read_byte((uint8_t *)j);
 				if(c != q)
 				{
 					avr_eeprom_write_byte(j, c);
 				}
-				
+
 				cnt++;
 				c = *char_addr++;
 				j++;
@@ -226,20 +233,20 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Pattern_text:
 		{
 			int cnt = 0;
-			char* char_addr = (char*)val;
+			char *char_addr = (char *)val;
 			char c = *char_addr++;
 			char q;
-			
+
 			eeprom_addr_t j = (eeprom_addr_t)Pattern_text;
 
-			while(c && (cnt<MAX_PATTERN_TEXT_LENGTH))
+			while(c && (cnt < MAX_PATTERN_TEXT_LENGTH))
 			{
-				q = (char)eeprom_read_byte((uint8_t*)j);
+				q = (char)eeprom_read_byte((uint8_t *)j);
 				if(c != q)
 				{
 					avr_eeprom_write_byte(j, c);
 				}
-				
+
 				cnt++;
 				c = *char_addr++;
 				j++;
@@ -248,24 +255,24 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 			avr_eeprom_write_byte(j, 0);
 		}
 		break;
-				
+
 		case Foxoring_pattern_text:
 		{
 			int cnt = 0;
-			char* char_addr = (char*)val;
+			char *char_addr = (char *)val;
 			char c = *char_addr++;
 			char q;
-			
+
 			eeprom_addr_t j = (eeprom_addr_t)Foxoring_pattern_text;
 
-			while(c && (cnt<MAX_PATTERN_TEXT_LENGTH))
+			while(c && (cnt < MAX_PATTERN_TEXT_LENGTH))
 			{
-				q = (char)eeprom_read_byte((uint8_t*)j);
+				q = (char)eeprom_read_byte((uint8_t *)j);
 				if(c != q)
 				{
 					avr_eeprom_write_byte(j, c);
 				}
-				
+
 				cnt++;
 				c = *char_addr++;
 				j++;
@@ -278,20 +285,20 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case UnlockCode:
 		{
 			int cnt = 0;
-			char* char_addr = (char*)val;
+			char *char_addr = (char *)val;
 			char c = *char_addr++;
 			char q;
-			
+
 			eeprom_addr_t j = (eeprom_addr_t)UnlockCode;
 
-			while(c && (cnt<MAX_UNLOCK_CODE_LENGTH))
+			while(c && (cnt < MAX_UNLOCK_CODE_LENGTH))
 			{
-				q = (char)eeprom_read_byte((uint8_t*)j);
+				q = (char)eeprom_read_byte((uint8_t *)j);
 				if(c != q)
 				{
 					avr_eeprom_write_byte(j, c);
 				}
-				
+
 				cnt++;
 				j++;
 				c = *char_addr++;
@@ -303,338 +310,332 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 
 		case Id_codespeed:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)))
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)))
 			{
-				avr_eeprom_write_byte(Id_codespeed, *(uint8_t*)val);
+				avr_eeprom_write_byte(Id_codespeed, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Pattern_Code_Speed:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.pattern_codespeed)))
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.pattern_codespeed)))
 			{
-				avr_eeprom_write_byte(Pattern_Code_Speed, *(uint8_t*)val);
+				avr_eeprom_write_byte(Pattern_Code_Speed, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Foxoring_Pattern_Code_Speed:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.foxoring_pattern_codespeed)))
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.foxoring_pattern_codespeed)))
 			{
-				avr_eeprom_write_byte(Foxoring_Pattern_Code_Speed, *(uint8_t*)val);
+				avr_eeprom_write_byte(Foxoring_Pattern_Code_Speed, *(uint8_t *)val);
 			}
 		}
 		break;
 
 		case Fox_setting_none:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_none)))
 			{
-				avr_eeprom_write_byte(Fox_setting_none, *(uint8_t*)val);
+				avr_eeprom_write_byte(Fox_setting_none, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Fox_setting_classic:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_classic)))
 			{
-				avr_eeprom_write_byte(Fox_setting_classic, *(uint8_t*)val);
+				avr_eeprom_write_byte(Fox_setting_classic, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Fox_setting_sprint:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_sprint)))
 			{
-				avr_eeprom_write_byte(Fox_setting_sprint, *(uint8_t*)val);
+				avr_eeprom_write_byte(Fox_setting_sprint, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Fox_setting_foxoring:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_foxoring)))
 			{
-				avr_eeprom_write_byte(Fox_setting_foxoring, *(uint8_t*)val);
+				avr_eeprom_write_byte(Fox_setting_foxoring, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Fox_setting_blind:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_blind)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_blind)))
 			{
-				avr_eeprom_write_byte(Fox_setting_blind, *(uint8_t*)val);
-			}			
+				avr_eeprom_write_byte(Fox_setting_blind, *(uint8_t *)val);
+			}
 		}
 		break;
-		
+
 		case Master_setting:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.master_setting)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.master_setting)))
 			{
-				avr_eeprom_write_byte(Master_setting, *(uint8_t*)val);
+				avr_eeprom_write_byte(Master_setting, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Event_setting:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.event_setting)))
+			if(*(uint8_t *)val != eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.event_setting)))
 			{
-				avr_eeprom_write_byte(Event_setting, *(uint8_t*)val);
+				avr_eeprom_write_byte(Event_setting, *(uint8_t *)val);
 			}
 		}
 		break;
-		
+
 		case Frequency:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency)))
 			{
-				avr_eeprom_write_dword(Frequency, *(uint32_t*)val);
+				avr_eeprom_write_dword(Frequency, *(uint32_t *)val);
 			}
 		}
 		break;
-		
+
 		case Frequency_Low:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)))
 			{
-				avr_eeprom_write_dword(Frequency_Low, *(uint32_t*)val);
+				avr_eeprom_write_dword(Frequency_Low, *(uint32_t *)val);
 			}
 		}
 		break;
-		
+
 		case Frequency_Med:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)))
 			{
-				avr_eeprom_write_dword(Frequency_Med, *(uint32_t*)val);
+				avr_eeprom_write_dword(Frequency_Med, *(uint32_t *)val);
 			}
 		}
 		break;
-		
+
 		case Frequency_Hi:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)))
 			{
-				avr_eeprom_write_dword(Frequency_Hi, *(uint32_t*)val);
+				avr_eeprom_write_dword(Frequency_Hi, *(uint32_t *)val);
 			}
 		}
 		break;
-		
+
 		case Frequency_Beacon:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)))
 			{
-				avr_eeprom_write_dword(Frequency_Beacon, *(uint32_t*)val);
+				avr_eeprom_write_dword(Frequency_Beacon, *(uint32_t *)val);
 			}
 		}
 		break;
 
 		case Event_start_epoch:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch)))
 			{
-				avr_eeprom_write_dword(Event_start_epoch, *(uint32_t*)val);
+				avr_eeprom_write_dword(Event_start_epoch, *(uint32_t *)val);
 			}
 		}
 		break;
 
 		case Event_finish_epoch:
 		{
-			if(*(uint32_t*)val != eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch)))
+			if(*(uint32_t *)val != eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch)))
 			{
-				avr_eeprom_write_dword(Event_finish_epoch, *(uint32_t*)val);
-			}		
+				avr_eeprom_write_dword(Event_finish_epoch, *(uint32_t *)val);
+			}
 		}
 		break;
 
 		case Utc_offset:
 		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.utc_offset)))
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.utc_offset)))
 			{
-				avr_eeprom_write_byte(Utc_offset, *(uint8_t*)val);
-			}		
+				avr_eeprom_write_byte(Utc_offset, *(uint8_t *)val);
+			}
 		}
 		break;
-		
+
 		case Off_Air_Seconds:
 		{
-			if(*(int16_t*)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.off_air_seconds)))
+			if(*(int16_t *)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.off_air_seconds)))
 			{
-				avr_eeprom_write_word(Off_Air_Seconds, *(uint16_t*)val);
+				avr_eeprom_write_word(Off_Air_Seconds, *(uint16_t *)val);
 			}
 		}
 		break;
-		
+
 		case On_Air_Seconds:
 		{
-			if(*(int16_t*)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.on_air_seconds)))
+			if(*(int16_t *)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.on_air_seconds)))
 			{
-				avr_eeprom_write_word(On_Air_Seconds, *(uint16_t*)val);
+				avr_eeprom_write_word(On_Air_Seconds, *(uint16_t *)val);
 			}
 		}
 		break;
-		
+
 		case ID_Period_Seconds:
 		{
-			if(*(int16_t*)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.ID_period_seconds)))
+			if(*(int16_t *)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.ID_period_seconds)))
 			{
-				avr_eeprom_write_word(ID_Period_Seconds, *(uint16_t*)val);
+				avr_eeprom_write_word(ID_Period_Seconds, *(uint16_t *)val);
 			}
 		}
 		break;
-		
+
 		case Intra_Cycle_Delay_Seconds:
 		{
-			if(*(int16_t*)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.intra_cycle_delay_time)))
+			if(*(int16_t *)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.intra_cycle_delay_time)))
 			{
-				avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, *(uint16_t*)val);
-			}		
+				avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, *(uint16_t *)val);
+			}
 		}
 		break;
 
 		case Eeprom_initialization_flag:
 		{
-			if(*(int16_t*)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.eeprom_initialization_flag)))
+			if(*(int16_t *)val != (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.eeprom_initialization_flag)))
 			{
-				avr_eeprom_write_word(Eeprom_initialization_flag, *(uint16_t*)val);
-			}		
-		}
-		break;
-		
-		case Voltage_threshold:
-		{
-			if(*(float*)val != eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)))
-			{
-				avr_eeprom_write_float(Voltage_threshold, *(float*)val);
-			}
-		}
-		break;
-		
-		case Clock_calibration:
-		{
-			if(*(uint16_t*)val != eeprom_read_word(&(EepromManager::ee_vars.clock_calibration)))
-			{
-				avr_eeprom_write_word(Clock_calibration, *(uint16_t*)val);
-			}
-		}
-		break;
-		
-		
-		case Days_to_run:
-		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.days_to_run)))
-			{
-				avr_eeprom_write_byte(Days_to_run, *(uint8_t*)val);
-			}
-		}
-		break;
-		
-		
-		case I2C_failure_count:
-		{
-			if(*(uint16_t*)val != eeprom_read_word(&(EepromManager::ee_vars.i2c_failure_count)))
-			{
-				avr_eeprom_write_byte(I2C_failure_count, *(uint8_t*)val);
-			}
-		}
-		break;
-		
-		
-		case Function:
-		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.function)))
-			{
-				avr_eeprom_write_byte(Function, *(uint8_t*)val);
-			}
-		}
-		break;
-		
-		case Enable_Boost_Regulator:
-		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)))
-			{
-				avr_eeprom_write_byte(Enable_Boost_Regulator, *(uint8_t*)val);
-			}
-		}
-		break;
-		
-		case Enable_External_Battery_Control:
-		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_external_battery_control)))
-			{
-				avr_eeprom_write_byte(Enable_External_Battery_Control, *(uint8_t*)val);
-			}
-		}
-		break;
-		
-		case Device_Enabled:
-		{
-			if(*(uint8_t*)val != eeprom_read_byte(&(EepromManager::ee_vars.device_enabled)))
-			{
-				avr_eeprom_write_byte(Device_Enabled, *(uint8_t*)val);
+				avr_eeprom_write_word(Eeprom_initialization_flag, *(uint16_t *)val);
 			}
 		}
 		break;
 
+		case Voltage_threshold:
+		{
+			if(*(float *)val != eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)))
+			{
+				avr_eeprom_write_float(Voltage_threshold, *(float *)val);
+			}
+		}
+		break;
+
+		case Clock_calibration:
+		{
+			if(*(uint16_t *)val != eeprom_read_word(&(EepromManager::ee_vars.clock_calibration)))
+			{
+				avr_eeprom_write_word(Clock_calibration, *(uint16_t *)val);
+			}
+		}
+		break;
+
+		case Days_to_run:
+		{
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.days_to_run)))
+			{
+				avr_eeprom_write_byte(Days_to_run, *(uint8_t *)val);
+			}
+		}
+		break;
+
+		case I2C_failure_count:
+		{
+			if(*(uint16_t *)val != eeprom_read_word(&(EepromManager::ee_vars.i2c_failure_count)))
+			{
+				avr_eeprom_write_byte(I2C_failure_count, *(uint8_t *)val);
+			}
+		}
+		break;
+
+		case Function:
+		{
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.function)))
+			{
+				avr_eeprom_write_byte(Function, *(uint8_t *)val);
+			}
+		}
+		break;
+
+		case Enable_Boost_Regulator:
+		{
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)))
+			{
+				avr_eeprom_write_byte(Enable_Boost_Regulator, *(uint8_t *)val);
+			}
+		}
+		break;
+
+		case Enable_External_Battery_Control:
+		{
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.enable_external_battery_control)))
+			{
+				avr_eeprom_write_byte(Enable_External_Battery_Control, *(uint8_t *)val);
+			}
+		}
+		break;
+
+		case Device_Enabled:
+		{
+			if(*(uint8_t *)val != eeprom_read_byte(&(EepromManager::ee_vars.device_enabled)))
+			{
+				avr_eeprom_write_byte(Device_Enabled, *(uint8_t *)val);
+			}
+		}
+		break;
 
 		default:
 		{
-
 		}
 		break;
 	}
 }
 
-/** 
+/**
  * Store any changed EEPROM variables
  */
 void EepromManager::saveAllEEPROM(void)
 {
-	updateEEPROMVar(Id_codespeed, (void*)&g_evteng_id_codespeed);	
-	updateEEPROMVar(Fox_setting_none, (void*)&g_fox[EVENT_NONE]);
-	updateEEPROMVar(Fox_setting_classic, (void*)&g_fox[EVENT_CLASSIC]);
-	updateEEPROMVar(Fox_setting_sprint, (void*)&g_fox[EVENT_SPRINT]);
-	updateEEPROMVar(Fox_setting_foxoring, (void*)&g_fox[EVENT_FOXORING]);
-	updateEEPROMVar(Fox_setting_blind, (void*)&g_fox[EVENT_BLIND_ARDF]);
-	updateEEPROMVar(Event_setting, (void*)&g_event);
-	updateEEPROMVar(Frequency, (void*)&g_frequency);
-	updateEEPROMVar(Frequency_Low, (void*)&g_frequency_low);
-	updateEEPROMVar(Frequency_Med, (void*)&g_frequency_med); /* use for sprint slow */
-	updateEEPROMVar(Frequency_Hi, (void*)&g_frequency_hi); /* use for sprint high - will also need sprint spectator and beacon */
-	updateEEPROMVar(Frequency_Beacon, (void*)&g_frequency_beacon);
-	updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
-	updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-	updateEEPROMVar(Utc_offset, (void*)&g_utc_offset);
-	updateEEPROMVar(Pattern_text, (void*)g_messages_text[PATTERN_TEXT]);
-	updateEEPROMVar(Foxoring_pattern_text, (void*)g_messages_text[FOXORING_PATTERN_TEXT]);
-	updateEEPROMVar(StationID_text, (void*)g_messages_text[STATION_ID]);
-	updateEEPROMVar(UnlockCode, (void*)g_unlockCode);
-	updateEEPROMVar(Frequency, (void*)&g_frequency);
-	updateEEPROMVar(RTTY_offset, (void*)&g_rtty_offset);
-	updateEEPROMVar(RF_Power, (void*)&g_80m_power_level_mW);
-	updateEEPROMVar(Pattern_Code_Speed, (void*)&g_evteng_pattern_codespeed);
-	updateEEPROMVar(Foxoring_Pattern_Code_Speed, (void*)&g_foxoring_pattern_codespeed);
-	updateEEPROMVar(Off_Air_Seconds, (void*)&g_evteng_off_air_seconds);
-	updateEEPROMVar(On_Air_Seconds, (void*)&g_evteng_on_air_seconds);
-	updateEEPROMVar(ID_Period_Seconds, (void*)&g_evteng_ID_period_seconds);
-	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void*)&g_evteng_intra_cycle_delay_time);
-	updateEEPROMVar(Voltage_threshold, (void*)&g_internal_voltage_low_threshold);
-	updateEEPROMVar(Clock_calibration, (void*)&g_clock_calibration);
-	updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
-	updateEEPROMVar(I2C_failure_count, (void*)&g_i2c_failure_count);
-	updateEEPROMVar(Function, (void*)&g_function);
-	updateEEPROMVar(Enable_Boost_Regulator, (void*)&g_enable_boost_regulator);
-	updateEEPROMVar(Enable_External_Battery_Control, (void*)&g_enable_external_battery_control);
-	updateEEPROMVar(Device_Enabled, (void*)&g_device_enabled);
+	updateEEPROMVar(Id_codespeed, (void *)&g_evteng_id_codespeed);
+	updateEEPROMVar(Fox_setting_none, (void *)&g_fox[EVENT_NONE]);
+	updateEEPROMVar(Fox_setting_classic, (void *)&g_fox[EVENT_CLASSIC]);
+	updateEEPROMVar(Fox_setting_sprint, (void *)&g_fox[EVENT_SPRINT]);
+	updateEEPROMVar(Fox_setting_foxoring, (void *)&g_fox[EVENT_FOXORING]);
+	updateEEPROMVar(Fox_setting_blind, (void *)&g_fox[EVENT_BLIND_ARDF]);
+	updateEEPROMVar(Event_setting, (void *)&g_event);
+	updateEEPROMVar(Frequency, (void *)&g_frequency);
+	updateEEPROMVar(Frequency_Low, (void *)&g_frequency_low);
+	updateEEPROMVar(Frequency_Med, (void *)&g_frequency_med); /* use for sprint slow */
+	updateEEPROMVar(Frequency_Hi, (void *)&g_frequency_hi);   /* use for sprint high - will also need sprint spectator and beacon */
+	updateEEPROMVar(Frequency_Beacon, (void *)&g_frequency_beacon);
+	updateEEPROMVar(Event_start_epoch, (void *)&g_event_start_epoch);
+	updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
+	updateEEPROMVar(Utc_offset, (void *)&g_utc_offset);
+	updateEEPROMVar(Pattern_text, (void *)g_messages_text[PATTERN_TEXT]);
+	updateEEPROMVar(Foxoring_pattern_text, (void *)g_messages_text[FOXORING_PATTERN_TEXT]);
+	updateEEPROMVar(StationID_text, (void *)g_messages_text[STATION_ID]);
+	updateEEPROMVar(UnlockCode, (void *)g_unlockCode);
+	updateEEPROMVar(Frequency, (void *)&g_frequency);
+	updateEEPROMVar(RTTY_offset, (void *)&g_rtty_offset);
+	updateEEPROMVar(RF_Power, (void *)&g_80m_power_level_mW);
+	updateEEPROMVar(Pattern_Code_Speed, (void *)&g_evteng_pattern_codespeed);
+	updateEEPROMVar(Foxoring_Pattern_Code_Speed, (void *)&g_foxoring_pattern_codespeed);
+	updateEEPROMVar(Off_Air_Seconds, (void *)&g_evteng_off_air_seconds);
+	updateEEPROMVar(On_Air_Seconds, (void *)&g_evteng_on_air_seconds);
+	updateEEPROMVar(ID_Period_Seconds, (void *)&g_evteng_ID_period_seconds);
+	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void *)&g_evteng_intra_cycle_delay_time);
+	updateEEPROMVar(Voltage_threshold, (void *)&g_internal_voltage_low_threshold);
+	updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
+	updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
+	updateEEPROMVar(I2C_failure_count, (void *)&g_i2c_failure_count);
+	updateEEPROMVar(Function, (void *)&g_function);
+	updateEEPROMVar(Enable_Boost_Regulator, (void *)&g_enable_boost_regulator);
+	updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
+	updateEEPROMVar(Device_Enabled, (void *)&g_device_enabled);
 }
-
 
 bool EepromManager::readNonVols(void)
 {
@@ -642,22 +643,22 @@ bool EepromManager::readNonVols(void)
 	uint16_t i;
 	uint16_t initialization_flag = eeprom_read_word(0);
 
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG) /* EEPROM is up to date */
 	{
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT; // (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.master_setting));
 		g_evteng_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
-		g_event = (Event_t)eeprom_read_byte((const uint8_t*)&(EepromManager::ee_vars.event_setting));
+		g_event = (Event_t)eeprom_read_byte((const uint8_t *)&(EepromManager::ee_vars.event_setting));
 		g_frequency = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency)), TX_MAXIMUM_FREQUENCY);
 		g_frequency_low = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_low)), TX_MAXIMUM_FREQUENCY);
- 		g_frequency_med = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)), TX_MAXIMUM_FREQUENCY);
- 		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_FREQUENCY);
- 		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_FREQUENCY);
+		g_frequency_med = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_med)), TX_MAXIMUM_FREQUENCY);
+		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_high)), TX_MAXIMUM_FREQUENCY);
+		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, eeprom_read_dword(&(EepromManager::ee_vars.frequency_beacon)), TX_MAXIMUM_FREQUENCY);
 		g_enable_boost_regulator = (bool)(eeprom_read_byte(&(EepromManager::ee_vars.enable_boost_regulator)));
-		fox_setting_slot_write_atomic(EVENT_NONE, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5)));
-		fox_setting_slot_write_atomic(EVENT_CLASSIC, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5)));
-		fox_setting_slot_write_atomic(EVENT_SPRINT, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5)));
-		fox_setting_slot_write_atomic(EVENT_FOXORING, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_foxoring)), FREQUENCY_TEST_BEACON)));
-		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting_blind)), FOX_5)));
+		fox_setting_slot_write_atomic(EVENT_NONE, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_none)), SPRINT_F5)));
+		fox_setting_slot_write_atomic(EVENT_CLASSIC, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_classic)), FOX_5)));
+		fox_setting_slot_write_atomic(EVENT_SPRINT, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_sprint)), SPRINT_F5)));
+		fox_setting_slot_write_atomic(EVENT_FOXORING, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_foxoring)), FREQUENCY_TEST_BEACON)));
+		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, (Fox_t)(CLAMP(BEACON, eeprom_read_byte((uint8_t *)&(EepromManager::ee_vars.fox_setting_blind)), FOX_5)));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
@@ -668,8 +669,9 @@ bool EepromManager::readNonVols(void)
 		char station_id_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
-			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_text[i])));			
-			if(c==255) c=0;
+			c = (char)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.pattern_text[i])));
+			if(c == 255)
+				c = 0;
 			pattern_text_local[i] = c;
 			if(!c)
 			{
@@ -681,8 +683,9 @@ bool EepromManager::readNonVols(void)
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
-			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.foxoring_pattern_text[i])));			
-			if(c==255) c=0;
+			c = (char)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.foxoring_pattern_text[i])));
+			if(c == 255)
+				c = 0;
 			foxoring_pattern_text_local[i] = c;
 			if(!c)
 			{
@@ -694,8 +697,9 @@ bool EepromManager::readNonVols(void)
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
-			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.stationID_text[i])));
-			if(c == 255) c= 0;
+			c = (char)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.stationID_text[i])));
+			if(c == 255)
+				c = 0;
 			station_id_text_local[i] = c;
 			if(!c)
 			{
@@ -707,196 +711,197 @@ bool EepromManager::readNonVols(void)
 
 		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
 		{
-			c = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));	
-			if(c==255) c=0;
+			c = (char)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.unlockCode[i])));
+			if(c == 255)
+				c = 0;
 			g_unlockCode[i] = c;
 			if(!c)
 			{
 				break;
 			}
 		}
-		
+
 		g_rtty_offset = eeprom_read_dword(&(EepromManager::ee_vars.rtty_offset));
 		g_80m_power_level_mW = CLAMP(MIN_RF_POWER_MW, eeprom_read_word(&(EepromManager::ee_vars.rf_power)), MAX_TX_POWER_80M_MW);
 
-		g_evteng_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.pattern_codespeed))), MAX_CODE_SPEED_WPM);
-		g_foxoring_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.foxoring_pattern_codespeed))), MAX_CODE_SPEED_WPM);
+		g_evteng_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.pattern_codespeed))), MAX_CODE_SPEED_WPM);
+		g_foxoring_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.foxoring_pattern_codespeed))), MAX_CODE_SPEED_WPM);
 
-		g_evteng_off_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.off_air_seconds)), 3600);
-		g_evteng_on_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.on_air_seconds)), 3600);
-		g_evteng_ID_period_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.ID_period_seconds)), 3600);
-		g_evteng_intra_cycle_delay_time = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t*)&(EepromManager::ee_vars.intra_cycle_delay_time)), 3600);
-		
+		g_evteng_off_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.off_air_seconds)), 3600);
+		g_evteng_on_air_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.on_air_seconds)), 3600);
+		g_evteng_ID_period_seconds = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.ID_period_seconds)), 3600);
+		g_evteng_intra_cycle_delay_time = CLAMP(0, (int16_t)eeprom_read_word((const uint16_t *)&(EepromManager::ee_vars.intra_cycle_delay_time)), 3600);
+
 		g_internal_voltage_low_threshold = CLAMP(3.0, eeprom_read_float(&(EepromManager::ee_vars.voltage_threshold)), 4.1);
-		
+
 		g_clock_calibration = eeprom_read_word(&(EepromManager::ee_vars.clock_calibration));
 
-		g_days_to_run = eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.days_to_run)));
-		
-		g_i2c_failure_count = eeprom_read_word((uint16_t*)(&(EepromManager::ee_vars.i2c_failure_count)));
+		g_days_to_run = eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.days_to_run)));
 
-		g_function = (Function_t)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.function)));
-		
-		g_enable_external_battery_control = (bool)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.enable_external_battery_control)));
-		
-		g_device_enabled = (bool)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.device_enabled)));
+		g_i2c_failure_count = eeprom_read_word((uint16_t *)(&(EepromManager::ee_vars.i2c_failure_count)));
+
+		g_function = (Function_t)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.function)));
+
+		g_enable_external_battery_control = (bool)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.enable_external_battery_control)));
+
+		g_device_enabled = (bool)eeprom_read_byte((uint8_t *)(&(EepromManager::ee_vars.device_enabled)));
 
 		failure = false;
 	}
 
-	return( failure);
+	return (failure);
 }
 
 /*
  * Set volatile variables to their values stored in EEPROM
  */
-	bool EepromManager::initializeEEPROMVars(void)
+bool EepromManager::initializeEEPROMVars(void)
+{
+	bool init = false;
+	uint16_t i, j;
+
+	uint16_t initialization_flag = eeprom_read_word(0);
+
+	if(initialization_flag != EEPROM_INITIALIZED_FLAG)
 	{
-		bool init = false;
-		uint16_t i, j;
+		g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
+		avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
 
-		uint16_t initialization_flag = eeprom_read_word(0);
+		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
+		avr_eeprom_write_byte(Master_setting, g_isMaster);
 
-		if(initialization_flag != EEPROM_INITIALIZED_FLAG)
+		fox_setting_slot_write_atomic(EVENT_NONE, EEPROM_FOX_SETTING_NONE_DEFAULT);
+		avr_eeprom_write_byte(Fox_setting_none, (uint8_t)g_fox[EVENT_NONE]);
+
+		fox_setting_slot_write_atomic(EVENT_CLASSIC, EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
+		avr_eeprom_write_byte(Fox_setting_classic, (uint8_t)g_fox[EVENT_CLASSIC]);
+
+		fox_setting_slot_write_atomic(EVENT_SPRINT, EEPROM_FOX_SETTING_SPRINT_DEFAULT);
+		avr_eeprom_write_byte(Fox_setting_sprint, (uint8_t)g_fox[EVENT_SPRINT]);
+
+		fox_setting_slot_write_atomic(EVENT_FOXORING, EEPROM_FOX_SETTING_FOXORING_DEFAULT);
+		avr_eeprom_write_byte(Fox_setting_foxoring, (uint8_t)g_fox[EVENT_FOXORING]);
+
+		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, EEPROM_FOX_SETTING_BLIND_DEFAULT);
+		avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)g_fox[EVENT_BLIND_ARDF]);
+
+		g_event = EEPROM_EVENT_SETTING_DEFAULT;
+		avr_eeprom_write_byte(Event_setting, (uint8_t)g_event);
+
+		g_frequency = EEPROM_FREQUENCY_DEFAULT;
+		avr_eeprom_write_dword(Frequency, g_frequency);
+
+		g_frequency_low = EEPROM_FREQUENCY_LOW_DEFAULT;
+		avr_eeprom_write_dword(Frequency_Low, g_frequency_low);
+
+		g_frequency_med = EEPROM_FREQUENCY_MED_DEFAULT;
+		avr_eeprom_write_dword(Frequency_Med, g_frequency_med);
+
+		g_frequency_hi = EEPROM_FREQUENCY_HI_DEFAULT;
+		avr_eeprom_write_dword(Frequency_Hi, g_frequency_hi);
+
+		g_frequency_beacon = EEPROM_FREQUENCY_BEACON_DEFAULT;
+		avr_eeprom_write_dword(Frequency_Beacon, g_frequency_beacon);
+
+		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
+		avr_eeprom_write_dword(Event_start_epoch, g_event_start_epoch);
+
+		g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
+		avr_eeprom_write_dword(Event_finish_epoch, g_event_finish_epoch);
+
+		g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
+		avr_eeprom_write_byte(Utc_offset, (uint8_t)g_utc_offset);
+
+		messages_text_slot_clear_atomic(STATION_ID);
+		avr_eeprom_write_byte(StationID_text, 0);
+
+		uint8_t *v = (uint8_t *)EEPROM_FOX_PATTERN_DEFAULT;
+		i = Pattern_text;
+		for(j = 0; j < strlen(EEPROM_FOX_PATTERN_DEFAULT); j++)
 		{
-			g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-			avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
-			
-			g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
-			avr_eeprom_write_byte(Master_setting, g_isMaster);
-
-			fox_setting_slot_write_atomic(EVENT_NONE, EEPROM_FOX_SETTING_NONE_DEFAULT);
-			avr_eeprom_write_byte(Fox_setting_none, (uint8_t)g_fox[EVENT_NONE]);
-			
-			fox_setting_slot_write_atomic(EVENT_CLASSIC, EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
-			avr_eeprom_write_byte(Fox_setting_classic, (uint8_t)g_fox[EVENT_CLASSIC]);
-			
-			fox_setting_slot_write_atomic(EVENT_SPRINT, EEPROM_FOX_SETTING_SPRINT_DEFAULT);
-			avr_eeprom_write_byte(Fox_setting_sprint, (uint8_t)g_fox[EVENT_SPRINT]);
-			
-			fox_setting_slot_write_atomic(EVENT_FOXORING, EEPROM_FOX_SETTING_FOXORING_DEFAULT);
-			avr_eeprom_write_byte(Fox_setting_foxoring, (uint8_t)g_fox[EVENT_FOXORING]);
-			
-			fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, EEPROM_FOX_SETTING_BLIND_DEFAULT);
-			avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)g_fox[EVENT_BLIND_ARDF]);
-			
-			g_event = EEPROM_EVENT_SETTING_DEFAULT;
-			avr_eeprom_write_byte(Event_setting, (uint8_t)g_event);
-			
-			g_frequency = EEPROM_FREQUENCY_DEFAULT;
-			avr_eeprom_write_dword(Frequency, g_frequency);
-			
-			g_frequency_low = EEPROM_FREQUENCY_LOW_DEFAULT;
-			avr_eeprom_write_dword(Frequency_Low, g_frequency_low);
-			
-			g_frequency_med = EEPROM_FREQUENCY_MED_DEFAULT;
-			avr_eeprom_write_dword(Frequency_Med, g_frequency_med);
-			
-			g_frequency_hi = EEPROM_FREQUENCY_HI_DEFAULT;
-			avr_eeprom_write_dword(Frequency_Hi, g_frequency_hi);
-			
-			g_frequency_beacon = EEPROM_FREQUENCY_BEACON_DEFAULT;
-			avr_eeprom_write_dword(Frequency_Beacon, g_frequency_beacon);
-
-			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
-			avr_eeprom_write_dword(Event_start_epoch, g_event_start_epoch);
-
-			g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
-			avr_eeprom_write_dword(Event_finish_epoch, g_event_finish_epoch);
-
-			g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
-			avr_eeprom_write_byte(Utc_offset, (uint8_t)g_utc_offset);
-
-			messages_text_slot_clear_atomic(STATION_ID);
-			avr_eeprom_write_byte(StationID_text, 0);
-
-			uint8_t *v = (uint8_t*)EEPROM_FOX_PATTERN_DEFAULT;
-			i = Pattern_text;
-			for(j = 0; j < strlen(EEPROM_FOX_PATTERN_DEFAULT); j++)
-			{
-				avr_eeprom_write_byte(i++, *v++);
-			}
-			
-			avr_eeprom_write_byte(i, '\0');
-			messages_text_slot_publish_atomic(PATTERN_TEXT, EEPROM_FOX_PATTERN_DEFAULT);
-
-			v = (uint8_t*)EEPROM_FOXORING_PATTERN_DEFAULT;
-			i = Foxoring_pattern_text;
-			for(j = 0; j < strlen(EEPROM_FOXORING_PATTERN_DEFAULT); j++)
-			{
-				avr_eeprom_write_byte(i++, *v++);
-			}
-			
-			avr_eeprom_write_byte(i, '\0');
-			messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, EEPROM_FOXORING_PATTERN_DEFAULT);
-
-			v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
-			i = UnlockCode;
-			for(j = 0; j < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); j++)
-			{
-				g_unlockCode[j] = *v;
-				avr_eeprom_write_byte(i++, *v++);
-			}
-
-			avr_eeprom_write_byte(i, '\0');
-			g_unlockCode[j] = '\0';
-			
-			g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
-			avr_eeprom_write_dword(RTTY_offset, g_rtty_offset);
-
-			g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
-			avr_eeprom_write_dword(RF_Power, g_80m_power_level_mW);
-			
-			g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
-			avr_eeprom_write_byte(Pattern_Code_Speed, g_evteng_pattern_codespeed);
-			
-			g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
-			avr_eeprom_write_byte(Foxoring_Pattern_Code_Speed, g_foxoring_pattern_codespeed);
-			
-			g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;
-			avr_eeprom_write_word(Off_Air_Seconds, g_evteng_off_air_seconds);
-			
-			g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;
-			avr_eeprom_write_word(On_Air_Seconds, g_evteng_on_air_seconds);
-		
-			g_evteng_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;
-			avr_eeprom_write_word(ID_Period_Seconds, g_evteng_ID_period_seconds);
-			
-			g_evteng_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT;
-			avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, g_evteng_intra_cycle_delay_time);
-
-			avr_eeprom_write_byte(i, '\0');
-
-			g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
-			avr_eeprom_write_float(Voltage_threshold, g_internal_voltage_low_threshold);
-			
-			g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
-			avr_eeprom_write_word(Clock_calibration, g_clock_calibration);
-
-			g_days_to_run = 1;
-			avr_eeprom_write_byte(Days_to_run, g_days_to_run);
-			
-			g_i2c_failure_count = 0;
-			avr_eeprom_write_dword(I2C_failure_count, g_i2c_failure_count);
-			
-			g_function = EEPROM_FUNCTION_DEFAULT;
-			avr_eeprom_write_byte(Function, (uint8_t)g_function);
-			
-			g_enable_boost_regulator = false;
-			avr_eeprom_write_byte(Enable_Boost_Regulator, (uint8_t)g_enable_boost_regulator);
-			
-			g_enable_external_battery_control = true;
-			avr_eeprom_write_byte(Enable_External_Battery_Control, (uint8_t)g_enable_external_battery_control);
-			
-			g_device_enabled = false;
-			avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);
-			
-			/* Done */
-
-			avr_eeprom_write_word(0, EEPROM_INITIALIZED_FLAG);
-			
-			init = true;
+			avr_eeprom_write_byte(i++, *v++);
 		}
-		
-		return(init);
+
+		avr_eeprom_write_byte(i, '\0');
+		messages_text_slot_publish_atomic(PATTERN_TEXT, EEPROM_FOX_PATTERN_DEFAULT);
+
+		v = (uint8_t *)EEPROM_FOXORING_PATTERN_DEFAULT;
+		i = Foxoring_pattern_text;
+		for(j = 0; j < strlen(EEPROM_FOXORING_PATTERN_DEFAULT); j++)
+		{
+			avr_eeprom_write_byte(i++, *v++);
+		}
+
+		avr_eeprom_write_byte(i, '\0');
+		messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, EEPROM_FOXORING_PATTERN_DEFAULT);
+
+		v = (uint8_t *)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
+		i = UnlockCode;
+		for(j = 0; j < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); j++)
+		{
+			g_unlockCode[j] = *v;
+			avr_eeprom_write_byte(i++, *v++);
+		}
+
+		avr_eeprom_write_byte(i, '\0');
+		g_unlockCode[j] = '\0';
+
+		g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
+		avr_eeprom_write_dword(RTTY_offset, g_rtty_offset);
+
+		g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
+		avr_eeprom_write_dword(RF_Power, g_80m_power_level_mW);
+
+		g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
+		avr_eeprom_write_byte(Pattern_Code_Speed, g_evteng_pattern_codespeed);
+
+		g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
+		avr_eeprom_write_byte(Foxoring_Pattern_Code_Speed, g_foxoring_pattern_codespeed);
+
+		g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;
+		avr_eeprom_write_word(Off_Air_Seconds, g_evteng_off_air_seconds);
+
+		g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;
+		avr_eeprom_write_word(On_Air_Seconds, g_evteng_on_air_seconds);
+
+		g_evteng_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;
+		avr_eeprom_write_word(ID_Period_Seconds, g_evteng_ID_period_seconds);
+
+		g_evteng_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT;
+		avr_eeprom_write_word(Intra_Cycle_Delay_Seconds, g_evteng_intra_cycle_delay_time);
+
+		avr_eeprom_write_byte(i, '\0');
+
+		g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
+		avr_eeprom_write_float(Voltage_threshold, g_internal_voltage_low_threshold);
+
+		g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
+		avr_eeprom_write_word(Clock_calibration, g_clock_calibration);
+
+		g_days_to_run = 1;
+		avr_eeprom_write_byte(Days_to_run, g_days_to_run);
+
+		g_i2c_failure_count = 0;
+		avr_eeprom_write_dword(I2C_failure_count, g_i2c_failure_count);
+
+		g_function = EEPROM_FUNCTION_DEFAULT;
+		avr_eeprom_write_byte(Function, (uint8_t)g_function);
+
+		g_enable_boost_regulator = false;
+		avr_eeprom_write_byte(Enable_Boost_Regulator, (uint8_t)g_enable_boost_regulator);
+
+		g_enable_external_battery_control = true;
+		avr_eeprom_write_byte(Enable_External_Battery_Control, (uint8_t)g_enable_external_battery_control);
+
+		g_device_enabled = false;
+		avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);
+
+		/* Done */
+
+		avr_eeprom_write_word(0, EEPROM_INITIALIZED_FLAG);
+
+		init = true;
 	}
+
+	return (init);
+}
