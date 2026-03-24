@@ -1636,7 +1636,7 @@ int main(void)
 					{
 						// Sleep type must be either SLEEP_UNTIL_NEXT_XMSN or SLEEP_UNTIL_START_TIME
 						// In either case it is time to power up the transmit circuits
-						if(SLEEP_UNTIL_NEXT_XMSN)
+						if(g_sleepType == SLEEP_UNTIL_NEXT_XMSN)
 						{
 							g_sleepType = SLEEP_AFTER_EVENT;
 						}
