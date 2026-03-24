@@ -81,6 +81,13 @@ typedef enum
 	SYNC_Waiting_for_ACK
 } SyncState_t;
 
+typedef struct
+{
+	time_t event_start_epoch;
+	time_t event_finish_epoch;
+	uint8_t days_to_run;
+} CloneTimingSnapshot_t;
+
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
 
 /***********************************************************************
@@ -195,6 +202,7 @@ static volatile uint16_t g_programming_countdown = 0;
 static volatile uint16_t g_programming_msg_throttle = 0;
 static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
+static CloneTimingSnapshot_t g_clone_timing_snapshot = {0, 0, 1};
 volatile bool g_cloningInProgress = false;
 
 volatile Enunciation_t g_enunciator = LED_ONLY;
@@ -278,6 +286,7 @@ static void loadCurrentPatternMorse(bool *repeat, callerID_t caller);
 static void loadStationIDMorse(bool *repeat, callerID_t caller);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
 static bool cancelManualTransientState(void);
+static void captureCloneTimingSnapshot(void);
 
 static bool cancelManualTransientState(void)
 {
@@ -295,6 +304,34 @@ static bool cancelManualTransientState(void)
 	}
 
 	return pending_start_after_keydown;
+}
+
+static void captureCloneTimingSnapshot(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	uint8_t total_days = g_days_to_run;
+	uint8_t completed_days = g_days_run;
+	uint8_t days_remaining = (completed_days < total_days) ? (total_days - completed_days) : 1;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	g_clone_timing_snapshot.event_start_epoch = saved_start_epoch;
+	g_clone_timing_snapshot.event_finish_epoch = saved_finish_epoch;
+	g_clone_timing_snapshot.days_to_run = total_days ? total_days : 1;
+
+	bool loaded_window_is_active = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+	bool loaded_window_differs_from_saved = (loaded_start_epoch != saved_start_epoch) || (loaded_finish_epoch != saved_finish_epoch);
+
+	if(loaded_window_is_active && loaded_window_differs_from_saved)
+	{
+		g_clone_timing_snapshot.event_start_epoch = loaded_start_epoch;
+		g_clone_timing_snapshot.event_finish_epoch = loaded_finish_epoch;
+		g_clone_timing_snapshot.days_to_run = days_remaining ? days_remaining : 1;
+	}
 }
 
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
@@ -3386,7 +3423,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								}
 
 								/* Start the event if one is configured */
-								if(eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch))
+								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 								{
 									startEventUsingRTC();
 								}
@@ -3669,11 +3706,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
 							atomic_write_time(&g_event_finish_epoch, MIN(event_start_epoch + DAY - HOUR, event_finish_epoch));
 
-							eventIsScheduledToRun(&g_event_start_epoch, &g_event_finish_epoch);
 							g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void *)&g_event_start_epoch);
 							g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
 
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
+							eventIsScheduledToRun(&event_start_epoch, &event_finish_epoch);
 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_finish_epoch);
 						}
 					}
@@ -5610,6 +5647,7 @@ void handleSerialCloning(void)
 				if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
 				{
 					g_cloningInProgress = true;
+					captureCloneTimingSnapshot();
 					g_event_checksum = 0;
 					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
 					sb_send_master_string(g_tempStr);
@@ -5662,7 +5700,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'T')
 					{
-						time_t event_start_epoch = atomic_read_time(&g_event_start_epoch);
+						time_t event_start_epoch = g_clone_timing_snapshot.event_start_epoch;
 						g_event_checksum += event_start_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_S_reply;
 						sprintf(g_tempStr, "CLK S %lu\n", event_start_epoch);
@@ -5684,7 +5722,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'S')
 					{
-						time_t event_finish_epoch = atomic_read_time(&g_event_finish_epoch);
+						time_t event_finish_epoch = g_clone_timing_snapshot.event_finish_epoch;
 						g_event_checksum += event_finish_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_F_reply;
 						sprintf(g_tempStr, "CLK F %lu\n", event_finish_epoch);
@@ -5706,9 +5744,9 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'F')
 					{
-						g_event_checksum += g_days_to_run;
+						g_event_checksum += g_clone_timing_snapshot.days_to_run;
 						g_programming_state = SYNC_Waiting_for_CLK_D_reply;
-						sprintf(g_tempStr, "CLK D %d\n", g_days_to_run);
+						sprintf(g_tempStr, "CLK D %d\n", g_clone_timing_snapshot.days_to_run);
 						sb_send_master_string(g_tempStr);
 						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
