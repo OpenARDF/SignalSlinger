@@ -249,6 +249,7 @@ void configRedLEDforEvent(void);
 bool switchIsClosed(void);
 bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
+bool startEvent(void);
 
 /*******************************/
 /* Hardcoded event support     */
@@ -1419,21 +1420,21 @@ int main(void)
 						g_evteng_event_commenced = false;
 						g_foreground_start_event = false;
 					 
-							time_t loaded_start_epoch;
-							time_t loaded_finish_epoch;
-							time_t saved_start_epoch;
-							time_t saved_finish_epoch;
-							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
-							if(loaded_start_epoch < MINIMUM_VALID_EPOCH) // should never be true
-							{
-									atomic_write_time(&g_evteng_loaded_start_epoch, saved_start_epoch);
-							}
+						time_t loaded_start_epoch;
+						time_t loaded_finish_epoch;
+						time_t saved_start_epoch;
+						time_t saved_finish_epoch;
+						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+						atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+						if(loaded_start_epoch < MINIMUM_VALID_EPOCH) // should never be true
+						{
+								atomic_write_time(&g_evteng_loaded_start_epoch, saved_start_epoch);
+						}
 						
-							if(loaded_finish_epoch < MINIMUM_VALID_EPOCH) // should never be true
-							{
-									atomic_write_time(&g_evteng_loaded_finish_epoch, saved_finish_epoch);
-							}
+						if(loaded_finish_epoch < MINIMUM_VALID_EPOCH) // should never be true
+						{
+								atomic_write_time(&g_evteng_loaded_finish_epoch, saved_finish_epoch);
+						}
 					}
 				
 					if(g_sleepType == SLEEP_POWER_OFF_OVERRIDE)
@@ -1470,23 +1471,23 @@ int main(void)
 							if(timeDif(now, hold_now) > 90) // Periodically check to see if the internal battery should be charged
 							{
 								hold_now = now;
-									system_charging_config();
-									g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
-									g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-									float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
-									float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
-									system_sleep_config();
+								system_charging_config();
+								g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
+								g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
+								float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+								float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+								system_sleep_config();
 								setExtBatLoadSwitch(RE_APPLY_LS_STATE); // Undo any charging configuration changes to the LS setting
 						
 								if(g_enable_external_battery_control) // Control of an external battery is enabled
 								{
-										if(internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) // An internal battery is present
+									if(internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) // An internal battery is present
+									{
+										if(internal_bat_voltage < internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
 										{
-											if(internal_bat_voltage < internal_voltage_low_threshold) // An external voltage is present and an internal battery is present & not fully charged
-											{
-												g_charge_battery = true;
-											}
-											else if(internal_bat_voltage >= INT_BAT_CHARGE_THRES_HIGH)
+											g_charge_battery = true;
+										}
+										else if(internal_bat_voltage >= INT_BAT_CHARGE_THRES_HIGH)
 										{
 											g_charge_battery = false;
 
@@ -1759,38 +1760,14 @@ int main(void)
 									
 										default: //	case 2: Start the event normally
 										{
-											suspendEvent();
-											// reinitialize event engine
-											g_evteng_initialize_event = true;
-											util_delay_ms(0);
-											while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
-											
-											// Restore saved event start and finish times
-											g_event_launched_by_user_action = false;
-											{
-												time_t start_epoch;
-												time_t finish_epoch;
-												atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-												atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
-											}
-					
-											if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-											{
-												startEventUsingRTC();
-											}
-											else
-											{
-												g_sleepType = SLEEP_FOREVER;
-												startEventNow(true); // Immediately start the event
-												if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
-											}
+											startEvent();
 										}
 										break;
 									}
 
 									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // Sleep after 5 minutes
 								}
-								else // No event scheduled for the future (one might be in progress, or non is scheduled at all)
+								else // No event scheduled for the future (one might be in progress, or none is scheduled at all)
 								{
 									suspendEvent();
 
@@ -2406,25 +2383,29 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								cancelManualTransientState();
 							}
+							
 							fox_setting_current_slot_write_atomic(holdFox);
 							setupForFox(holdFox, START_EVENT_WITH_STARTFINISH_TIMES);
 
-							if(g_evteng_event_enabled) // try to update an event already in progress
+							if(!g_cloningInProgress)
 							{
-								g_evteng_initialize_event = true;
-								util_delay_ms(0);
-								while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+								if(g_evteng_event_enabled) // try to update an event already in progress
+								{
+									g_evteng_initialize_event = true;
+									util_delay_ms(0);
+									while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
 								
-								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-								{
-									g_event_launched_by_user_action = false;
- 									startEventUsingRTC();
-								}
-								else
-								{
-									g_sleepType = SLEEP_FOREVER;
-									startEventNow(true); // Immediately start the event
-									if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+									if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+									{
+										g_event_launched_by_user_action = false;
+ 										startEventUsingRTC();
+									}
+									else
+									{
+										g_sleepType = SLEEP_FOREVER;
+										startEventNow(true); // Immediately start the event
+										if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+									}
 								}
 							}
 						}
@@ -3065,7 +3046,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(!g_meshmode)
 					{
-						if(sb_buff->fields[SB_FIELD1][0] == 'P')
+						if(sb_buff->fields[SB_FIELD1][0] == 'P') // Target receives clone command from source
 						{
 							if(!atomic_read_u16(&g_send_clone_success_countdown))
 							{
@@ -3084,10 +3065,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							atomic_write_u16(&g_programming_countdown, 0);
 							if(sum == atomic_read_u32(&g_event_checksum))
 							{
-								sb_send_string((char*)"MAS ACK\n");
-								atomic_write_u16(&g_send_clone_success_countdown, 18000);
-								cancelManualTransientState();
-								setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);   /* Start the event if one is configured */
+								if(startEvent())
+								{
+									sb_send_string((char*)"MAS NAK\n");
+								}
+								else
+								{
+									sb_send_string((char*)"MAS ACK\n");
+									atomic_write_u16(&g_send_clone_success_countdown, 18000);
+								}
 							}
 							else
 							{
@@ -3477,9 +3463,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 
 								if(g_cloningInProgress)
-							{
-								sb_send_string((char*)"CLK S\n");
-								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+								{
+									sb_send_string((char*)"CLK S\n");
+									atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 									g_event_checksum += s;
 								}
 								else
@@ -6107,4 +6093,45 @@ bool timeIsSet(void)
 {
 	time_t now = time(null);
 	return (now > MINIMUM_VALID_EPOCH);
+}
+
+bool startEvent(void)
+{
+	bool error = true;
+	
+	cancelManualTransientState();
+	suspendEvent();
+	// reinitialize event engine
+	g_evteng_initialize_event = true;
+	util_delay_ms(0);
+	while(util_delay_ms(17) && g_evteng_initialize_event); // Wait for event engine to initialize
+	
+	if(g_evteng_initialize_event)
+	{
+		return error;
+	}
+	
+	error = false;
+												
+	// Restore saved event start and finish times
+	g_event_launched_by_user_action = false;
+	{
+		time_t start_epoch;
+		time_t finish_epoch;
+		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
+	}
+												
+	if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+	{
+		startEventUsingRTC();
+	}
+	else
+	{
+		g_sleepType = SLEEP_FOREVER;
+		startEventNow(true); // Immediately start the event
+		if(!g_enable_external_battery_control) setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+	}
+	
+	return error;
 }
