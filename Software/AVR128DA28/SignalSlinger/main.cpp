@@ -122,8 +122,8 @@ static volatile uint16_t g_evteng_code_throttle = 50;
 static volatile uint16_t g_evteng_sleepshutdown_seconds = 300;
 volatile uint8_t g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
-volatile int16_t g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;                    /* amount of time to spend on the air */
-volatile int16_t g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;                  /* amount of time to wait before returning to the air */
+volatile int16_t g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;   /* amount of time to spend on the air */
+volatile int16_t g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT; /* amount of time to wait before returning to the air */
 static inline void atomic_set_system_time(time_t epoch, bool reset_rtc)
 {
 	ENTER_CRITICAL(main_set_system_time);
@@ -3402,7 +3402,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(t)
 						{
-								atomic_set_system_time(t, true);
+							atomic_set_system_time(t, true);
 
 							if(g_cloningInProgress)
 							{
