@@ -287,6 +287,7 @@ static void loadStationIDMorse(bool *repeat, callerID_t caller);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
 static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
+static void reinitializeEventEngine(void);
 
 static bool cancelManualTransientState(void)
 {
@@ -332,6 +333,14 @@ static void captureCloneTimingSnapshot(void)
 		g_clone_timing_snapshot.event_finish_epoch = loaded_finish_epoch;
 		g_clone_timing_snapshot.days_to_run = days_remaining ? days_remaining : 1;
 	}
+}
+
+static void reinitializeEventEngine(void)
+{
+	g_evteng_initialize_event = true;
+	util_delay_ms(0);
+	while(util_delay_ms(17) && g_evteng_initialize_event)
+		; // Wait for event engine to initialize
 }
 
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
@@ -1979,6 +1988,7 @@ int main(void)
 					// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
 
 					g_evteng_run_event_until_canceled = !eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+					reinitializeEventEngine();
 
 					LEDS.init();
 					g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
@@ -2461,10 +2471,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								if(g_evteng_event_enabled) // try to update an event already in progress
 								{
-									g_evteng_initialize_event = true;
-									util_delay_ms(0);
-									while(util_delay_ms(17) && g_evteng_initialize_event)
-										; // Wait for event engine to initialize
+									reinitializeEventEngine();
 
 									if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 									{
@@ -3245,6 +3252,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						}
+						reinitializeEventEngine();
 						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
 					}
 				}
@@ -4205,10 +4213,7 @@ void startTransmissionsNow(bool configOverride)
 
 	if(configOverride || (conf != CONFIGURATION_ERROR))
 	{
-		g_evteng_initialize_event = true;
-		util_delay_ms(0);
-		while(util_delay_ms(17) && g_evteng_initialize_event)
-			; // Wait for event engine to initialize
+		reinitializeEventEngine();
 
 		setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW); /* Let the RTC start the event */
 	}
@@ -4222,10 +4227,7 @@ void startEventNow(bool configOverride)
 
 	if(configOverride || (conf != CONFIGURATION_ERROR))
 	{
-		g_evteng_initialize_event = true;
-		util_delay_ms(0);
-		while(util_delay_ms(17) && g_evteng_initialize_event)
-			; // Wait for event engine to initialize
+		reinitializeEventEngine();
 
 		setupForFox(USE_CURRENT_FOX, START_EVENT_NOW_AND_RUN_FOREVER); /* Let the RTC start the event */
 	}
@@ -4239,10 +4241,7 @@ void startSyncdEventNow(bool configOverride)
 
 	if(configOverride || (conf != CONFIGURATION_ERROR))
 	{
-		g_evteng_initialize_event = true;
-		util_delay_ms(0);
-		while(util_delay_ms(17) && g_evteng_initialize_event)
-			; // Wait for event engine to initialize
+		reinitializeEventEngine();
 
 		setupForFox(USE_CURRENT_FOX, START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT); /* Let the RTC start the event */
 	}
@@ -4257,10 +4256,7 @@ bool startEventUsingRTC(void)
 
 	if(conf != CONFIGURATION_ERROR)
 	{
-		g_evteng_initialize_event = true;
-		util_delay_ms(0);
-		while(util_delay_ms(17) && g_evteng_initialize_event)
-			; // Wait for event engine to initialize
+		reinitializeEventEngine();
 
 		setupForFox(USE_CURRENT_FOX, START_EVENT_WITH_STARTFINISH_TIMES);
 		{
@@ -6174,10 +6170,7 @@ bool startEvent(void)
 	cancelManualTransientState();
 	suspendEvent();
 	// reinitialize event engine
-	g_evteng_initialize_event = true;
-	util_delay_ms(0);
-	while(util_delay_ms(17) && g_evteng_initialize_event)
-		; // Wait for event engine to initialize
+	reinitializeEventEngine();
 
 	if(g_evteng_initialize_event)
 	{
