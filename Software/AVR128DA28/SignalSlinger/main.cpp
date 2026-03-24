@@ -5640,15 +5640,22 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-				if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
-				{
-					g_cloningInProgress = true;
-					captureCloneTimingSnapshot();
-					g_event_checksum = 0;
-					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
-					sb_send_master_string(g_tempStr);
-					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
-					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
+					{
+						g_cloningInProgress = true;
+						captureCloneTimingSnapshot();
+						if(g_evteng_event_enabled && g_evteng_event_commenced &&
+						   eventIsScheduledToRunNow(g_clone_timing_snapshot.event_start_epoch, g_clone_timing_snapshot.event_finish_epoch))
+						{
+							/* Pause an actively running timed event on the master while cloning so we can isolate
+							 * whether the live event engine state is contributing to clone-time clock skew. */
+							suspendEvent();
+						}
+						g_event_checksum = 0;
+						sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
+						sb_send_master_string(g_tempStr);
+						g_programming_state = SYNC_Waiting_for_FUN_A_reply;
+						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
