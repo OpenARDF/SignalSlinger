@@ -882,7 +882,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		avr_eeprom_write_byte(Days_to_run, g_days_to_run);
 
 		g_i2c_failure_count = 0;
-		avr_eeprom_write_dword(I2C_failure_count, g_i2c_failure_count);
+		avr_eeprom_write_word(I2C_failure_count, g_i2c_failure_count);
 
 		g_function = EEPROM_FUNCTION_DEFAULT;
 		avr_eeprom_write_byte(Function, (uint8_t)g_function);
