@@ -117,6 +117,16 @@ volatile uint8_t g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile int16_t g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;                    /* amount of time to spend on the air */
 volatile int16_t g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT;                  /* amount of time to wait before returning to the air */
+static inline void atomic_set_system_time(time_t epoch, bool reset_rtc)
+{
+	ENTER_CRITICAL(main_set_system_time);
+	if(reset_rtc)
+	{
+		RTC_zero();
+	}
+	set_system_time(epoch);
+	EXIT_CRITICAL(main_set_system_time);
+}
 volatile int16_t g_evteng_intra_cycle_delay_time = EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT; /* offset time into a repeating transmit cycle */
 volatile int16_t g_evteng_ID_period_seconds = EEPROM_ID_TIME_INTERVAL_DEFAULT;            /* amount of time between ID/callsign transmissions */
 volatile time_t g_event_start_epoch = EEPROM_START_TIME_DEFAULT;
@@ -1131,7 +1141,7 @@ int main(void)
 	reportSettings();
 
 	/* Check that the RTC is running */
-	set_system_time(YEAR_2000_EPOCH);
+	atomic_set_system_time(YEAR_2000_EPOCH, false);
 	time_t now = time(null);
 	while((util_delay_ms(4500)) && (now == time(null)))
 		;
@@ -3355,8 +3365,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(t)
 						{
-							RTC_zero();
-							set_system_time(t);
+								atomic_set_system_time(t, true);
 
 							if(g_cloningInProgress)
 							{
