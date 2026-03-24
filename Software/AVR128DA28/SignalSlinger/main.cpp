@@ -3146,24 +3146,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
 					{
 						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
-						g_cloningInProgress = false;
-						atomic_write_u16(&g_programming_countdown, 0);
 						if(sum == atomic_read_u32(&g_event_checksum))
 						{
-							if(startEvent())
-							{
-								sb_send_string((char *)"MAS NAK\n");
-							}
-							else
-							{
-								sb_send_string((char *)"MAS ACK\n");
-								atomic_write_u16(&g_send_clone_success_countdown, 18000);
-							}
+							/* Acknowledge the clone before restarting the event so the target
+							 * stays in clone-safe parsing mode until the transfer fully completes. */
+							bool cloned_event_should_restart = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+							sb_send_string((char *)"MAS ACK\n");
+							atomic_write_u16(&g_send_clone_success_countdown, 18000);
+							g_foreground_start_event = cloned_event_should_restart;
 						}
 						else
 						{
 							sb_send_string((char *)"MAS NAK\n");
 						}
+
+						g_cloningInProgress = false;
+						atomic_write_u16(&g_programming_countdown, 0);
 					}
 					else
 					{
