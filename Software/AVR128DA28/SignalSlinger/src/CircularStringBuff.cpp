@@ -25,67 +25,67 @@
 
 CircularStringBuff::CircularStringBuff(size_t size)
 {
-  buf_ = (char*)malloc(size);
-  max_size_ = size;
-  head_ = 0;
-  tail_ = 0;
-  full_ = false;
+	buf_ = (char *)malloc(size);
+	max_size_ = size;
+	head_ = 0;
+	tail_ = 0;
+	full_ = false;
 }
 
-CircularStringBuff::~CircularStringBuff() {
+CircularStringBuff::~CircularStringBuff()
+{
 	free(buf_);
 }
 
-
 void CircularStringBuff::reset()
 {
-  head_ = tail_;
-  full_ = false;
+	head_ = tail_;
+	full_ = false;
 }
 
 bool CircularStringBuff::empty() const
 {
-  /*if head and tail are equal, we are empty */
-  return (!full_ && (head_ == tail_));
+	/*if head and tail are equal, we are empty */
+	return (!full_ && (head_ == tail_));
 }
 
 bool CircularStringBuff::full() const
 {
-  return (full_);
+	return (full_);
 }
 
 size_t CircularStringBuff::capacity() const
 {
-  return (max_size_);
+	return (max_size_);
 }
 
 size_t CircularStringBuff::size() const
 {
-  size_t size = max_size_;
+	size_t size = max_size_;
 
-  if (!full_)
-  {
-    if (head_ >= tail_)
-    {
-      size = head_ - tail_;
-    }
-    else
-    {
-      size = max_size_ + head_ - tail_;
-    }
-  }
+	if(!full_)
+	{
+		if(head_ >= tail_)
+		{
+			size = head_ - tail_;
+		}
+		else
+		{
+			size = max_size_ + head_ - tail_;
+		}
+	}
 
-  return (size);
+	return (size);
 }
 
-/** 
+/**
  * Place another item in the buffer
  */
 void CircularStringBuff::put(char item)
 {
 	buf_[head_] = toupper(static_cast<unsigned char>(item));
-	
-	if (full_)
+
+	if(full_)
 	{
 		tail_ = (tail_ + 1) % max_size_;
 	}
@@ -95,47 +95,47 @@ void CircularStringBuff::put(char item)
 	full_ = head_ == tail_;
 }
 
-/** 
+/**
  * Return the last put item and remove it from the buffer
  */
 char CircularStringBuff::pop()
 {
-  if(empty())
-  {
-	return ('\0');
-  }
+	if(empty())
+	{
+		return ('\0');
+	}
 
-  /*Read data and decrement the head (we now have one more free space) */
+	/*Read data and decrement the head (we now have one more free space) */
 
-  if(head_ == 0) 
-  {
-    head_ = max_size_ - 1;
-  }
-  else
-  {
-    --head_;
-  }
-  
-  char val = buf_[head_];
-  full_ = false;
+	if(head_ == 0)
+	{
+		head_ = max_size_ - 1;
+	}
+	else
+	{
+		--head_;
+	}
 
-  return (val);
+	char val = buf_[head_];
+	full_ = false;
+
+	return (val);
 }
 
-/** 
+/**
  * Return the FIFO entry and delete it from the buffer
  */
 char CircularStringBuff::get()
 {
-  if (empty())
-  {
-    return ('\0');
-  }
+	if(empty())
+	{
+		return ('\0');
+	}
 
-  /*Read data and advance the tail (we now have a free space) */
-  char val = buf_[tail_];
-  full_ = false;
-  tail_ = (tail_ + 1) % max_size_;
+	/*Read data and advance the tail (we now have a free space) */
+	char val = buf_[tail_];
+	full_ = false;
+	tail_ = (tail_ + 1) % max_size_;
 
-  return (val);
+	return (val);
 }

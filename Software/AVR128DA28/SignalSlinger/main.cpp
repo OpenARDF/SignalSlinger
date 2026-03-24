@@ -2897,7 +2897,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(arg == '0') /* Stop an event in progress. Resume countdown to any future event */
 						{
 							suspendEvent();                              // Stop any running event and initialize loaded event engine settings
-							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
+							setupForFox(USE_CURRENT_FOX, START_NOTHING);
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 							g_event_launched_by_user_action = false;
 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0); // Allow the transmitter to sleep forever

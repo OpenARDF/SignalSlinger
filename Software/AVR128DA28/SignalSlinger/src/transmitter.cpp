@@ -22,7 +22,6 @@
  *  SOFTWARE.
  */
 
-
 #include <string.h>
 #include <stdlib.h>
 #include <avr/eeprom.h>
@@ -53,12 +52,11 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 /**
  */
- void shutdown_transmitter(void);
-	
+void shutdown_transmitter(void);
+
 /**
  */
- void restart_transmitter(void);
-
+void restart_transmitter(void);
 
 /*
  * This function sets the VFO frequency (CLK0 of the Si5351) based on the intended frequency passed in by the parameter (freq),
@@ -67,114 +65,118 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
  * Update the oscillator with a new transmit frequency.  The caller
  * may request that the clock remain disabled after programming.
  */
-	bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
-	{
-		bool err = true;
+bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
+{
+	bool err = true;
 
-		if(!freq) return(err);
-		
-		if(g_tx_initialized)
+	if(!freq)
+		return (err);
+
+	if(g_tx_initialized)
+	{
+		if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY)) /* 80m */
 		{
-			if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY))    /* 80m */
+			if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
 			{
-				if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
-				{
-					err = false;
-				}
+				err = false;
 			}
 		}
-
-		g_80m_frequency = *freq;
-		
-// 		si5351_set_freq(*freq, TX_CLOCK_VHF, leaveClockOff); /* Test for quadrature */
-
-		return(err);
 	}
-	
+
+	g_80m_frequency = *freq;
+
+	// 		si5351_set_freq(*freq, TX_CLOCK_VHF, leaveClockOff); /* Test for quadrature */
+
+	return (err);
+}
+
 /* Globally enable or disable all RF output.  When disabled the
  * transmitter is powered down to conserve energy.
  */
-	void setDisableTransmissions(bool disabled)
+void setDisableTransmissions(bool disabled)
+{
+	if(disabled)
 	{
-		if(disabled)
-		{
-			g_disable_transmissions = true;
-			powerToTransmitter(OFF);
-		}
-		else
-		{
-			g_disable_transmissions = false;
-		}
+		g_disable_transmissions = true;
+		powerToTransmitter(OFF);
 	}
-	
-	bool getDisableTransmissions(void)
+	else
 	{
-		return(g_disable_transmissions);
+		g_disable_transmissions = false;
 	}
+}
+
+bool getDisableTransmissions(void)
+{
+	return (g_disable_transmissions);
+}
 
 /* Apply or remove power from the RF chain and related control lines.
  * When enabling, the Si5351 and related peripherals are reinitialized.
  */
-	EC powerToTransmitter(bool state)
+EC powerToTransmitter(bool state)
+{
+	EC result = ERROR_CODE_NO_ERROR;
+
+	if(g_disable_transmissions)
 	{
-		EC result = ERROR_CODE_NO_ERROR;
-		
-		if(g_disable_transmissions)
-		{
-			si5351_shutdown_comms();
+		si5351_shutdown_comms();
 #ifdef HW_TARGET_3_5
 #else
-			setBoostEnable(OFF);
+		setBoostEnable(OFF);
 #endif
-			setFETDriverLoadSwitch(OFF, TRANSMITTER);
-			setSignalGeneratorEnable(OFF, TRANSMITTER);
-			g_tx_initialized = false;
-			g_transmitter_keyed = false;
+		setFETDriverLoadSwitch(OFF, TRANSMITTER);
+		setSignalGeneratorEnable(OFF, TRANSMITTER);
+		g_tx_initialized = false;
+		g_transmitter_keyed = false;
+	}
+	else
+	{
+		if(!state)
+		{
+			si5351_shutdown_comms();
+		}
+
+		if(g_enable_external_battery_control)
+			setExtBatLoadSwitch(state, TRANSMITTER);
+		setSignalGeneratorEnable(state, TRANSMITTER);
+
+#ifdef HW_TARGET_3_5
+#else
+		if(g_enable_boost_regulator)
+			setBoostEnable(state);
+#endif
+		setFETDriverLoadSwitch(state, TRANSMITTER);
+
+		if(state)
+		{
+			int tries = 10;
+
+			util_delay_ms(0);
+			while(util_delay_ms(100))
+				;
+			while(tries && (init_transmitter(g_80m_frequency, true) != ERROR_CODE_NO_ERROR))
+			{
+				--tries;
+			}
+
+			if(!tries)
+			{
+				result = ERROR_CODE_RF_OSCILLATOR_ERROR;
+			}
+
+			si5351_start_comms();
 		}
 		else
 		{
-			if(!state)
-			{
-				si5351_shutdown_comms();
-			}
-			
-			if(g_enable_external_battery_control) setExtBatLoadSwitch(state, TRANSMITTER);
-			setSignalGeneratorEnable(state, TRANSMITTER);
-			
-#ifdef HW_TARGET_3_5
-#else
-			if(g_enable_boost_regulator) setBoostEnable(state);
-#endif
-			setFETDriverLoadSwitch(state, TRANSMITTER);
-						
-			if(state)
-			{
-				int tries = 10;
-				
-				util_delay_ms(0);
-				while(util_delay_ms(100));
-				while(tries && (init_transmitter(g_80m_frequency, true) != ERROR_CODE_NO_ERROR))
-				{
-					--tries;
-				}
-				
-				if(!tries)
-				{
-					result = ERROR_CODE_RF_OSCILLATOR_ERROR;
-				}
-				
-				si5351_start_comms();
-			}
-			else
-			{
-				g_tx_initialized = false;
-				g_transmitter_keyed = false;
-			}
+			g_tx_initialized = false;
+			g_transmitter_keyed = false;
 		}
-
-		return(result);
 	}
-// 	
+
+	return (result);
+}
+//
 // 	void txKeyDown(bool key)
 // 	{
 // 		if(g_tx_initialized)
@@ -183,15 +185,15 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 // 			while(--tries && (key != keyTransmitter(key)));
 // 		}
 // 	}
-	
+
 // 	bool txConfirmRFisOff(void)
 // 	{
 // 		if(g_tx_initialized)
 // 		{
 // 			int tries = 5;
-// 		
+//
 // 			while(--tries && (si5351_get_phase(SI5351_CLK0, null) != ERROR_CODE_NO_ERROR)); /* confirm oscillator comms are working */
-// 		
+//
 // 			if(tries > 0) // oscillator appears to be working
 // 			{
 // 				tries = 5;
@@ -208,18 +210,18 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 // 					shutdown_transmitter();
 // 					restart_transmitter();
 // 				}
-// 			
+//
 // 				if(tries <= 0) // failed to disable the RF generator
 // 				{
 // 					tries = 5;
-// 				
+//
 // 					g_tx_initialized = false;
 // 					while(--tries && !g_tx_initialized)
 // 					{
 // 						init_transmitter(true);
 // 						keyTransmitter(OFF);
 // 					}
-// 				
+//
 // 					if(tries < 1)
 // 					{
 // 						return(true); // assume transmitter might be stuck in key down state
@@ -227,176 +229,178 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 // 				}
 // 			}
 // 		}
-// 		
+//
 // 		return(g_transmitter_keyed);
 // 	}
 
-	
-	bool keyTransmitter(bool on)
+bool keyTransmitter(bool on)
+{
+	if(g_tx_initialized)
 	{
-		if(g_tx_initialized)
-		{			
-			int tries = 5;
-			
-			if(on)
+		int tries = 5;
+
+		if(on)
+		{
+			if(!g_transmitter_keyed)
 			{
-				if(!g_transmitter_keyed)
+				fet_driver(ON);
+				while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_ENABLED) != ERROR_CODE_NO_ERROR))
 				{
-					fet_driver(ON);
-					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_ENABLED) != ERROR_CODE_NO_ERROR))
-					{
-						shutdown_transmitter();
-						restart_transmitter();
-					}
-					
-					if(tries)
-					{
-						g_transmitter_keyed = true;
-					}
+					shutdown_transmitter();
+					restart_transmitter();
 				}
-			}
-			else
-			{
-				if(g_transmitter_keyed)
+
+				if(tries)
 				{
-					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
-					{
-						shutdown_transmitter();
-						restart_transmitter();
-					}
-					
-					if(tries)
-					{
-						g_transmitter_keyed = false;
-					}
+					g_transmitter_keyed = true;
 				}
 			}
 		}
 		else
 		{
-			g_transmitter_keyed = false;
+			if(g_transmitter_keyed)
+			{
+				while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
+				{
+					shutdown_transmitter();
+					restart_transmitter();
+				}
+
+				if(tries)
+				{
+					g_transmitter_keyed = false;
+				}
+			}
 		}
-		
-		return(g_transmitter_keyed);
 	}
+	else
+	{
+		g_transmitter_keyed = false;
+	}
+
+	return (g_transmitter_keyed);
+}
 
 // 	uint16_t txGetPowerMw(void)
 // 	{
 // 		return( g_80m_power_level_mW);
 // 	}
-	
-	bool txIsInitialized(void)
+
+bool txIsInitialized(void)
+{
+	return g_tx_initialized;
+}
+
+void shutdown_transmitter(void)
+{
+	si5351_shutdown_comms();
+	powerToTransmitter(OFF);
+}
+
+void restart_transmitter(void)
+{
+	powerToTransmitter(ON);
+	si5351_start_comms();
+}
+
+EC init_transmitter(Frequency_Hz freq, bool leave_clock_off)
+{
+	EC code;
+	g_80m_frequency = freq;
+	code = init_transmitter(leave_clock_off);
+
+	return code;
+}
+
+EC init_transmitter(bool leave_clock_off)
+{
+	EC code = ERROR_CODE_NO_ERROR;
+
+	int tries = 5;
+
+	while(--tries && (si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0) != ERROR_CODE_NO_ERROR))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 initialization failed
 	{
-		return g_tx_initialized;
+		return (ERROR_CODE_RF_OSCILLATOR_ERROR);
 	}
 
-	void shutdown_transmitter(void)
+	// 		if((err = si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0)))
+	// 		{
+	// 			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
+	// 		}
+
+	tries = 5;
+
+	while(--tries && ((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)) != ERROR_CODE_NO_ERROR))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
 	{
-		si5351_shutdown_comms();	
-		powerToTransmitter(OFF);
+		return (ERROR_CODE_RF_OSCILLATOR_ERROR);
 	}
-	
-	void restart_transmitter(void)
+
+	// 		if((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)))
+	// 		{
+	// 			return( code);
+	// 		}
+
+	tries = 5;
+
+	while(--tries && ((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)) != ERROR_CODE_NO_ERROR))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
 	{
-		powerToTransmitter(ON);
-		si5351_start_comms();
+		return (ERROR_CODE_RF_OSCILLATOR_ERROR);
 	}
-	
-	EC init_transmitter(Frequency_Hz freq, bool leave_clock_off)
+	else
 	{
-		EC code;
-		g_80m_frequency = freq;
-		code = init_transmitter(leave_clock_off);
-		
-		return code;
+		g_tx_initialized = true;
 	}
-	
-	EC init_transmitter(bool leave_clock_off)
+
+	// 		if((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)))
+	// 		{
+	// 			return( code);
+	// 		}
+
+	// 		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
+	// 		{
+	// 			return( code);
+	// 		}
+	//
+	// 		if((code = si5351_drive_strength(TX_CLOCK_VHF, SI5351_DRIVE_2MA)))
+	// 		{
+	// 			return( code);
+	// 		}
+	//
+	// 		if((code = si5351_clock_enable(TX_CLOCK_VHF, SI5351_CLK_DISABLED)))
+	// 		{
+	// 			return( code);
+	// 		}
+	//
+	// 		if((code = si5351_set_phase(TX_CLOCK_VHF, 0)))
+	// 		{
+	// 			return( code);
+	// 		}
+	//
+
+	tries = 5;
+
+	while(--tries && (txSetFrequency((Frequency_Hz *)&g_80m_frequency, leave_clock_off)))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
 	{
-		EC code = ERROR_CODE_NO_ERROR;
-
-		int tries = 5;
-
-		while(--tries && (si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 initialization failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		if((err = si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0)))
-// 		{
-// 			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-// 		}
-
-		tries = 5;
-
-		while(--tries && ((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		if((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)))
-// 		{
-// 			return( code);
-// 		}
-		
-
-		tries = 5;
-
-		while(--tries && ((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-		else
-		{
-			g_tx_initialized = true;
-		}
-
-// 		if((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)))
-// 		{
-// 			return( code);
-// 		}
-		
-// 		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_drive_strength(TX_CLOCK_VHF, SI5351_DRIVE_2MA)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_clock_enable(TX_CLOCK_VHF, SI5351_CLK_DISABLED)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_set_phase(TX_CLOCK_VHF, 0)))
-// 		{
-// 			return( code);
-// 		}
-// 
-
-		tries = 5;
-
-		while(--tries && (txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off))); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off);
-// 		if(!err)
-// 		{
-// 			g_tx_initialized = true;
-// 		}
-
-		return( code);
+		return (ERROR_CODE_RF_OSCILLATOR_ERROR);
 	}
+
+	// 		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off);
+	// 		if(!err)
+	// 		{
+	// 			g_tx_initialized = true;
+	// 		}
+
+	return (code);
+}

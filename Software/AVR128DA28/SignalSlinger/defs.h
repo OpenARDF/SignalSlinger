@@ -1,31 +1,31 @@
 
 /**********************************************************************************************
-* Copyright © 2017 Digital Confections LLC
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy of
-* this software and associated documentation files (the "Software"), to deal in the
-* Software without restriction, including without limitation the rights to use, copy,
-* modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
-* and to permit persons to whom the Software is furnished to do so, subject to the
-* following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-* PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-* FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-* OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-*
-**********************************************************************************************/
+ * Copyright © 2017 Digital Confections LLC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in the
+ * Software without restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ **********************************************************************************************/
 
 #ifndef DEFS_H
 #define DEFS_H
 
 #ifndef F_CPU
- #define F_CPU 24000000UL /* gets declared in makefile */
+#define F_CPU 24000000UL /* gets declared in makefile */
 #endif
 
 #include <avr/io.h>
@@ -36,9 +36,9 @@
  * Set the text that gets displayed to the user */
 #define SW_REVISION "1.2b"
 #define HW_TARGET_3_4
-//#define HW_TARGET_3_5
+// #define HW_TARGET_3_5
 
-//#define TRANQUILIZE_WATCHDOG
+// #define TRANQUILIZE_WATCHDOG
 
 #define PRODUCT_NAME_SHORT "SignalSlinger"
 #define PRODUCT_NAME_LONG "SignalSlinger 80m Radio Orienteering Transmitter"
@@ -46,7 +46,7 @@
 /* Caution: Do not enable test software build flag for releasable software */
 // #define TEST_MODE_SOFTWARE /* Do not define on releasable software */
 #ifdef TEST_MODE_SOFTWARE
-#define TEXT_TEST_SOFTWARE_NOTICE_TXT (char*)"\n* TEST SOFTWARE: Do not distribute! \n* Some commands disabled.\n\n"
+#define TEXT_TEST_SOFTWARE_NOTICE_TXT (char *)"\n* TEST SOFTWARE: Do not distribute! \n* Some commands disabled.\n\n"
 #undef SW_REVISION
 #define SW_REVISION "*** TEST SOFTWARE ***"
 #endif
@@ -61,7 +61,8 @@
 /*******************************************************/
 /* Error Codes                                         */
 /*******************************************************/
-typedef enum {
+typedef enum
+{
 	ERROR_CODE_NO_ERROR = 0x00,
 	ERROR_CODE_REPORT_NO_ERROR = 0x01,
 	ERROR_CODE_EVENT_STATION_ID_ERROR = 0xC7,
@@ -71,8 +72,8 @@ typedef enum {
 	ERROR_CODE_EVENT_MISSING_TRANSMIT_DURATION = 0xCB,
 	ERROR_CODE_EVENT_MISSING_START_TIME = 0xCC,
 	ERROR_CODE_EVENT_NOT_CONFIGURED = 0xCD,
-    ERROR_CODE_ILLEGAL_COMMAND_RCVD = 0xCE,
-    ERROR_CODE_SW_LOGIC_ERROR = 0xCF,
+	ERROR_CODE_ILLEGAL_COMMAND_RCVD = 0xCE,
+	ERROR_CODE_SW_LOGIC_ERROR = 0xCF,
 	ERROR_CODE_EVENT_ENDED_IN_PAST = 0xD0,
 	ERROR_CODE_ATMEGA_NOT_RESPONDING = 0xD1,
 	ERROR_CODE_RF_OSCILLATOR_ERROR = 0xD2,
@@ -87,16 +88,17 @@ typedef enum {
 	ERROR_CODE_DAC3_NONRESPONSIVE = 0xFD,
 	ERROR_CODE_DAC2_NONRESPONSIVE = 0xFE,
 	ERROR_CODE_DAC1_NONRESPONSIVE = 0xFF
-	} EC;
+} EC;
 
 /*******************************************************/
 /* Status Codes                                                                 */
 /*******************************************************/
-typedef enum {
+typedef enum
+{
 	STATUS_CODE_IDLE = 0x00,
 	STATUS_CODE_REPORT_IDLE = 0x01,
 	STATUS_CODE_NO_ANT_ATTACHED = 0xE9,
-//	STATUS_CODE_2M_ANT_ATTACHED = 0xEA,
+	//	STATUS_CODE_2M_ANT_ATTACHED = 0xEA,
 	STATUS_CODE_80M_ANT_ATTACHED = 0xEB,
 	STATUS_CODE_RECEIVING_EVENT_DATA = 0xEC,
 	STATUS_CODE_RETURNED_FROM_SLEEP = 0xED,
@@ -108,23 +110,24 @@ typedef enum {
 	STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING = 0xFD,
 	STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT = 0xFE,
 	STATUS_CODE_WAITING_FOR_EVENT_START = 0xFF
-	} SC;
+} SC;
 
-typedef enum {
+typedef enum
+{
 	SLEEP_UNTIL_START_TIME,
 	SLEEP_AFTER_EVENT,
 	SLEEP_UNTIL_NEXT_XMSN,
 	SLEEP_FOREVER,
 	SLEEP_POWER_OFF_OVERRIDE
-	} SleepType;
-	
+} SleepType;
 
-typedef enum {
+typedef enum
+{
 	DO_NOT_ENUNCIATE,
 	LED_AND_RF,
 	LED_ONLY
-	} Enunciation_t;
-	
+} Enunciation_t;
+
 #define ENUNCIATION_BLINK_WPM 8
 
 /*******************************************************/
@@ -161,22 +164,22 @@ typedef enum {
 
 /*******************************************************/
 /*******************************************************
-* ADC Scale Factors */
+ * ADC Scale Factors */
 /* Battery voltage should be read when +12V supply is enabled and all transmitters are fully powered off */
 #define ADC_REF_VOLTAGE_mV 1100UL
 
-#define ADC_MAX_VOLTAGE_MV 4200L /* maximum voltage the ADC can read */
+#define ADC_MAX_VOLTAGE_MV 4200L     /* maximum voltage the ADC can read */
 #define BATTERY_VOLTAGE_MAX_MV 4200L /* voltage at which the battery is considered to be fully charged */
-#define BATTERY_DROP 320L /* voltage drop between the battery terminals and the ADC input while powering the ESP8266 */
+#define BATTERY_DROP 320L            /* voltage drop between the battery terminals and the ADC input while powering the ESP8266 */
 #define BATTERY_DROP_OFFSET (BATTERY_DROP * 1023L)
 #define VBAT(x) (BATTERY_DROP + (x * ADC_MAX_VOLTAGE_MV) / 1023L)
-#define BATTERY_PERCENTAGE(x, y) ( ( 100L * ((x * ADC_MAX_VOLTAGE_MV + BATTERY_DROP_OFFSET) - (1023L * y)) )  / ((BATTERY_VOLTAGE_MAX_MV - y) * 1023L))
+#define BATTERY_PERCENTAGE(x, y) ((100L * ((x * ADC_MAX_VOLTAGE_MV + BATTERY_DROP_OFFSET) - (1023L * y))) / ((BATTERY_VOLTAGE_MAX_MV - y) * 1023L))
 
 #define SUPPLY_VOLTAGE_MAX_MV 14100L
-#define VSUPPLY(x)((x * SUPPLY_VOLTAGE_MAX_MV) / 1023L)
+#define VSUPPLY(x) ((x * SUPPLY_VOLTAGE_MAX_MV) / 1023L)
 
 #define PA_VOLTAGE_MAX_MV 14100L
-#define VPA(x)((x * PA_VOLTAGE_MAX_MV) / 1023L)
+#define VPA(x) ((x * PA_VOLTAGE_MAX_MV) / 1023L)
 
 #define INT_BAT_PRESENT_VOLTAGE (0.5)
 #define INT_BAT_CHARGE_THRESH_LOW_MIN (3.0)
@@ -185,22 +188,22 @@ typedef enum {
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (8.5)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
-//#define FAN_TURN_ON_TEMP (45.)
-//#define FAN_TURN_OFF_TEMP (40.)
+// #define FAN_TURN_ON_TEMP (45.)
+// #define FAN_TURN_OFF_TEMP (40.)
 #define FAN_TURN_ON_TEMP (35.)
 #define FAN_TURN_OFF_TEMP (30.)
 
 #define MINIMUM_VALID_TEMP (-20.)
 #define MAXIMUM_VALID_TEMP (125.)
 
-typedef uint16_t BatteryLevel;  /* in milliVolts */
+typedef uint16_t BatteryLevel; /* in milliVolts */
 
 #define TEXT_BUFF_SIZE 50
 
 /*******************************************************/
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
-	#define SELECTIVELY_DISABLE_OPTIMIZATION
+#define SELECTIVELY_DISABLE_OPTIMIZATION
 #endif
 
 /******************************************************
@@ -255,33 +258,33 @@ typedef uint16_t BatteryLevel;  /* in milliVolts */
 #define EEPROM_FREQUENCY_MED_DEFAULT 3540000
 #define EEPROM_FREQUENCY_HI_DEFAULT 3560000
 #define EEPROM_FREQUENCY_BEACON_DEFAULT 3600000
-#define TEXT_SET_TIME_TXT (char*)"* > CLK T YYMMDDhhmmss <- Set current time\n"
-#define TEXT_SET_START_TXT (char*)"* > CLK S YYMMDDhhmmss <- Set start time\n"
-#define TEXT_SET_FINISH_TXT (char*)"* > CLK F YYMMDDhhmmss <- Set finish time\n"
-#define TEXT_SET_ID_TXT (char*)"* > ID \"callsign\" <- Set callsign\n"
-#define TEXT_ERR_FINISH_BEFORE_START_TXT (char*)"* Err: Finish before start!\n"
-#define TEXT_ERR_FINISH_IN_PAST_TXT (char*)"* Err: Finish in past!\n"
-#define TEXT_ERR_START_IN_PAST_TXT (char*)"* Err: Start in past!\n"
-#define TEXT_ERR_INVALID_TIME_TXT (char*)"* Err: Invalid time!\n"
-#define TEXT_ERR_TIME_IN_PAST_TXT (char*)"* Err: Time in past!\n"
-#define TEXT_ERR_ALIGNED_TO_5MIN_TXT (char*)"* Alert: Time adjusted to 5-min cycle\n"
-#define TEXT_RTC_NOT_RESPONDING_TXT (char*)"* Error: No response from clock hardware\n"
-#define TEXT_TX_NOT_RESPONDING_TXT (char*)"* Error: No response from transmit hardware\n"
-#define TEXT_WIFI_NOT_DETECTED_TXT (char*)"* Warning: WiFi hardware not detected\n"
-#define TEXT_EXCESSIVE_TEMPERATURE (char*)"* Error: High Temperature Shutdown!\n"
-#define TEXT_RESET_OCCURRED_TXT (char*)"* Warning: CPU Reset! Need to set clock\n"
-#define TEXT_NOT_SLEEPING_TXT (char*)"* Awake\n"
-#define TEXT_POWER_OFF (char*)"* Power off. Press and hold pushbutton for power on\n"
-#define TEXT_SLEEPING_TXT (char*)"* Sleeping. Press and hold pushbutton to awaken\n"
-#define TEXT_SLEEPING_UNTIL_START_TXT (char*)"* Sleeping until start\n"
-#define TEXT_SLEEPING_UNTIL_NEXT_XMSN (char*)"* Sleeping until next transmission\n"
-#define TEXT_CURRENT_SETTINGS_TXT (char*)"\n*   === SignalSlinger Settings ===\n"
-#define TEXT_EVENT_SETTINGS_TXT (char*)"\n*    === Frequency Settings ===\n"
-#define TEXT_DEVICE_DISABLED_TXT (char*)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"
+#define TEXT_SET_TIME_TXT (char *)"* > CLK T YYMMDDhhmmss <- Set current time\n"
+#define TEXT_SET_START_TXT (char *)"* > CLK S YYMMDDhhmmss <- Set start time\n"
+#define TEXT_SET_FINISH_TXT (char *)"* > CLK F YYMMDDhhmmss <- Set finish time\n"
+#define TEXT_SET_ID_TXT (char *)"* > ID \"callsign\" <- Set callsign\n"
+#define TEXT_ERR_FINISH_BEFORE_START_TXT (char *)"* Err: Finish before start!\n"
+#define TEXT_ERR_FINISH_IN_PAST_TXT (char *)"* Err: Finish in past!\n"
+#define TEXT_ERR_START_IN_PAST_TXT (char *)"* Err: Start in past!\n"
+#define TEXT_ERR_INVALID_TIME_TXT (char *)"* Err: Invalid time!\n"
+#define TEXT_ERR_TIME_IN_PAST_TXT (char *)"* Err: Time in past!\n"
+#define TEXT_ERR_ALIGNED_TO_5MIN_TXT (char *)"* Alert: Time adjusted to 5-min cycle\n"
+#define TEXT_RTC_NOT_RESPONDING_TXT (char *)"* Error: No response from clock hardware\n"
+#define TEXT_TX_NOT_RESPONDING_TXT (char *)"* Error: No response from transmit hardware\n"
+#define TEXT_WIFI_NOT_DETECTED_TXT (char *)"* Warning: WiFi hardware not detected\n"
+#define TEXT_EXCESSIVE_TEMPERATURE (char *)"* Error: High Temperature Shutdown!\n"
+#define TEXT_RESET_OCCURRED_TXT (char *)"* Warning: CPU Reset! Need to set clock\n"
+#define TEXT_NOT_SLEEPING_TXT (char *)"* Awake\n"
+#define TEXT_POWER_OFF (char *)"* Power off. Press and hold pushbutton for power on\n"
+#define TEXT_SLEEPING_TXT (char *)"* Sleeping. Press and hold pushbutton to awaken\n"
+#define TEXT_SLEEPING_UNTIL_START_TXT (char *)"* Sleeping until start\n"
+#define TEXT_SLEEPING_UNTIL_NEXT_XMSN (char *)"* Sleeping until next transmission\n"
+#define TEXT_CURRENT_SETTINGS_TXT (char *)"\n*   === SignalSlinger Settings ===\n"
+#define TEXT_EVENT_SETTINGS_TXT (char *)"\n*    === Frequency Settings ===\n"
+#define TEXT_DEVICE_DISABLED_TXT (char *)"\n* Device disabled!\n* Press button seven (7) times to enable.\n\n"
 
-#define MINIMUM_VALID_EPOCH ((time_t)1609459200UL)  /* 1 Jan 2021 00:00:00 */
-#define YEAR_2000_EPOCH ((time_t)946684800UL)  /* 1 Jan 2000 00:00:00 */
-#define FOREVER_EPOCH ((time_t)4294967295UL) /* 7 Feb 2106 00:00:00 */
+#define MINIMUM_VALID_EPOCH ((time_t)1609459200UL) /* 1 Jan 2021 00:00:00 */
+#define YEAR_2000_EPOCH ((time_t)946684800UL)      /* 1 Jan 2000 00:00:00 */
+#define FOREVER_EPOCH ((time_t)4294967295UL)       /* 7 Feb 2106 00:00:00 */
 #define SECONDS_24H ((time_t)86400UL)
 
 typedef enum
@@ -301,7 +304,6 @@ typedef enum
 	LOADED_SETTINGS
 } Settings_t;
 
-
 typedef enum
 {
 	Function_Undefined,
@@ -310,30 +312,29 @@ typedef enum
 	Function_Signal_Gen
 } Function_t;
 
-
 /******************************************************
  * General definitions for making the code easier to understand */
 
 #ifndef Frequency_Hz
-	typedef uint32_t Frequency_Hz;
+typedef uint32_t Frequency_Hz;
 #endif
 
-#define ON              1
-#define OFF             0
-#define TOGGLE			2
-#define HIGH			1
-#define LOW				0
-#define UNDETERMINED	3
+#define ON 1
+#define OFF 0
+#define TOGGLE 2
+#define HIGH 1
+#define LOW 0
+#define UNDETERMINED 3
 
-#define MIN(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __a : __b; })
-#define MAX(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
+#define MIN(A, B) ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __a : __b; })
+#define MAX(A, B) ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
 
-#define CLAMP(low, x, high) ({\
-  __typeof__(x) __x = (x); \
-  __typeof__(low) __low = (low);\
-  __typeof__(high) __high = (high);\
-  __x > __high ? __high : (__x < __low ? __low : __x);\
-  })
+#define CLAMP(low, x, high) ({                           \
+	__typeof__(x) __x = (x);                             \
+	__typeof__(low) __low = (low);                       \
+	__typeof__(high) __high = (high);                    \
+	__x > __high ? __high : (__x < __low ? __low : __x); \
+})
 
 #define MAX_TIME 4294967295UL
 #define MAX_UINT16 65535
@@ -371,10 +372,10 @@ typedef enum
 	FOXORING_FOX3,
 	FREQUENCY_TEST_BEACON,
 	USE_CURRENT_FOX
-	#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 	,
 	REPORT_BATTERY
-	#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 } Fox_t;
 
 typedef enum
@@ -392,10 +393,10 @@ typedef enum
 #define OCR2A_OVF_FREQ_600 0x06
 #define OCR2A_OVF_FREQ_720 0x05
 #define OCR2A_OVF_BASE_FREQ OCR2A_OVF_FREQ_720
-#define TIMER2_57HZ (120/OCR2A_OVF_BASE_FREQ)
-#define TIMER2_20HZ (588/OCR2A_OVF_BASE_FREQ)
-#define TIMER2_5_8HZ (1200/OCR2A_OVF_BASE_FREQ)
-#define TIMER2_0_5HZ (12000/OCR2A_OVF_BASE_FREQ)
+#define TIMER2_57HZ (120 / OCR2A_OVF_BASE_FREQ)
+#define TIMER2_20HZ (588 / OCR2A_OVF_BASE_FREQ)
+#define TIMER2_5_8HZ (1200 / OCR2A_OVF_BASE_FREQ)
+#define TIMER2_0_5HZ (12000 / OCR2A_OVF_BASE_FREQ)
 
 /******************************************************
  * UI Hardware-related definitions */
@@ -438,4 +439,4 @@ typedef enum
 	INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES
 } InitializeAction_t;
 
-#endif  /* DEFS_H */
+#endif /* DEFS_H */
