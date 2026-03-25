@@ -467,8 +467,7 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 			}
 
 			return true;
-		}
-		while(false);
+		} while(false);
 	}
 
 	if(errMsg)
