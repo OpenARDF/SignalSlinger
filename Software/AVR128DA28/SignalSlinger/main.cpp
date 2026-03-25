@@ -383,43 +383,35 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 		*finishEpoch = 0;
 	}
 
-	if(errMsg)
-	{
-		strcpy(errMsg, "* Err: Invalid offset!\n");
-	}
-
+	const char *error = "* Err: Invalid offset!\n";
 	time_t start_epoch = atomic_read_time(&g_event_start_epoch);
 	if(start_epoch < MINIMUM_VALID_EPOCH)
 	{
-		if(errMsg)
-		{
-			strcpy(errMsg, "* Err: Start not set!\n");
-		}
-
-		return false;
+		error = "* Err: Start not set!\n";
+		goto fail;
 	}
 
 	if(!offsetString || offsetString[0] != '+')
 	{
-		return false;
+		goto fail;
 	}
 
 	const char *hours_str = offsetString + 1;
 	if(!hours_str[0])
 	{
-		return false;
+		goto fail;
 	}
 
 	const char *colon = strchr(hours_str, ':');
 	if(colon && strchr(colon + 1, ':'))
 	{
-		return false;
+		goto fail;
 	}
 
 	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
 	if((hour_len == 0) || (hour_len > 3))
 	{
-		return false;
+		goto fail;
 	}
 
 	uint16_t hours = 0;
@@ -427,7 +419,7 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 	{
 		if(!isdigit((unsigned char)hours_str[i]))
 		{
-			return false;
+			goto fail;
 		}
 
 		hours = (hours * 10) + (uint16_t)(hours_str[i] - '0');
@@ -435,7 +427,7 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 
 	if(hours > 480)
 	{
-		return false;
+		goto fail;
 	}
 
 	uint8_t minutes = 0;
@@ -445,14 +437,14 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 		size_t minute_len = strlen(minutes_str);
 		if((minute_len == 0) || (minute_len > 2))
 		{
-			return false;
+			goto fail;
 		}
 
 		for(size_t i = 0; i < minute_len; i++)
 		{
 			if(!isdigit((unsigned char)minutes_str[i]))
 			{
-				return false;
+				goto fail;
 			}
 
 			minutes = (minutes * 10) + (uint8_t)(minutes_str[i] - '0');
@@ -460,33 +452,24 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 
 		if(minutes > 59)
 		{
-			return false;
+			goto fail;
 		}
-	}
-
-	time_t finish = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
-	time_t now = time(NULL);
-	if(finish < MAX(start_epoch, now))
-	{
-		if(errMsg)
-		{
-			strcpy(errMsg, TEXT_ERR_FINISH_IN_PAST_TXT);
-		}
-
-		return false;
 	}
 
 	if(finishEpoch)
 	{
-		*finishEpoch = finish;
-	}
-
-	if(errMsg)
-	{
-		errMsg[0] = '\0';
+		*finishEpoch = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
 	}
 
 	return true;
+
+fail:
+	if(errMsg)
+	{
+		strcpy(errMsg, error);
+	}
+
+	return false;
 }
 
 /**
