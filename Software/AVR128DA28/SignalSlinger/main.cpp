@@ -281,6 +281,7 @@ void reportConfigErrors(Settings_t location);
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller);
 static void loadStationIDMorse(bool *repeat, callerID_t caller);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
+static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpoch, char *errMsg);
 static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
@@ -373,6 +374,119 @@ static const char *completeTimeString_volatile(const char *partialString, volati
 {
 	time_t epoch = atomic_read_time(currentEpoch);
 	return completeTimeString(partialString, &epoch);
+}
+
+static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpoch, char *errMsg)
+{
+	if(finishEpoch)
+	{
+		*finishEpoch = 0;
+	}
+
+	if(errMsg)
+	{
+		strcpy(errMsg, "* Err: Invalid offset!\n");
+	}
+
+	time_t start_epoch = atomic_read_time(&g_event_start_epoch);
+	if(start_epoch < MINIMUM_VALID_EPOCH)
+	{
+		if(errMsg)
+		{
+			strcpy(errMsg, "* Err: Start not set!\n");
+		}
+
+		return false;
+	}
+
+	if(!offsetString || offsetString[0] != '+')
+	{
+		return false;
+	}
+
+	const char *hours_str = offsetString + 1;
+	if(!hours_str[0])
+	{
+		return false;
+	}
+
+	const char *colon = strchr(hours_str, ':');
+	if(colon && strchr(colon + 1, ':'))
+	{
+		return false;
+	}
+
+	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
+	if((hour_len == 0) || (hour_len > 3))
+	{
+		return false;
+	}
+
+	uint16_t hours = 0;
+	for(size_t i = 0; i < hour_len; i++)
+	{
+		if(!isdigit((unsigned char)hours_str[i]))
+		{
+			return false;
+		}
+
+		hours = (hours * 10) + (uint16_t)(hours_str[i] - '0');
+	}
+
+	if(hours > 480)
+	{
+		return false;
+	}
+
+	uint8_t minutes = 0;
+	if(colon)
+	{
+		const char *minutes_str = colon + 1;
+		size_t minute_len = strlen(minutes_str);
+		if((minute_len == 0) || (minute_len > 2))
+		{
+			return false;
+		}
+
+		for(size_t i = 0; i < minute_len; i++)
+		{
+			if(!isdigit((unsigned char)minutes_str[i]))
+			{
+				return false;
+			}
+
+			minutes = (minutes * 10) + (uint8_t)(minutes_str[i] - '0');
+		}
+
+		if(minutes > 59)
+		{
+			return false;
+		}
+	}
+
+	time_t finish = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
+	time_t now = time(NULL);
+	if(finish < MAX(start_epoch, now))
+	{
+		if(errMsg)
+		{
+			strcpy(errMsg, TEXT_ERR_FINISH_IN_PAST_TXT);
+		}
+
+		return false;
+	}
+
+	if(finishEpoch)
+	{
+		*finishEpoch = finish;
+	}
+
+	if(errMsg)
+	{
+		errMsg[0] = '\0';
+	}
+
+	return true;
 }
 
 /**
@@ -3531,6 +3645,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						time_t s;
 						bool setSequalF = false;
+						bool explicitMirrorToFinish = false;
 
 						if(g_cloningInProgress)
 						{
@@ -3551,6 +3666,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								s = atomic_read_time(&g_event_finish_epoch);
 								setSequalF = true;
+								explicitMirrorToFinish = true;
 							}
 							else
 							{
@@ -3567,7 +3683,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 						}
 
-						if(s || g_cloningInProgress)
+						if(s || g_cloningInProgress || explicitMirrorToFinish)
 						{
 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_event_start_epoch, s, s);
 							g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void *)&g_event_start_epoch);
@@ -3624,6 +3740,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						time_t f;
+						bool explicitMirrorToStart = false;
 
 						if(g_cloningInProgress)
 						{
@@ -3632,15 +3749,20 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						else
 						{
 							g_tempStr[12] = '\0';
-							g_tempStr[11] = '0'; // finish time seconds are always zero
-							g_tempStr[10] = '0';
 
 							if(g_tempStr[0] == '=')
 							{
 								f = atomic_read_time(&g_event_start_epoch);
+								explicitMirrorToStart = true;
+							}
+							else if(g_tempStr[0] == '+')
+							{
+								parseFinishOffsetToEpoch(g_tempStr, &f, g_tempStr);
 							}
 							else
 							{
+								g_tempStr[11] = '0'; // finish time seconds are always zero
+								g_tempStr[10] = '0';
 								const char *tmp = completeTimeString_volatile(g_tempStr, &g_event_finish_epoch);
 								if(tmp)
 									strncpy(g_tempStr, tmp, 13);
@@ -3654,7 +3776,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 						}
 
-						if(f || g_cloningInProgress)
+						if(f || g_cloningInProgress || explicitMirrorToStart)
 						{
 							atomic_write_time_pair(&g_event_finish_epoch, &g_evteng_loaded_finish_epoch, f, f);
 
