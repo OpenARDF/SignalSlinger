@@ -2911,7 +2911,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(arg == '0') /* Stop an event in progress. Resume countdown to any future event */
 						{
-							suspendEvent();                              // Stop any running event and initialize loaded event engine settings
+							suspendEvent(); // Stop any running event and initialize loaded event engine settings
 							setupForFox(USE_CURRENT_FOX, START_NOTHING);
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 							g_event_launched_by_user_action = false;
@@ -5663,7 +5663,7 @@ void handleSerialCloning(void)
 
 	if(sb_buff)
 	{
-		LEDS.init();                                      /* Extend or resume LED operation */
+		LEDS.init(); /* Extend or resume LED operation */
 	}
 
 	if(!atomic_read_u16(&g_programming_msg_throttle))
@@ -5683,23 +5683,23 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-					if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S')) /* Slave responds ready for cloning */
+				if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S')) /* Slave responds ready for cloning */
+				{
+					extendMasterModeTimeout();
+					g_cloningInProgress = true;
+					captureCloneTimingSnapshot();
+					if(g_evteng_event_enabled && g_evteng_event_commenced &&
+					   eventIsScheduledToRunNow(g_clone_timing_snapshot.event_start_epoch, g_clone_timing_snapshot.event_finish_epoch))
 					{
-						extendMasterModeTimeout();
-						g_cloningInProgress = true;
-						captureCloneTimingSnapshot();
-						if(g_evteng_event_enabled && g_evteng_event_commenced &&
-						   eventIsScheduledToRunNow(g_clone_timing_snapshot.event_start_epoch, g_clone_timing_snapshot.event_finish_epoch))
-						{
-							/* Pause an actively running timed event on the master while cloning so we can isolate
-							 * whether the live event engine state is contributing to clone-time clock skew. */
-							suspendEvent();
-						}
-						g_event_checksum = 0;
-						sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
-						sb_send_master_string(g_tempStr);
-						g_programming_state = SYNC_Waiting_for_FUN_A_reply;
-						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						/* Pause an actively running timed event on the master while cloning so we can isolate
+						 * whether the live event engine state is contributing to clone-time clock skew. */
+						suspendEvent();
+					}
+					g_event_checksum = 0;
+					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
+					sb_send_master_string(g_tempStr);
+					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
+					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 				}
 			}
