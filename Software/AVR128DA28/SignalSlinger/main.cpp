@@ -104,11 +104,6 @@ static volatile SC g_last_status_code = STATUS_CODE_IDLE;
 
 volatile bool g_device_enabled = false;
 
-static volatile bool g_powering_off = false;
-
-static volatile bool g_battery_measurements_active = false;
-static volatile uint16_t g_maximum_battery = 0;
-
 static volatile bool g_foreground_start_event = false;
 static volatile bool g_foreground_enable_transmitter = false;
 static volatile int g_hardware_error = (int)HARDWARE_OK;
@@ -187,7 +182,6 @@ static bool g_start_event_after_keydown = false; /* Foreground-only: one-press k
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
 static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = {TIMER2_0_5HZ, TIMER2_0_5HZ, TIMER2_0_5HZ};
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = {2000, 2000, 4000};
-static volatile bool g_adcUpdated[NUMBER_OF_POLLED_ADC_CHANNELS] = {false, false, false};
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = {0, 0, 0};
 static volatile bool g_thermal_shutdown = false;
 
@@ -1028,7 +1022,6 @@ ISR(TCB0_INT_vect)
 
 			if(hold < 4090)
 			{
-				g_adcUpdated[indexConversionInProcess] = true;
 				g_lastConversionResult[indexConversionInProcess] = hold;
 
 				if(g_adcChannelOrder[indexConversionInProcess] == ADCInternalBatteryVoltage)

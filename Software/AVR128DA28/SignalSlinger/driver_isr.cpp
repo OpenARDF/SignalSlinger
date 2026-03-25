@@ -43,7 +43,6 @@
 #include "globals.h"
 
 void serial_Rx(uint8_t rx_char);
-void serial_Tx(uint8_t rx_char);
 
 ISR(USART0_RXC_vect)
 {
