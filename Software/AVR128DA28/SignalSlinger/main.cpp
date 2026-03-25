@@ -586,8 +586,10 @@ void handle_1sec_tasks(void)
 						time_t loaded_start_epoch;
 						time_t loaded_finish_epoch_pair;
 						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
-						g_evteng_loaded_start_epoch = loaded_start_epoch + SECONDS_24H;
-						g_evteng_loaded_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+						time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
+						time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+						atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
+						atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
 						g_sleepType = SLEEP_UNTIL_START_TIME;
 						g_go_to_sleep_now = true;
 					}
@@ -700,12 +702,13 @@ void handle_1sec_tasks(void)
 			{
 				if(g_sleepType == SLEEP_AFTER_EVENT)
 				{
-					if(noEventWillRun()) /* Should never evaluate to true here, but checking just in case */
+					if(noEventWillRun()) /* Event is done; fall through and request the appropriate sleep state now. */
 					{
 						g_sleepType = SLEEP_FOREVER;
 					}
 				}
-				else if(!g_go_to_sleep_now)
+
+				if((g_sleepType != SLEEP_AFTER_EVENT) && !g_go_to_sleep_now)
 				{
 					if(g_sleepType == SLEEP_FOREVER)
 					{
@@ -2119,11 +2122,6 @@ int main(void)
 					if(g_last_error_code != ERROR_CODE_NO_ERROR)
 					{
 						sb_send_string((char *)"* Err: event not launched\n");
-					}
-
-					if(g_evteng_event_enabled)
-					{
-						g_sleepType = SLEEP_AFTER_EVENT;
 					}
 
 					LEDS.init();
