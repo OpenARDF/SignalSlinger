@@ -388,82 +388,89 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 	if(start_epoch < MINIMUM_VALID_EPOCH)
 	{
 		error = "* Err: Start not set!\n";
-		goto fail;
 	}
-
-	if(!offsetString || offsetString[0] != '+')
+	else
 	{
-		goto fail;
-	}
-
-	const char *hours_str = offsetString + 1;
-	if(!hours_str[0])
-	{
-		goto fail;
-	}
-
-	const char *colon = strchr(hours_str, ':');
-	if(colon && strchr(colon + 1, ':'))
-	{
-		goto fail;
-	}
-
-	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
-	if((hour_len == 0) || (hour_len > 3))
-	{
-		goto fail;
-	}
-
-	uint16_t hours = 0;
-	for(size_t i = 0; i < hour_len; i++)
-	{
-		if(!isdigit((unsigned char)hours_str[i]))
+		do
 		{
-			goto fail;
-		}
-
-		hours = (hours * 10) + (uint16_t)(hours_str[i] - '0');
-	}
-
-	if(hours > 480)
-	{
-		goto fail;
-	}
-
-	uint8_t minutes = 0;
-	if(colon)
-	{
-		const char *minutes_str = colon + 1;
-		size_t minute_len = strlen(minutes_str);
-		if((minute_len == 0) || (minute_len > 2))
-		{
-			goto fail;
-		}
-
-		for(size_t i = 0; i < minute_len; i++)
-		{
-			if(!isdigit((unsigned char)minutes_str[i]))
+			if(!offsetString || offsetString[0] != '+')
 			{
-				goto fail;
+				break;
 			}
 
-			minutes = (minutes * 10) + (uint8_t)(minutes_str[i] - '0');
-		}
+			const char *hours_str = offsetString + 1;
+			if(!hours_str[0])
+			{
+				break;
+			}
 
-		if(minutes > 59)
-		{
-			goto fail;
+			const char *colon = strchr(hours_str, ':');
+			if(colon && strchr(colon + 1, ':'))
+			{
+				break;
+			}
+
+			size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
+			if((hour_len == 0) || (hour_len > 3))
+			{
+				break;
+			}
+
+			uint16_t hours = 0;
+			bool valid = true;
+			for(size_t i = 0; i < hour_len; i++)
+			{
+				if(!isdigit((unsigned char)hours_str[i]))
+				{
+					valid = false;
+					break;
+				}
+
+				hours = (hours * 10) + (uint16_t)(hours_str[i] - '0');
+			}
+
+			if(!valid || (hours > 480))
+			{
+				break;
+			}
+
+			uint8_t minutes = 0;
+			if(colon)
+			{
+				const char *minutes_str = colon + 1;
+				size_t minute_len = strlen(minutes_str);
+				if((minute_len == 0) || (minute_len > 2))
+				{
+					break;
+				}
+
+				for(size_t i = 0; i < minute_len; i++)
+				{
+					if(!isdigit((unsigned char)minutes_str[i]))
+					{
+						valid = false;
+						break;
+					}
+
+					minutes = (minutes * 10) + (uint8_t)(minutes_str[i] - '0');
+				}
+
+				if(!valid || (minutes > 59))
+				{
+					break;
+				}
+			}
+
+			if(finishEpoch)
+			{
+				*finishEpoch = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
+			}
+
+			return true;
 		}
+		while(false);
 	}
 
-	if(finishEpoch)
-	{
-		*finishEpoch = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
-	}
-
-	return true;
-
-fail:
 	if(errMsg)
 	{
 		strcpy(errMsg, error);
