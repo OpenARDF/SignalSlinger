@@ -289,6 +289,7 @@ static const char *completeTimeString_volatile(const char *partialString, volati
 static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
+static inline void extendMasterModeTimeout(void);
 
 static bool cancelManualTransientState(void)
 {
@@ -342,6 +343,11 @@ static void reinitializeEventEngine(void)
 	util_delay_ms(0);
 	while(util_delay_ms(17) && g_evteng_initialize_event)
 		; // Wait for event engine to initialize
+}
+
+static inline void extendMasterModeTimeout(void)
+{
+	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 }
 
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
@@ -5640,7 +5646,6 @@ void handleSerialCloning(void)
 
 	if(sb_buff)
 	{
-		atomic_write_u16(&isMasterCountdownSeconds, 600); /* Extend Master time */
 		LEDS.init();                                      /* Extend or resume LED operation */
 	}
 
@@ -5663,6 +5668,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 					if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S')) /* Slave responds ready for cloning */
 					{
+						extendMasterModeTimeout();
 						g_cloningInProgress = true;
 						captureCloneTimingSnapshot();
 						if(g_evteng_event_enabled && g_evteng_event_commenced &&
@@ -5690,6 +5696,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_FUNCTION)
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += 'A';
 					g_seconds_transition = false;
 					g_programming_state = SYNC_Align_to_Second_Transition;
@@ -5724,6 +5731,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'T')
 					{
+						extendMasterModeTimeout();
 						time_t event_start_epoch = g_clone_timing_snapshot.event_start_epoch;
 						g_event_checksum += event_start_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_S_reply;
@@ -5746,6 +5754,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'S')
 					{
+						extendMasterModeTimeout();
 						time_t event_finish_epoch = g_clone_timing_snapshot.event_finish_epoch;
 						g_event_checksum += event_finish_epoch;
 						g_programming_state = SYNC_Waiting_for_CLK_F_reply;
@@ -5768,6 +5777,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'F')
 					{
+						extendMasterModeTimeout();
 						g_event_checksum += g_clone_timing_snapshot.days_to_run;
 						g_programming_state = SYNC_Waiting_for_CLK_D_reply;
 						sprintf(g_tempStr, "CLK D %d\n", g_clone_timing_snapshot.days_to_run);
@@ -5789,6 +5799,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'D')
 					{
+						extendMasterModeTimeout();
 						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 						g_programming_state = SYNC_Waiting_for_ID_reply;
 
@@ -5840,6 +5851,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_SET_STATION_ID)
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_evteng_id_codespeed;
 					g_programming_state = SYNC_Waiting_for_ID_CodeSpeed_reply;
 					sprintf(g_tempStr, "SPD I %u\n", g_evteng_id_codespeed);
@@ -5860,6 +5872,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'I')
 					{
+						extendMasterModeTimeout();
 						sprintf(g_tempStr, "SPD P %u\n", g_evteng_pattern_codespeed);
 
 						g_event_checksum += g_evteng_pattern_codespeed;
@@ -5882,6 +5895,7 @@ void handleSerialCloning(void)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'P')
 					{
+						extendMasterModeTimeout();
 						char c = '\0';
 
 						if(g_event == EVENT_CLASSIC)
@@ -5920,6 +5934,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_EVENT) /* Slave responds with EVT message */
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_frequency;
 					g_programming_state = SYNC_Waiting_for_NoEvent_Freq_reply;
 					sprintf(g_tempStr, "FRE X %lu\n", g_frequency);
@@ -5938,6 +5953,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_TX_FREQ) /* Slave responds with EVT message */
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_frequency_low;
 					g_programming_state = SYNC_Waiting_for_Freq_Low_reply;
 					sprintf(g_tempStr, "FRE L %lu\n", g_frequency_low);
@@ -5956,6 +5972,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_frequency_med;
 					g_programming_state = SYNC_Waiting_for_Freq_Med_reply;
 					sprintf(g_tempStr, "FRE M %lu\n", g_frequency_med);
@@ -5974,6 +5991,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_frequency_hi;
 					g_programming_state = SYNC_Waiting_for_Freq_Hi_reply;
 					sprintf(g_tempStr, "FRE H %lu\n", g_frequency_hi);
@@ -5992,6 +6010,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
+					extendMasterModeTimeout();
 					g_event_checksum += g_frequency_beacon;
 					g_programming_state = SYNC_Waiting_for_Freq_Beacon_reply;
 					sprintf(g_tempStr, "FRE B %lu\n", g_frequency_beacon);
@@ -6010,6 +6029,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
+					extendMasterModeTimeout();
 					g_programming_state = SYNC_Waiting_for_ACK;
 					sprintf(g_tempStr, "MAS Q %lu\n", atomic_read_u32(&g_event_checksum));
 					sb_send_master_string(g_tempStr);
@@ -6027,6 +6047,7 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_MASTER)
 				{
+					extendMasterModeTimeout();
 					if(sb_buff->fields[SB_FIELD1][0] == 'A')
 					{
 						atomic_write_u16(&g_send_clone_success_countdown, 18000);
@@ -6037,7 +6058,6 @@ void handleSerialCloning(void)
 						g_cloningInProgress = false;
 					}
 
-					atomic_write_u16(&isMasterCountdownSeconds, 600); /* Extend Master time */
 					g_programming_state = SYNC_Searching_for_slave;
 				}
 			}
