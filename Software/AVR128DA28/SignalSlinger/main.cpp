@@ -112,6 +112,7 @@ static volatile uint16_t g_maximum_battery = 0;
 static volatile bool g_foreground_start_event = false;
 static volatile bool g_foreground_enable_transmitter = false;
 static volatile int g_hardware_error = (int)HARDWARE_OK;
+static volatile bool g_defer_cloned_event_start = false;
 
 /* Variables related to the "Event Engine" which consists of two ISRs and the foreground working
 together to handle event timing. Communication between ISRs and forground is most efficiently
@@ -1675,12 +1676,20 @@ int main(void)
 			uint16_t counted_presses = atomic_exchange_u16(&g_foreground_handle_counted_presses, 0);
 			if(counted_presses)
 			{
+				bool release_deferred_clone_start = false;
 				if(atomic_read_u16(&g_send_clone_success_countdown) || g_cloningInProgress)
 				{
+					release_deferred_clone_start = atomic_read_u16(&g_send_clone_success_countdown) && g_defer_cloned_event_start;
 					atomic_write_u16(&g_send_clone_success_countdown, 0);
 					g_cloningInProgress = false;
 					atomic_write_u16(&g_programming_msg_throttle, 0);
 					counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
+				}
+
+				if(release_deferred_clone_start)
+				{
+					g_defer_cloned_event_start = false;
+					g_foreground_start_event = true;
 				}
 
 				if(g_isMaster)
@@ -2077,6 +2086,12 @@ int main(void)
 			else
 			{
 				handleSerialBusMsgs();
+
+				if(g_defer_cloned_event_start && !g_cloningInProgress && !atomic_read_u16(&g_send_clone_success_countdown) && !g_foreground_start_event)
+				{
+					g_defer_cloned_event_start = false;
+					g_foreground_start_event = true;
+				}
 
 				if(g_cloningInProgress && !atomic_read_u16(&g_programming_countdown)) // Cloning timed out
 				{
@@ -3133,14 +3148,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'P') // Target receives clone command from source
 					{
-						if(!atomic_read_u16(&g_send_clone_success_countdown))
+						/* Ignore repeated clone probes once a timed event has already been launched so an idle
+						 * master cannot suspend and overwrite a target that is already running. */
+						if(!atomic_read_u16(&g_send_clone_success_countdown) && !g_evteng_event_commenced)
 						{
 							g_cloningInProgress = true;
+							g_defer_cloned_event_start = false;
 							cancelManualTransientState();
 							suspendEvent();
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum = 0;
-							sb_send_string((char *)"MAS\n");
+							sb_send_string((char *)"MAS S\n");
 						}
 					}
 					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
@@ -3151,12 +3169,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							/* Acknowledge the clone before restarting the event so the target
 							 * stays in clone-safe parsing mode until the transfer fully completes. */
 							bool cloned_event_should_restart = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							bool cloned_event_is_already_in_progress = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 							sb_send_string((char *)"MAS ACK\n");
 							atomic_write_u16(&g_send_clone_success_countdown, 18000);
-							g_foreground_start_event = cloned_event_should_restart;
+							g_defer_cloned_event_start = cloned_event_should_restart && cloned_event_is_already_in_progress;
+							g_foreground_start_event = cloned_event_should_restart && !g_defer_cloned_event_start;
 						}
 						else
 						{
+							g_defer_cloned_event_start = false;
 							sb_send_string((char *)"MAS NAK\n");
 						}
 
@@ -5638,7 +5661,7 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-					if(msg_id == SB_MESSAGE_MASTER) /* Slave responds with MAS message */
+					if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S')) /* Slave responds ready for cloning */
 					{
 						g_cloningInProgress = true;
 						captureCloneTimingSnapshot();
