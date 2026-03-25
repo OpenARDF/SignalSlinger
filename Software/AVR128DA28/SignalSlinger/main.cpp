@@ -271,6 +271,7 @@ void startTransmissionsNow(bool configOverride);
 void setupForFox(Fox_t fox, EventAction_t action);
 time_t validateTimeString(char *str, char *errMsg);
 time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsh);
+time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg, const char *rawInput);
 bool reportTimeTill(time_t from, time_t until, const char *prefix, const char *failMsg);
 void reportConfigErrors(Settings_t location);
 /*******************************/
@@ -3538,7 +3539,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						else
 						{
 							char msg[TEMP_STRING_SIZE + 1];
+							char rawStartInput[13];
 							msg[0] = '\0';
+							strncpy(rawStartInput, g_tempStr, sizeof(rawStartInput) - 1);
+							rawStartInput[sizeof(rawStartInput) - 1] = '\0';
 							g_tempStr[12] = '\0';
 							g_tempStr[11] = '0'; // start time seconds are always zero
 							g_tempStr[10] = '0';
@@ -3553,7 +3557,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								const char *tmp = completeTimeString_volatile(g_tempStr, &g_evteng_loaded_start_epoch);
 								if(tmp)
 									strncpy(g_tempStr, tmp, 13);
-								s = validateTimeString(g_tempStr, &g_event_start_epoch, (g_event == EVENT_CLASSIC), msg);
+								s = validateTimeString(g_tempStr, &g_event_start_epoch, (g_event == EVENT_CLASSIC), msg, rawStartInput);
 							}
 
 							if(msg[0] != '\0')
@@ -4661,10 +4665,15 @@ void setupForFox(Fox_t fox, EventAction_t action)
  */
 time_t validateTimeString(char *str, char *errMsg)
 {
-	return validateTimeString(str, null, false, errMsg);
+	return validateTimeString(str, null, false, errMsg, null);
 }
 
 time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg)
+{
+	return validateTimeString(str, epochVar, align5min, errMsg, null);
+}
+
+time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg, const char *rawInput)
 {
 	time_t valid = 0;                          // Initialize return value to 0 (indicating invalid by default).
 	int len = strlen(str);                     // Get the length of the provided string.
@@ -4700,6 +4709,21 @@ time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, 
 	{
 		// Convert the time string to epoch value (`YYMMDDhhmmss` format).
 		time_t ep = String2Epoch(NULL, str);
+
+		if((validationType == 1) && (ep < minimumEpoch) && rawInput && rawInput[0] && only_digits((char *)rawInput))
+		{
+			// When an event is already running, partial start input may have been expanded against the old start date.
+			const char *retry = completeTimeString(rawInput, &now);
+			if(retry)
+			{
+				time_t retryEpoch = String2Epoch(NULL, (char *)retry);
+				if(retryEpoch >= minimumEpoch)
+				{
+					strncpy(str, retry, 13);
+					ep = retryEpoch;
+				}
+			}
+		}
 
 		// Validate if the calculated epoch is greater than or equal to the minimum allowed.
 		if(ep >= minimumEpoch)
