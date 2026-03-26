@@ -2141,7 +2141,7 @@ int main(void)
 					{
 						// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
 
-						g_evteng_run_event_until_canceled = !eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+						g_evteng_run_event_until_canceled = false; // Foreground auto-start is only used for scheduled event launches
 						setupForFox(USE_CURRENT_FOX, START_NOTHING); // Refresh fox-specific timing before launching a loaded event
 						reinitializeEventEngine();
 
