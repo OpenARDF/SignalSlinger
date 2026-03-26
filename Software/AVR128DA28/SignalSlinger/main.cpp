@@ -2622,26 +2622,26 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							fox_setting_current_slot_write_atomic(holdFox);
 							setupForFox(holdFox, START_EVENT_WITH_STARTFINISH_TIMES);
 
-								if(!g_cloningInProgress)
+							if(!g_cloningInProgress)
+							{
+								if(g_evteng_event_enabled) // try to update an event already in progress
 								{
-									if(g_evteng_event_enabled) // try to update an event already in progress
+									if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 									{
-										if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-										{
-											g_event_launched_by_user_action = false;
-											startEventUsingRTC();
-										}
-										else
-										{
-											g_sleepType = SLEEP_FOREVER;
-											startEventNow(true); // Immediately start the event
-											if(!g_enable_external_battery_control)
-												setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
-										}
+										g_event_launched_by_user_action = false;
+										startEventUsingRTC();
+									}
+									else
+									{
+										g_sleepType = SLEEP_FOREVER;
+										startEventNow(true); // Immediately start the event
+										if(!g_enable_external_battery_control)
+											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 									}
 								}
 							}
 						}
+					}
 				} /* if(c1) */
 
 				if(!fox2Text(g_tempStr, getFoxSetting()))
