@@ -285,6 +285,7 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
+static void loadEventTimingForFox(Fox_t fox);
 static bool reloadLoadedEventWindowFromSavedSettings(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
@@ -341,6 +342,194 @@ static void reinitializeEventEngine(void)
 	util_delay_ms(0);
 	while(util_delay_ms(17) && g_evteng_initialize_event)
 		; // Wait for event engine to initialize
+}
+
+static void loadEventTimingForFox(Fox_t fox)
+{
+	bool delayNotSet = true;
+
+	if(fox == USE_CURRENT_FOX)
+	{
+		fox = getFoxSetting();
+	}
+
+	switch(fox)
+	{
+		case FOX_1:
+		{
+			delayNotSet = false;
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		case FOX_2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 60;
+			}
+		}
+		case FOX_3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 120;
+			}
+		}
+		case FOX_4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 180;
+			}
+		}
+		case FOX_5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 240;
+			}
+
+			g_evteng_ID_period_seconds = 60;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 60;
+			g_evteng_off_air_seconds = 240;
+		}
+		break;
+
+		case SPRINT_S1:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 0;
+			}
+		}
+		case SPRINT_S2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 12;
+			}
+		}
+		case SPRINT_S3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 24;
+			}
+		}
+		case SPRINT_S4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 36;
+			}
+		}
+		case SPRINT_S5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 48;
+			}
+
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = 600;
+			g_evteng_on_air_seconds = 12;
+			g_evteng_off_air_seconds = 48;
+		}
+		break;
+
+		case SPRINT_F1:
+		{
+			delayNotSet = false;
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		case SPRINT_F2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 12;
+			}
+		}
+		case SPRINT_F3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 24;
+			}
+		}
+		case SPRINT_F4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 36;
+			}
+		}
+		case SPRINT_F5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 48;
+			}
+
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 12;
+			g_evteng_off_air_seconds = 48;
+		}
+		break;
+
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+		case REPORT_BATTERY:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+
+		case FOXORING_FOX1:
+		case FOXORING_FOX2:
+		case FOXORING_FOX3:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+		}
+		break;
+
+		case FREQUENCY_TEST_BEACON:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+		}
+		break;
+
+		case SPECTATOR:
+		case BEACON:
+		default:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+		}
+		break;
+	}
 }
 
 static bool reloadLoadedEventWindowFromSavedSettings(void)
@@ -689,6 +878,7 @@ void handle_1sec_tasks(void)
 
 					if(temp_time >= loaded_start_epoch) /* Time for the event to start */
 					{
+						loadEventTimingForFox(USE_CURRENT_FOX);
 						g_evteng_event_commenced = true;
 						g_evteng_initialize_event = true;
 						g_sleepType = SLEEP_AFTER_EVENT;
@@ -4469,209 +4659,13 @@ void configRedLEDforEvent(void)
 void setupForFox(Fox_t fox, EventAction_t action)
 {
 	SC sc;
-	bool delayNotSet = true;
 
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-	if(fox == USE_CURRENT_FOX)
-	{
-		fox = getFoxSetting();
-	}
-
 	g_evteng_event_enabled = false;
 	g_evteng_event_commenced = false;
-
-	switch(fox)
-	{
-		case FOX_1:
-		{
-			delayNotSet = false;
-			g_evteng_intra_cycle_delay_time = 0;
-		}
-		case FOX_2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 60;
-			}
-		}
-		case FOX_3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 120;
-			}
-		}
-		case FOX_4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 180;
-			}
-		}
-		case FOX_5:
-		{
-			/* Set the Morse code pattern and speed */
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 240;
-			}
-
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_ID_period_seconds = 60;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds; /* wait 1 minute to send the ID */
-			g_evteng_on_air_seconds = 60;                                   /* on period is one minute */
-			g_evteng_off_air_seconds = 240;                                 /* off period = 4 minutes */
-		}
-		break;
-
-		case SPRINT_S1:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 0;
-			}
-		}
-		case SPRINT_S2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 12;
-			}
-		}
-		case SPRINT_S3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 24;
-			}
-		}
-		case SPRINT_S4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 36;
-			}
-		}
-		case SPRINT_S5:
-		{
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 48;
-			}
-
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = 600; /* wait 10 minutes send the ID */
-			g_evteng_on_air_seconds = 12;            /* on period is 12 seconds */
-			g_evteng_off_air_seconds = 48;           /* off period = 48 seconds */
-		}
-		break;
-
-		case SPRINT_F1:
-		{
-			delayNotSet = false;
-			g_evteng_intra_cycle_delay_time = 0;
-		}
-		case SPRINT_F2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 12;
-			}
-		}
-		case SPRINT_F3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 24;
-			}
-		}
-		case SPRINT_F4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 36;
-			}
-		}
-		case SPRINT_F5:
-		{
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 48;
-			}
-
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds; /* wait 10 minutes send the ID */
-			g_evteng_on_air_seconds = 12;                                   /* on period is 12 seconds */
-			g_evteng_off_air_seconds = 48;                                  /* off period = 48 seconds */
-		}
-		break;
-
-#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-		case REPORT_BATTERY:
-		{
-			g_evteng_intra_cycle_delay_time = 0;
-			// 			g_on_air_interval_seconds = 30;
-			// 			g_cycle_period_seconds = 60;
-			// 			g_number_of_foxes = 2;
-			// 			g_evteng_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
-			// 			g_fox_id_offset = REPORT_BATTERY - 1;
-			// 			g_id_interval_seconds = 60;
-		}
-		break;
-#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-
-		case FOXORING_FOX1:
-		case FOXORING_FOX2:
-		case FOXORING_FOX3:
-		{
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds; /* wait 10 minutes send the ID */
-			g_evteng_on_air_seconds = 600;                                  /* on period is 10 minutes */
-			g_evteng_off_air_seconds = 0;                                   /* off period is very short */
-		}
-		break;
-
-		case FREQUENCY_TEST_BEACON:
-		{
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds; /* wait 10 minutes send the ID */
-			g_evteng_on_air_seconds = 600;                                  /* on period 10 minutes */
-			g_evteng_off_air_seconds = 0;                                   /* off period is very short */
-			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-		}
-		break;
-
-		case SPECTATOR:
-		case BEACON:
-		default:
-		{
-			// 			init_transmitter(getFrequencySetting());
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds; /* wait 10 minutes send the ID */
-			g_evteng_on_air_seconds = 600;                                  /* on period is 10 minutes */
-			g_evteng_off_air_seconds = 0;                                   /* off period is very short */
-		}
-		break;
-	}
+	loadEventTimingForFox(fox);
 
 	g_foreground_enable_transmitter = false;
 	g_foreground_start_event = false;
