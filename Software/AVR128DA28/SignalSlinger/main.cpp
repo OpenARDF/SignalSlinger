@@ -2137,15 +2137,16 @@ int main(void)
 			{
 				g_foreground_start_event = false;
 
-				if(!g_isMaster)
-				{
-					// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
+					if(!g_isMaster)
+					{
+						// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
 
-					g_evteng_run_event_until_canceled = !eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
-					reinitializeEventEngine();
+						g_evteng_run_event_until_canceled = !eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+						setupForFox(USE_CURRENT_FOX, START_NOTHING); // Refresh fox-specific timing before launching a loaded event
+						reinitializeEventEngine();
 
-					LEDS.init();
-					g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
+						LEDS.init();
+						g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
 
 					if(g_last_error_code != ERROR_CODE_NO_ERROR)
 					{
