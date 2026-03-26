@@ -285,6 +285,8 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
+static bool reloadLoadedEventWindowFromSavedSettings(void);
+static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 
 static bool cancelManualTransientState(void)
@@ -339,6 +341,55 @@ static void reinitializeEventEngine(void)
 	util_delay_ms(0);
 	while(util_delay_ms(17) && g_evteng_initialize_event)
 		; // Wait for event engine to initialize
+}
+
+static bool reloadLoadedEventWindowFromSavedSettings(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+
+	loaded_start_epoch = saved_start_epoch;
+	loaded_finish_epoch = saved_finish_epoch;
+
+	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
+	{
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+		return false;
+	}
+
+	uint8_t day_index = MIN(g_days_run, (uint8_t)((g_days_to_run > 0) ? (g_days_to_run - 1) : 0));
+	loaded_start_epoch += ((time_t)day_index * SECONDS_24H);
+	loaded_finish_epoch += ((time_t)day_index * SECONDS_24H);
+
+	if(timeIsSet())
+	{
+		time_t now = time(null);
+		while((loaded_finish_epoch <= now) && ((day_index + 1) < g_days_to_run))
+		{
+			day_index++;
+			loaded_start_epoch += SECONDS_24H;
+			loaded_finish_epoch += SECONDS_24H;
+		}
+	}
+
+	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+
+	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+}
+
+static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
+{
+	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
+	{
+		return false;
+	}
+
+	g_days_run++;
+	return reloadLoadedEventWindowFromSavedSettings();
 }
 
 static inline void extendMasterModeTimeout(void)
@@ -1265,12 +1316,7 @@ int main(void)
 	g_ee_mgr.initializeEEPROMVars();
 
 	g_ee_mgr.readNonVols();
-	{
-		time_t start_epoch;
-		time_t finish_epoch;
-		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
-	}
+	reloadLoadedEventWindowFromSavedSettings();
 	g_isMaster = false; /* Never start up as master */
 
 	if(g_enable_external_battery_control)
@@ -1394,10 +1440,7 @@ int main(void)
 
 				if(!g_event_launched_by_user_action) // re-initialize event engine with stored event start and stop if it might be needed
 				{
-					time_t start_epoch;
-					time_t finish_epoch;
-					atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
+					reloadLoadedEventWindowFromSavedSettings();
 				}
 
 				// If the event loaded into the event engine is disabled, set it to start.
@@ -1965,13 +2008,8 @@ int main(void)
 									{
 										atomic_write_u16(&g_demo_event_countdown, 0);
 										g_foreground_reset_after_demo = false;
-										// Restore saved event start and finish times (though they are not needed for non-timed events)
-										{
-											time_t start_epoch;
-											time_t finish_epoch;
-											atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-											atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
-										}
+										// Restore the currently relevant saved event window.
+										reloadLoadedEventWindowFromSavedSettings();
 									}
 
 									if(atomic_read_u16(&g_key_down_countdown))
@@ -2034,11 +2072,12 @@ int main(void)
 							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 							if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 							{
-								if((g_evteng_event_enabled && g_evteng_event_commenced)) // if it is currently running, stop it
+								suspendEvent();
+								if(advanceLoadedEventWindowAfterCurrentDayCancel())
 								{
-									suspendEvent();
-									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+									startEventUsingRTC();
 								}
+								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 							}
 							else // the event is scheduled for the future, so set it up to start (transmissions will stop for now)
 							{
@@ -2583,23 +2622,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							fox_setting_current_slot_write_atomic(holdFox);
 							setupForFox(holdFox, START_EVENT_WITH_STARTFINISH_TIMES);
 
-							if(!g_cloningInProgress)
-							{
-								if(g_evteng_event_enabled) // try to update an event already in progress
+								if(!g_cloningInProgress)
 								{
-									reinitializeEventEngine();
-
-									if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+									if(g_evteng_event_enabled) // try to update an event already in progress
 									{
-										g_event_launched_by_user_action = false;
-										startEventUsingRTC();
-									}
-									else
-									{
-										g_sleepType = SLEEP_FOREVER;
-										startEventNow(true); // Immediately start the event
-										if(!g_enable_external_battery_control)
-											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+										if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+										{
+											g_event_launched_by_user_action = false;
+											startEventUsingRTC();
+										}
+										else
+										{
+											g_sleepType = SLEEP_FOREVER;
+											startEventNow(true); // Immediately start the event
+											if(!g_enable_external_battery_control)
+												setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+										}
 									}
 								}
 							}
@@ -4329,12 +4367,7 @@ void suspendEvent()
 	g_evteng_event_commenced = false; /* get things stopped immediately */
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-	{
-		time_t start_epoch;
-		time_t finish_epoch;
-		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
-	}
+	reloadLoadedEventWindowFromSavedSettings();
 	powerToTransmitter(OFF);
 	g_sleepType = SLEEP_FOREVER; /* Prevent the clock from restarting an event that is in progress */
 	configRedLEDforEvent();
@@ -4744,10 +4777,10 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 		if(allClocksSet(SAVED_SETTINGS))
 		{
+			reloadLoadedEventWindowFromSavedSettings();
 			time_t loaded_start_epoch;
 			time_t loaded_finish_epoch;
-			atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-			atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+			atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 			g_evteng_run_event_until_canceled = false;
 			EC ec = activateEventEngineUsingCurrentSettings(&sc, loaded_start_epoch, loaded_finish_epoch);
 			if(ec == ERROR_CODE_NO_ERROR)
@@ -6302,22 +6335,43 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 
 		if(!result) // If current settings won't run, see if it should run for more days
 		{
-			uint8_t days_remaining = g_days_to_run - g_days_run;
-			if(days_remaining > 0)
+			if(g_days_to_run > 1)
 			{
 				if((*start_epoch > MINIMUM_VALID_EPOCH) && (*finish_epoch > *start_epoch))
 				{
-					uint16_t days = days_remaining;
 					time_t s = *start_epoch;
 					time_t f = *finish_epoch;
+					time_t saved_start_epoch = atomic_read_time(&g_event_start_epoch);
+					time_t earliest_remaining_start = saved_start_epoch;
+					uint8_t minimum_day_offset = MIN(g_days_run, (uint8_t)(g_days_to_run - 1));
 
-					while((s < now) && days--)
+					if(saved_start_epoch > MINIMUM_VALID_EPOCH)
+					{
+						earliest_remaining_start += ((time_t)minimum_day_offset * SECONDS_24H);
+						if(s < earliest_remaining_start)
+						{
+							time_t delta = earliest_remaining_start - s;
+							s += delta;
+							f += delta;
+						}
+					}
+
+					uint8_t day_offset = 0;
+					if((saved_start_epoch > MINIMUM_VALID_EPOCH) && (s >= saved_start_epoch))
+					{
+						time_t delta = s - saved_start_epoch;
+						day_offset = MIN((uint8_t)(delta / SECONDS_24H), (uint8_t)(g_days_to_run - 1));
+					}
+
+					uint8_t shifts_remaining = ((g_days_to_run - 1) > day_offset) ? ((g_days_to_run - 1) - day_offset) : 0;
+					while((f <= now) && shifts_remaining)
 					{
 						s += SECONDS_24H;
 						f += SECONDS_24H;
+						shifts_remaining--;
 					}
 
-					if(s > now)
+					if(eventScheduledForTheFuture(s, f) || eventIsScheduledToRunNow(s, f))
 					{
 						*start_epoch = s;
 						*finish_epoch = f;
@@ -6343,28 +6397,12 @@ bool startEvent(void)
 
 	cancelManualTransientState();
 	suspendEvent();
-	// reinitialize event engine
-	reinitializeEventEngine();
-
-	if(g_evteng_initialize_event)
-	{
-		return error;
-	}
-
-	error = false;
-
-	// Restore saved event start and finish times
 	g_event_launched_by_user_action = false;
-	{
-		time_t start_epoch;
-		time_t finish_epoch;
-		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, start_epoch, finish_epoch);
-	}
+	reloadLoadedEventWindowFromSavedSettings();
 
 	if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 	{
-		startEventUsingRTC();
+		error = startEventUsingRTC();
 	}
 	else
 	{
@@ -6372,6 +6410,7 @@ bool startEvent(void)
 		startEventNow(true); // Immediately start the event
 		if(!g_enable_external_battery_control)
 			setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
+		error = false;
 	}
 
 	return error;
