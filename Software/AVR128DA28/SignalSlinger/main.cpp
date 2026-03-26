@@ -286,6 +286,7 @@ static bool cancelManualTransientState(void);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
 static void loadEventTimingForFox(Fox_t fox);
+static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning);
 static bool reloadLoadedEventWindowFromSavedSettings(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
@@ -529,6 +530,26 @@ static void loadEventTimingForFox(Fox_t fox)
 			g_evteng_off_air_seconds = 0;
 		}
 		break;
+	}
+}
+
+static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
+{
+	bool should_resume_loaded_event = loadedEventShouldBeEnabled();
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	if(deferStartIfAlreadyRunning && should_resume_loaded_event && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+	{
+		g_defer_cloned_event_start = true;
+		g_foreground_start_event = false;
+	}
+	else
+	{
+		g_defer_cloned_event_start = false;
+		g_foreground_start_event = should_resume_loaded_event;
 	}
 }
 
@@ -969,6 +990,9 @@ ISR(TCB0_INT_vect)
 	static bool transitionPrepped = false;
 	static int idTimeout = 0;
 	static bool id_timed_out = false;
+	static uint16_t codeInc = 0;
+	static bool muteAfterID = false; /* Inhibit any transmissions immediately after the ID has been sent */
+	static bool key = false;
 
 	if(g_evteng_initialize_event)
 	{
@@ -977,6 +1001,10 @@ ISR(TCB0_INT_vect)
 		transitionPrepped = false;
 		idTimeout = 0;
 		id_timed_out = false;
+		codeInc = 0;
+		muteAfterID = false;
+		key = OFF;
+		g_evteng_sending_station_ID = false;
 	}
 
 	uint8_t x = TCB0.INTFLAGS;
@@ -985,13 +1013,11 @@ ISR(TCB0_INT_vect)
 	{
 		static bool conversionInProcess = false;
 		static int8_t indexConversionInProcess = 0;
-		static uint16_t codeInc = 0;
 		bool repeat, finished;
 		static uint16_t switch_closures_count_period = 40;
 		uint8_t holdSwitch = 0;
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
-		static bool muteAfterID = false; /* Inhibit any transmissions immediately after the ID has been sent */
 		static uint16_t switch_closed_time = 0;
 
 		if(g_key_down_countdown)
@@ -1118,7 +1144,6 @@ ISR(TCB0_INT_vect)
 		if(g_send_clone_success_countdown)
 			g_send_clone_success_countdown--;
 
-		static bool key = false;
 		if(idTimeout)
 		{
 			idTimeout--;
@@ -2022,6 +2047,7 @@ int main(void)
 					atomic_write_u16(&g_send_clone_success_countdown, 0);
 					g_cloningInProgress = false;
 					atomic_write_u16(&g_programming_msg_throttle, 0);
+					resumeLoadedEventAfterCloneExit(false);
 					counted_presses = 0; /* Throw out any keypresses that occurred while cloning or sending cloning success pattern */
 				}
 
@@ -2283,6 +2309,13 @@ int main(void)
 					}
 					else if(counted_presses == 5)
 					{
+						bool had_transient_state = g_start_event_after_keydown || atomic_read_u16(&g_key_down_countdown) || atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_keydown || g_foreground_reset_after_demo;
+						if(had_transient_state)
+						{
+							cancelManualTransientState();
+							suspendEvent();
+						}
+
 						g_isMaster = true;
 						g_evteng_event_commenced = false;
 						atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
@@ -2293,19 +2326,6 @@ int main(void)
 						atomic_write_u16(&g_send_clone_success_countdown, 0);
 						LEDS.init();
 						text_buff_reset_atomic();
-
-						if(atomic_read_u16(&g_key_down_countdown))
-						{
-							g_start_event_after_keydown = false;
-							atomic_write_u16(&g_key_down_countdown, 0);
-							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
-						}
-
-						if(atomic_read_u16(&g_demo_event_countdown))
-						{
-							atomic_write_u16(&g_demo_event_countdown, 0);
-							g_foreground_reset_after_demo = false;
-						}
 					}
 					else if(counted_presses == 7)
 					{
@@ -2420,13 +2440,13 @@ int main(void)
 
 				if(g_defer_cloned_event_start && !g_cloningInProgress && !atomic_read_u16(&g_send_clone_success_countdown) && !g_foreground_start_event)
 				{
-					g_defer_cloned_event_start = false;
-					g_foreground_start_event = true;
+					resumeLoadedEventAfterCloneExit(false);
 				}
 
 				if(g_cloningInProgress && !atomic_read_u16(&g_programming_countdown)) // Cloning timed out
 				{
 					g_cloningInProgress = false;
+					resumeLoadedEventAfterCloneExit(false);
 				}
 
 				if(text_buff_empty_atomic())
@@ -3497,18 +3517,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							/* Acknowledge the clone before restarting the event so the target
 							 * stays in clone-safe parsing mode until the transfer fully completes. */
-							bool cloned_event_should_restart = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
-							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
-							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-							bool cloned_event_is_already_in_progress = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 							sb_send_string((char *)"MAS ACK\n");
 							atomic_write_u16(&g_send_clone_success_countdown, 18000);
-							g_defer_cloned_event_start = cloned_event_should_restart && cloned_event_is_already_in_progress;
-							g_foreground_start_event = cloned_event_should_restart && !g_defer_cloned_event_start;
+							resumeLoadedEventAfterCloneExit(true);
 						}
 						else
 						{
-							g_defer_cloned_event_start = false;
+							resumeLoadedEventAfterCloneExit(false);
 							sb_send_string((char *)"MAS NAK\n");
 						}
 
