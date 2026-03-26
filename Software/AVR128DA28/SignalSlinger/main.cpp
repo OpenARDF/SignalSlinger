@@ -2642,7 +2642,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								}
 							}
 						}
-					}
 				} /* if(c1) */
 
 				if(!fox2Text(g_tempStr, getFoxSetting()))
