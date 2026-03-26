@@ -5215,6 +5215,22 @@ void reportSettings(void)
 	float processor_temperature = atomic_read_float(&g_processor_temperature);
 	float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
 	float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
+	bool use_shifted_loaded_schedule = false;
+
+	if((g_days_to_run > 1) && (g_days_run > 0))
+	{
+		time_t effective_start_epoch = loaded_start_epoch;
+		time_t effective_finish_epoch = loaded_finish_epoch;
+		if(eventIsScheduledToRun(&effective_start_epoch, &effective_finish_epoch) &&
+		   ((effective_start_epoch != event_start_epoch) || (effective_finish_epoch != event_finish_epoch)))
+		{
+			use_shifted_loaded_schedule = true;
+			loaded_start_epoch = effective_start_epoch;
+			loaded_finish_epoch = effective_finish_epoch;
+			event_start_epoch = effective_start_epoch;
+			event_finish_epoch = effective_finish_epoch;
+		}
+	}
 
 	// Send the product name.
 	sb_send_string((char *)PRODUCT_NAME_LONG);
@@ -5439,15 +5455,19 @@ void reportSettings(void)
 	}
 
 	// Check the clock configuration state and report necessary actions.
-	ConfigurationState_t cfg = clockConfigurationCheck(SAVED_SETTINGS);
-	if((cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
+	ConfigurationState_t cfg = WAITING_FOR_START;
+	if(!use_shifted_loaded_schedule)
+	{
+		cfg = clockConfigurationCheck(SAVED_SETTINGS);
+	}
+
+	if(!use_shifted_loaded_schedule && (cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
 	{
 		sb_send_string((char *)"\n* Needed Actions:\n");
 		reportConfigErrors(SAVED_SETTINGS);
 	}
 	else
 	{
-		// Report times for event start, duration, and remaining time.
 		reportTimeTill(now, loaded_start_epoch, "\n*   Starts in: ", "\n*   In progress\n");
 		reportTimeTill(loaded_start_epoch, loaded_finish_epoch, "*   Lasts: ", NULL);
 		if(loaded_start_epoch < now)
@@ -5455,8 +5475,11 @@ void reportSettings(void)
 			reportTimeTill(now, loaded_finish_epoch, "*   Time Remaining: ", NULL);
 		}
 
-		// If the event is disabled, provide instructions to start.
-		if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
+		bool needs_manual_start = use_shifted_loaded_schedule
+			? (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
+			: (eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event);
+
+		if(needs_manual_start)
 		{
 			sb_send_string((char *)"\n* Needed Action:\n");
 			sb_send_string((char *)"\n*  Start with > GO 1, or GO 2\n");
@@ -6233,11 +6256,13 @@ void handleSerialCloning(void)
  */
 bool noEventWillRun(void)
 {
-	bool result;
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
 
-	result = (!eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) || !g_evteng_event_enabled);
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+	bool event_is_scheduled = eventIsScheduledToRun(&loaded_start_epoch, &loaded_finish_epoch);
 
-	return result;
+	return !event_is_scheduled || (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled);
 }
 
 /*
