@@ -283,6 +283,7 @@ static void loadStationIDMorse(bool *repeat, callerID_t caller);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
 static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpoch, char *errMsg);
 static bool cancelManualTransientState(void);
+static bool finishTimedEventIfExpired(time_t now);
 static void captureCloneTimingSnapshot(void);
 static void reinitializeEventEngine(void);
 static void loadEventTimingForFox(Fox_t fox);
@@ -607,6 +608,53 @@ static inline void extendMasterModeTimeout(void)
 	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 }
 
+static bool finishTimedEventIfExpired(time_t now)
+{
+	if(!(g_evteng_event_commenced && !g_evteng_run_event_until_canceled))
+	{
+		return false;
+	}
+
+	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	if(!loaded_finish_epoch || (now < loaded_finish_epoch))
+	{
+		return false;
+	}
+
+	g_last_status_code = STATUS_CODE_EVENT_FINISHED;
+	g_evteng_on_the_air = 0;
+	keyTransmitter(OFF);
+	g_evteng_event_enabled = false;
+	g_evteng_event_commenced = false;
+	LEDS.init();
+	g_days_run++;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
+
+	if(!g_enable_external_battery_control)
+		setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
+
+	if(g_days_run < g_days_to_run)
+	{
+		time_t loaded_start_epoch;
+		time_t loaded_finish_epoch_pair;
+		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
+		time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
+		time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
+		atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
+		g_sleepType = SLEEP_UNTIL_START_TIME;
+		g_go_to_sleep_now = true;
+	}
+	else
+	{
+		g_sleepType = SLEEP_FOREVER;
+		g_evteng_loaded_start_epoch = 0;
+		g_evteng_loaded_finish_epoch = 0;
+	}
+
+	return true;
+}
+
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
 {
 	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
@@ -763,6 +811,7 @@ ISR(RTC_CNT_vect)
 
 		if(g_sleeping)
 		{
+			finishTimedEventIfExpired(time(null));
 			if(g_sleepType != SLEEP_FOREVER)
 			{
 				time_t time_to_wake_up = atomic_read_time(&g_time_to_wake_up);
@@ -811,47 +860,7 @@ void handle_1sec_tasks(void)
 	if(!g_cloningInProgress)
 	{
 		temp_time = time(null);
-
-		if(g_evteng_event_commenced && !g_evteng_run_event_until_canceled)
-		{
-			time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-			if(loaded_finish_epoch) /* If a finish time has been set */
-			{
-				if(temp_time >= loaded_finish_epoch)
-				{
-					g_last_status_code = STATUS_CODE_EVENT_FINISHED;
-					g_evteng_on_the_air = 0;
-					keyTransmitter(OFF);
-					g_evteng_event_enabled = false;
-					g_evteng_event_commenced = false;
-					LEDS.init();
-					g_days_run++;
-					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
-
-					if(!g_enable_external_battery_control)
-						setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
-
-					if(g_days_run < g_days_to_run)
-					{
-						time_t loaded_start_epoch;
-						time_t loaded_finish_epoch_pair;
-						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
-						time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
-						time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
-						atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
-						atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
-						g_sleepType = SLEEP_UNTIL_START_TIME;
-						g_go_to_sleep_now = true;
-					}
-					else
-					{
-						g_sleepType = SLEEP_FOREVER;
-						g_evteng_loaded_start_epoch = 0;
-						g_evteng_loaded_finish_epoch = 0;
-					}
-				}
-			}
-		}
+		finishTimedEventIfExpired(temp_time);
 
 		if(g_evteng_event_enabled && !g_isMaster)
 		{
