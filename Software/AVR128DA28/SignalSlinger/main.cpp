@@ -167,6 +167,7 @@ static volatile bool g_sleeping = false;
 static volatile time_t g_time_to_wake_up = 0;
 static volatile Awakened_t g_awakenedBy = POWER_UP_START;
 static volatile SleepType g_sleepType = SLEEP_FOREVER;
+static volatile uint8_t g_button_wake_prior_sleep_type = SLEEP_FOREVER;
 static volatile time_t g_seconds_since_wakeup = 0;
 static volatile bool g_foreground_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
@@ -254,6 +255,8 @@ bool eventIsScheduledToRunNow(time_t start_epoch, time_t finish_epoch);
 bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch);
 bool noEventWillRun(void);
 bool eventRunning(void);
+void restoreStateAfterButtonWakeAuthorization(void);
+bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
 bool allClocksSet(Settings_t location);
@@ -1476,6 +1479,7 @@ ISR(PORTD_PORT_vect)
 	{
 		if(g_sleeping)
 		{
+			g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
 			g_go_to_sleep_now = false;
 			g_sleeping = false;
 			g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
@@ -1671,6 +1675,11 @@ int main(void)
 				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
 				{
 					g_foreground_start_event = true;
+				}
+
+				if((g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && !g_foreground_start_event)
+				{
+					restoreStateAfterButtonWakeAuthorization();
 				}
 
 				atomic_write_u16(&g_demo_event_countdown, 0);
@@ -1996,10 +2005,13 @@ int main(void)
 						atomic_write_u16(&g_button_hold_countdown, 1000);
 						atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 
-						if((g_sleepType == SLEEP_UNTIL_START_TIME) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN)) /* User woke up the transmitter early, before transmissions were to start */
+						if((g_button_wake_prior_sleep_type == SLEEP_UNTIL_START_TIME) || (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN)) /* User woke up the transmitter early, before transmissions were to start */
 						{
 							g_foreground_start_event = false;
-							g_evteng_event_commenced = false;
+							if(g_button_wake_prior_sleep_type == SLEEP_UNTIL_START_TIME)
+							{
+								g_evteng_event_commenced = false;
+							}
 							if(!g_enable_external_battery_control)
 								setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 						}
@@ -2029,13 +2041,14 @@ int main(void)
 						}
 					}
 
-					// Here we power up the transmitter because, if an event should start while awakened by a
-					// user action, the transmitter would not necessarily get powered up, and transmissions would
-					// not occur. This could happen during a timed event start, or while asleep waiting for the next
-					// time to transmit during an event. This is also needed following a SLEEP_UNTIL_NEXT_XMSN.
-					if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+					// Restore the transmitter power state that matches the logical state we just woke into.
+					bool should_power_tx = shouldPowerTransmitterAfterWake();
+					if(powerToTransmitter(should_power_tx) != ERROR_CODE_NO_ERROR)
 					{
-						sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+						if(should_power_tx)
+						{
+							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+						}
 					}
 
 					g_last_status_code = STATUS_CODE_RETURNED_FROM_SLEEP;
@@ -2495,7 +2508,7 @@ int main(void)
 							}
 							else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
 							{
-								LEDS.sendCode((char *)"E  ");
+								LEDS.blink(LEDS_RED_BLINK_SLOW, true);
 							}
 							else /* Should not reach here, but if we do, it is an error */
 							{
@@ -4667,12 +4680,118 @@ bool startEventUsingRTC(void)
 	return err;
 }
 
+void restoreStateAfterButtonWakeAuthorization(void)
+{
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	switch((SleepType)g_button_wake_prior_sleep_type)
+	{
+		case SLEEP_UNTIL_NEXT_XMSN:
+		{
+			if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_AFTER_EVENT;
+				g_evteng_event_commenced = true;
+			}
+			else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_event_commenced = false;
+			}
+			else
+			{
+				g_sleepType = SLEEP_FOREVER;
+			}
+		}
+		break;
+
+		case SLEEP_UNTIL_START_TIME:
+		{
+			if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_event_commenced = false;
+			}
+			else if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_AFTER_EVENT;
+			}
+			else
+			{
+				g_sleepType = SLEEP_FOREVER;
+			}
+		}
+		break;
+
+		case SLEEP_AFTER_EVENT:
+		{
+			if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_AFTER_EVENT;
+			}
+			else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+			{
+				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_event_commenced = false;
+			}
+			else
+			{
+				g_sleepType = SLEEP_FOREVER;
+			}
+		}
+		break;
+
+		case SLEEP_FOREVER:
+		case SLEEP_POWER_OFF_OVERRIDE:
+		default:
+		{
+			g_sleepType = SLEEP_FOREVER;
+		}
+		break;
+	}
+}
+
+bool shouldPowerTransmitterAfterWake(void)
+{
+	if(g_awakenedBy != AWAKENED_BY_BUTTONPRESS)
+	{
+		return g_device_enabled;
+	}
+
+	switch((SleepType)g_button_wake_prior_sleep_type)
+	{
+		case SLEEP_UNTIL_NEXT_XMSN:
+		{
+			return (g_device_enabled && g_evteng_event_enabled);
+		}
+
+		case SLEEP_AFTER_EVENT:
+		{
+			return (g_device_enabled && g_evteng_event_enabled && g_evteng_event_commenced);
+		}
+
+		case SLEEP_UNTIL_START_TIME:
+		case SLEEP_FOREVER:
+		case SLEEP_POWER_OFF_OVERRIDE:
+		default:
+		{
+			return false;
+		}
+	}
+}
+
 void configRedLEDforEvent(void)
 {
 	if(noEventWillRun())
 	{
 		if(!g_evteng_run_event_until_canceled)
 			LEDS.blink(LEDS_RED_BLINK_FAST, true);
+	}
+	else if(!g_evteng_event_commenced)
+	{
+		LEDS.blink(LEDS_RED_BLINK_SLOW, true);
 	}
 	else
 	{
