@@ -641,7 +641,7 @@ static bool finishTimedEventIfExpired(time_t now)
 	g_days_run++;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
 
-	if(!g_enable_external_battery_control)
+	if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 		setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
 
 	if(g_days_run < g_days_to_run)
@@ -905,7 +905,7 @@ void handle_1sec_tasks(void)
 					g_foreground_enable_transmitter = true;
 					LEDS.init();
 
-					if(!g_enable_external_battery_control)
+					if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on an externally-controlled device
 				}
 			}
@@ -943,7 +943,7 @@ void handle_1sec_tasks(void)
 						g_foreground_enable_transmitter = true;
 						LEDS.init();
 
-						if(!g_enable_external_battery_control)
+						if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 							setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on an externally-controlled device
 					}
 				}
@@ -1909,7 +1909,7 @@ int main(void)
 					}
 
 					powerToTransmitter(OFF);
-					if(!g_enable_external_battery_control)
+					if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
 
 					atomic_write_u16(&g_demo_event_countdown, 0);
@@ -2026,7 +2026,7 @@ int main(void)
 							{
 								g_evteng_event_commenced = false;
 							}
-							if(!g_enable_external_battery_control)
+							if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 								setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 						}
 					}
@@ -2275,7 +2275,7 @@ int main(void)
 										LEDS.init();
 #ifndef TEST_MODE_SOFTWARE
 										startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
-										if(!g_enable_external_battery_control)
+										if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 #endif
 									}
@@ -2404,7 +2404,7 @@ int main(void)
 
 					LEDS.init();
 					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-					if(!g_enable_external_battery_control)
+					if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 				}
 			}
@@ -2684,7 +2684,7 @@ int main(void)
 				{
 					g_sleepType = SLEEP_FOREVER;
 					startEventNow(true); // Immediately start the event
-					if(!g_enable_external_battery_control)
+					if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 				}
 			}
@@ -2710,7 +2710,7 @@ int main(void)
 					{
 						g_sleepType = SLEEP_FOREVER;
 						startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
-						if(!g_enable_external_battery_control)
+						if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 							setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 					}
 				}
@@ -2956,7 +2956,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									{
 										g_sleepType = SLEEP_FOREVER;
 										startEventNow(true); // Immediately start the event
-										if(!g_enable_external_battery_control)
+										if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 									}
 								}
@@ -4998,7 +4998,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			}
 
 			LEDS.init();
-			if(!g_enable_external_battery_control)
+			if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 				setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 		}
 
@@ -6702,7 +6702,7 @@ bool startEvent(void)
 	{
 		g_sleepType = SLEEP_FOREVER;
 		startEventNow(true); // Immediately start the event
-		if(!g_enable_external_battery_control)
+		if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
 			setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 		error = false;
 	}
