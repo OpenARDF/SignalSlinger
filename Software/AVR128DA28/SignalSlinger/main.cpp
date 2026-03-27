@@ -168,6 +168,8 @@ static volatile time_t g_time_to_wake_up = 0;
 static volatile Awakened_t g_awakenedBy = POWER_UP_START;
 static volatile SleepType g_sleepType = SLEEP_FOREVER;
 static volatile uint8_t g_button_wake_prior_sleep_type = SLEEP_FOREVER;
+static volatile bool g_button_wake_prior_event_enabled = false;
+static volatile bool g_button_wake_prior_event_commenced = false;
 static volatile time_t g_seconds_since_wakeup = 0;
 static volatile bool g_foreground_check_for_long_wakeup_press = true;
 static volatile bool g_device_wakeup_complete = false;
@@ -1485,6 +1487,8 @@ ISR(PORTD_PORT_vect)
 		if(g_sleeping)
 		{
 			g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
+			g_button_wake_prior_event_enabled = g_evteng_event_enabled;
+			g_button_wake_prior_event_commenced = g_evteng_event_commenced;
 			g_go_to_sleep_now = false;
 			g_sleeping = false;
 			g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
@@ -1671,7 +1675,12 @@ int main(void)
 				if(g_enable_external_battery_control)
 					setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
 
-				if(!g_event_launched_by_user_action) // re-initialize event engine with stored event start and stop if it might be needed
+				bool restoring_mid_event_button_wake =
+					(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
+					(g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) &&
+					g_button_wake_prior_event_commenced;
+
+				if(!g_event_launched_by_user_action && !restoring_mid_event_button_wake) // re-initialize event engine with stored event start and stop if it might be needed
 				{
 					reloadLoadedEventWindowFromSavedSettings();
 				}
@@ -2591,11 +2600,15 @@ int main(void)
 				{
 					time_t loaded_start_epoch;
 					time_t loaded_finish_epoch;
+					time_t now = time(null);
+
+					finishTimedEventIfExpired(now);
 					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
 					{
-						time_t now = time(null);
 						time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
+						g_evteng_event_enabled = true;
+						g_evteng_event_commenced = true;
 						atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
 						g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
 						g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
@@ -4727,25 +4740,38 @@ void restoreStateAfterButtonWakeAuthorization(void)
 {
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
+	time_t now = time(null);
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 
 	switch((SleepType)g_button_wake_prior_sleep_type)
 	{
 		case SLEEP_UNTIL_NEXT_XMSN:
 		{
-			if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+			g_evteng_event_enabled = g_button_wake_prior_event_enabled;
+			g_evteng_event_commenced = g_button_wake_prior_event_commenced;
+
+			if(finishTimedEventIfExpired(now))
+			{
+				break;
+			}
+
+			if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_sleepType = SLEEP_AFTER_EVENT;
+				g_evteng_event_enabled = true;
 				g_evteng_event_commenced = true;
 			}
 			else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_event_enabled = true;
 				g_evteng_event_commenced = false;
 			}
 			else
 			{
 				g_sleepType = SLEEP_FOREVER;
+				g_evteng_event_enabled = false;
+				g_evteng_event_commenced = false;
 			}
 		}
 		break;
@@ -4770,18 +4796,31 @@ void restoreStateAfterButtonWakeAuthorization(void)
 
 		case SLEEP_AFTER_EVENT:
 		{
-			if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+			g_evteng_event_enabled = g_button_wake_prior_event_enabled;
+			g_evteng_event_commenced = g_button_wake_prior_event_commenced;
+
+			if(finishTimedEventIfExpired(now))
+			{
+				break;
+			}
+
+			if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_sleepType = SLEEP_AFTER_EVENT;
+				g_evteng_event_enabled = true;
+				g_evteng_event_commenced = true;
 			}
 			else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_sleepType = SLEEP_UNTIL_START_TIME;
+				g_evteng_event_enabled = true;
 				g_evteng_event_commenced = false;
 			}
 			else
 			{
 				g_sleepType = SLEEP_FOREVER;
+				g_evteng_event_enabled = false;
+				g_evteng_event_commenced = false;
 			}
 		}
 		break;
