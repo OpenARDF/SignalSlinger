@@ -2494,6 +2494,25 @@ int main(void)
 					{
 						LEDS.blink(LEDS_RED_ON_CONSTANT, true);
 					}
+					else if(g_foreground_start_event)
+					{
+						time_t loaded_start_epoch;
+						time_t loaded_finish_epoch;
+						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+						if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+						{
+							LEDS.blink(LEDS_RED_OFF);
+						}
+						else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+						{
+							LEDS.blink(LEDS_RED_BLINK_SLOW);
+						}
+						else
+						{
+							LEDS.blink(LEDS_RED_BLINK_FAST);
+						}
+					}
 					else if(!g_evteng_event_commenced)
 					{
 						if(atomic_read_u16(&g_send_clone_success_countdown))
@@ -2563,7 +2582,15 @@ int main(void)
 					time_t loaded_start_epoch;
 					time_t loaded_finish_epoch;
 					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-					if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
+					{
+						time_t now = time(null);
+						time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
+						atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
+						g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
+						g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+					}
+					else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 					{
 						g_sleepType = SLEEP_UNTIL_START_TIME;
 					}
