@@ -1676,9 +1676,9 @@ int main(void)
 					setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
 
 				bool restoring_mid_event_button_wake =
-					(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
-					(g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) &&
-					g_button_wake_prior_event_commenced;
+				    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
+				    (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) &&
+				    g_button_wake_prior_event_commenced;
 
 				if(!g_event_launched_by_user_action && !restoring_mid_event_button_wake) // re-initialize event engine with stored event start and stop if it might be needed
 				{
@@ -2386,16 +2386,16 @@ int main(void)
 			{
 				g_foreground_start_event = false;
 
-					if(!g_isMaster)
-					{
-						// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
+				if(!g_isMaster)
+				{
+					// Here, we have the foreground loop launch whatever event is already loaded into the Event Engine
 
-						g_evteng_run_event_until_canceled = false; // Foreground auto-start is only used for scheduled event launches
-						setupForFox(USE_CURRENT_FOX, START_NOTHING); // Refresh fox-specific timing before launching a loaded event
-						reinitializeEventEngine();
+					g_evteng_run_event_until_canceled = false;   // Foreground auto-start is only used for scheduled event launches
+					setupForFox(USE_CURRENT_FOX, START_NOTHING); // Refresh fox-specific timing before launching a loaded event
+					reinitializeEventEngine();
 
-						LEDS.init();
-						g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
+					LEDS.init();
+					g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
 
 					if(g_last_error_code != ERROR_CODE_NO_ERROR)
 					{
@@ -2543,7 +2543,7 @@ int main(void)
 							bool active_event_window;
 							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 							active_event_window = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) &&
-								(g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
+							                      (g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
 
 							if(active_event_window)
 							{
@@ -2554,7 +2554,7 @@ int main(void)
 								LEDS.blink(LEDS_RED_BLINK_FAST);
 							}
 							else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
-									eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
+							        eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
 							{
 								LEDS.blink(LEDS_RED_BLINK_SLOW);
 							}
@@ -4910,7 +4910,7 @@ void configRedLEDforEvent(void)
 
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 	active_event_window = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) &&
-		(g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
+	                      (g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
 
 	if(active_event_window)
 	{
@@ -5746,8 +5746,8 @@ void reportSettings(void)
 		}
 
 		bool needs_manual_start = use_shifted_loaded_schedule
-			? (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
-			: (eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event);
+		                              ? (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
+		                              : (eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event);
 
 		if(needs_manual_start)
 		{
