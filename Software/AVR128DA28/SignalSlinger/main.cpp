@@ -2508,7 +2508,7 @@ int main(void)
 							}
 							else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
 							{
-								LEDS.blink(LEDS_RED_BLINK_SLOW, true);
+								LEDS.blink(LEDS_RED_BLINK_SLOW);
 							}
 							else /* Should not reach here, but if we do, it is an error */
 							{
