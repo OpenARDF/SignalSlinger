@@ -2574,8 +2574,12 @@ int main(void)
 				g_foreground_check_for_long_wakeup_press = false;
 				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 				LEDS.blink(LEDS_OFF);
+				g_isMaster = false;
+				atomic_write_u16(&isMasterCountdownSeconds, 0);
+				g_defer_cloned_event_start = false;
 				atomic_write_u16(&g_send_clone_success_countdown, 0);
 				g_cloningInProgress = false;
+				atomic_write_u16(&g_programming_countdown, 0);
 				atomic_write_u16(&g_programming_msg_throttle, 0);
 
 				{
