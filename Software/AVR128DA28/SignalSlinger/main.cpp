@@ -2116,12 +2116,15 @@ int main(void)
 						atomic_write_u16(&isMasterCountdownSeconds, 0);
 						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 						sb_send_NewPrompt();
+						g_isMaster = false;
 						g_evteng_event_commenced = false;
-						g_foreground_start_event = true;
+						g_defer_cloned_event_start = false;
+						g_foreground_start_event = loadedEventShouldBeEnabled();
 						g_cloningInProgress = false;
 						atomic_write_u16(&g_programming_countdown, 0);
+						atomic_write_u16(&g_programming_msg_throttle, 0);
 						atomic_write_u16(&g_send_clone_success_countdown, 0);
-						LEDS.blink(LEDS_RED_OFF);
+						LEDS.init();
 						text_buff_reset_atomic();
 					}
 					else if(counted_presses == 9) // Perform software reset
@@ -2537,9 +2540,12 @@ int main(void)
 						{
 							time_t loaded_start_epoch;
 							time_t loaded_finish_epoch;
+							bool active_event_window;
 							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+							active_event_window = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) &&
+								(g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
 
-							if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+							if(active_event_window)
 							{
 								LEDS.blink(LEDS_RED_OFF);
 							}
@@ -4875,7 +4881,19 @@ bool shouldPowerTransmitterAfterWake(void)
 
 void configRedLEDforEvent(void)
 {
-	if(noEventWillRun())
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	bool active_event_window;
+
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+	active_event_window = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) &&
+		(g_evteng_event_enabled || g_foreground_start_event || (g_sleepType == SLEEP_AFTER_EVENT) || (g_sleepType == SLEEP_UNTIL_NEXT_XMSN));
+
+	if(active_event_window)
+	{
+		LEDS.blink(LEDS_RED_OFF);
+	}
+	else if(noEventWillRun())
 	{
 		if(!g_evteng_run_event_until_canceled)
 			LEDS.blink(LEDS_RED_BLINK_FAST, true);
