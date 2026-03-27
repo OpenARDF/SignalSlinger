@@ -2535,11 +2535,20 @@ int main(void)
 						}
 						else
 						{
-							if(noEventWillRun()) /* No event is running now, nor will one run in the future */
+							time_t loaded_start_epoch;
+							time_t loaded_finish_epoch;
+							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+							if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+							{
+								LEDS.blink(LEDS_RED_OFF);
+							}
+							else if(noEventWillRun()) /* No event is running now, nor will one run in the future */
 							{
 								LEDS.blink(LEDS_RED_BLINK_FAST);
 							}
-							else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
+							else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
+									eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)) /* An event is scheduled to run in the future = OK */
 							{
 								LEDS.blink(LEDS_RED_BLINK_SLOW);
 							}
