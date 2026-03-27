@@ -2621,12 +2621,35 @@ int main(void)
 					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
 					{
-						time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
-						g_evteng_event_enabled = true;
-						g_evteng_event_commenced = true;
-						atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
-						g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
-						g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+						int32_t timeRemaining = SECONDS_24H; // Any big number will do
+
+						if(timeIsSet() && (loaded_start_epoch != loaded_finish_epoch) && (now < loaded_finish_epoch))
+						{
+							timeRemaining = timeDif(loaded_finish_epoch, now);
+						}
+
+						/* Match the event engine's normal off-air sleep guard so we do not wake for an
+						 * extra post-finish slot after the user manually puts the unit back to sleep. */
+						if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
+						{
+							time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
+							g_evteng_event_enabled = true;
+							g_evteng_event_commenced = true;
+							atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
+							g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
+							g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+						}
+						else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
+						{
+							g_evteng_event_enabled = true;
+							g_evteng_event_commenced = true;
+							atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
+							g_sleepType = SLEEP_FOREVER;
+						}
+						else
+						{
+							g_sleepType = SLEEP_AFTER_EVENT;
+						}
 					}
 					else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 					{
