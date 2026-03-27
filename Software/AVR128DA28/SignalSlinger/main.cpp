@@ -2114,9 +2114,9 @@ int main(void)
 						}
 
 						atomic_write_u16(&isMasterCountdownSeconds, 0);
-						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 						sb_send_NewPrompt();
 						g_isMaster = false;
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Resume normal slave sleep timeout */
 						g_evteng_event_commenced = false;
 						g_defer_cloned_event_start = false;
 						g_foreground_start_event = loadedEventShouldBeEnabled();
@@ -2358,7 +2358,7 @@ int main(void)
 						g_isMaster = true;
 						g_evteng_event_commenced = false;
 						atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
-						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720);
+						atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720); /* Never sleep while master; slave timeout starts after master ends */
 
 						g_cloningInProgress = false;
 						atomic_write_u16(&g_programming_countdown, 0);
@@ -3647,7 +3647,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if((sb_buff->fields[SB_FIELD1][0] == 'M') || (sb_buff->fields[SB_FIELD1][0] == '1'))
 							{
 								g_isMaster = true;
-								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720);
+								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 720); /* Never sleep while master; slave timeout starts after master ends */
 								atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 							}
 						}
