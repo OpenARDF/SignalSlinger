@@ -566,6 +566,12 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 
 	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
 
+	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
+	{
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
+		return false;
+	}
+
 	loaded_start_epoch = saved_start_epoch;
 	loaded_finish_epoch = saved_finish_epoch;
 
@@ -651,8 +657,7 @@ static bool finishTimedEventIfExpired(time_t now)
 	else
 	{
 		g_sleepType = SLEEP_FOREVER;
-		g_evteng_loaded_start_epoch = 0;
-		g_evteng_loaded_finish_epoch = 0;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
 	}
 
 	return true;
@@ -2547,6 +2552,7 @@ int main(void)
 				float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
 				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 				float external_voltage = atomic_read_float(&g_external_voltage);
+				bool event_active = (g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster);
 				internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
 				external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
@@ -2564,7 +2570,7 @@ int main(void)
 				}
 				else
 				{
-					LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+					LEDS.blink(event_active ? LEDS_GREEN_OFF : LEDS_GREEN_ON_CONSTANT);
 				}
 			}
 
@@ -3889,6 +3895,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							char buf[TEMP_STRING_SIZE];
 							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
 							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
+
+							if(g_days_to_run > 1)
+							{
+								eventIsScheduledToRun(&loaded_start_epoch, &loaded_finish_epoch);
+							}
 							//							if(!g_meshmode) sb_send_NewLine();
 
 							if(loaded_start_epoch < MINIMUM_VALID_EPOCH)
@@ -3916,7 +3928,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							sb_send_string(g_tempStr);
 
 							//							if(!g_meshmode) sb_send_NewLine();
-							sprintf(g_tempStr, "* Days to run: %d\n", g_days_to_run);
+							sprintf(g_tempStr, "* Days to run: %d\n", days_remaining ? days_remaining : g_days_to_run);
 							sb_send_string(g_tempStr);
 						}
 					}
