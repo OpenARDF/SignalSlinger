@@ -947,7 +947,6 @@ void handle_1sec_tasks(void)
 
 					g_foreground_enable_transmitter = true;
 					LEDS.init();
-
 				}
 			}
 			else /* waiting for the start time to arrive */
@@ -983,7 +982,6 @@ void handle_1sec_tasks(void)
 
 						g_foreground_enable_transmitter = true;
 						LEDS.init();
-
 					}
 				}
 			}
@@ -2322,7 +2320,7 @@ int main(void)
 										g_event_launched_by_user_action = true;
 										LEDS.init();
 #ifndef TEST_MODE_SOFTWARE
-										startSyncdEventNow(true);                   // Immediately start the event (sync to the clock if possible)
+										startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
 #endif
 									}
 									else
@@ -2730,7 +2728,7 @@ int main(void)
 				else
 				{
 					g_sleepType = SLEEP_FOREVER;
-					startEventNow(true);                        // Immediately start the event
+					startEventNow(true); // Immediately start the event
 				}
 			}
 
@@ -2754,7 +2752,7 @@ int main(void)
 					else
 					{
 						g_sleepType = SLEEP_FOREVER;
-						startSyncdEventNow(true);                   // Immediately start the event, synchronized to the clock if possible
+						startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
 					}
 				}
 #endif
@@ -2998,7 +2996,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									else
 									{
 										g_sleepType = SLEEP_FOREVER;
-										startEventNow(true);                        // Immediately start the event
+										startEventNow(true); // Immediately start the event
 									}
 								}
 							}
@@ -4301,48 +4299,48 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_string(g_tempStr);
 					}
 				}
-					else if(sb_buff->fields[SB_FIELD1][0] == 'X')
+				else if(sb_buff->fields[SB_FIELD1][0] == 'X')
+				{
+					char c = (char)sb_buff->fields[SB_FIELD2][0];
+					bool updateStoredValue = false;
+					bool should_reapply_controlled_power =
+					    g_device_enabled &&
+					    (g_foreground_enable_transmitter ||
+					     get_V3V3_enable() ||
+					     get_fet_driver() ||
+					     txIsInitialized() ||
+					     (g_evteng_event_enabled && (g_evteng_event_commenced || g_evteng_run_event_until_canceled)));
+
+					if(c == '1') // Control the external battery to connect it for transmissions and internal battery charging
 					{
-						char c = (char)sb_buff->fields[SB_FIELD2][0];
-						bool updateStoredValue = false;
-						bool should_reapply_controlled_power =
-						    g_device_enabled &&
-						    (g_foreground_enable_transmitter ||
-						     get_V3V3_enable() ||
-						     get_fet_driver() ||
-						     txIsInitialized() ||
-						     (g_evteng_event_enabled && (g_evteng_event_commenced || g_evteng_run_event_until_canceled)));
+						setDisableTransmissions(false);
+						g_enable_external_battery_control = true;
+						updateStoredValue = true;
+					}
+					else if(c == '2') // Control the external battery to connect it for charging the internal battery, but disable transmissions
+					{
+						setDisableTransmissions(true);
+						g_enable_external_battery_control = true;
+						updateStoredValue = true;
+					}
+					else if(c != '\0') // On legacy hardware, repurpose the shared auxiliary switch for fan control instead of external-battery control.
+					{
+						setDisableTransmissions(false);
+						g_enable_external_battery_control = false;
+						updateStoredValue = true;
+					}
 
-						if(c == '1') // Control the external battery to connect it for transmissions and internal battery charging
-						{
-							setDisableTransmissions(false);
-							g_enable_external_battery_control = true;
-							updateStoredValue = true;
-						}
-						else if(c == '2') // Control the external battery to connect it for charging the internal battery, but disable transmissions
-						{
-							setDisableTransmissions(true);
-							g_enable_external_battery_control = true;
-							updateStoredValue = true;
-						}
-						else if(c != '\0') // On legacy hardware, repurpose the shared auxiliary switch for fan control instead of external-battery control.
-						{
-							setDisableTransmissions(false);
-							g_enable_external_battery_control = false;
-							updateStoredValue = true;
-						}
+					if(updateStoredValue)
+					{
+						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+						g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
 
-						if(updateStoredValue)
+						if(g_enable_external_battery_control && should_reapply_controlled_power)
 						{
-							setExtBatLoadSwitch(OFF, INITIALIZE_LS);
-							g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
-
-							if(g_enable_external_battery_control && should_reapply_controlled_power)
-							{
-								powerToTransmitter(ON);
-							}
+							powerToTransmitter(ON);
 						}
 					}
+				}
 				// 				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
 				// 				{
 				// 					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
@@ -6757,7 +6755,7 @@ bool startEvent(void)
 	else
 	{
 		g_sleepType = SLEEP_FOREVER;
-		startEventNow(true);                        // Immediately start the event
+		startEventNow(true); // Immediately start the event
 		error = false;
 	}
 

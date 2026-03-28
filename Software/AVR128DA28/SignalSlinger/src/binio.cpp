@@ -22,7 +22,6 @@
  *  SOFTWARE.
  */
 
-
 #include "binio.h"
 #include "port.h"
 #include "defs.h"
@@ -46,13 +45,12 @@ binio::binio()
 {
 	portDdebounced = 0;
 	portAdebounced = 0;
-} //binio
+} // binio
 
 // default destructor
 binio::~binio()
 {
 } //~binio
-
 
 // This function is called approximately each 1/60 to 1/30 sec.
 void debounce(void)
@@ -60,7 +58,7 @@ void debounce(void)
 	// Move previously sampled raw input bits one step down the line.
 	portDpinReadings[2] = portDpinReadings[1];
 	portDpinReadings[1] = portDpinReadings[0];
-	
+
 	portApinReadings[2] = portApinReadings[1];
 	portApinReadings[1] = portApinReadings[0];
 
@@ -69,15 +67,9 @@ void debounce(void)
 	portApinReadings[0] = PORTA_get_port_level();
 
 	// Debounce output bits using low-pass filtering.
-	portDdebounced = portDdebounced ^ (
-	(portDdebounced ^ portDpinReadings[0])
-	& (portDdebounced ^ portDpinReadings[1])
-	& (portDdebounced ^ portDpinReadings[2]));
-	
-	portAdebounced = portAdebounced ^ (
-	(portAdebounced ^ portApinReadings[0])
-	& (portAdebounced ^ portApinReadings[1])
-	& (portAdebounced ^ portApinReadings[2]));
+	portDdebounced = portDdebounced ^ ((portDdebounced ^ portDpinReadings[0]) & (portDdebounced ^ portDpinReadings[1]) & (portDdebounced ^ portDpinReadings[2]));
+
+	portAdebounced = portAdebounced ^ ((portAdebounced ^ portApinReadings[0]) & (portAdebounced ^ portApinReadings[1]) & (portAdebounced ^ portApinReadings[2]));
 }
 
 uint8_t portDdebouncedVals(void)
@@ -85,28 +77,27 @@ uint8_t portDdebouncedVals(void)
 	return portDdebounced;
 }
 
-
 void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
- 	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
- 	PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH);
-	
- 	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
+	PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH);
+
+	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 
 	PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT); /* Enables/latches battery power to +VSW */
 	PORTA_set_pin_level(POWER_ENABLE, HIGH);
 
- 	PORTA_set_pin_dir(PADDLE_DIT, PORT_DIR_IN);
+	PORTA_set_pin_dir(PADDLE_DIT, PORT_DIR_IN);
 	PORTA_set_pin_pull_mode(PADDLE_DIT, PORT_PULL_OFF);
 
- 	PORTA_set_pin_dir(PADDLE_DAH, PORT_DIR_IN);
+	PORTA_set_pin_dir(PADDLE_DAH, PORT_DIR_IN);
 	PORTA_set_pin_pull_mode(PADDLE_DAH, PORT_PULL_OFF);
 
 	PORTA_set_pin_dir(STRAIGHTKEY, PORT_DIR_OUT);
 	PORTA_set_pin_level(STRAIGHTKEY, LOW);
-	
+
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(V3V3_PWR_ENABLE, LOW);
 
@@ -117,13 +108,13 @@ void BINIO_init(void)
 	PORTA_set_pin_dir(BOOST_PWR_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(BOOST_PWR_ENABLE, LOW);
 #endif
-	
+
 	/* PORTC *************************************************************************************/
-	
+
 	PORTC_set_pin_dir(SERIAL_TX, PORT_DIR_OUT);
 	PORTC_set_pin_dir(SERIAL_RX, PORT_DIR_IN);
 	PORTC_pin_set_isc(SERIAL_RX, PORT_ISC_INTDISABLE_gc);
-	
+
 	/* PORTD *************************************************************************************/
 	PORTD_set_pin_dir(VBAT_INT, PORT_DIR_IN);
 	PORTD_set_pin_pull_mode(VBAT_INT, PORT_PULL_OFF);
@@ -136,16 +127,15 @@ void BINIO_init(void)
 	PORTD_set_pin_dir(SWITCH, PORT_DIR_IN);
 	PORTD_set_pin_pull_mode(SWITCH, PORT_PULL_UP);
 	PORTD_pin_set_isc(SWITCH, PORT_ISC_FALLING_gc);
-	
+
 	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
 	PORTD_set_pin_level(LED_GREEN, LOW);
 
 	g_adc_initialization = ADC_NOT_INITIALIZED; /* Reset ADC configuration */
 
 	/* PORTF *************************************************************************************/
-// 	PORTF_set_pin_dir(X32KHZ_SQUAREWAVE, PORT_DIR_OFF);	
+	// 	PORTF_set_pin_dir(X32KHZ_SQUAREWAVE, PORT_DIR_OFF);
 }
-
 
 static volatile bool driverCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 /**
@@ -157,27 +147,27 @@ bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
 	{
 		case INTERNAL_BATTERY_CHARGING: // Not used
 		{
-// 			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			// 			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 		}
 		break;
-		
+
 		case TRANSMITTER:
 		{
 			driverCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		case INITIALIZE_LS:
 		{
 			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 			driverCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		default:
-		break;
+			break;
 	}
-	
+
 	if(!driverCallerStates[INTERNAL_BATTERY_CHARGING] && !driverCallerStates[TRANSMITTER])
 	{
 		fet_driver(OFF);
@@ -185,9 +175,8 @@ bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
 	}
 
 	fet_driver(ON);
-	return(ON);
+	return (ON);
 }
-
 
 static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 /**
@@ -208,25 +197,25 @@ bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 		}
 		break;
-		
+
 		case TRANSMITTER:
 		{
 			chargeLScallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		case INITIALIZE_LS:
 		{
 			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 			chargeLScallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		// case RE_APPLY_LS_STATE:
 		default:
-		break;
+			break;
 	}
-	
+
 	if(!chargeLScallerStates[INTERNAL_BATTERY_CHARGING] && !chargeLScallerStates[TRANSMITTER])
 	{
 		setExtBatLSEnable(OFF);
@@ -234,7 +223,7 @@ bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 	}
 
 	setExtBatLSEnable(ON);
-	return(ON);
+	return (ON);
 }
 
 static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
@@ -242,7 +231,7 @@ static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OF
  State machine to keep track of multiple controllers of the signal generator (VDD). This ensures that VDD is ON if any of the controllers has turned it on.
  */
 bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
-{	
+{
 	switch(sender)
 	{
 		case INTERNAL_BATTERY_CHARGING:
@@ -250,24 +239,24 @@ bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 		}
 		break;
-		
+
 		case TRANSMITTER:
 		{
 			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		case INITIALIZE_LS:
 		{
 			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
 		}
 		break;
-		
+
 		default:
-		break;
+			break;
 	}
-	
+
 	if(!SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] && !SignalGeneratorCallerStates[TRANSMITTER])
 	{
 		v3V3_enable(OFF);
@@ -275,9 +264,8 @@ bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 	}
 
 	v3V3_enable(ON);
-	return(ON);
+	return (ON);
 }
-
 
 /**
  State machine to keep track of multiple controllers of the boost regulator. This ensures that the resource is ON if any of the clients has turned it on.
@@ -285,13 +273,12 @@ bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 #ifdef HW_TARGET_3_5
 #else
 bool setBoostEnable(bool onoff)
-{		
+{
 	boost_enable(onoff);
-	return(onoff);
+	return (onoff);
 }
 #endif
 
-	
 void fet_driver(bool state)
 {
 	if(state == ON)
@@ -324,7 +311,7 @@ void setExtBatLSEnable(bool state)
 		PORTA_set_pin_level(AUX_SWITCH_ENABLE, LOW);
 	}
 }
-	
+
 bool getExtBatLSEnable(void)
 {
 	return (PORTA_get_pin_level(AUX_SWITCH_ENABLE) != LOW);
@@ -364,7 +351,7 @@ bool getCoolingFanLSEnable(void)
 {
 	return (PORTA_get_pin_level(COOLING_FAN_ENABLE) != LOW);
 }
-	
+
 #else
 void boost_enable(bool state)
 {
