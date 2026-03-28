@@ -67,8 +67,8 @@ void system_charging_config()
 
 //	BINIO_init();
 		/* PORTA *************************************************************************************/
-  	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
-  	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH); // Turn on external power source
+  	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
+  	PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH); // Turn on the shared auxiliary switch
 // 	
 //  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 // 	PORTA_set_pin_level(FET_DRIVER_ENABLE, HIGH);
@@ -142,8 +142,8 @@ void system_sleep_config()
 	LED_set_GREEN_dir(PORT_DIR_OUT);
 	LED_set_GREEN_level(OFF);
 
-// 	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
-// 	PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
+// 	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
+// 	PORTA_set_pin_level(AUX_SWITCH_ENABLE, LOW);
 // 	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT); /* Don't turn off charging in case internal battery is charging */
 // 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
 	PORTA_set_pin_dir(V3V3_PWR_ENABLE, PORT_DIR_OUT);
@@ -189,4 +189,3 @@ void system_sleep_config()
 	PORTF_set_pin_dir(unusedF6, PORT_DIR_OUT);
 	PORTF_set_pin_level(unusedF6, LOW);
 }
-

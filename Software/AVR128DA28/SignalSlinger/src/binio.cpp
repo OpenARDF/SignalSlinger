@@ -89,8 +89,8 @@ uint8_t portDdebouncedVals(void)
 void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
- 	PORTA_set_pin_dir(CHARGE_AUX_ENABLE, PORT_DIR_OUT);
- 	PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+ 	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
+ 	PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH);
 	
  	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT);
 	PORTA_set_pin_level(FET_DRIVER_ENABLE, LOW);
@@ -310,22 +310,24 @@ bool get_fet_driver(void)
 {
 	return (PORTA_get_pin_level(FET_DRIVER_ENABLE) != LOW);
 }
-	
+
+/* Historical name retained: on legacy non-HW_TARGET_3_5 hardware this drives the
+ * shared auxiliary switch, which may be assigned at runtime to battery support or fan control. */
 void setExtBatLSEnable(bool state)
 {
 	if(state == ON)
 	{
-		PORTA_set_pin_level(CHARGE_AUX_ENABLE, HIGH);
+		PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH);
 	}
 	else
 	{
-		PORTA_set_pin_level(CHARGE_AUX_ENABLE, LOW);
+		PORTA_set_pin_level(AUX_SWITCH_ENABLE, LOW);
 	}
 }
 	
 bool getExtBatLSEnable(void)
 {
-	return (PORTA_get_pin_level(CHARGE_AUX_ENABLE) != LOW);
+	return (PORTA_get_pin_level(AUX_SWITCH_ENABLE) != LOW);
 }
 
 void v3V3_enable(bool state)

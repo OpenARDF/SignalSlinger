@@ -258,6 +258,7 @@ bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch);
 bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
+static inline void clearPendingWakeInterruptFlags(void);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
@@ -686,9 +687,6 @@ static bool finishTimedEventIfExpired(time_t now)
 	g_days_run++;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
 
-	if(!g_enable_external_battery_control)       // Intentional inverted guard for a special use case; add a comment here explaining why.
-		setExtBatLoadSwitch(OFF, INITIALIZE_LS); // Turn off an externally-controlled device
-
 	if(g_days_run < g_days_to_run)
 	{
 		time_t loaded_start_epoch;
@@ -950,8 +948,6 @@ void handle_1sec_tasks(void)
 					g_foreground_enable_transmitter = true;
 					LEDS.init();
 
-					if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on an externally-controlled device
 				}
 			}
 			else /* waiting for the start time to arrive */
@@ -988,8 +984,6 @@ void handle_1sec_tasks(void)
 						g_foreground_enable_transmitter = true;
 						LEDS.init();
 
-						if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-							setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on an externally-controlled device
 					}
 				}
 			}
@@ -1584,6 +1578,14 @@ bool switchIsClosed(void)
 	return (!(portDdebouncedVals() & (1 << SWITCH)));
 }
 
+static inline void clearPendingWakeInterruptFlags(void)
+{
+	/* Drop any stale edge flags captured while we were still awake so only a
+	 * new button press or fresh serial activity can wake the device. */
+	VPORTC.INTFLAGS = 0xFF;
+	VPORTD.INTFLAGS = 0xFF;
+}
+
 /* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
@@ -1803,6 +1805,8 @@ int main(void)
 			}
 
 #ifdef HW_TARGET_3_5
+			/* Newer hardware has a dedicated fan-control output that is independent of
+			 * the auxiliary external-battery switch. */
 			if(g_thermal_shutdown) // Extremely high temperature detected
 			{
 				setCoolingFanLSEnable(ON); // should already be on
@@ -1823,6 +1827,8 @@ int main(void)
 				}
 			}
 #else
+			/* Legacy hardware reuses the shared auxiliary switch as fan drive whenever
+			 * external-battery control is disabled at runtime. */
 			else
 			{
 				if(g_turn_on_fan)
@@ -1954,9 +1960,6 @@ int main(void)
 					}
 
 					powerToTransmitter(OFF);
-					if(!g_enable_external_battery_control) // Intentional inverted guard for a special use case; add a comment here explaining why.
-						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
-
 					atomic_write_u16(&g_demo_event_countdown, 0);
 					g_foreground_reset_after_demo = false;
 					atomic_write_u16(&g_key_down_countdown, 0);
@@ -1966,6 +1969,7 @@ int main(void)
 					LEDS.deactivate();
 					serialbus_disable();
 					system_sleep_config();
+					clearPendingWakeInterruptFlags();
 					SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_STDBY_gc);
 					g_sleeping = true;
 					g_awakenedBy = AWAKENED_INIT;
@@ -2028,6 +2032,7 @@ int main(void)
 						set_sleep_mode(SLEEP_MODE_STANDBY);
 						//					set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 						DISABLE_INTERRUPTS();
+						clearPendingWakeInterruptFlags();
 						sleep_enable();
 						ENABLE_INTERRUPTS();
 						sleep_cpu(); /* Sleep occurs here */
@@ -2071,8 +2076,6 @@ int main(void)
 							{
 								g_evteng_event_commenced = false;
 							}
-							if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-								setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 						}
 					}
 					else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT) // Similar to being awakened by a button press, but without the 5-second "hold down the button" timing constraint
@@ -2320,8 +2323,6 @@ int main(void)
 										LEDS.init();
 #ifndef TEST_MODE_SOFTWARE
 										startSyncdEventNow(true);                   // Immediately start the event (sync to the clock if possible)
-										if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 #endif
 									}
 									else
@@ -2449,8 +2450,6 @@ int main(void)
 
 					LEDS.init();
 					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-					if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 				}
 			}
 
@@ -2732,8 +2731,6 @@ int main(void)
 				{
 					g_sleepType = SLEEP_FOREVER;
 					startEventNow(true);                        // Immediately start the event
-					if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-						setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 				}
 			}
 
@@ -2758,8 +2755,6 @@ int main(void)
 					{
 						g_sleepType = SLEEP_FOREVER;
 						startSyncdEventNow(true);                   // Immediately start the event, synchronized to the clock if possible
-						if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-							setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 					}
 				}
 #endif
@@ -3004,8 +2999,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									{
 										g_sleepType = SLEEP_FOREVER;
 										startEventNow(true);                        // Immediately start the event
-										if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-											setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 									}
 								}
 							}
@@ -4308,36 +4301,48 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_string(g_tempStr);
 					}
 				}
-				else if(sb_buff->fields[SB_FIELD1][0] == 'X')
-				{
-					char c = (char)sb_buff->fields[SB_FIELD2][0];
-					bool updateStoredValue = false;
+					else if(sb_buff->fields[SB_FIELD1][0] == 'X')
+					{
+						char c = (char)sb_buff->fields[SB_FIELD2][0];
+						bool updateStoredValue = false;
+						bool should_reapply_controlled_power =
+						    g_device_enabled &&
+						    (g_foreground_enable_transmitter ||
+						     get_V3V3_enable() ||
+						     get_fet_driver() ||
+						     txIsInitialized() ||
+						     (g_evteng_event_enabled && (g_evteng_event_commenced || g_evteng_run_event_until_canceled)));
 
-					if(c == '1') // Control the external battery to connect it for transmissions and internal battery charging
-					{
-						setDisableTransmissions(false);
-						g_enable_external_battery_control = true;
-						updateStoredValue = true;
-					}
-					else if(c == '2') // Control the external battery to connect it for charging the internal battery, but disable transmissions
-					{
-						setDisableTransmissions(true);
-						g_enable_external_battery_control = true;
-						updateStoredValue = true;
-					}
-					else if(c != '\0') // Do not control an external battery, use it for fan control instead
-					{
-						setDisableTransmissions(false);
-						g_enable_external_battery_control = false;
-						updateStoredValue = true;
-					}
+						if(c == '1') // Control the external battery to connect it for transmissions and internal battery charging
+						{
+							setDisableTransmissions(false);
+							g_enable_external_battery_control = true;
+							updateStoredValue = true;
+						}
+						else if(c == '2') // Control the external battery to connect it for charging the internal battery, but disable transmissions
+						{
+							setDisableTransmissions(true);
+							g_enable_external_battery_control = true;
+							updateStoredValue = true;
+						}
+						else if(c != '\0') // On legacy hardware, repurpose the shared auxiliary switch for fan control instead of external-battery control.
+						{
+							setDisableTransmissions(false);
+							g_enable_external_battery_control = false;
+							updateStoredValue = true;
+						}
 
-					if(updateStoredValue)
-					{
-						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
-						g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
+						if(updateStoredValue)
+						{
+							setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+							g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
+
+							if(g_enable_external_battery_control && should_reapply_controlled_power)
+							{
+								powerToTransmitter(ON);
+							}
+						}
 					}
-				}
 				// 				else if(sb_buff->fields[SB_FIELD1][0] == 'B')
 				// 				{
 				// 					bool v = ((char)sb_buff->fields[SB_FIELD2][0] == '1');
@@ -5051,8 +5056,6 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			}
 
 			LEDS.init();
-			if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-				setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 		}
 
 		g_evteng_event_commenced = true;
@@ -6755,8 +6758,6 @@ bool startEvent(void)
 	{
 		g_sleepType = SLEEP_FOREVER;
 		startEventNow(true);                        // Immediately start the event
-		if(!g_enable_external_battery_control)      // Intentional inverted guard for a special use case; add a comment here explaining why.
-			setExtBatLoadSwitch(ON, INITIALIZE_LS); // Turn on power to externally-controlled device
 		error = false;
 	}
 

@@ -41,7 +41,16 @@
 #define POWER_ENABLE 3
 #define V3V3_PWR_ENABLE 2
 #define FET_DRIVER_ENABLE 1
-#define CHARGE_AUX_ENABLE 0
+/*
+ * Hardware topology note:
+ * - When HW_TARGET_3_5 is defined, the board has separate switched outputs for
+ *   external-battery control (AUX_SWITCH_ENABLE below) and cooling-fan control
+ *   (COOLING_FAN_ENABLE above).
+ * - When HW_TARGET_3_5 is not defined, the board has only one auxiliary switched
+ *   output on this pin. At runtime that shared output is used either for
+ *   external-battery/charging support or as a temperature-controlled fan switch.
+ */
+#define AUX_SWITCH_ENABLE 0
 
 /* PORTC *************************************************************************************/
 #define SI5351_SCL 3

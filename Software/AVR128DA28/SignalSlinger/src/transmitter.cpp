@@ -43,7 +43,15 @@ static volatile bool g_disable_transmissions = false;
 uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 volatile bool g_enable_boost_regulator = false;
 
-volatile bool g_enable_external_battery_control = true; // true = set the LS to control an external power source; It must be controlled to support transmissions and internal battery charging
+/*
+ * Runtime role select for the shared auxiliary switch:
+ * - HW_TARGET_3_5 defined: battery control and fan control are separate outputs,
+ *   so this flag affects only the external-battery/charging path.
+ * - HW_TARGET_3_5 not defined: the board has one shared auxiliary switched output;
+ *   true routes that output to external-battery/charging support, false repurposes
+ *   the same output for temperature-controlled fan drive.
+ */
+volatile bool g_enable_external_battery_control = true;
 
 /**
  */
@@ -118,6 +126,11 @@ EC powerToTransmitter(bool state)
 {
 	EC result = ERROR_CODE_NO_ERROR;
 
+	/* BAT X 2 disables the internal RF chain but still uses the external-control
+	 * switch to power any attached external device with the same event timing. */
+	if(g_enable_external_battery_control)
+		setExtBatLoadSwitch(state, TRANSMITTER);
+
 	if(g_disable_transmissions)
 	{
 		si5351_shutdown_comms();
@@ -137,8 +150,6 @@ EC powerToTransmitter(bool state)
 			si5351_shutdown_comms();
 		}
 
-		if(g_enable_external_battery_control)
-			setExtBatLoadSwitch(state, TRANSMITTER);
 		setSignalGeneratorEnable(state, TRANSMITTER);
 
 #ifdef HW_TARGET_3_5
