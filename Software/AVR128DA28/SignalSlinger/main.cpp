@@ -294,6 +294,7 @@ static void reinitializeEventEngine(void);
 static void loadEventTimingForFox(Fox_t fox);
 static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning);
 static bool reloadLoadedEventWindowFromSavedSettings(void);
+static bool catchUpLoadedMultiDayEventAfterClockSet(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 
@@ -600,6 +601,50 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 
 	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
 
+	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+}
+
+static bool catchUpLoadedMultiDayEventAfterClockSet(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	uint8_t total_days = g_days_to_run ? g_days_to_run : 1;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+
+	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
+	{
+		return reloadLoadedEventWindowFromSavedSettings();
+	}
+
+	if(g_days_run >= total_days)
+	{
+		g_days_run = total_days;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
+		return false;
+	}
+
+	uint8_t day_index = MIN(g_days_run, (uint8_t)(total_days - 1));
+	time_t loaded_start_epoch = saved_start_epoch + ((time_t)day_index * SECONDS_24H);
+	time_t loaded_finish_epoch = saved_finish_epoch + ((time_t)day_index * SECONDS_24H);
+	time_t now = time(null);
+
+	while((loaded_finish_epoch <= now) && ((day_index + 1) < total_days))
+	{
+		day_index++;
+		loaded_start_epoch += SECONDS_24H;
+		loaded_finish_epoch += SECONDS_24H;
+	}
+
+	if(loaded_finish_epoch <= now)
+	{
+		g_days_run = total_days;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
+		return false;
+	}
+
+	g_days_run = day_index;
+	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
 	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
@@ -2641,10 +2686,13 @@ int main(void)
 						}
 						else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
 						{
-							g_evteng_event_enabled = true;
+							/* Keep tracking the scheduled finish time, but leave transmissions disabled so
+							 * a later manual wake cannot resurrect a slot that no longer fully fits before
+							 * the event ends. */
+							g_evteng_event_enabled = false;
 							g_evteng_event_commenced = true;
 							atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
-							g_sleepType = SLEEP_FOREVER;
+							g_sleepType = SLEEP_AFTER_EVENT;
 						}
 						else
 						{
@@ -3885,6 +3933,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(t)
 						{
+							bool time_was_valid = timeIsSet();
 							atomic_set_system_time(t, true);
 
 							if(g_cloningInProgress)
@@ -3906,7 +3955,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								}
 
 								/* Start the event if one is configured */
-								if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+								if((!time_was_valid && catchUpLoadedMultiDayEventAfterClockSet()) ||
+								   (time_was_valid && eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)))
 								{
 									startEventUsingRTC();
 								}
@@ -4845,8 +4895,11 @@ void restoreStateAfterButtonWakeAuthorization(void)
 			if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_sleepType = SLEEP_AFTER_EVENT;
-				g_evteng_event_enabled = true;
-				g_evteng_event_commenced = true;
+				if(g_button_wake_prior_event_enabled)
+				{
+					g_evteng_event_enabled = true;
+					g_evteng_event_commenced = true;
+				}
 			}
 			else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
 			{
