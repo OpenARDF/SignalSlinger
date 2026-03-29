@@ -4125,43 +4125,67 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(!f1)
 						{
 							char buf[TEMP_STRING_SIZE];
+							time_t saved_start_epoch = atomic_read_time(&g_event_start_epoch);
+							time_t saved_finish_epoch = atomic_read_time(&g_event_finish_epoch);
 							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
 							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
 							uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
+							bool effective_window_scheduled = false;
+							bool show_effective_window = false;
 
 							if(g_days_to_run > 1)
 							{
-								eventIsScheduledToRun(&loaded_start_epoch, &loaded_finish_epoch);
+								effective_window_scheduled = eventIsScheduledToRun(&loaded_start_epoch, &loaded_finish_epoch);
+								show_effective_window = effective_window_scheduled &&
+								                        ((loaded_start_epoch != saved_start_epoch) || (loaded_finish_epoch != saved_finish_epoch));
 							}
 							//							if(!g_meshmode) sb_send_NewLine();
 
-							if(loaded_start_epoch < MINIMUM_VALID_EPOCH)
+							if(saved_start_epoch < MINIMUM_VALID_EPOCH)
 							{
 								sprintf(g_tempStr, "* Start:not set\n");
 							}
 							else
 							{
-								sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+								sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(saved_start_epoch, buf, TEMP_STRING_SIZE));
 							}
 
 							sb_send_string(g_tempStr);
 
 							//							if(!g_meshmode) sb_send_NewLine();
 
-							if(loaded_finish_epoch < MINIMUM_VALID_EPOCH)
+							if(saved_finish_epoch < MINIMUM_VALID_EPOCH)
 							{
 								sprintf(g_tempStr, "* Finish:not set\n");
 							}
 							else
 							{
-								sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(loaded_finish_epoch, buf, TEMP_STRING_SIZE));
+								sprintf(g_tempStr, "* Finish:%s\n", convertEpochToTimeString(saved_finish_epoch, buf, TEMP_STRING_SIZE));
 							}
 
 							sb_send_string(g_tempStr);
 
 							//							if(!g_meshmode) sb_send_NewLine();
-							sprintf(g_tempStr, "* Days to run: %d\n", days_remaining ? days_remaining : g_days_to_run);
+							sprintf(g_tempStr, "* Days to run: %d\n", g_days_to_run);
 							sb_send_string(g_tempStr);
+
+							if(g_days_to_run > 1)
+							{
+								sprintf(g_tempStr, "* Days remaining: %d\n", days_remaining);
+								sb_send_string(g_tempStr);
+
+								if(show_effective_window)
+								{
+									sprintf(g_tempStr, "* Current window start:%s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+									sb_send_string(g_tempStr);
+									sprintf(g_tempStr, "* Current window finish:%s\n", convertEpochToTimeString(loaded_finish_epoch, buf, TEMP_STRING_SIZE));
+									sb_send_string(g_tempStr);
+								}
+								else if(!effective_window_scheduled && timeIsSet())
+								{
+									sb_send_string((char *)"* No remaining scheduled day window at the current time\n");
+								}
+							}
 						}
 					}
 				}
@@ -5753,7 +5777,7 @@ void reportSettings(void)
 	float processor_temperature = atomic_read_float(&g_processor_temperature);
 	float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
 	float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
-	bool use_shifted_loaded_schedule = false;
+	bool show_effective_window = false;
 
 	if((g_days_to_run > 1) && (g_days_run > 0))
 	{
@@ -5762,11 +5786,9 @@ void reportSettings(void)
 		if(eventIsScheduledToRun(&effective_start_epoch, &effective_finish_epoch) &&
 		   ((effective_start_epoch != event_start_epoch) || (effective_finish_epoch != event_finish_epoch)))
 		{
-			use_shifted_loaded_schedule = true;
+			show_effective_window = true;
 			loaded_start_epoch = effective_start_epoch;
 			loaded_finish_epoch = effective_finish_epoch;
-			event_start_epoch = effective_start_epoch;
-			event_finish_epoch = effective_finish_epoch;
 		}
 	}
 
@@ -5919,29 +5941,41 @@ void reportSettings(void)
 	// 	sprintf(g_tempStr, "*   Cal: %d\n", RTC_get_cal());
 	// 	sb_send_string(g_tempStr);
 
-	// If the event runs for more than 1 day, report the number of days remaining.
-	if(g_days_to_run > 1)
-	{
-		uint8_t days_remaining = g_days_to_run - g_days_run;
-		if(days_remaining)
+		// If the event runs for more than 1 day, report both the configured run length and
+		// the remaining days at the current wall-clock time.
+		if(g_days_to_run > 1)
 		{
-			sprintf(g_tempStr, "\n*   == Runs for %d days ==\n", days_remaining);
+			uint8_t days_remaining = g_days_to_run - g_days_run;
+			sprintf(g_tempStr, "\n*   == Configured for %d days ==\n", g_days_to_run);
+			sb_send_string(g_tempStr);
+			sprintf(g_tempStr, "*   Days remaining: %d\n", days_remaining);
 			sb_send_string(g_tempStr);
 		}
-	}
 
 	// Report the start and finish times of the event.
 	// 	if(!g_evteng_loaded_start_epoch) g_evteng_loaded_start_epoch = g_event_start_epoch;
 	// 	if(!g_evteng_loaded_finish_epoch) g_evteng_loaded_finish_epoch = g_event_finish_epoch;
-	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(event_start_epoch, buf, TEMP_STRING_SIZE));
-	sb_send_string(g_tempStr);
-	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(event_finish_epoch, buf, TEMP_STRING_SIZE));
-	sb_send_string(g_tempStr);
-	if(event_finish_epoch == event_start_epoch)
-	{
-		sprintf(g_tempStr, "*   Event start disabled (Start = Finish)\n");
+		sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(event_start_epoch, buf, TEMP_STRING_SIZE));
 		sb_send_string(g_tempStr);
-	}
+		sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(event_finish_epoch, buf, TEMP_STRING_SIZE));
+		sb_send_string(g_tempStr);
+		if(event_finish_epoch == event_start_epoch)
+		{
+			sprintf(g_tempStr, "*   Event start disabled (Start = Finish)\n");
+			sb_send_string(g_tempStr);
+		}
+
+		if(show_effective_window)
+		{
+			sprintf(g_tempStr, "*   Current window start:  %s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+			sb_send_string(g_tempStr);
+			sprintf(g_tempStr, "*   Current window finish: %s\n", convertEpochToTimeString(loaded_finish_epoch, buf, TEMP_STRING_SIZE));
+			sb_send_string(g_tempStr);
+		}
+		else if((g_days_to_run > 1) && timeIsSet() && (g_days_run >= g_days_to_run))
+		{
+			sb_send_string((char *)"*   No remaining scheduled day window at the current time\n");
+		}
 
 	// If an event is active, report event-specific frequency settings.
 	if(g_event != EVENT_NONE)
