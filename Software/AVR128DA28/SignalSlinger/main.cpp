@@ -2685,102 +2685,126 @@ int main(void)
 				}
 			}
 
-				if(g_device_enabled)
-				{
-					float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
-					float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
-					float external_voltage = atomic_read_float(&g_external_voltage);
-					internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
-					external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
+			if(g_device_enabled)
+			{
+				float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+				float external_voltage = atomic_read_float(&g_external_voltage);
+				internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
+				external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
-					configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
-				}
-				else
-				{
-					LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
-				}
+				configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
+			}
+			else
+			{
+				LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
+			}
 
-				if(g_long_button_press) /* Shut things down and go to sleep or power off */
-				{
-					g_long_button_press = false;
-					g_foreground_check_for_long_wakeup_press = false;
-					atomic_write_u16(&g_foreground_handle_counted_presses, 0);
-					LEDS.blink(LEDS_OFF);
-					g_isMaster = false;
-					atomic_write_u16(&isMasterCountdownSeconds, 0);
-					g_defer_cloned_event_start = false;
-					atomic_write_u16(&g_send_clone_success_countdown, 0);
-					g_cloningInProgress = false;
-					atomic_write_u16(&g_programming_countdown, 0);
-					atomic_write_u16(&g_programming_msg_throttle, 0);
+			if(g_long_button_press) /* Shut things down and go to sleep or power off */
+			{
+				g_long_button_press = false;
+				g_foreground_check_for_long_wakeup_press = false;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+				LEDS.blink(LEDS_OFF);
+				g_isMaster = false;
+				atomic_write_u16(&isMasterCountdownSeconds, 0);
+				g_defer_cloned_event_start = false;
+				atomic_write_u16(&g_send_clone_success_countdown, 0);
+				g_cloningInProgress = false;
+				atomic_write_u16(&g_programming_countdown, 0);
+				atomic_write_u16(&g_programming_msg_throttle, 0);
 
+				{
+					time_t loaded_start_epoch;
+					time_t loaded_finish_epoch;
+					time_t now = time(null);
+
+					finishTimedEventIfExpired(now);
+					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
 					{
-						time_t loaded_start_epoch;
-						time_t loaded_finish_epoch;
-						time_t now = time(null);
+						int32_t timeRemaining = SECONDS_24H; // Any big number will do
 
-						finishTimedEventIfExpired(now);
-						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-						if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
+						if(timeIsSet() && (loaded_start_epoch != loaded_finish_epoch) && (now < loaded_finish_epoch))
 						{
-							int32_t timeRemaining = SECONDS_24H; // Any big number will do
-
-							if(timeIsSet() && (loaded_start_epoch != loaded_finish_epoch) && (now < loaded_finish_epoch))
-							{
-								timeRemaining = timeDif(loaded_finish_epoch, now);
-							}
-
-							/* Match the event engine's normal off-air sleep guard so we do not wake for an
-							 * extra post-finish slot after the user manually puts the unit back to sleep. */
-							if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
-							{
-								time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
-								g_evteng_event_enabled = true;
-								g_evteng_event_commenced = true;
-								atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
-								g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
-								g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
-							}
-							else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
-							{
-								/* Keep tracking the scheduled finish time, but leave transmissions disabled so
-								 * a later manual wake cannot resurrect a slot that no longer fully fits before
-								 * the event ends. */
-								g_evteng_event_enabled = false;
-								g_evteng_event_commenced = true;
-								atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
-								g_sleepType = SLEEP_AFTER_EVENT;
-							}
-							else
-							{
-								g_sleepType = SLEEP_AFTER_EVENT;
-							}
+							timeRemaining = timeDif(loaded_finish_epoch, now);
 						}
-						else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+
+						/* Match the event engine's normal off-air sleep guard so we do not wake for an
+						 * extra post-finish slot after the user manually puts the unit back to sleep. */
+						if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
 						{
-							g_sleepType = SLEEP_UNTIL_START_TIME;
+							time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
+							g_evteng_event_enabled = true;
+							g_evteng_event_commenced = true;
+							atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
+							g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
+							g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
 						}
-						else if(timeIsSet())
+						else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
 						{
-							g_sleepType = SLEEP_FOREVER;
+							/* Keep tracking the scheduled finish time, but leave transmissions disabled so
+							 * a later manual wake cannot resurrect a slot that no longer fully fits before
+							 * the event ends. */
+							g_evteng_event_enabled = false;
+							g_evteng_event_commenced = true;
+							atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
+							g_sleepType = SLEEP_AFTER_EVENT;
 						}
 						else
 						{
-							suspendEvent();
+							g_sleepType = SLEEP_AFTER_EVENT;
 						}
 					}
-
-					g_go_to_sleep_now = true;
+					else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+					{
+						g_sleepType = SLEEP_UNTIL_START_TIME;
+					}
+					else if(timeIsSet())
+					{
+						g_sleepType = SLEEP_FOREVER;
+					}
+					else
+					{
+						suspendEvent();
+					}
 				}
+
+				g_go_to_sleep_now = true;
 			}
+		}
 
-			if(g_foreground_reset_after_demo)
+		if(g_foreground_reset_after_demo)
+		{
+			atomic_write_u16(&g_demo_event_countdown, 0);
+			g_foreground_reset_after_demo = false;
+
+			suspendEvent();
+
+			if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 			{
-				atomic_write_u16(&g_demo_event_countdown, 0);
-				g_foreground_reset_after_demo = false;
+				g_event_launched_by_user_action = false;
+				startEventUsingRTC();
+			}
+			else
+			{
+				g_sleepType = SLEEP_FOREVER;
+				startEventNow(true); // Immediately start the event
+			}
+		}
 
-				suspendEvent();
+		if(g_foreground_reset_after_keydown)
+		{
+			atomic_write_u16(&g_key_down_countdown, 0);
+			g_foreground_reset_after_keydown = false;
 
+			suspendEvent();
+
+			g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+
+#ifndef TEST_MODE_SOFTWARE
+			if(g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
+			{
 				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 				{
 					g_event_launched_by_user_action = false;
@@ -2789,37 +2813,12 @@ int main(void)
 				else
 				{
 					g_sleepType = SLEEP_FOREVER;
-					startEventNow(true); // Immediately start the event
+					startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
 				}
 			}
-
-			if(g_foreground_reset_after_keydown)
-			{
-				atomic_write_u16(&g_key_down_countdown, 0);
-				g_foreground_reset_after_keydown = false;
-
-				suspendEvent();
-
-				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-
-#ifndef TEST_MODE_SOFTWARE
-				if(g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
-				{
-					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-					{
-						g_event_launched_by_user_action = false;
-						startEventUsingRTC();
-					}
-					else
-					{
-						g_sleepType = SLEEP_FOREVER;
-						startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
-					}
-				}
 #endif
 
-				g_start_event_after_keydown = false;
-			}
+			g_start_event_after_keydown = false;
 		}
 	}
 }
