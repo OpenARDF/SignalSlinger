@@ -1796,10 +1796,11 @@ int main(void)
 				}
 
 				// If the event loaded into the event engine is disabled, set it to start.
-				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
-				{
-					g_foreground_start_event = true;
-				}
+					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event &&
+					   !currentLoadedEventWindowCanceled())
+					{
+						g_foreground_start_event = true;
+					}
 
 				if((g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && !g_foreground_start_event)
 				{
@@ -2162,9 +2163,11 @@ int main(void)
 						}
 						else
 						{
-							g_foreground_start_event = true;
+							if(!currentLoadedEventWindowCanceled())
+							{
+								g_foreground_start_event = true;
+							}
 						}
-					}
 
 					// Restore the transmitter power state that matches the logical state we just woke into.
 					bool should_power_tx = shouldPowerTransmitterAfterWake();
@@ -4541,6 +4544,16 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
 	time_to_wake_up = atomic_read_time(&g_time_to_wake_up);
 
+	if(currentLoadedEventWindowCanceled())
+	{
+		if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+		{
+			g_sleepType = SLEEP_AFTER_EVENT;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+			return false;
+		}
+	}
+
 	time_t now = time(null);
 	int32_t dif = timeDif(now, loaded_start_epoch);
 
@@ -4893,6 +4906,14 @@ void restoreStateAfterButtonWakeAuthorization(void)
 	time_t loaded_finish_epoch;
 	time_t now = time(null);
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	if(currentLoadedEventWindowCanceled() && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+	{
+		g_evteng_event_enabled = false;
+		g_evteng_event_commenced = false;
+		g_sleepType = SLEEP_AFTER_EVENT;
+		return;
+	}
 
 	switch((SleepType)g_button_wake_prior_sleep_type)
 	{
