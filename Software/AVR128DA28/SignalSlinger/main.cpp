@@ -6028,12 +6028,12 @@ void reportSettings(void)
 
 	// Check the clock configuration state and report necessary actions.
 	ConfigurationState_t cfg = WAITING_FOR_START;
-	if(!use_shifted_loaded_schedule)
+	if(!show_effective_window)
 	{
 		cfg = clockConfigurationCheck(SAVED_SETTINGS);
 	}
 
-	if(!use_shifted_loaded_schedule && (cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
+	if(!show_effective_window && (cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
 	{
 		sb_send_string((char *)"\n* Needed Actions:\n");
 		reportConfigErrors(SAVED_SETTINGS);
@@ -6047,7 +6047,7 @@ void reportSettings(void)
 			reportTimeTill(now, loaded_finish_epoch, "*   Time Remaining: ", NULL);
 		}
 
-		bool needs_manual_start = use_shifted_loaded_schedule
+		bool needs_manual_start = show_effective_window
 		                              ? (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event)
 		                              : (eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event);
 
