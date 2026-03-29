@@ -1796,11 +1796,11 @@ int main(void)
 				}
 
 				// If the event loaded into the event engine is disabled, set it to start.
-					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event &&
-					   !currentLoadedEventWindowCanceled())
-					{
-						g_foreground_start_event = true;
-					}
+				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event &&
+				   !currentLoadedEventWindowCanceled())
+				{
+					g_foreground_start_event = true;
+				}
 
 				if((g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && !g_foreground_start_event)
 				{
