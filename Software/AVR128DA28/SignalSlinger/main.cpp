@@ -680,19 +680,19 @@ static bool currentLoadedEventWindowCanceled(void)
 		return false;
 	}
 
+	if(!timeIsSet())
+	{
+		return false;
+	}
+
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 
-	if(!timeIsSet())
-	{
-		return g_event_canceled_by_user;
-	}
-
-	/* The latch only applies to the currently loaded window. If the loaded window is no
-	 * longer current or future, callers should treat the cancellation as stale. */
-	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) ||
-	       eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
+	/* The latch only applies to the currently loaded event window. Once the loaded window
+	 * has advanced to the future, passive wake/scheduler logic must stop treating it as
+	 * canceled. */
+	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
 static inline void extendMasterModeTimeout(void)
@@ -2517,7 +2517,7 @@ int main(void)
 						}
 						else
 						{
-							g_event_canceled_by_user = true;
+							g_event_canceled_by_user = false;
 						}
 					}
 					else if(counted_presses == 5)
