@@ -305,7 +305,7 @@ static void reinitializeEventEngine(void);
 static void loadEventTimingForFox(Fox_t fox);
 static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning);
 static bool reloadLoadedEventWindowFromSavedSettings(void);
-static bool catchUpLoadedMultiDayEventAfterClockSet(void);
+static bool resyncLoadedEventWindowAfterClockSet(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 static bool currentLoadedEventWindowCanceled(void);
@@ -618,30 +618,27 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
-static bool catchUpLoadedMultiDayEventAfterClockSet(void)
+static bool resyncLoadedEventWindowAfterClockSet(void)
 {
 	time_t saved_start_epoch;
 	time_t saved_finish_epoch;
+	time_t prior_loaded_start_epoch;
+	time_t prior_loaded_finish_epoch;
 	uint8_t total_days = g_days_to_run ? g_days_to_run : 1;
 
 	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &prior_loaded_start_epoch, &prior_loaded_finish_epoch);
 
 	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
 	{
 		return reloadLoadedEventWindowFromSavedSettings();
 	}
 
-	if(g_days_run >= total_days)
-	{
-		g_days_run = total_days;
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
-		return false;
-	}
-
-	uint8_t day_index = MIN(g_days_run, (uint8_t)(total_days - 1));
-	time_t loaded_start_epoch = saved_start_epoch + ((time_t)day_index * SECONDS_24H);
-	time_t loaded_finish_epoch = saved_finish_epoch + ((time_t)day_index * SECONDS_24H);
+	uint8_t day_index = 0;
+	time_t loaded_start_epoch = saved_start_epoch;
+	time_t loaded_finish_epoch = saved_finish_epoch;
 	time_t now = time(null);
+	bool have_schedulable_window = false;
 
 	while((loaded_finish_epoch <= now) && ((day_index + 1) < total_days))
 	{
@@ -652,14 +649,29 @@ static bool catchUpLoadedMultiDayEventAfterClockSet(void)
 
 	if(loaded_finish_epoch <= now)
 	{
-		g_days_run = total_days;
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
-		return false;
+		day_index = total_days;
+		loaded_start_epoch = 0;
+		loaded_finish_epoch = 0;
+	}
+	else
+	{
+		have_schedulable_window = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
+		                         eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 	}
 
 	g_days_run = day_index;
 	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
-	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+
+	/* A clock change can move us onto a different day's window. Only preserve the cancel
+	 * latch if the resync kept us on the same loaded window and that window is still
+	 * current. */
+	if((prior_loaded_start_epoch != loaded_start_epoch) || (prior_loaded_finish_epoch != loaded_finish_epoch) ||
+	   !eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+	{
+		g_event_canceled_by_user = false;
+	}
+
+	return have_schedulable_window;
 }
 
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
@@ -4052,7 +4064,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(t)
 						{
-							bool time_was_valid = timeIsSet();
 							atomic_set_system_time(t, true);
 
 							if(g_cloningInProgress)
@@ -4066,6 +4077,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								bool pending_start_after_keydown = cancelManualTransientState();
 								bool had_active_or_pending_event = g_evteng_event_commenced || g_evteng_event_enabled || pending_start_after_keydown;
+								bool should_resume_loaded_event = resyncLoadedEventWindowAfterClockSet();
 
 								if(had_active_or_pending_event)
 								{
@@ -4073,13 +4085,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									suspendEvent();
 								}
 
-								/* Start the event if one is configured */
-								if((!time_was_valid && catchUpLoadedMultiDayEventAfterClockSet()) ||
-								   (time_was_valid && eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch)))
+								/* Re-sync the loaded event window to the new clock time, including backward
+								 * corrections, so the scheduled multi-day window follows the corrected clock. */
+								if(should_resume_loaded_event && !currentLoadedEventWindowCanceled())
 								{
 									startEventUsingRTC();
 								}
-								else if(had_active_or_pending_event) // keydown can imply a pending synced event start
+								else if(had_active_or_pending_event && !currentLoadedEventWindowCanceled()) // keydown can imply a pending synced event start
 								{
 									startSyncdEventNow(true);
 								}
