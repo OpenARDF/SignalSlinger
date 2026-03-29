@@ -5778,6 +5778,7 @@ void reportSettings(void)
 	float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
 	float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
 	bool show_effective_window = false;
+	bool exhausted_multiday_schedule = false;
 
 	if((g_days_to_run > 1) && (g_days_run > 0))
 	{
@@ -5945,11 +5946,12 @@ void reportSettings(void)
 		// the remaining days at the current wall-clock time.
 		if(g_days_to_run > 1)
 		{
-			uint8_t days_remaining = g_days_to_run - g_days_run;
+			uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
 			sprintf(g_tempStr, "\n*   == Configured for %d days ==\n", g_days_to_run);
 			sb_send_string(g_tempStr);
 			sprintf(g_tempStr, "*   Days remaining: %d\n", days_remaining);
 			sb_send_string(g_tempStr);
+			exhausted_multiday_schedule = timeIsSet() && (days_remaining == 0);
 		}
 
 	// Report the start and finish times of the event.
@@ -6033,7 +6035,12 @@ void reportSettings(void)
 		cfg = clockConfigurationCheck(SAVED_SETTINGS);
 	}
 
-	if(!show_effective_window && (cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
+	if(exhausted_multiday_schedule)
+	{
+		/* The report above already explained that the configured multi-day event has no
+		 * remaining day window. Suppress stale timing/status output below. */
+	}
+	else if(!show_effective_window && (cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS) && (cfg != SCHEDULED_EVENT_WILL_NEVER_RUN))
 	{
 		sb_send_string((char *)"\n* Needed Actions:\n");
 		reportConfigErrors(SAVED_SETTINGS);
@@ -6920,6 +6927,13 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 
 	if(!start_epoch || !finish_epoch || (*start_epoch == *finish_epoch))
 	{
+		return false;
+	}
+
+	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
+	{
+		*start_epoch = 0;
+		*finish_epoch = 0;
 		return false;
 	}
 
