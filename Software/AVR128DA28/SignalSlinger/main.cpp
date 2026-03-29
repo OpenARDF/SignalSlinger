@@ -1151,73 +1151,73 @@ ISR(TCB0_INT_vect)
 		if(g_device_wakeup_complete)
 		{
 			fiftyMS++;
-				if(!(fiftyMS % 6))
-				{
-					holdSwitch = portDdebouncedVals() & (1 << SWITCH);
-					debounce();
+			if(!(fiftyMS % 6))
+			{
+				holdSwitch = portDdebouncedVals() & (1 << SWITCH);
+				debounce();
 
-					if(holdSwitch != (portDdebouncedVals() & (1 << SWITCH))) /* Change detected */
+				if(holdSwitch != (portDdebouncedVals() & (1 << SWITCH))) /* Change detected */
+				{
+					if(holdSwitch) /* Switch was open, so it must have just now closed */
 					{
-						if(holdSwitch) /* Switch was open, so it must have just now closed */
+						/* If the unit is awake but the LEDs have timed out, the first press only
+						 * revives LED activity and must not be interpreted as a command. */
+						if(!g_sleeping && !LEDS.active())
 						{
-							/* If the unit is awake but the LEDs have timed out, the first press only
-							 * revives LED activity and must not be interpreted as a command. */
-							if(!g_sleeping && !LEDS.active())
-							{
-								g_consume_current_press_for_led_wake = true;
-								g_pending_led_revival = true;
-								g_switch_presses_count = 0;
-								buttonReleased = false;
-								switch_closures_count_period = 0;
-								switch_closed_time = 0;
-								longPressEnabled = false;
-							}
-							else
-							{
-								g_switch_presses_count++;
-								buttonReleased = false;
-								switch_closures_count_period = 40;
-							}
-						}
-						else /* Switch is now open */
-						{
+							g_consume_current_press_for_led_wake = true;
+							g_pending_led_revival = true;
+							g_switch_presses_count = 0;
+							buttonReleased = false;
+							switch_closures_count_period = 0;
 							switch_closed_time = 0;
-							buttonReleased = true;
-							if(g_consume_current_press_for_led_wake)
-							{
-								g_consume_current_press_for_led_wake = false;
-								longPressEnabled = true;
-								g_switch_presses_count = 0;
-								switch_closures_count_period = 0;
-							}
-							else
-							{
-								longPressEnabled = true;
-							}
+							longPressEnabled = false;
+						}
+						else
+						{
+							g_switch_presses_count++;
+							buttonReleased = false;
+							switch_closures_count_period = 40;
 						}
 					}
-					else if(!holdSwitch) // && LEDS.active()) /* Switch closed, LEDs operating */
+					else /* Switch is now open */
 					{
-						if(!g_consume_current_press_for_led_wake && !g_long_button_press && longPressEnabled)
+						switch_closed_time = 0;
+						buttonReleased = true;
+						if(g_consume_current_press_for_led_wake)
 						{
-							if(++switch_closed_time >= 200)
-							{
-								g_long_button_press = true;
-								switch_closed_time = 0;
+							g_consume_current_press_for_led_wake = false;
+							longPressEnabled = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
+						}
+						else
+						{
+							longPressEnabled = true;
+						}
+					}
+				}
+				else if(!holdSwitch) // && LEDS.active()) /* Switch closed, LEDs operating */
+				{
+					if(!g_consume_current_press_for_led_wake && !g_long_button_press && longPressEnabled)
+					{
+						if(++switch_closed_time >= 200)
+						{
+							g_long_button_press = true;
+							switch_closed_time = 0;
 							g_switch_presses_count = 0;
 							longPressEnabled = false;
 						}
 					}
 				}
 
-					if(g_consume_current_press_for_led_wake)
-					{
-						g_switch_presses_count = 0;
-					}
-					else if(switch_closures_count_period) // Time to check if button presses have occurred
-					{
-						static uint8_t hold_switch_presses_count = 0;
-						switch_closures_count_period--;
+				if(g_consume_current_press_for_led_wake)
+				{
+					g_switch_presses_count = 0;
+				}
+				else if(switch_closures_count_period) // Time to check if button presses have occurred
+				{
+					static uint8_t hold_switch_presses_count = 0;
+					switch_closures_count_period--;
 
 					if((g_switch_presses_count != 1) || buttonReleased) // Special case: the first press could be a long press if pushbutton is held long enough
 					{
@@ -1248,15 +1248,15 @@ ISR(TCB0_INT_vect)
 				}
 			}
 		}
-				else
-				{
-					longPressEnabled = false;
-					switch_closed_time = 0;
-					g_switch_presses_count = 0;
-					g_consume_current_press_for_led_wake = false;
-					//			switch_closures_count_period = 0;
-					g_long_button_press = false;
-				}
+		else
+		{
+			longPressEnabled = false;
+			switch_closed_time = 0;
+			g_switch_presses_count = 0;
+			g_consume_current_press_for_led_wake = false;
+			//			switch_closures_count_period = 0;
+			g_long_button_press = false;
+		}
 
 		if(g_programming_countdown > 0)
 			g_programming_countdown--;
