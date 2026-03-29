@@ -2778,38 +2778,18 @@ int main(void)
 			}
 		}
 
-		if(g_foreground_reset_after_demo)
-		{
-			atomic_write_u16(&g_demo_event_countdown, 0);
-			g_foreground_reset_after_demo = false;
-
-			suspendEvent();
-
-			if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+			if(g_foreground_reset_after_demo)
 			{
-				g_event_launched_by_user_action = false;
-				startEventUsingRTC();
-			}
-			else
-			{
-				g_sleepType = SLEEP_FOREVER;
-				startEventNow(true); // Immediately start the event
-			}
-		}
+				atomic_write_u16(&g_demo_event_countdown, 0);
+				g_foreground_reset_after_demo = false;
 
-		if(g_foreground_reset_after_keydown)
-		{
-			atomic_write_u16(&g_key_down_countdown, 0);
-			g_foreground_reset_after_keydown = false;
+				suspendEvent();
 
-			suspendEvent();
-
-			g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-
-#ifndef TEST_MODE_SOFTWARE
-			if(g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
-			{
-				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+				if(g_event_canceled_by_user)
+				{
+					/* Do not let a stale demo timeout resurrect an event the user canceled. */
+				}
+				else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
 				{
 					g_event_launched_by_user_action = false;
 					startEventUsingRTC();
@@ -2817,15 +2797,43 @@ int main(void)
 				else
 				{
 					g_sleepType = SLEEP_FOREVER;
-					startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
+					startEventNow(true); // Immediately start the event
 				}
 			}
+
+			if(g_foreground_reset_after_keydown)
+			{
+				atomic_write_u16(&g_key_down_countdown, 0);
+				g_foreground_reset_after_keydown = false;
+
+				suspendEvent();
+
+				g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+				if(g_event_canceled_by_user)
+				{
+					g_start_event_after_keydown = false;
+				}
+
+#ifndef TEST_MODE_SOFTWARE
+				if(!g_event_canceled_by_user && g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
+				{
+					if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
+					{
+						g_event_launched_by_user_action = false;
+						startEventUsingRTC();
+					}
+					else
+				{
+					g_sleepType = SLEEP_FOREVER;
+						startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
+					}
+				}
 #endif
 
-			g_start_event_after_keydown = false;
+				g_start_event_after_keydown = false;
+			}
 		}
 	}
-}
 
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 // void handleSerialBusMsgs()
@@ -3479,19 +3487,21 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_event_launched_by_user_action = false;
 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0); // Allow the transmitter to sleep forever
 						}
-						else if(arg == '1') /* Start the event, syncing to the top of the hour */
-						{
-							g_event_launched_by_user_action = true;
-							suspendEvent(); // Stop any running event and initialize loaded event engine settings
-							startSyncdEventNow(true);
-						}
-						else if(arg == '2') /* Start the event at the programmed start time */
-						{
-							g_event_launched_by_user_action = false;
-							suspendEvent();                 // Stop any running event and initialize loaded event engine settings
-							g_evteng_event_enabled = false; /* Disable an event currently underway */
-							startEventUsingRTC();
-						}
+							else if(arg == '1') /* Start the event, syncing to the top of the hour */
+							{
+								g_event_canceled_by_user = false;
+								g_event_launched_by_user_action = true;
+								suspendEvent(); // Stop any running event and initialize loaded event engine settings
+								startSyncdEventNow(true);
+							}
+							else if(arg == '2') /* Start the event at the programmed start time */
+							{
+								g_event_canceled_by_user = false;
+								g_event_launched_by_user_action = false;
+								suspendEvent();                 // Stop any running event and initialize loaded event engine settings
+								g_evteng_event_enabled = false; /* Disable an event currently underway */
+								startEventUsingRTC();
+							}
 						// 						else if(arg == '3')  /* Start the event immediately with transmissions starting now */
 						// 						{
 						// 							g_event_launched_by_user_action = true;
@@ -6881,6 +6891,7 @@ bool startEvent(void)
 {
 	bool error = true;
 
+	g_event_canceled_by_user = false;
 	cancelManualTransientState();
 	suspendEvent();
 	g_event_launched_by_user_action = false;
