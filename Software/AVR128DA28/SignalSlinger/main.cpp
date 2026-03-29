@@ -180,6 +180,16 @@ static volatile bool g_foreground_report_settings = false;
 static volatile uint16_t g_report_settings_countdown = 0;
 static bool g_event_launched_by_user_action = false;
 static bool g_start_event_after_keydown = false; /* Foreground-only: one-press keydown should launch a synced event afterward */
+/* Foreground-only interaction helpers:
+ * - g_consume_current_press_for_led_wake prevents the first press after LED timeout
+ *   from being interpreted as a command.
+ * - g_pending_led_revival requests that foreground restore LED indications.
+ * - g_event_canceled_by_user latches cancellation of the current event window until
+ *   the user explicitly restarts it or the schedule advances to a new window.
+ */
+static volatile bool g_consume_current_press_for_led_wake = false;
+static volatile bool g_pending_led_revival = false;
+static volatile bool g_event_canceled_by_user = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
@@ -298,6 +308,9 @@ static bool reloadLoadedEventWindowFromSavedSettings(void);
 static bool catchUpLoadedMultiDayEventAfterClockSet(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
+static bool currentLoadedEventWindowCanceled(void);
+static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error);
+static void reviveLedActivityForCurrentState(void);
 
 static bool cancelManualTransientState(void)
 {
@@ -658,6 +671,28 @@ static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 
 	g_days_run++;
 	return reloadLoadedEventWindowFromSavedSettings();
+}
+
+static bool currentLoadedEventWindowCanceled(void)
+{
+	if(!g_event_canceled_by_user)
+	{
+		return false;
+	}
+
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	if(!timeIsSet())
+	{
+		return g_event_canceled_by_user;
+	}
+
+	/* The latch only applies to the currently loaded window. If the loaded window is no
+	 * longer current or future, callers should treat the cancellation as stale. */
+	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) ||
+	       eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
 }
 
 static inline void extendMasterModeTimeout(void)
@@ -4985,6 +5020,62 @@ void configRedLEDforEvent(void)
 	{
 		LEDS.blink(LEDS_RED_OFF); // Foreground will handle blinking chores
 	}
+}
+
+static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
+{
+	if(external_pwr_error)
+	{
+		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
+		return;
+	}
+
+	if(g_charge_battery)
+	{
+		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+		return;
+	}
+
+	if(internal_bat_error)
+	{
+		LEDS.blink(LEDS_GREEN_BLINK_FAST);
+		return;
+	}
+
+	bool event_active = (g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster);
+
+	/* When awake but off-air during an active event, keep green illuminated to confirm
+	 * the unit is awake and ready for button commands. */
+	if(event_active && (g_evteng_on_the_air < 0) && !g_sleeping)
+	{
+		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+	}
+	else
+	{
+		LEDS.blink(event_active ? LEDS_GREEN_OFF : LEDS_GREEN_ON_CONSTANT);
+	}
+}
+
+static void reviveLedActivityForCurrentState(void)
+{
+	float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+	float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
+	float external_voltage = atomic_read_float(&g_external_voltage);
+
+	bool internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
+	bool external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
+
+	/* Re-arm LED timeout and restore the current logical indication state. */
+	LEDS.init();
+
+	if(!g_device_enabled)
+	{
+		LEDS.blink(LEDS_RED_THEN_GREEN_BLINK_SLOW, true);
+		return;
+	}
+
+	configRedLEDforEvent();
+	configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
 }
 
 void setupForFox(Fox_t fox, EventAction_t action)
