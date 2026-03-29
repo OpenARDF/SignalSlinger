@@ -656,7 +656,7 @@ static bool resyncLoadedEventWindowAfterClockSet(void)
 	else
 	{
 		have_schedulable_window = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
-		                         eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+		                          eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 	}
 
 	g_days_run = day_index;
