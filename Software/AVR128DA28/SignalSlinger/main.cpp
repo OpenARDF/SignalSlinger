@@ -2254,97 +2254,140 @@ int main(void)
 						RSTCTRL_reset();
 					}
 				}
-					else // not Master
+				else // not Master
+				{
+					if(counted_presses == 1)
 					{
-						if(counted_presses == 1)
+						if(!g_cloningInProgress && g_device_enabled)
 						{
-							if(!g_cloningInProgress && g_device_enabled)
+							if(g_event_canceled_by_user)
 							{
-								if(g_event_canceled_by_user)
+								startEvent();
+							}
+							else if(getFoxSetting() == FREQUENCY_TEST_BEACON)
+							{
+								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+								if(!txIsInitialized())
 								{
-									startEvent();
-								}
-								else if(getFoxSetting() == FREQUENCY_TEST_BEACON)
-								{
-									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-									if(!txIsInitialized())
+									if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 									{
+										sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+									}
+								}
+
+								g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
+
+								if(++g_frequency_to_test >= NUMBER_OF_TEST_FREQUENCIES)
+									g_frequency_to_test = 0;
+
+								if(g_frequency_to_test == 0)
+								{
+									txSetFrequency(&g_frequency_low, true);
+								}
+								else if(g_frequency_to_test == 1)
+								{
+									txSetFrequency(&g_frequency_med, true);
+								}
+								else if(g_frequency_to_test == 2)
+								{
+									txSetFrequency(&g_frequency_hi, true);
+								}
+								else if(g_frequency_to_test == 3)
+								{
+									txSetFrequency(&g_frequency_beacon, true);
+								}
+
+								setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW);
+							}
+							else
+							{
+								time_t loaded_start_epoch;
+								time_t loaded_finish_epoch;
+								bool current_window_running;
+								bool future_window_only;
+
+								g_start_event_after_keydown = false;
+								atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+								current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+								future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
+
+								if(current_window_running)
+								{
+									bool had_demo_countdown = atomic_read_u16(&g_demo_event_countdown);
+									bool had_keydown_countdown = atomic_read_u16(&g_key_down_countdown);
+									suspendEvent();
+
+									if(had_demo_countdown)
+									{
+										atomic_write_u16(&g_demo_event_countdown, 0);
+										g_foreground_reset_after_demo = false;
+									}
+
+									if(had_keydown_countdown)
+									{
+										atomic_write_u16(&g_key_down_countdown, 0);
+										g_foreground_reset_after_keydown = false;
+										g_event_launched_by_user_action = false;
+										LEDS.init();
+										startEventUsingRTC();
+									}
+									else if(had_demo_countdown)
+									{
+										g_event_launched_by_user_action = false;
+										LEDS.init();
+										startEventUsingRTC();
+									}
+									else
+									{
+#ifdef TEST_MODE_SOFTWARE
+										atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
+#else
+										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
+#endif
+										g_event_launched_by_user_action = false;
 										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 										}
+										LEDS.init();
+										LEDS.setRed(ON);
+										keyTransmitter(ON);
+										g_evteng_event_enabled = false;
+										g_evteng_run_event_until_canceled = true;
 									}
 
-									g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
-
-									if(++g_frequency_to_test >= NUMBER_OF_TEST_FREQUENCIES)
-										g_frequency_to_test = 0;
-
-									if(g_frequency_to_test == 0)
-									{
-										txSetFrequency(&g_frequency_low, true);
-									}
-									else if(g_frequency_to_test == 1)
-									{
-										txSetFrequency(&g_frequency_med, true);
-									}
-									else if(g_frequency_to_test == 2)
-									{
-										txSetFrequency(&g_frequency_hi, true);
-									}
-									else if(g_frequency_to_test == 3)
-									{
-										txSetFrequency(&g_frequency_beacon, true);
-									}
-
-									setupForFox(USE_CURRENT_FOX, START_TRANSMISSIONS_NOW);
+									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 								}
-								else
+								else if(future_window_only)
 								{
-									time_t loaded_start_epoch;
-									time_t loaded_finish_epoch;
-									bool current_window_running;
-									bool future_window_only;
-
-									g_start_event_after_keydown = false;
-									atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-									current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-									future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
-
-									if(current_window_running)
+									/* Implement special behavior if an event is scheduled to commence in the future: have a single button press toggle between
+									 * transmitting and slow blinking. But, in either case, the transmitter should eventually go to sleep and awaken at the
+									 * appointed time for the future event */
+									uint8_t inc = 0;
+									if(atomic_read_u16(&g_key_down_countdown))
 									{
-										bool had_demo_countdown = atomic_read_u16(&g_demo_event_countdown);
-										bool had_keydown_countdown = atomic_read_u16(&g_key_down_countdown);
-										suspendEvent();
+										atomic_write_u16(&g_key_down_countdown, 0);
+										g_foreground_reset_after_keydown = false;
+										inc = 1;
+									}
 
-										if(had_demo_countdown)
-										{
-											atomic_write_u16(&g_demo_event_countdown, 0);
-											g_foreground_reset_after_demo = false;
-										}
+									if(atomic_read_u16(&g_demo_event_countdown))
+									{
+										atomic_write_u16(&g_demo_event_countdown, 0);
+										g_foreground_reset_after_demo = false;
+										inc = 2;
+									}
 
-										if(had_keydown_countdown)
+									switch(inc)
+									{
+										case 0: /* 30 second keydown */
 										{
-											atomic_write_u16(&g_key_down_countdown, 0);
-											g_foreground_reset_after_keydown = false;
-											g_event_launched_by_user_action = false;
-											LEDS.init();
-											startEventUsingRTC();
-										}
-										else if(had_demo_countdown)
-										{
-											g_event_launched_by_user_action = false;
-											LEDS.init();
-											startEventUsingRTC();
-										}
-										else
-										{
+											suspendEvent();
 #ifdef TEST_MODE_SOFTWARE
 											atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
 #else
 											atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
-											g_event_launched_by_user_action = false;
 											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -2352,131 +2395,88 @@ int main(void)
 											LEDS.init();
 											LEDS.setRed(ON);
 											keyTransmitter(ON);
-											g_evteng_event_enabled = false;
+											g_evteng_event_enabled = false; // Keydown is not controlled by the Event Engine
 											g_evteng_run_event_until_canceled = true;
-										}
-
-										atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-									}
-									else if(future_window_only)
-									{
-										/* Implement special behavior if an event is scheduled to commence in the future: have a single button press toggle between
-										 * transmitting and slow blinking. But, in either case, the transmitter should eventually go to sleep and awaken at the
-										 * appointed time for the future event */
-										uint8_t inc = 0;
-										if(atomic_read_u16(&g_key_down_countdown))
-										{
-											atomic_write_u16(&g_key_down_countdown, 0);
-											g_foreground_reset_after_keydown = false;
-											inc = 1;
-										}
-
-										if(atomic_read_u16(&g_demo_event_countdown))
-										{
-											atomic_write_u16(&g_demo_event_countdown, 0);
-											g_foreground_reset_after_demo = false;
-											inc = 2;
-										}
-
-										switch(inc)
-										{
-											case 0: /* 30 second keydown */
-											{
-												suspendEvent();
-#ifdef TEST_MODE_SOFTWARE
-												atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
-#else
-												atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
-#endif
-												if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
-												{
-													sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
-												}
-												LEDS.init();
-												LEDS.setRed(ON);
-												keyTransmitter(ON);
-												g_evteng_event_enabled = false; // Keydown is not controlled by the Event Engine
-												g_evteng_run_event_until_canceled = true;
-												g_start_event_after_keydown = true;
-											}
-											break;
-
-											case 1: /* 30 second demo transmission */
-											{
-												suspendEvent();
-
-												if(g_evteng_on_air_seconds < 30)
-												{
-													atomic_write_u16(&g_demo_event_countdown, g_evteng_on_air_seconds * 300); // transmit seconds
-												}
-												else
-												{
-													atomic_write_u16(&g_demo_event_countdown, 9000); // 30 seconds
-												}
-
-												if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
-												{
-													sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
-												}
-
-												LEDS.init();
-												startTransmissionsNow(true);
-											}
-											break;
-
-											default: //	case 2: Start the event normally
-											{
-												startEvent();
-											}
-											break;
-										}
-
-										atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // Sleep after 5 minutes
-									}
-									else // No event scheduled for the future (one might be in progress, or none is scheduled at all)
-									{
-										suspendEvent();
-
-										if(atomic_read_u16(&g_demo_event_countdown))
-										{
-											atomic_write_u16(&g_demo_event_countdown, 0);
-											g_foreground_reset_after_demo = false;
-											// Restore the currently relevant saved event window.
-											reloadLoadedEventWindowFromSavedSettings();
-										}
-
-										if(atomic_read_u16(&g_key_down_countdown))
-										{
-											atomic_write_u16(&g_key_down_countdown, 0); // Cancel countdown
-											g_foreground_reset_after_keydown = false;
-											g_event_launched_by_user_action = true;
-											LEDS.init();
-#ifndef TEST_MODE_SOFTWARE
-											startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
-#endif
-										}
-										else
-										{
-#ifdef TEST_MODE_SOFTWARE
-											atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
-#else
-											atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
-#endif
 											g_start_event_after_keydown = true;
+										}
+										break;
+
+										case 1: /* 30 second demo transmission */
+										{
+											suspendEvent();
+
+											if(g_evteng_on_air_seconds < 30)
+											{
+												atomic_write_u16(&g_demo_event_countdown, g_evteng_on_air_seconds * 300); // transmit seconds
+											}
+											else
+											{
+												atomic_write_u16(&g_demo_event_countdown, 9000); // 30 seconds
+											}
+
 											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 											}
+
 											LEDS.init();
-											LEDS.setRed(ON);
-											keyTransmitter(ON);
-											g_evteng_event_enabled = false;
-											g_evteng_run_event_until_canceled = true;
+											startTransmissionsNow(true);
 										}
+										break;
+
+										default: //	case 2: Start the event normally
+										{
+											startEvent();
+										}
+										break;
+									}
+
+									atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); // Sleep after 5 minutes
+								}
+								else // No event scheduled for the future (one might be in progress, or none is scheduled at all)
+								{
+									suspendEvent();
+
+									if(atomic_read_u16(&g_demo_event_countdown))
+									{
+										atomic_write_u16(&g_demo_event_countdown, 0);
+										g_foreground_reset_after_demo = false;
+										// Restore the currently relevant saved event window.
+										reloadLoadedEventWindowFromSavedSettings();
+									}
+
+									if(atomic_read_u16(&g_key_down_countdown))
+									{
+										atomic_write_u16(&g_key_down_countdown, 0); // Cancel countdown
+										g_foreground_reset_after_keydown = false;
+										g_event_launched_by_user_action = true;
+										LEDS.init();
+#ifndef TEST_MODE_SOFTWARE
+										startSyncdEventNow(true); // Immediately start the event (sync to the clock if possible)
+#endif
+									}
+									else
+									{
+#ifdef TEST_MODE_SOFTWARE
+										atomic_write_u16(&g_key_down_countdown, 36000); // 120 seconds
+#else
+										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
+#endif
+										g_start_event_after_keydown = true;
+										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+										{
+											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+										}
+										LEDS.init();
+										LEDS.setRed(ON);
+										keyTransmitter(ON);
+										g_evteng_event_enabled = false;
+										g_evteng_run_event_until_canceled = true;
 									}
 								}
 							}
 						}
+					}
 					else if(counted_presses == 3)
 					{
 						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
