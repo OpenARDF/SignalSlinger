@@ -2477,51 +2477,49 @@ int main(void)
 							}
 						}
 					}
-					else if(counted_presses == 3)
-					{
-						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-
-						if(atomic_read_u16(&g_key_down_countdown))
+						else if(counted_presses == 3)
 						{
-							g_start_event_after_keydown = false;
-							atomic_write_u16(&g_key_down_countdown, 0);
-							g_foreground_reset_after_keydown = false; // prevent foreground from executing keydown reset
-						}
+							time_t loaded_start_epoch = 0;
+							time_t loaded_finish_epoch = 0;
+							bool event_is_scheduled;
+							bool current_window_running = false;
+							bool future_window_only = false;
 
-						if(atomic_read_u16(&g_demo_event_countdown))
-						{
-							atomic_write_u16(&g_demo_event_countdown, 0);
-							g_foreground_reset_after_demo = false;
-						}
+							cancelManualTransientState();
+							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+							g_event_launched_by_user_action = false;
 
-						g_event_launched_by_user_action = false;
-
-						if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-						{
-							time_t loaded_start_epoch;
-							time_t loaded_finish_epoch;
-							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-							if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+							event_is_scheduled = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+							if(event_is_scheduled)
 							{
-								suspendEvent();
+								atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+								current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+								future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
+							}
+
+							suspendEvent();
+
+							if(current_window_running)
+							{
+								g_event_canceled_by_user = true;
 								if(advanceLoadedEventWindowAfterCurrentDayCancel())
 								{
+									g_event_canceled_by_user = false;
 									startEventUsingRTC();
 								}
 								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 							}
-							else // the event is scheduled for the future, so set it up to start (transmissions will stop for now)
+							else if(future_window_only) // Preserve existing future-event behavior
 							{
-								suspendEvent();
+								g_event_canceled_by_user = false;
 								startEventUsingRTC();
 								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 							}
+							else
+							{
+								g_event_canceled_by_user = true;
+							}
 						}
-						else
-						{
-							suspendEvent();
-						}
-					}
 					else if(counted_presses == 5)
 					{
 						bool had_transient_state = g_start_event_after_keydown || atomic_read_u16(&g_key_down_countdown) || atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_keydown || g_foreground_reset_after_demo;
