@@ -2477,49 +2477,49 @@ int main(void)
 							}
 						}
 					}
-						else if(counted_presses == 3)
+					else if(counted_presses == 3)
+					{
+						time_t loaded_start_epoch = 0;
+						time_t loaded_finish_epoch = 0;
+						bool event_is_scheduled;
+						bool current_window_running = false;
+						bool future_window_only = false;
+
+						cancelManualTransientState();
+						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+						g_event_launched_by_user_action = false;
+
+						event_is_scheduled = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+						if(event_is_scheduled)
 						{
-							time_t loaded_start_epoch = 0;
-							time_t loaded_finish_epoch = 0;
-							bool event_is_scheduled;
-							bool current_window_running = false;
-							bool future_window_only = false;
+							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+							current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+							future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
+						}
 
-							cancelManualTransientState();
-							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-							g_event_launched_by_user_action = false;
+						suspendEvent();
 
-							event_is_scheduled = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
-							if(event_is_scheduled)
-							{
-								atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-								current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-								future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
-							}
-
-							suspendEvent();
-
-							if(current_window_running)
-							{
-								g_event_canceled_by_user = true;
-								if(advanceLoadedEventWindowAfterCurrentDayCancel())
-								{
-									g_event_canceled_by_user = false;
-									startEventUsingRTC();
-								}
-								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-							}
-							else if(future_window_only) // Preserve existing future-event behavior
+						if(current_window_running)
+						{
+							g_event_canceled_by_user = true;
+							if(advanceLoadedEventWindowAfterCurrentDayCancel())
 							{
 								g_event_canceled_by_user = false;
 								startEventUsingRTC();
-								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 							}
-							else
-							{
-								g_event_canceled_by_user = true;
-							}
+							atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 						}
+						else if(future_window_only) // Preserve existing future-event behavior
+						{
+							g_event_canceled_by_user = false;
+							startEventUsingRTC();
+							atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+						}
+						else
+						{
+							g_event_canceled_by_user = true;
+						}
+					}
 					else if(counted_presses == 5)
 					{
 						bool had_transient_state = g_start_event_after_keydown || atomic_read_u16(&g_key_down_countdown) || atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_keydown || g_foreground_reset_after_demo;
