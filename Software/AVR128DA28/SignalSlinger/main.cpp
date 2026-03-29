@@ -2168,6 +2168,7 @@ int main(void)
 								g_foreground_start_event = true;
 							}
 						}
+					}
 
 					// Restore the transmitter power state that matches the logical state we just woke into.
 					bool should_power_tx = shouldPowerTransmitterAfterWake();
