@@ -4245,26 +4245,27 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += s;
 							}
-							else
-							{
-								cancelManualTransientState();
-								g_days_to_run = 1;
-								g_days_run = 0;
-
-								if(!setSequalF)
+								else
 								{
-									time_t event_start_epoch;
-									time_t event_finish_epoch;
-									atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-									time_t new_finish_epoch = MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
-									atomic_write_time_pair(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, new_finish_epoch);
+									cancelManualTransientState();
+									g_days_to_run = 1;
+									g_days_run = 0;
 
-									g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
+									if(!setSequalF)
+									{
+										time_t event_start_epoch;
+										time_t event_finish_epoch;
+										atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
+										time_t new_finish_epoch = MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
+										atomic_write_time_pair(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, new_finish_epoch);
+
+										g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
+									}
+
 									startEventUsingRTC();
 								}
 							}
 						}
-					}
 
 					if(!g_cloningInProgress)
 					{
@@ -6835,10 +6836,23 @@ void handleSerialCloning(void)
  */
 bool noEventWillRun(void)
 {
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	/* Saved settings where Start == Finish disable scheduled event start entirely. Treat
+	 * that as "no event will run" even if the loaded window is stale. */
+	if(!g_evteng_run_event_until_canceled &&
+	   (saved_start_epoch > MINIMUM_VALID_EPOCH) &&
+	   (saved_finish_epoch == saved_start_epoch))
+	{
+		return true;
+	}
+
 	bool event_is_scheduled = eventIsScheduledToRun(&loaded_start_epoch, &loaded_finish_epoch);
 
 	return !event_is_scheduled || (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled);
