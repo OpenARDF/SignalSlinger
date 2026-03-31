@@ -126,37 +126,53 @@ void BINIO_init(void)
 }
 
 static volatile bool driverCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
-/**
- State machine to keep track of multiple controllers of the FET driver load switch. This ensures that the switch is ON if any of the controllers has turned it on.
- */
-bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
+
+static void updateLoadSwitchCallerState(volatile bool *callerStates,
+										bool onoff,
+										hardwareResourceClients sender,
+										bool trackInternalBatteryCharging)
 {
 	switch(sender)
 	{
-		case INTERNAL_BATTERY_CHARGING: // Not used
+		case INTERNAL_BATTERY_CHARGING:
 		{
-			// 			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			if(trackInternalBatteryCharging)
+			{
+				callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			}
 		}
 		break;
 
 		case TRANSMITTER:
 		{
-			driverCallerStates[TRANSMITTER] = onoff;
+			callerStates[TRANSMITTER] = onoff;
 		}
 		break;
 
 		case INITIALIZE_LS:
 		{
-			driverCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-			driverCallerStates[TRANSMITTER] = onoff;
+			callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
+			callerStates[TRANSMITTER] = onoff;
 		}
 		break;
 
 		default:
 			break;
 	}
+}
 
-	if(!driverCallerStates[INTERNAL_BATTERY_CHARGING] && !driverCallerStates[TRANSMITTER])
+static bool anyLoadSwitchCallerEnabled(const volatile bool *callerStates)
+{
+	return callerStates[INTERNAL_BATTERY_CHARGING] || callerStates[TRANSMITTER];
+}
+/**
+ State machine to keep track of multiple controllers of the FET driver load switch. This ensures that the switch is ON if any of the controllers has turned it on.
+ */
+bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
+{
+	updateLoadSwitchCallerState(driverCallerStates, onoff, sender, false);
+
+	if(!anyLoadSwitchCallerEnabled(driverCallerStates))
 	{
 		fet_driver(OFF);
 		return OFF;
@@ -172,39 +188,16 @@ static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF}
  */
 bool setExtBatLoadSwitch(hardwareResourceClients client)
 {
+	(void)client;
 	bool currentState = setExtBatLoadSwitch(OFF, RE_APPLY_LS_STATE);
 	return currentState;
 }
 
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	switch(sender)
-	{
-		case INTERNAL_BATTERY_CHARGING:
-		{
-			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-		}
-		break;
+	updateLoadSwitchCallerState(chargeLScallerStates, onoff, sender, true);
 
-		case TRANSMITTER:
-		{
-			chargeLScallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-
-		case INITIALIZE_LS:
-		{
-			chargeLScallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-			chargeLScallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-
-		// case RE_APPLY_LS_STATE:
-		default:
-			break;
-	}
-
-	if(!chargeLScallerStates[INTERNAL_BATTERY_CHARGING] && !chargeLScallerStates[TRANSMITTER])
+	if(!anyLoadSwitchCallerEnabled(chargeLScallerStates))
 	{
 		setExtBatLSEnable(OFF);
 		return OFF;
@@ -220,32 +213,9 @@ static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OF
  */
 bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 {
-	switch(sender)
-	{
-		case INTERNAL_BATTERY_CHARGING:
-		{
-			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-		}
-		break;
+	updateLoadSwitchCallerState(SignalGeneratorCallerStates, onoff, sender, true);
 
-		case TRANSMITTER:
-		{
-			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-
-		case INITIALIZE_LS:
-		{
-			SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] = onoff;
-			SignalGeneratorCallerStates[TRANSMITTER] = onoff;
-		}
-		break;
-
-		default:
-			break;
-	}
-
-	if(!SignalGeneratorCallerStates[INTERNAL_BATTERY_CHARGING] && !SignalGeneratorCallerStates[TRANSMITTER])
+	if(!anyLoadSwitchCallerEnabled(SignalGeneratorCallerStates))
 	{
 		v3V3_enable(OFF);
 		return OFF;

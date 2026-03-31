@@ -62,32 +62,58 @@ static volatile bool serialbus_tx_active = false; /* volatile is required to ens
 static volatile SerialbusTxBuffer tx_buffer[SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS];
 static volatile SerialbusRxBuffer rx_buffer[SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS];
 
+typedef bool (*buffer_index_match_t)(uint8_t index);
+
+static bool find_matching_buffer_index(uint8_t *bufferIndex, uint8_t bufferCount, buffer_index_match_t matches)
+{
+	uint8_t count = 0;
+
+	while(!matches(*bufferIndex))
+	{
+		if(++count >= bufferCount)
+		{
+			return false;
+		}
+
+		(*bufferIndex)++;
+		if(*bufferIndex >= bufferCount)
+		{
+			*bufferIndex = 0;
+		}
+	}
+
+	return true;
+}
+
+static bool tx_buffer_is_full(uint8_t index)
+{
+	return tx_buffer[index][0] != '\0';
+}
+
+static bool tx_buffer_is_empty(uint8_t index)
+{
+	return tx_buffer[index][0] == '\0';
+}
+
+static bool rx_buffer_is_full(uint8_t index)
+{
+	return rx_buffer[index].id != SB_MESSAGE_EMPTY;
+}
+
+static bool rx_buffer_is_empty(uint8_t index)
+{
+	return rx_buffer[index].id == SB_MESSAGE_EMPTY;
+}
+
 /*
  * Locate the next transmit buffer that contains a queued message.
  * Returns a pointer to the buffer or null if no messages are waiting.
  */
 SerialbusTxBuffer *nextFullSBTxBuffer(void)
 {
-	bool found = true;
 	static uint8_t bufferIndex = 0;
-	uint8_t count = 0;
 
-	while(tx_buffer[bufferIndex][0] == '\0')
-	{
-		if(++count >= SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS)
-		{
-			found = false;
-			break;
-		}
-
-		bufferIndex++;
-		if(bufferIndex >= SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS)
-		{
-			bufferIndex = 0;
-		}
-	}
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS, tx_buffer_is_full))
 	{
 		return ((SerialbusTxBuffer *)&tx_buffer[bufferIndex]);
 	}
@@ -101,26 +127,9 @@ SerialbusTxBuffer *nextFullSBTxBuffer(void)
  */
 SerialbusTxBuffer *nextEmptySBTxBuffer(void)
 {
-	bool found = true;
 	static uint8_t bufferIndex = 0;
-	uint8_t count = 0;
 
-	while(tx_buffer[bufferIndex][0] != '\0')
-	{
-		if(++count >= SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS)
-		{
-			found = false;
-			break;
-		}
-
-		bufferIndex++;
-		if(bufferIndex >= SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS)
-		{
-			bufferIndex = 0;
-		}
-	}
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS, tx_buffer_is_empty))
 	{
 		return ((SerialbusTxBuffer *)&tx_buffer[bufferIndex]);
 	}
@@ -134,26 +143,9 @@ SerialbusTxBuffer *nextEmptySBTxBuffer(void)
  */
 SerialbusRxBuffer *nextEmptySBRxBuffer(void)
 {
-	bool found = true;
 	static uint8_t bufferIndex = 0;
-	uint8_t count = 0;
 
-	while(rx_buffer[bufferIndex].id != SB_MESSAGE_EMPTY)
-	{
-		if(++count >= SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS)
-		{
-			found = false;
-			break;
-		}
-
-		bufferIndex++;
-		if(bufferIndex >= SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS)
-		{
-			bufferIndex = 0;
-		}
-	}
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_empty))
 	{
 		for(int i = 0; i < SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
 		{
@@ -172,26 +164,9 @@ SerialbusRxBuffer *nextEmptySBRxBuffer(void)
  */
 SerialbusRxBuffer *nextFullSBRxBuffer(void)
 {
-	bool found = true;
 	static uint8_t bufferIndex = 0;
-	uint8_t count = 0;
 
-	while(rx_buffer[bufferIndex].id == SB_MESSAGE_EMPTY)
-	{
-		if(++count >= SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS)
-		{
-			found = false;
-			break;
-		}
-
-		bufferIndex++;
-		if(bufferIndex >= SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS)
-		{
-			bufferIndex = 0;
-		}
-	}
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_full))
 	{
 		return ((SerialbusRxBuffer *)&rx_buffer[bufferIndex]);
 	}

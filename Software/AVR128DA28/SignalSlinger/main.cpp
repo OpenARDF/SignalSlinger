@@ -241,6 +241,73 @@ uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 2];
 volatile bool g_enable_manual_transmissions = true;
 static volatile bool g_meshmode = false;
 
+typedef enum
+{
+	FREQ_SOURCE_CURRENT,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_MED,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_BEACON
+} FrequencySource_t;
+
+static const char * const g_fixed_fox_pattern_text[USE_CURRENT_FOX] =
+{
+	"MO",
+	"MOE",
+	"MOI",
+	"MOS",
+	"MOH",
+	"MO5",
+	"S",
+	"ME",
+	"MI",
+	"MS",
+	"MH",
+	"M5",
+	"OE",
+	"OI",
+	"OS",
+	"OH",
+	"O5",
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static const FrequencySource_t g_fox_frequency_source[USE_CURRENT_FOX] =
+{
+	FREQ_SOURCE_BEACON,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_MED,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_LOW,
+	FREQ_SOURCE_MED,
+	FREQ_SOURCE_HIGH,
+	FREQ_SOURCE_LOW
+};
+
+static const char * const g_frequency_test_pattern_text[NUMBER_OF_TEST_FREQUENCIES] =
+{
+	"< E<",
+	"< EE<",
+	"< EEE<",
+	"< EEEE<"
+};
+
 /***********************************************************************
  * Private Function Prototypes
  *
@@ -6252,150 +6319,28 @@ int getPatternCodeSpeed(void)
  */
 char *getCurrentPatternText(void)
 {
-	char *c;
-
 	Fox_t fox = getFoxSetting();
-	switch(fox)
+
+	if((fox >= 0) && (fox < USE_CURRENT_FOX))
 	{
-		case FOX_1:
+		if((fox == FOXORING_FOX1) || (fox == FOXORING_FOX2) || (fox == FOXORING_FOX3))
 		{
-			c = (char *)"MOE";
+			return g_messages_text[FOXORING_PATTERN_TEXT];
 		}
-		break;
 
-		case FOX_2:
+		if(fox == FREQUENCY_TEST_BEACON)
 		{
-			c = (char *)"MOI";
+			uint8_t test_index = MIN(g_frequency_to_test, (uint8_t)(NUMBER_OF_TEST_FREQUENCIES - 1));
+			return (char *)g_frequency_test_pattern_text[test_index];
 		}
-		break;
 
-		case FOX_3:
+		if(g_fixed_fox_pattern_text[fox])
 		{
-			c = (char *)"MOS";
+			return (char *)g_fixed_fox_pattern_text[fox];
 		}
-		break;
-
-		case FOX_4:
-		{
-			c = (char *)"MOH";
-		}
-		break;
-
-		case FOX_5:
-		{
-			c = (char *)"MO5";
-		}
-		break;
-
-		case SPECTATOR:
-		{
-			c = (char *)"S";
-		}
-		break;
-
-		case SPRINT_S1:
-		{
-			c = (char *)"ME";
-		}
-		break;
-
-		case SPRINT_S2:
-		{
-			c = (char *)"MI";
-		}
-		break;
-
-		case SPRINT_S3:
-		{
-			c = (char *)"MS";
-		}
-		break;
-
-		case SPRINT_S4:
-		{
-			c = (char *)"MH";
-		}
-		break;
-
-		case SPRINT_S5:
-		{
-			c = (char *)"M5";
-		}
-		break;
-
-		case SPRINT_F1:
-		{
-			c = (char *)"OE";
-		}
-		break;
-
-		case SPRINT_F2:
-		{
-			c = (char *)"OI";
-		}
-		break;
-
-		case SPRINT_F3:
-		{
-			c = (char *)"OS";
-		}
-		break;
-
-		case SPRINT_F4:
-		{
-			c = (char *)"OH";
-		}
-		break;
-
-		case SPRINT_F5:
-		{
-			c = (char *)"O5";
-		}
-		break;
-
-		case FOXORING_FOX1:
-		case FOXORING_FOX2:
-		case FOXORING_FOX3:
-		{
-			c = g_messages_text[FOXORING_PATTERN_TEXT];
-		}
-		break;
-
-		case FREQUENCY_TEST_BEACON:
-		{
-			if(g_frequency_to_test == 0)
-			{
-				c = (char *)"< E<";
-			}
-			else if(g_frequency_to_test == 1)
-			{
-				c = (char *)"< EE<";
-			}
-			else if(g_frequency_to_test == 2)
-			{
-				c = (char *)"< EEE<";
-			}
-			else // if(g_frequency_to_test == 3)
-			{
-				c = (char *)"< EEEE<";
-			}
-		}
-		break;
-
-		case BEACON:
-		{
-			c = (char *)"MO";
-		}
-		break;
-
-		default:
-		{
-			c = g_messages_text[PATTERN_TEXT];
-		}
-		break;
 	}
 
-	return c;
+	return g_messages_text[PATTERN_TEXT];
 }
 
 /*
@@ -6404,85 +6349,27 @@ char *getCurrentPatternText(void)
  */
 Frequency_Hz getFrequencySetting(void)
 {
-	Frequency_Hz freq;
-
 	Fox_t fox = getFoxSetting();
-	switch(fox)
+
+	if((fox >= 0) && (fox < USE_CURRENT_FOX))
 	{
-		case BEACON:
+		switch(g_fox_frequency_source[fox])
 		{
-			freq = g_frequency_beacon;
+			case FREQ_SOURCE_LOW:
+				return g_frequency_low;
+			case FREQ_SOURCE_MED:
+				return g_frequency_med;
+			case FREQ_SOURCE_HIGH:
+				return g_frequency_hi;
+			case FREQ_SOURCE_BEACON:
+				return g_frequency_beacon;
+			case FREQ_SOURCE_CURRENT:
+			default:
+				break;
 		}
-		break;
-
-		case FOX_1:
-		case FOX_2:
-		case FOX_3:
-		case FOX_4:
-		case FOX_5:
-		{
-			freq = g_frequency_low;
-		}
-		break;
-
-		case SPECTATOR:
-		{
-			freq = g_frequency_med;
-		}
-		break;
-
-		case SPRINT_S1:
-		case SPRINT_S2:
-		case SPRINT_S3:
-		case SPRINT_S4:
-		case SPRINT_S5:
-		{
-			freq = g_frequency_low;
-		}
-		break;
-
-		case SPRINT_F1:
-		case SPRINT_F2:
-		case SPRINT_F3:
-		case SPRINT_F4:
-		case SPRINT_F5:
-		{
-			freq = g_frequency_hi;
-		}
-		break;
-
-		case FOXORING_FOX1:
-		{
-			freq = g_frequency_low;
-		}
-		break;
-
-		case FOXORING_FOX2:
-		{
-			freq = g_frequency_med;
-		}
-		break;
-
-		case FOXORING_FOX3:
-		{
-			freq = g_frequency_hi;
-		}
-		break;
-
-		case FREQUENCY_TEST_BEACON:
-		{
-			freq = g_frequency_low;
-		}
-		break;
-
-		default:
-		{
-			freq = g_frequency;
-		}
-		break;
 	}
 
-	return (freq);
+	return g_frequency;
 }
 
 /*
