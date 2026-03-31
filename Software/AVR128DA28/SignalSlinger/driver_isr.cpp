@@ -60,7 +60,7 @@ static volatile uint16_t g_serial_rx_idle_ticks = 0;
 static bool g_serial_rx_receiving_msg = false;
 static bool g_serial_rx_ignoreAllInput = false;
 static bool g_serial_rx_inEscapeSequence = false;
-static bool g_serial_rx_useMeshMode = false;
+static volatile bool g_serial_rx_useMeshMode = false;
 static bool g_serial_rx_invalidCommand = false;
 
 static uint16_t serialbus_rx_idle_reload_ticks(void)
@@ -104,6 +104,11 @@ void serialbus_reset_rx_parser(void)
 	g_serial_rx_ignoreAllInput = false;
 	g_serial_rx_inEscapeSequence = false;
 	g_serial_rx_invalidCommand = false;
+}
+
+void serialbus_set_rx_mesh_mode(bool enabled)
+{
+	g_serial_rx_useMeshMode = enabled;
 }
 
 void serialbus_rx_idle_tick(void)
