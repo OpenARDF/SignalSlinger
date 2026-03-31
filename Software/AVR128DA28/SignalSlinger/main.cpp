@@ -4585,28 +4585,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
-				case SB_CR_NO_DATA:
+			case SB_CR_NO_DATA:
+			{
+				if(!g_cloningInProgress && !g_meshmode)
 				{
-					if(!g_cloningInProgress && !g_meshmode)
-					{
-						atomic_write_u16(&g_report_settings_countdown, 100);
-					}
+					atomic_write_u16(&g_report_settings_countdown, 100);
 				}
-				break;
+			}
+			break;
 
-				case SB_RX_IDLE_TIMEOUT:
+			case SB_RX_IDLE_TIMEOUT:
+			{
+				suppressResponse = true;
+				if(!g_cloningInProgress && !g_meshmode)
 				{
-					suppressResponse = true;
-					if(!g_cloningInProgress && !g_meshmode)
-					{
-						sb_send_NewLine();
-						sb_send_NewPrompt();
-					}
+					sb_send_NewLine();
+					sb_send_NewPrompt();
 				}
-				break;
+			}
+			break;
 
-				default:
-				{
+			default:
+			{
 				if(!g_cloningInProgress && !atomic_read_u16(&g_report_settings_countdown) && !g_meshmode)
 				{
 					sb_send_string(HELP_TEXT_TXT);
