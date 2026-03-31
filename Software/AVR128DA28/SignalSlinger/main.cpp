@@ -297,7 +297,12 @@ void reportConfigErrors(Settings_t location);
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller);
 static void loadStationIDMorse(bool *repeat, callerID_t caller);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
-static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpoch, char *errMsg);
+static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes);
+static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch);
+static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg);
+static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue);
+static void acknowledgeClonedClockValue(const char *reply, time_t epoch);
+static void finalizeLocalClockUpdate(void);
 static bool cancelManualTransientState(void);
 static bool finishTimedEventIfExpired(time_t now);
 static void captureCloneTimingSnapshot(void);
@@ -785,106 +790,197 @@ static const char *completeTimeString_volatile(const char *partialString, volati
 	return completeTimeString(partialString, &epoch);
 }
 
-static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpoch, char *errMsg)
+static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes)
 {
-	if(finishEpoch)
+	if(hours)
 	{
-		*finishEpoch = 0;
+		*hours = 0;
 	}
 
-	const char *error = "* Err: Invalid offset!\n";
-	time_t start_epoch = atomic_read_time(&g_event_start_epoch);
-	if(start_epoch < MINIMUM_VALID_EPOCH)
+	if(minutes)
 	{
-		error = "* Err: Start not set!\n";
+		*minutes = 0;
 	}
-	else
+
+	if(hasMinutes)
 	{
-		do
+		*hasMinutes = false;
+	}
+
+	if(!offsetString || (offsetString[0] != '+'))
+	{
+		return false;
+	}
+
+	const char *hours_str = offsetString + 1;
+	if(!hours_str[0])
+	{
+		return false;
+	}
+
+	const char *colon = strchr(hours_str, ':');
+	if(colon && strchr(colon + 1, ':'))
+	{
+		return false;
+	}
+
+	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
+	if(hour_len > 3)
+	{
+		return false;
+	}
+
+	uint16_t parsed_hours = 0;
+	for(size_t i = 0; i < hour_len; i++)
+	{
+		if(!isdigit((unsigned char)hours_str[i]))
 		{
-			if(!offsetString || offsetString[0] != '+')
+			return false;
+		}
+
+		parsed_hours = (parsed_hours * 10) + (uint16_t)(hours_str[i] - '0');
+	}
+
+	if(parsed_hours > 480)
+	{
+		return false;
+	}
+
+	uint8_t parsed_minutes = 0;
+	bool parsed_has_minutes = false;
+	if(colon)
+	{
+		const char *minutes_str = colon + 1;
+		size_t minute_len = strlen(minutes_str);
+		if((minute_len == 0) || (minute_len > 2))
+		{
+			return false;
+		}
+
+		parsed_has_minutes = true;
+
+		for(size_t i = 0; i < minute_len; i++)
+		{
+			if(!isdigit((unsigned char)minutes_str[i]))
 			{
-				break;
+				return false;
 			}
 
-			const char *hours_str = offsetString + 1;
-			if(!hours_str[0])
+			parsed_minutes = (parsed_minutes * 10) + (uint8_t)(minutes_str[i] - '0');
+		}
+
+		if(parsed_minutes > 59)
+		{
+			return false;
+		}
+	}
+
+	if(hours)
+	{
+		*hours = parsed_hours;
+	}
+
+	if(minutes)
+	{
+		*minutes = parsed_minutes;
+	}
+
+	if(hasMinutes)
+	{
+		*hasMinutes = parsed_has_minutes;
+	}
+
+	return true;
+}
+
+static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch)
+{
+	if(!boundary)
+	{
+		return epoch;
+	}
+
+	time_t aligned = ((epoch + (boundary / 2)) / boundary) * boundary;
+	if(aligned < minimumEpoch)
+	{
+		aligned = ((minimumEpoch + boundary - 1) / boundary) * boundary;
+	}
+
+	return aligned;
+}
+
+static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg)
+{
+	if(resolvedEpoch)
+	{
+		*resolvedEpoch = 0;
+	}
+
+	if(baseEpoch < MINIMUM_VALID_EPOCH)
+	{
+		if(errMsg)
+		{
+			if(suppressBaseEpochError)
 			{
-				break;
+				errMsg[0] = '\0';
 			}
-
-			const char *colon = strchr(hours_str, ':');
-			if(colon && strchr(colon + 1, ':'))
+			else
 			{
-				break;
+				strcpy(errMsg, baseEpochError ? baseEpochError : "* Err: Invalid offset!\n");
 			}
+		}
 
-			size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
-			if(hour_len > 3)
-			{
-				break;
-			}
+		return false;
+	}
 
-			uint16_t hours = 0;
-			bool valid = true;
-			for(size_t i = 0; i < hour_len; i++)
-			{
-				if(!isdigit((unsigned char)hours_str[i]))
-				{
-					valid = false;
-					break;
-				}
+	uint16_t hours = 0;
+	uint8_t minutes = 0;
+	bool hasMinutes = false;
+	if(!parseClockHourMinuteOffset(offsetString, &hours, &minutes, &hasMinutes))
+	{
+		if(errMsg)
+		{
+			strcpy(errMsg, "* Err: Invalid offset!\n");
+		}
 
-				hours = (hours * 10) + (uint16_t)(hours_str[i] - '0');
-			}
+		return false;
+	}
 
-			if(!valid || (hours > 480))
-			{
-				break;
-			}
+	time_t target = baseEpoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
+	time_t boundary = hasMinutes ? minuteBoundary : hourBoundary;
 
-			uint8_t minutes = 0;
-			if(colon)
-			{
-				const char *minutes_str = colon + 1;
-				size_t minute_len = strlen(minutes_str);
-				if((minute_len == 0) || (minute_len > 2))
-				{
-					break;
-				}
-
-				for(size_t i = 0; i < minute_len; i++)
-				{
-					if(!isdigit((unsigned char)minutes_str[i]))
-					{
-						valid = false;
-						break;
-					}
-
-					minutes = (minutes * 10) + (uint8_t)(minutes_str[i] - '0');
-				}
-
-				if(!valid || (minutes > 59))
-				{
-					break;
-				}
-			}
-
-			if(finishEpoch)
-			{
-				*finishEpoch = start_epoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
-			}
-
-			return true;
-		} while(false);
+	if(resolvedEpoch)
+	{
+		*resolvedEpoch = alignEpochToNearestBoundary(target, boundary, baseEpoch);
 	}
 
 	if(errMsg)
 	{
-		strcpy(errMsg, error);
+		errMsg[0] = '\0';
 	}
 
-	return false;
+	return true;
+}
+
+static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue)
+{
+	atomic_write_time_pair(loadedEpoch, savedEpoch, epoch, epoch);
+	g_ee_mgr.updateEEPROMVar(eeVar, eeValue);
+}
+
+static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
+{
+	sb_send_string((char *)reply);
+	atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+	g_event_checksum += epoch;
+}
+
+static void finalizeLocalClockUpdate(void)
+{
+	cancelManualTransientState();
+	g_days_to_run = 1;
+	g_days_run = 0;
+	startEventUsingRTC();
 }
 
 /**
@@ -4199,6 +4295,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						time_t s;
 						bool setSequalF = false;
 						bool explicitMirrorToFinish = false;
+						bool offsetFromCurrentTime = false;
 
 						if(g_cloningInProgress)
 						{
@@ -4221,6 +4318,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								setSequalF = true;
 								explicitMirrorToFinish = true;
 							}
+							else if(g_tempStr[0] == '+')
+							{
+								offsetFromCurrentTime = true;
+								s = time(null);
+								resolveClockOffsetToEpoch(g_tempStr, s, null, true, HOUR, ((time_t)5 * MINUTE), &s, msg);
+							}
 							else
 							{
 								const char *tmp = completeTimeString_volatile(g_tempStr, &g_evteng_loaded_start_epoch);
@@ -4238,33 +4341,24 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(s || g_cloningInProgress || explicitMirrorToFinish)
 						{
-							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_event_start_epoch, s, s);
-							g_ee_mgr.updateEEPROMVar(Event_start_epoch, (void *)&g_event_start_epoch);
+							persistClockEpochValue(&g_evteng_loaded_start_epoch, &g_event_start_epoch, s, Event_start_epoch, (void *)&g_event_start_epoch);
 
 							if(g_cloningInProgress)
 							{
-								sb_send_string((char *)"CLK S\n");
-								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-								g_event_checksum += s;
+								acknowledgeClonedClockValue("CLK S\n", s);
 							}
 							else
 							{
-								cancelManualTransientState();
-								g_days_to_run = 1;
-								g_days_run = 0;
-
 								if(!setSequalF)
 								{
 									time_t event_start_epoch;
 									time_t event_finish_epoch;
 									atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-									time_t new_finish_epoch = MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
-									atomic_write_time_pair(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, new_finish_epoch);
-
-									g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
+									time_t new_finish_epoch = offsetFromCurrentTime ? (event_start_epoch + SECONDS_24H) : MAX(event_finish_epoch, (event_start_epoch + SECONDS_24H));
+									persistClockEpochValue(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, Event_finish_epoch, (void *)&g_event_finish_epoch);
 								}
 
-								startEventUsingRTC();
+								finalizeLocalClockUpdate();
 							}
 						}
 					}
@@ -4311,7 +4405,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 							else if(g_tempStr[0] == '+')
 							{
-								parseFinishOffsetToEpoch(g_tempStr, &f, g_tempStr);
+								resolveClockOffsetToEpoch(g_tempStr, atomic_read_time(&g_event_start_epoch), "* Err: Start not set!\n", false, 0, 0, &f, g_tempStr);
 							}
 							else
 							{
@@ -4332,22 +4426,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(f || g_cloningInProgress || explicitMirrorToStart)
 						{
-							atomic_write_time_pair(&g_event_finish_epoch, &g_evteng_loaded_finish_epoch, f, f);
-
-							g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
+							persistClockEpochValue(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, f, Event_finish_epoch, (void *)&g_event_finish_epoch);
 
 							if(g_cloningInProgress)
 							{
-								sb_send_string((char *)"CLK F\n");
-								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-								g_event_checksum += f;
+								acknowledgeClonedClockValue("CLK F\n", f);
 							}
 							else
 							{
-								cancelManualTransientState();
-								g_days_to_run = 1;
-								g_days_run = 0;
-								startEventUsingRTC();
+								finalizeLocalClockUpdate();
 							}
 						}
 					}
