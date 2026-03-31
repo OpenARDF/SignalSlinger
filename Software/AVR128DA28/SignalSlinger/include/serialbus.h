@@ -140,15 +140,15 @@ extern "C"
 	 */
 	void serialbus_disable(void);
 
-/**
- * Reset any partially-parsed ISR RX state while preserving mesh-mode selection.
- */
-void serialbus_reset_rx_parser(void);
+	/**
+	 * Reset any partially-parsed ISR RX state while preserving mesh-mode selection.
+	 */
+	void serialbus_reset_rx_parser(void);
 
-/**
- * Synchronize the ISR-side RX echo/parser mesh-mode flag with foreground state.
- */
-void serialbus_set_rx_mesh_mode(bool enabled);
+	/**
+	 * Synchronize the ISR-side RX echo/parser mesh-mode flag with foreground state.
+	 */
+	void serialbus_set_rx_mesh_mode(bool enabled);
 
 	/**
 	 * Advance the ISR RX parser idle timer by one TCB2 tick.

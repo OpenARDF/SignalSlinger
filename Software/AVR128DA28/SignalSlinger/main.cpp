@@ -2917,22 +2917,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 		switch(msg_id)
 		{
-				case SB_MODE_MESH:
-				{
-					char c1 = (sb_buff->fields[SB_FIELD1][0]);
+			case SB_MODE_MESH:
+			{
+				char c1 = (sb_buff->fields[SB_FIELD1][0]);
 
-					if(c1 == '1')
-					{
-						g_meshmode = true;
-						serialbus_set_rx_mesh_mode(true);
-					}
-					else
-					{
-						g_meshmode = false;
-						serialbus_set_rx_mesh_mode(false);
-					}
+				if(c1 == '1')
+				{
+					g_meshmode = true;
+					serialbus_set_rx_mesh_mode(true);
 				}
-				break;
+				else
+				{
+					g_meshmode = false;
+					serialbus_set_rx_mesh_mode(false);
+				}
+			}
+			break;
 
 			case SB_MESSAGE_RESET:
 			{
