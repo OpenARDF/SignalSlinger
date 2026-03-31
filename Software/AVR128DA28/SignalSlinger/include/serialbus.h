@@ -96,6 +96,7 @@ typedef enum
 	SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',		/* Temperature information */
 	SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',			/* Functionality setting */
 	SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',					/* Meshtastic mode setting */
+	SB_RX_IDLE_TIMEOUT = MAX_UINT16-2,							/* Parser dropped a stale partial RX line */
 	SB_INVALID_MESSAGE = MAX_UINT16,							/* This value must never overlap a valid message ID */
 	SB_CR_NO_DATA = MAX_UINT16-1								/* This value must never overlap a valid message ID */
 } SBMessageID;

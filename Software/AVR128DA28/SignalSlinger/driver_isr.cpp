@@ -57,7 +57,6 @@ static uint8_t g_serial_rx_field_len = 0;
 static int g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
 static uint8_t g_serial_rx_escapeCount = 0;
 static volatile uint16_t g_serial_rx_idle_ticks = 0;
-static volatile bool g_serial_rx_idle_expired = false;
 static bool g_serial_rx_receiving_msg = false;
 static bool g_serial_rx_ignoreAllInput = false;
 static bool g_serial_rx_inEscapeSequence = false;
@@ -101,7 +100,6 @@ void serialbus_reset_rx_parser(void)
 	g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
 	g_serial_rx_escapeCount = 0;
 	g_serial_rx_idle_ticks = 0;
-	g_serial_rx_idle_expired = false;
 	g_serial_rx_receiving_msg = false;
 	g_serial_rx_ignoreAllInput = false;
 	g_serial_rx_inEscapeSequence = false;
@@ -115,7 +113,13 @@ void serialbus_rx_idle_tick(void)
 		g_serial_rx_idle_ticks--;
 		if(!g_serial_rx_idle_ticks)
 		{
-			g_serial_rx_idle_expired = true;
+			if(g_serial_rx_buff && !g_serial_rx_useMeshMode)
+			{
+				g_serial_rx_buff->type = SERIALBUS_MSG_INVALID;
+				g_serial_rx_buff->id = SB_RX_IDLE_TIMEOUT;
+			}
+
+			serialbus_reset_rx_parser();
 		}
 	}
 }
@@ -134,11 +138,6 @@ ISR(USART0_RXC_vect)
 void serial_Rx(uint8_t rx_char)
 {
 	uint8_t echo_char = rx_char;
-
-	if(g_serial_rx_idle_expired)
-	{
-		serialbus_reset_rx_parser();
-	}
 
 	if(!g_serial_rx_buff)
 	{
