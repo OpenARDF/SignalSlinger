@@ -22,15 +22,14 @@
  *  SOFTWARE.
  */
 
-
 #ifndef ADC_H_
 #define ADC_H_
 
-	
 #define FREE_RUNNING true
 #define SINGLE_CONVERSION false
 
-typedef enum {
+typedef enum
+{
 	ADCInternalBatteryVoltage,
 	ADCExternalBatteryVoltage,
 	ADC12VRegulatedVoltage,
@@ -39,7 +38,8 @@ typedef enum {
 	ADCShutdown
 } ADC_Active_Channel_t;
 
-typedef enum {
+typedef enum
+{
 	ADC_NOT_INITIALIZED,
 	ADC_FREE_RUN_INITIALIZED,
 	ADC_SINGLE_CONVERSION_INITIALIZED
@@ -54,6 +54,5 @@ bool isValidTemp(float temperatureC);
 float readVoltage(ADC_Active_Channel_t chan);
 void ADC0_SYSTEM_init(bool freerun);
 void ADC0_SYSTEM_shutdown(void);
-
 
 #endif /* ADC_H_ */

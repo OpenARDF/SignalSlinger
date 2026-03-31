@@ -54,32 +54,34 @@ void RTC_init(uint16_t cal)
 {
 	g_clock_calibration = cal;
 	util_delay_ms(0);
-    while ((RTC.STATUS > 0) && util_delay_ms(500)) { /* Wait for all registers to be synchronized */
-    }
-    //Compare 
-    RTC.CMP = 0x00;
+	while((RTC.STATUS > 0) && util_delay_ms(500))
+	{ /* Wait for all registers to be synchronized */
+	}
+	// Compare
+	RTC.CMP = 0x00;
 
-    //Count
-    RTC.CNT = 0x00;
+	// Count
+	RTC.CNT = 0x00;
 
-    //Period
-    RTC.PER = CLAMP(32757u, cal, 32777u);
+	// Period
+	RTC.PER = CLAMP(32757u, cal, 32777u);
 
-    //Clock selection: XOSC32K
-    RTC.CLKSEL = 0x02;
+	// Clock selection: XOSC32K
+	RTC.CLKSEL = 0x02;
 
-    //CMP disabled; OVF enabled; 
-    RTC.INTCTRL = 0x01;
+	// CMP disabled; OVF enabled;
+	RTC.INTCTRL = 0x01;
 
-    //RUNSTDBY enabled; PRESCALER DIV1; CORREN disabled; RTCEN enabled; 
-    RTC.CTRLA = 0x81;
+	// RUNSTDBY enabled; PRESCALER DIV1; CORREN disabled; RTCEN enabled;
+	RTC.CTRLA = 0x81;
 	RTC.DBGCTRL = 0x01; /* Run in debug mode */
-    
+
 	util_delay_ms(0);
-    while ((RTC.PITCTRLA > 0) && util_delay_ms(500)) { /* Wait for all registers to be synchronized */
-    }
-    //PI disabled; 
-    RTC.PITINTCTRL = 0x00;    
+	while((RTC.PITCTRLA > 0) && util_delay_ms(500))
+	{ /* Wait for all registers to be synchronized */
+	}
+	// PI disabled;
+	RTC.PITINTCTRL = 0x00;
 }
 
 uint16_t RTC_get_cal(void)
@@ -96,37 +98,39 @@ void RTC_init_backup(uint16_t cal)
 {
 	g_clock_calibration = cal;
 	use_backup_clock = true;
-	
+
 	ccp_write_io((void *)&(CLKCTRL.OSC32KCTRLA),
-	 		1 << CLKCTRL_RUNSTDBY_bp /* Run standby: enabled */);
-	
+	             1 << CLKCTRL_RUNSTDBY_bp /* Run standby: enabled */);
+
 	util_delay_ms(0);
-    while ((RTC.STATUS > 0) && util_delay_ms(500)) { /* Wait for all registers to be synchronized */
-    }
-    //Compare 
-    RTC.CMP = 0x00;
+	while((RTC.STATUS > 0) && util_delay_ms(500))
+	{ /* Wait for all registers to be synchronized */
+	}
+	// Compare
+	RTC.CMP = 0x00;
 
-    //Count
-    RTC.CNT = 0x00;
+	// Count
+	RTC.CNT = 0x00;
 
-    //Period
-    RTC.PER = CLAMP(32757u, cal, 32777u);
+	// Period
+	RTC.PER = CLAMP(32757u, cal, 32777u);
 
-    //Clock selection: OSC32K
-    RTC.CLKSEL = 0x00;
+	// Clock selection: OSC32K
+	RTC.CLKSEL = 0x00;
 
-    //CMP disabled; OVF enabled; 
-    RTC.INTCTRL = 0x01;
+	// CMP disabled; OVF enabled;
+	RTC.INTCTRL = 0x01;
 
-    //RUNSTDBY disabled; PRESCALER DIV1; CORREN disabled; RTCEN enabled; 
-    RTC.CTRLA = 0x81;
+	// RUNSTDBY disabled; PRESCALER DIV1; CORREN disabled; RTCEN enabled;
+	RTC.CTRLA = 0x81;
 	RTC.DBGCTRL = 0x01; /* Run in debug mode */
-    
+
 	util_delay_ms(0);
-    while ((RTC.PITCTRLA > 0) && util_delay_ms(500)) { /* Wait for all registers to be synchronized */
-    }
-    //PI disabled; 
-    RTC.PITINTCTRL = 0x00;    
+	while((RTC.PITCTRLA > 0) && util_delay_ms(500))
+	{ /* Wait for all registers to be synchronized */
+	}
+	// PI disabled;
+	RTC.PITINTCTRL = 0x00;
 }
 
 void RTC_set_calibration(uint16_t cal)
@@ -139,7 +143,7 @@ void RTC_set_calibration(uint16_t cal)
 	{
 		RTC_init(cal);
 	}
-	
+
 	g_clock_calibration = cal;
-	g_ee_mgr.updateEEPROMVar(Clock_calibration, (void*)&g_clock_calibration);
+	g_ee_mgr.updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
 }
