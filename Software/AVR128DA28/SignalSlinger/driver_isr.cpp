@@ -62,7 +62,7 @@ void serial_Rx(uint8_t rx_char)
 	static uint8_t charIndex = 0;
 	static uint8_t field_index = 0;
 	static uint8_t field_len = 0;
-	static int msg_ID = 0;
+	static uint16_t msg_ID = 0;
 	static bool receiving_msg = false;
 	static bool ignoreAllInput = false;
 	static bool useMeshMode = false;
@@ -252,7 +252,7 @@ void serial_Rx(uint8_t rx_char)
 							{
 								msg_ID = SB_MESSAGE_EMPTY;
 								
-									if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
+									if(field_len > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
 									{
 										rx_char = '\0';
 										SBMessageID publish_id = useMeshMode ? SB_MESSAGE_EMPTY : SB_INVALID_MESSAGE;

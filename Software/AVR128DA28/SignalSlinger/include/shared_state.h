@@ -150,8 +150,8 @@ static inline void messages_text_slot_copy_atomic(uint8_t slot, char* dst, size_
 static inline void messages_text_slot_publish_atomic(uint8_t slot, const char* src)
 {
 	ENTER_CRITICAL(shared_messages_text_publish);
-	strncpy(g_messages_text[slot], src, MAX_PATTERN_TEXT_LENGTH + 1);
-	g_messages_text[slot][MAX_PATTERN_TEXT_LENGTH + 1] = '\0';
+	strncpy(g_messages_text[slot], src, MAX_PATTERN_TEXT_LENGTH);
+	g_messages_text[slot][MAX_PATTERN_TEXT_LENGTH] = '\0';
 	EXIT_CRITICAL(shared_messages_text_publish);
 }
 
