@@ -35,15 +35,14 @@
 #include <stdio.h>
 #include "atmel_start_pins.h"
 
-
 #ifdef ATMEL_STUDIO_7
 #include <avr/eeprom.h>
-#endif  /* ATMEL_STUDIO_7 */
+#endif /* ATMEL_STUDIO_7 */
 
 #ifdef ATMEL_STUDIO_7
 #include <string.h>
 #include <stdio.h>
-#endif  /* ATMEL_STUDIO_7 */
+#endif /* ATMEL_STUDIO_7 */
 
 volatile uint16_t g_serial_timeout_ticks = 200;
 volatile USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
@@ -58,7 +57,7 @@ static volatile char g_isr_echo_fifo[SERIALBUS_ISR_ECHO_FIFO_SIZE];
 
 /* Local function prototypes */
 bool serialbus_start_tx(void);
-bool serialbus_send_text(char* text);
+bool serialbus_send_text(char *text);
 static void USART1_initialization(uint32_t baud);
 static void USART0_initialization(uint32_t baud);
 static inline void serialbus_echo_fifo_reset(void)
@@ -76,7 +75,7 @@ static volatile SerialbusRxBuffer rx_buffer[SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS];
  * Locate the next transmit buffer that contains a queued message.
  * Returns a pointer to the buffer or null if no messages are waiting.
  */
-SerialbusTxBuffer* nextFullSBTxBuffer(void)
+SerialbusTxBuffer *nextFullSBTxBuffer(void)
 {
 	bool found = true;
 	static uint8_t bufferIndex = 0;
@@ -99,17 +98,17 @@ SerialbusTxBuffer* nextFullSBTxBuffer(void)
 
 	if(found)
 	{
-		return((SerialbusTxBuffer*)&tx_buffer[bufferIndex]);
+		return ((SerialbusTxBuffer *)&tx_buffer[bufferIndex]);
 	}
 
-	return(null);
+	return (null);
 }
 
 /*
  * Find the next available empty transmit buffer for queuing data.
  * Returns a pointer to the buffer or null if all buffers are in use.
  */
-SerialbusTxBuffer* nextEmptySBTxBuffer(void)
+SerialbusTxBuffer *nextEmptySBTxBuffer(void)
 {
 	bool found = true;
 	static uint8_t bufferIndex = 0;
@@ -132,17 +131,17 @@ SerialbusTxBuffer* nextEmptySBTxBuffer(void)
 
 	if(found)
 	{
-		return((SerialbusTxBuffer*)&tx_buffer[bufferIndex]);
+		return ((SerialbusTxBuffer *)&tx_buffer[bufferIndex]);
 	}
 
-	return(null);
+	return (null);
 }
 
 /*
  * Return a pointer to the next empty receive buffer so incoming data
  * can be stored without overwriting unread messages.
  */
-SerialbusRxBuffer* nextEmptySBRxBuffer(void)
+SerialbusRxBuffer *nextEmptySBRxBuffer(void)
 {
 	bool found = true;
 	static uint8_t bufferIndex = 0;
@@ -165,22 +164,22 @@ SerialbusRxBuffer* nextEmptySBRxBuffer(void)
 
 	if(found)
 	{
-		for(int i=0; i<SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
+		for(int i = 0; i < SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
 		{
 			rx_buffer[bufferIndex].fields[i][0] = '\0';
 		}
-		
-		return((SerialbusRxBuffer*)&rx_buffer[bufferIndex]);
+
+		return ((SerialbusRxBuffer *)&rx_buffer[bufferIndex]);
 	}
 
-	return(null);
+	return (null);
 }
 
 /*
  * Fetch the next receive buffer that has been filled with a message
  * from the remote device.
  */
-SerialbusRxBuffer* nextFullSBRxBuffer(void)
+SerialbusRxBuffer *nextFullSBRxBuffer(void)
 {
 	bool found = true;
 	static uint8_t bufferIndex = 0;
@@ -203,19 +202,18 @@ SerialbusRxBuffer* nextFullSBRxBuffer(void)
 
 	if(found)
 	{
-		return((SerialbusRxBuffer*)&rx_buffer[bufferIndex]);
+		return ((SerialbusRxBuffer *)&rx_buffer[bufferIndex]);
 	}
 
-	return(null);
+	return (null);
 }
-
 
 /***********************************************************************
  * serialbusTxInProgress(void)
  ************************************************************************/
 bool serialbusTxInProgress(void)
 {
-	return(serialbus_tx_active);
+	return (serialbus_tx_active);
 }
 
 /*
@@ -229,7 +227,7 @@ bool serialbus_start_tx(void)
 	if(success) /* message will be lost if transmit is busy */
 	{
 		serialbus_tx_active = true;
-		
+
 		if(g_serialbus_usart_number == USART_0)
 		{
 			USART0_enable_tx();
@@ -240,7 +238,7 @@ bool serialbus_start_tx(void)
 		}
 	}
 
-	return(success);
+	return (success);
 }
 
 void serialbus_end_tx(void)
@@ -255,7 +253,7 @@ void serialbus_end_tx(void)
 		{
 			USART1.CTRLA &= ~(1 << USART_DREIE_bp); /* Transmit Data Register Empty Interrupt Enable: disable */
 		}
-		
+
 		serialbus_tx_active = false;
 	}
 }
@@ -274,7 +272,6 @@ void USART1_initialization(uint32_t baud)
 	USART1_init(baud, false);
 }
 
-
 /* configure the pins and initialize the registers */
 void USART0_initialization(uint32_t baud)
 {
@@ -289,15 +286,14 @@ void USART0_initialization(uint32_t baud)
 	USART0_init(baud, false);
 }
 
-
 void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
-	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
+	memset((void *)rx_buffer, 0, sizeof(rx_buffer));
 	serialbus_reset_rx_parser();
 	serialbus_end_tx();
 	serialbus_echo_fifo_reset();
 
-	for(int bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
+	for(int bufferIndex = 0; bufferIndex < SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
 	{
 		tx_buffer[bufferIndex][0] = '\0';
 	}
@@ -312,7 +308,7 @@ void serialbus_init(uint32_t baud, USART_Number_t usart)
 		{
 			USART1_initialization(baud);
 		}
-	
+
 		g_serialbus_usart_number = usart;
 	}
 
@@ -322,19 +318,22 @@ void serialbus_init(uint32_t baud, USART_Number_t usart)
 
 void serialbus_flush_rx(void)
 {
-	if(g_serialbus_disabled) return;
-	
+	if(g_serialbus_disabled)
+		return;
+
 	if(g_serialbus_usart_number == USART_0)
 	{
 		char c = USART0_get_data();
-		while((c = USART0_get_data())); // flush the buffer
+		while((c = USART0_get_data()))
+			; // flush the buffer
 	}
 	else
 	{
 		char c = USART1_get_data();
-		while((c = USART1_get_data())); // flush the buffer
+		while((c = USART1_get_data()))
+			; // flush the buffer
 	}
-	
+
 	return;
 }
 
@@ -346,36 +345,35 @@ void serialbus_disable(void)
 	serialbus_end_tx();
 
 	if(g_serialbus_usart_number == USART_0)
-	{	
+	{
 		USART0_disable();
 	}
 	else
 	{
 		USART1_disable();
 	}
-	
-	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
+
+	memset((void *)rx_buffer, 0, sizeof(rx_buffer));
 	serialbus_reset_rx_parser();
 	serialbus_echo_fifo_reset();
 
-	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
+	for(bufferIndex = 0; bufferIndex < SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
 	{
 		tx_buffer[bufferIndex][0] = '\0';
 	}
 }
 
-
 /*
  * Queue a null-terminated string for transmission.  The routine will block
  * briefly if no buffer is available, returning true on error.
  */
-bool serialbus_send_text(char* text)
+bool serialbus_send_text(char *text)
 {
 	bool err = true;
 
 	if(g_serialbus_disabled)
 	{
-		return( err);
+		return (err);
 	}
 
 	uint16_t tries;
@@ -383,13 +381,14 @@ bool serialbus_send_text(char* text)
 	{
 		SerialbusTxBuffer local_copy;
 		snprintf(local_copy, SERIALBUS_MAX_TX_MSG_LENGTH, "%s", text);
-		SerialbusTxBuffer* buff = nextEmptySBTxBuffer();
+		SerialbusTxBuffer *buff = nextEmptySBTxBuffer();
 		tries = 200;
-		
+
 		while(!buff && tries--)
 		{
 			uint16_t spin = 500;
-			while(serialbusTxInProgress() && spin--); /* Wait for previous transmission to complete */
+			while(serialbusTxInProgress() && spin--)
+				; /* Wait for previous transmission to complete */
 			buff = nextEmptySBTxBuffer();
 		}
 
@@ -414,9 +413,8 @@ bool serialbus_send_text(char* text)
 		}
 	}
 
-	return(err);
+	return (err);
 }
-
 
 /***********************************************************************************
  *  Support for creating and sending various Terminal Mode Serialbus messages is provided below.
@@ -424,14 +422,15 @@ bool serialbus_send_text(char* text)
 
 void sb_send_NewPrompt(void)
 {
-	if(g_isMaster || g_cloningInProgress) return;
-	
+	if(g_isMaster || g_cloningInProgress)
+		return;
+
 	if(g_serialbus_disabled)
 	{
 		return;
 	}
 
-	while(serialbus_send_text((char*)textPrompt))
+	while(serialbus_send_text((char *)textPrompt))
 	{
 		;
 	}
@@ -439,19 +438,21 @@ void sb_send_NewPrompt(void)
 
 void sb_send_NewLine(void)
 {
-	if(g_isMaster || g_cloningInProgress) return;
-	
+	if(g_isMaster || g_cloningInProgress)
+		return;
+
 	if(g_serialbus_disabled)
 	{
 		return;
 	}
-	serialbus_send_text((char*)crlf);
+	serialbus_send_text((char *)crlf);
 }
 
 void sb_echo_char(uint8_t c)
 {
-	if(g_isMaster || g_cloningInProgress) return;
-	
+	if(g_isMaster || g_cloningInProgress)
+		return;
+
 	if(g_serialbus_disabled)
 	{
 		return;
@@ -466,8 +467,10 @@ bool sb_echo_char_isr(uint8_t c)
 {
 	uint8_t next_head;
 
-	if(g_isMaster || g_cloningInProgress) return false;
-	if(g_serialbus_disabled) return false;
+	if(g_isMaster || g_cloningInProgress)
+		return false;
+	if(g_serialbus_disabled)
+		return false;
 
 	next_head = (uint8_t)((g_isr_echo_head + 1U) % SERIALBUS_ISR_ECHO_FIFO_SIZE);
 	if(next_head == g_isr_echo_tail)
@@ -481,55 +484,58 @@ bool sb_echo_char_isr(uint8_t c)
 	return true;
 }
 
-bool serialbus_echo_try_get_isr(uint8_t* c)
+bool serialbus_echo_try_get_isr(uint8_t *c)
 {
-	if(!c) return false;
-	if(g_isr_echo_head == g_isr_echo_tail) return false;
+	if(!c)
+		return false;
+	if(g_isr_echo_head == g_isr_echo_tail)
+		return false;
 
 	*c = (uint8_t)g_isr_echo_fifo[g_isr_echo_tail];
 	g_isr_echo_tail = (uint8_t)((g_isr_echo_tail + 1U) % SERIALBUS_ISR_ECHO_FIFO_SIZE);
 	return true;
 }
 
-bool sb_send_string(char* str)
+bool sb_send_string(char *str)
 {
-	if(g_isMaster) return true;
-	
+	if(g_isMaster)
+		return true;
+
 	return sb_send_master_string(str);
 }
 
-bool sb_send_master_string(char* str)
+bool sb_send_master_string(char *str)
 {
-	char buf[SERIALBUS_MAX_TX_MSG_LENGTH+1];
+	char buf[SERIALBUS_MAX_TX_MSG_LENGTH + 1];
 	bool err = false;
-	uint16_t length, lengthToSend, lengthSent=0;
+	uint16_t length, lengthToSend, lengthSent = 0;
 	bool done = false;
 
 	if(g_serialbus_disabled)
 	{
-		return( true);
+		return (true);
 	}
 
 	if(str == NULL)
 	{
-		return( true);
+		return (true);
 	}
 
 	if(!*str)
 	{
-		return(true);
+		return (true);
 	}
 
 	length = strlen(str);
 
 	do
 	{
-		lengthToSend = MIN(length-lengthSent, (uint16_t)(SERIALBUS_MAX_TX_MSG_LENGTH-1));
+		lengthToSend = MIN(length - lengthSent, (uint16_t)(SERIALBUS_MAX_TX_MSG_LENGTH - 1));
 		strncpy(buf, &str[lengthSent], lengthToSend);
 
 		buf[lengthToSend] = '\0';
 		err = serialbus_send_text(buf);
-		
+
 		atomic_write_u16(&g_serial_timeout_ticks, 200);
 		if(!err)
 		{
@@ -539,17 +545,18 @@ bool sb_send_master_string(char* str)
 				;
 			}
 
-			if(serialbusTxInProgress() && (!spin_guard || !atomic_read_u16(&g_serial_timeout_ticks))) err = true;
+			if(serialbusTxInProgress() && (!spin_guard || !atomic_read_u16(&g_serial_timeout_ticks)))
+				err = true;
 		}
 
 		lengthSent += lengthToSend;
 		done = err || (lengthSent >= length);
-	}while(!done);
+	} while(!done);
 
-	return( err);
+	return (err);
 }
 
-void sb_send_value(uint16_t value, char* label)
+void sb_send_value(uint16_t value, char *label)
 {
 	bool err;
 	char tempMsgBuff[SERIALBUS_MAX_MSG_LENGTH];
@@ -564,7 +571,7 @@ void sb_send_value(uint16_t value, char* label)
 	{
 		;
 	}
-	
+
 	atomic_write_u16(&g_serial_timeout_ticks, 200);
 	{
 		uint32_t spin_guard = 120000UL;
@@ -579,8 +586,7 @@ void sb_send_value(uint16_t value, char* label)
 	}
 }
 
-
 bool sb_enabled(void)
 {
-	return( !g_serialbus_disabled);
+	return (!g_serialbus_disabled);
 }

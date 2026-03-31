@@ -43,14 +43,14 @@
 #include "globals.h"
 
 void serial_Rx(uint8_t rx_char);
-static int serialbus_parse_msg_id(const char* text, uint8_t len);
+static int serialbus_parse_msg_id(const char *text, uint8_t len);
 
 #define SERIALBUS_MAX_ESC_SEQUENCE_LENGTH 16
 #define SERIALBUS_RX_IDLE_TIMEOUT_HUMAN_MS 8000U
 #define SERIALBUS_RX_IDLE_TIMEOUT_NOISE_MS 500U
 
 static char g_serial_rx_textBuff[SERIALBUS_MAX_MSG_LENGTH];
-static SerialbusRxBuffer* g_serial_rx_buff = NULL;
+static SerialbusRxBuffer *g_serial_rx_buff = NULL;
 static uint8_t g_serial_rx_charIndex = 0;
 static uint8_t g_serial_rx_field_index = 0;
 static uint8_t g_serial_rx_field_len = 0;
@@ -79,7 +79,7 @@ static uint16_t serialbus_rx_idle_reload_ticks(void)
 	return 0;
 }
 
-static int serialbus_parse_msg_id(const char* text, uint8_t len)
+static int serialbus_parse_msg_id(const char *text, uint8_t len)
 {
 	int msg_id = SB_MESSAGE_EMPTY;
 
@@ -123,14 +123,14 @@ void serialbus_rx_idle_tick(void)
 ISR(USART0_RXC_vect)
 {
 	uint8_t rx_char = USART0_get_data();
-	
+
 	if(g_serialbus_usart_number == USART_0)
 	{
 		serial_Rx(rx_char);
 	}
 }
 
-//void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
+// void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
 void serial_Rx(uint8_t rx_char)
 {
 	uint8_t echo_char = rx_char;
@@ -158,11 +158,12 @@ void serial_Rx(uint8_t rx_char)
 			rx_char = toupper(rx_char);
 			echo_char = rx_char;
 		}
-		if(rx_char == '\n') rx_char = '\r';
+		if(rx_char == '\n')
+			rx_char = '\r';
 
 		if(g_serial_rx_ignoreAllInput)
 		{
-			if(rx_char == '\r')    /* Handle carriage return */
+			if(rx_char == '\r') /* Handle carriage return */
 			{
 				g_serial_rx_ignoreAllInput = false;
 			}
@@ -182,13 +183,13 @@ void serial_Rx(uint8_t rx_char)
 				}
 			}
 			else if((echo_char == '\r') ||
-					((echo_char >= 0x40U) && (echo_char <= 0x7EU)) ||
-					(g_serial_rx_escapeCount >= SERIALBUS_MAX_ESC_SEQUENCE_LENGTH))
+			        ((echo_char >= 0x40U) && (echo_char <= 0x7EU)) ||
+			        (g_serial_rx_escapeCount >= SERIALBUS_MAX_ESC_SEQUENCE_LENGTH))
 			{
 				g_serial_rx_inEscapeSequence = false;
 			}
 		}
-		else if(rx_char == 0x1B)    /* Ignore ESC sequences */
+		else if(rx_char == 0x1B) /* Ignore ESC sequences */
 		{
 			rx_char = '\0';
 			g_serial_rx_inEscapeSequence = true;
@@ -199,7 +200,7 @@ void serial_Rx(uint8_t rx_char)
 			g_serial_rx_ignoreAllInput = true;
 			rx_char = '\0';
 		}
-		else if(rx_char == '\r')    /* Handle carriage return */
+		else if(rx_char == '\r') /* Handle carriage return */
 		{
 			SBMessageID completed_id = SB_MESSAGE_EMPTY;
 			bool publish_msg = false;
@@ -249,11 +250,11 @@ void serial_Rx(uint8_t rx_char)
 		}
 		else if(rx_char)
 		{
-			g_serial_rx_textBuff[g_serial_rx_charIndex] = rx_char;  /* hold the characters for re-use */
+			g_serial_rx_textBuff[g_serial_rx_charIndex] = rx_char; /* hold the characters for re-use */
 
 			if(g_serial_rx_charIndex)
 			{
-				if(rx_char == 0x7F)         /* Handle backspace */
+				if(rx_char == 0x7F) /* Handle backspace */
 				{
 					g_serial_rx_charIndex--;
 
@@ -267,8 +268,8 @@ void serial_Rx(uint8_t rx_char)
 						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* replace deleted char with null */
 						g_serial_rx_invalidCommand = (g_serial_rx_field_len > SERIALBUS_MAX_MSG_ID_LENGTH);
 						g_serial_rx_msg_ID = (!g_serial_rx_invalidCommand && g_serial_rx_field_len)
-							? serialbus_parse_msg_id(g_serial_rx_textBuff, g_serial_rx_field_len)
-							: SB_MESSAGE_EMPTY;
+						                         ? serialbus_parse_msg_id(g_serial_rx_textBuff, g_serial_rx_field_len)
+						                         : SB_MESSAGE_EMPTY;
 					}
 					else if(g_serial_rx_field_len)
 					{
@@ -315,7 +316,7 @@ void serial_Rx(uint8_t rx_char)
 							serialbus_reset_rx_parser();
 						}
 						else if((g_serial_rx_textBuff[g_serial_rx_charIndex - 1] == ' ') ||
-								((g_serial_rx_field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
+						        ((g_serial_rx_field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
 						{
 							rx_char = '\0';
 						}
@@ -331,7 +332,7 @@ void serial_Rx(uint8_t rx_char)
 							g_serial_rx_charIndex = MIN(g_serial_rx_charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 						}
 					}
-					else if(g_serial_rx_field_index == 0)    /* message ID received */
+					else if(g_serial_rx_field_index == 0) /* message ID received */
 					{
 						g_serial_rx_field_len++;
 
@@ -396,7 +397,7 @@ void serial_Rx(uint8_t rx_char)
 
 					rx_char = '\0';
 				}
-				else                    /* start of new message */
+				else /* start of new message */
 				{
 					uint8_t i;
 					g_serial_rx_field_index = 0;
@@ -425,37 +426,36 @@ void serial_Rx(uint8_t rx_char)
 	}
 }
 
-
 /**
 
 */
 ISR(USART1_DRE_vect)
 {
-		if(g_serialbus_usart_number == USART_1)
+	if(g_serialbus_usart_number == USART_1)
+	{
+		static SerialbusTxBuffer *buff = 0;
+		static uint8_t charIndex = 0;
+
+		if(!buff)
 		{
-			static SerialbusTxBuffer* buff = 0;
-			static uint8_t charIndex = 0;
+			buff = nextFullSBTxBuffer();
+		}
 
-			if(!buff)
+		{
+			uint8_t echo_char;
+			if(serialbus_echo_try_get_isr(&echo_char))
 			{
-				buff = nextFullSBTxBuffer();
-			}
-
-			{
-				uint8_t echo_char;
-				if(serialbus_echo_try_get_isr(&echo_char))
-				{
-					USART1.TXDATAL = echo_char;
-					return;
-				}
-			}
-			if(!buff)
-			{
-				serialbus_end_tx();
+				USART1.TXDATAL = echo_char;
 				return;
 			}
-			if((*buff)[charIndex])
-			{
+		}
+		if(!buff)
+		{
+			serialbus_end_tx();
+			return;
+		}
+		if((*buff)[charIndex])
+		{
 			/* Put data into buffer, sends the data */
 			USART1.TXDATAL = (*buff)[charIndex++];
 		}
@@ -472,16 +472,15 @@ ISR(USART1_DRE_vect)
 	}
 }
 
-
 /**
 
 */
 ISR(USART1_RXC_vect)
 {
-	uint8_t rx_char = USART1_get_data();	
-	
+	uint8_t rx_char = USART1_get_data();
+
 	if(g_serialbus_usart_number == USART_1)
 	{
 		serial_Rx(rx_char);
-    }
+	}
 }
