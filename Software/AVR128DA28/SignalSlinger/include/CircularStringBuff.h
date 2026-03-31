@@ -34,9 +34,6 @@ class CircularStringBuff {
 	void reset(void);
 	bool empty(void) const;
 	bool full(void) const;
-	size_t capacity(void) const;
-	size_t size(void) const;
-	char pop(void);
 
 	private:
 	// Non-copyable (C++98 style)

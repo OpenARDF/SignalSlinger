@@ -35,15 +35,6 @@
 #include <stdio.h>
 #include "atmel_start_pins.h"
 
-#ifdef ATMEL_STUDIO_7
-#include <avr/eeprom.h>
-#endif /* ATMEL_STUDIO_7 */
-
-#ifdef ATMEL_STUDIO_7
-#include <string.h>
-#include <stdio.h>
-#endif /* ATMEL_STUDIO_7 */
-
 volatile uint16_t g_serial_timeout_ticks = 200;
 volatile USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
 static volatile bool g_serialbus_disabled = true;

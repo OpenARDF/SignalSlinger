@@ -125,22 +125,4 @@ bool setBoostEnable(bool onoff);
  */
 bool getExtBatLSEnable(void);
 
-class binio
-{
-//variables
-public:
-protected:
-private:
-
-//functions
-public:
-	binio();
-	~binio();
-protected:
-private:
-	binio( const binio &c );
-	binio& operator=( const binio &c );
-
-}; //binio
-
 #endif //__BINIO_H__

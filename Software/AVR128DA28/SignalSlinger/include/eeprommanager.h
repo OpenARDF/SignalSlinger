@@ -27,10 +27,6 @@
 
 #include "defs.h"
 
-#ifdef ATMEL_STUDIO_7
-#include <avr/eeprom.h>
-#endif  /* ATMEL_STUDIO_7 */
-
 #include <time.h>
 #include <avr/eeprom.h>
 
@@ -200,8 +196,7 @@ class EepromManager
 
 	/*functions */
 	public:
-	EepromManager();
-	~EepromManager();
+	EepromManager() {}
 
 	static const struct EE_prom ee_vars;
 

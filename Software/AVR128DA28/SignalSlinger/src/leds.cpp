@@ -58,16 +58,6 @@ static void text_buff_reset_and_disable_manual_atomic(void)
 	EXIT_CRITICAL(leds_text_buff_reset);
 }
 
-// default constructor
-leds::leds()
-{
-} //leds
-
-// default destructor
-leds::~leds()
-{
-} //~leds
-
 /* LED enunciation timer interrupt.  This handler manages the blink state
  * machines for the red and green LEDs and enforces the overall timeout that
  * turns the indicators off after a period of inactivity.

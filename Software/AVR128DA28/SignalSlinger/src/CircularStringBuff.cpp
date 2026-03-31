@@ -54,30 +54,6 @@ bool CircularStringBuff::full() const
 	return (full_);
 }
 
-size_t CircularStringBuff::capacity() const
-{
-	return (max_size_);
-}
-
-size_t CircularStringBuff::size() const
-{
-	size_t size = max_size_;
-
-	if(!full_)
-	{
-		if(head_ >= tail_)
-		{
-			size = head_ - tail_;
-		}
-		else
-		{
-			size = max_size_ + head_ - tail_;
-		}
-	}
-
-	return (size);
-}
-
 /**
  * Place another item in the buffer
  */
@@ -93,33 +69,6 @@ void CircularStringBuff::put(char item)
 	head_ = (head_ + 1) % max_size_;
 
 	full_ = head_ == tail_;
-}
-
-/**
- * Return the last put item and remove it from the buffer
- */
-char CircularStringBuff::pop()
-{
-	if(empty())
-	{
-		return ('\0');
-	}
-
-	/*Read data and decrement the head (we now have one more free space) */
-
-	if(head_ == 0)
-	{
-		head_ = max_size_ - 1;
-	}
-	else
-	{
-		--head_;
-	}
-
-	char val = buf_[head_];
-	full_ = false;
-
-	return (val);
 }
 
 /**

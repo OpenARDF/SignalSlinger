@@ -36,9 +36,6 @@ private:
 
 //functions
 public:
-	leds();
-	~leds();
-	
 	void init(void);
 	void init(Blink_t setBlink);
 	void blink(Blink_t blinkMode);
@@ -47,7 +44,6 @@ public:
 	void deactivate(void);
 	void setRed(bool on);
 	void setGreen(bool on);
-	void resume(void);
 	void sendCode(char* str);
 	
 protected:

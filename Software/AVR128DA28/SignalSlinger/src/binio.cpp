@@ -40,18 +40,6 @@ void setExtBatLSEnable(bool state);
 void boost_enable(bool state);
 #endif
 
-// default constructor
-binio::binio()
-{
-	portDdebounced = 0;
-	portAdebounced = 0;
-} // binio
-
-// default destructor
-binio::~binio()
-{
-} //~binio
-
 // This function is called approximately each 1/60 to 1/30 sec.
 void debounce(void)
 {

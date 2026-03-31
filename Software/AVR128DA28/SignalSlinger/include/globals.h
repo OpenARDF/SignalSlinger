@@ -34,7 +34,6 @@ extern bool g_si5351_initialized;
 extern volatile Frequency_Hz g_80m_frequency;
 extern volatile uint16_t g_80m_power_level_mW;
 extern volatile Frequency_Hz g_rtty_offset;
-extern uint16_t g_80m_power_table[16];
 extern volatile bool g_enable_boost_regulator;
 extern volatile bool g_enable_external_battery_control;
 

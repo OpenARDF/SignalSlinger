@@ -40,7 +40,6 @@ static volatile bool g_drain_voltage_enabled = false;
 static volatile bool g_transmitter_keyed = false;
 static volatile bool g_disable_transmissions = false;
 
-uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
 volatile bool g_enable_boost_regulator = false;
 
 /*

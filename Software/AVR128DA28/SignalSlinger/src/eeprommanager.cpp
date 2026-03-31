@@ -32,13 +32,6 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
-#ifdef ATMEL_STUDIO_7
-#include <avr/pgmspace.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#endif /* ATMEL_STUDIO_7 */
-
 /***********************************************************************
  * Global Variables & String Constants
  *
@@ -123,20 +116,6 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00000000,                                   //  Guard
         0x00                                          //  uint8_t device_enabled
 };
-
-/* default constructor */
-EepromManager::EepromManager()
-{
-} /*EepromManager */
-
-/* default destructor */
-EepromManager::~EepromManager()
-{
-} /*~EepromManager */
-
-#include <inttypes.h>
-#include <avr/eeprom.h>
-#include <avr/io.h>
 
 typedef uint16_t eeprom_addr_t;
 
@@ -618,7 +597,6 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Foxoring_pattern_text, (void *)g_messages_text[FOXORING_PATTERN_TEXT]);
 	updateEEPROMVar(StationID_text, (void *)g_messages_text[STATION_ID]);
 	updateEEPROMVar(UnlockCode, (void *)g_unlockCode);
-	updateEEPROMVar(Frequency, (void *)&g_frequency);
 	updateEEPROMVar(RTTY_offset, (void *)&g_rtty_offset);
 	updateEEPROMVar(RF_Power, (void *)&g_80m_power_level_mW);
 	updateEEPROMVar(Pattern_Code_Speed, (void *)&g_evteng_pattern_codespeed);
