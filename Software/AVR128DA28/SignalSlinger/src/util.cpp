@@ -299,6 +299,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			const char *p = partialString + 1;
 			time_t value = atol(p);
 			time_t newEpoch = epoch;
+			const char *colon = strchr(p, ':');
 
 			// ---- Case: ±HHMM  (4 digits) ----
 			if(isdigit(p[0]) && isdigit(p[1]) &&
@@ -306,6 +307,49 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			{
 				int H = (p[0] - '0') * 10 + (p[1] - '0');
 				int M = (p[2] - '0') * 10 + (p[3] - '0');
+
+				newEpoch += sign * (H * 3600 + M * 60);
+			}
+			else if(colon)
+			{
+				size_t hour_len = (size_t)(colon - p);
+				const char *minutes_str = colon + 1;
+				size_t minute_len = strlen(minutes_str);
+				int H = 0;
+				int M = 0;
+				bool valid = true;
+
+				if(strchr(minutes_str, ':') || (hour_len > 3) || (minute_len == 0) || (minute_len > 2))
+				{
+					return null;
+				}
+
+				for(size_t i = 0; i < hour_len; i++)
+				{
+					if(!isdigit((unsigned char)p[i]))
+					{
+						valid = false;
+						break;
+					}
+
+					H = (H * 10) + (p[i] - '0');
+				}
+
+				for(size_t i = 0; valid && (i < minute_len); i++)
+				{
+					if(!isdigit((unsigned char)minutes_str[i]))
+					{
+						valid = false;
+						break;
+					}
+
+					M = (M * 10) + (minutes_str[i] - '0');
+				}
+
+				if(!valid || (M > 59))
+				{
+					return null;
+				}
 
 				newEpoch += sign * (H * 3600 + M * 60);
 			}

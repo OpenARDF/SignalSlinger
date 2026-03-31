@@ -820,7 +820,7 @@ static bool parseFinishOffsetToEpoch(const char *offsetString, time_t *finishEpo
 			}
 
 			size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
-			if((hour_len == 0) || (hour_len > 3))
+			if(hour_len > 3)
 			{
 				break;
 			}
