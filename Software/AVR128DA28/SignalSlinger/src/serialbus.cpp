@@ -293,6 +293,7 @@ void USART0_initialization(uint32_t baud)
 void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
+	serialbus_reset_rx_parser();
 	serialbus_end_tx();
 	serialbus_echo_fifo_reset();
 
@@ -354,6 +355,7 @@ void serialbus_disable(void)
 	}
 	
 	memset((void*)rx_buffer, 0, sizeof(rx_buffer));
+	serialbus_reset_rx_parser();
 	serialbus_echo_fifo_reset();
 
 	for(bufferIndex=0; bufferIndex<SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)

@@ -45,7 +45,7 @@
 #define SERIALBUS_MAX_TX_MSG_LENGTH 41
 #define SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS 3
 #define SERIALBUS_MAX_MSG_ID_LENGTH 3
-#define SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH 6
+#define SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH 16
 
 #define SERIALBUS_MAX_COMMANDLINE_LENGTH ((1 + SERIALBUS_MAX_MSG_FIELD_LENGTH) * SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS)
 
@@ -138,6 +138,16 @@ void serialbus_flush_rx(void);
  * Immediately turns off receiver and flushes receive buffer
  */
 void serialbus_disable(void);
+
+/**
+ * Reset any partially-parsed ISR RX state while preserving mesh-mode selection.
+ */
+void serialbus_reset_rx_parser(void);
+
+/**
+ * Advance the ISR RX parser idle timer by one TCB2 tick.
+ */
+void serialbus_rx_idle_tick(void);
 
 /**
  * Stop any active transmission and reset transmit state.

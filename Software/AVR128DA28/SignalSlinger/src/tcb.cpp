@@ -188,6 +188,7 @@ ISR(TCB2_INT_vect)
 	{
 		if(g_i2c0_timeout_ticks) g_i2c0_timeout_ticks--;
 		if(g_serial_timeout_ticks) g_serial_timeout_ticks--;
+		serialbus_rx_idle_tick();
 	}
 	
 	TCB2.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm);
