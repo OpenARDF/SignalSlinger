@@ -45,6 +45,59 @@ uint8_t char2bcd(char c[]);
 uint8_t bcd2dec(uint8_t val);
 time_t epoch_from_ltm(tm *ltm);
 
+static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char * const *table)
+{
+	if((index >= count) || !table[index])
+	{
+		return true;
+	}
+
+	strcpy(str, table[index]);
+	return false;
+}
+
+static const char * const g_function_text[] =
+{
+	NULL,
+	"QRP Transmitter",
+	"Radio Orienteering",
+	"Signal Generator"
+};
+
+static const char * const g_fox_text[USE_CURRENT_FOX] =
+{
+	"Beacon \"MO\"",
+	"Classic Fox 1 \"MOE\"",
+	"Classic Fox 2 \"MOI\"",
+	"Classic Fox 3 \"MOS\"",
+	"Classic Fox 4 \"MOH\"",
+	"Classic Fox 5 \"MO5\"",
+	"Spectator \"S\"",
+	"Sprint Slow 1 \"ME\"",
+	"Sprint Slow 2 \"MI\"",
+	"Sprint Slow 3 \"MS\"",
+	"Sprint Slow 4 \"MH\"",
+	"Sprint Slow 5 \"M5\"",
+	"Sprint Fast 1 \"OE\"",
+	"Sprint Fast 2 \"OI\"",
+	"Sprint Fast 3 \"OS\"",
+	"Sprint Fast 4 \"OH\"",
+	"Sprint Fast 5 \"O5\"",
+	"Foxoring \"Low Freq\" Fox",
+	"Foxoring \"Medium Freq\" Fox",
+	"Foxoring \"High Freq\" Fox",
+	"Frequency Test Beacon"
+};
+
+static const char * const g_event_text[EVENT_NUMBER_OF_EVENTS] =
+{
+	"None Set",
+	"Classic",
+	"Sprint",
+	"Foxoring",
+	"Blind ARDF"
+};
+
 /**
  * Returns a-b
  * It appears difftime might not be handling subtraction of unsigned arguments correctly with current compiler. This function avoids any problems.
@@ -252,7 +305,7 @@ static void formatTimestamp(char *buf,
 }
 
 // =====================================================
-// MAIN FUNCTION — Complete, Refactored, With New Rules
+// MAIN FUNCTION - Complete, Refactored, With New Rules
 // =====================================================
 char *completeTimeString(const char *partialString, time_t *currentEpoch)
 {
@@ -301,7 +354,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			time_t newEpoch = epoch;
 			const char *colon = strchr(p, ':');
 
-			// ---- Case: ±HHMM  (4 digits) ----
+			// ---- Case: +/-HHMM  (4 digits) ----
 			if(isdigit(p[0]) && isdigit(p[1]) &&
 			   isdigit(p[2]) && isdigit(p[3]) && p[4] == '\0')
 			{
@@ -355,7 +408,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			}
 			else
 			{
-				// ---- Case: ±N(unit) ----
+				// ---- Case: +/-N(unit) ----
 				// Where unit = h/H (hours), m/M (minutes), d/D (days)
 				while(*p && isdigit(*p))
 					p++;
@@ -784,35 +837,7 @@ bool frequencyVal(char *str, Frequency_Hz *result)
  */
 bool function2Text(char *str, Function_t fun)
 {
-	bool failure = false;
-
-	switch(fun)
-	{
-		case Function_ARDF_TX:
-		{
-			sprintf(str, "Radio Orienteering");
-		}
-		break;
-
-		case Function_QRP_TX:
-		{
-			sprintf(str, "QRP Transmitter");
-		}
-		break;
-
-		case Function_Signal_Gen:
-		{
-			sprintf(str, "Signal Generator");
-		}
-		break;
-
-		default:
-		{
-			failure = true;
-		}
-	}
-
-	return failure;
+	return lookupEnumText(str, (uint8_t)fun, (uint8_t)(sizeof(g_function_text) / sizeof(g_function_text[0])), g_function_text);
 }
 
 /**
@@ -824,144 +849,7 @@ bool function2Text(char *str, Function_t fun)
  */
 bool fox2Text(char *str, Fox_t fox)
 {
-	bool failure = false;
-
-	switch(fox)
-	{
-		case BEACON:
-		{
-			sprintf(str, "Beacon \"MO\"");
-		}
-		break;
-
-		case FOX_1:
-		{
-			sprintf(str, "Classic Fox 1 \"MOE\"");
-		}
-		break;
-
-		case FOX_2:
-		{
-			sprintf(str, "Classic Fox 2 \"MOI\"");
-		}
-		break;
-
-		case FOX_3:
-		{
-			sprintf(str, "Classic Fox 3 \"MOS\"");
-		}
-		break;
-
-		case FOX_4:
-		{
-			sprintf(str, "Classic Fox 4 \"MOH\"");
-		}
-		break;
-
-		case FOX_5:
-		{
-			sprintf(str, "Classic Fox 5 \"MO5\"");
-		}
-		break;
-
-		case SPECTATOR:
-		{
-			sprintf(str, "Spectator \"S\"");
-		}
-		break;
-
-		case SPRINT_S1:
-		{
-			sprintf(str, "Sprint Slow 1 \"ME\"");
-		}
-		break;
-
-		case SPRINT_S2:
-		{
-			sprintf(str, "Sprint Slow 2 \"MI\"");
-		}
-		break;
-
-		case SPRINT_S3:
-		{
-			sprintf(str, "Sprint Slow 3 \"MS\"");
-		}
-		break;
-
-		case SPRINT_S4:
-		{
-			sprintf(str, "Sprint Slow 4 \"MH\"");
-		}
-		break;
-
-		case SPRINT_S5:
-		{
-			sprintf(str, "Sprint Slow 5 \"M5\"");
-		}
-		break;
-
-		case SPRINT_F1:
-		{
-			sprintf(str, "Sprint Fast 1 \"OE\"");
-		}
-		break;
-
-		case SPRINT_F2:
-		{
-			sprintf(str, "Sprint Fast 2 \"OI\"");
-		}
-		break;
-
-		case SPRINT_F3:
-		{
-			sprintf(str, "Sprint Fast 3 \"OS\"");
-		}
-		break;
-
-		case SPRINT_F4:
-		{
-			sprintf(str, "Sprint Fast 4 \"OH\"");
-		}
-		break;
-
-		case SPRINT_F5:
-		{
-			sprintf(str, "Sprint Fast 5 \"O5\"");
-		}
-		break;
-
-		case FOXORING_FOX1:
-		{
-			sprintf(str, "Foxoring \"Low Freq\" Fox");
-		}
-		break;
-
-		case FOXORING_FOX2:
-		{
-			sprintf(str, "Foxoring \"Medium Freq\" Fox");
-		}
-		break;
-
-		case FOXORING_FOX3:
-		{
-			sprintf(str, "Foxoring \"High Freq\" Fox");
-		}
-		break;
-
-		case FREQUENCY_TEST_BEACON:
-		{
-			sprintf(str, "Frequency Test Beacon");
-		}
-		break;
-
-		default:
-		{
-			failure = true;
-		}
-		break;
-	}
-
-	return (failure);
+	return lookupEnumText(str, (uint8_t)fox, USE_CURRENT_FOX, g_fox_text);
 }
 
 /**
@@ -973,56 +861,15 @@ bool fox2Text(char *str, Fox_t fox)
  */
 bool event2Text(char *str, Event_t evt)
 {
-	bool failure = false;
-
-	switch(evt)
-	{
-		case EVENT_CLASSIC:
-		{
-			sprintf(str, "Classic");
-		}
-		break;
-
-		case EVENT_SPRINT:
-		{
-			sprintf(str, "Sprint");
-		}
-		break;
-
-		case EVENT_FOXORING:
-		{
-			sprintf(str, "Foxoring");
-		}
-		break;
-
-		case EVENT_BLIND_ARDF:
-		{
-			sprintf(str, "Blind ARDF");
-		}
-		break;
-
-		case EVENT_NONE:
-		{
-			sprintf(str, "None Set");
-		}
-		break;
-
-		default:
-		{
-			failure = true;
-		}
-		break;
-	}
-
-	return (failure);
+	return lookupEnumText(str, (uint8_t)evt, EVENT_NUMBER_OF_EVENTS, g_event_text);
 }
 
 /*-------------------------------------------------------------
  *  float_to_parts_signed
  *  ---------------------
  *  Split a float (positive or negative) into:
- *      – characteristic : signed integer part      (-32768 … 32767)
- *      – mantissa       : first decimal digit   (0 … 9)
+ *      - characteristic : signed integer part      (-32768 to 32767)
+ *      - mantissa       : first decimal digit      (0 to 9)
  *
  *  Returns:  false  ? success
  *            true   ? error   (bad args, NaN/Inf, out of range)
@@ -1035,7 +882,7 @@ bool float_to_parts_signed(float value,
 	if(integerPart == NULL || fractionPart == NULL)
 		return true;
 
-	/* reject NaN or ±Inf */
+	/* reject NaN or +/-Inf */
 	if(isnanf(value) || isinff(value))
 		return true;
 
