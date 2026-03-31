@@ -45,7 +45,7 @@ uint8_t char2bcd(char c[]);
 uint8_t bcd2dec(uint8_t val);
 time_t epoch_from_ltm(tm *ltm);
 
-static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char * const *table)
+static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char *const *table)
 {
 	if((index >= count) || !table[index])
 	{
@@ -56,47 +56,44 @@ static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char *
 	return false;
 }
 
-static const char * const g_function_text[] =
-{
-	NULL,
-	"QRP Transmitter",
-	"Radio Orienteering",
-	"Signal Generator"
-};
+static const char *const g_function_text[] =
+    {
+        NULL,
+        "QRP Transmitter",
+        "Radio Orienteering",
+        "Signal Generator"};
 
-static const char * const g_fox_text[USE_CURRENT_FOX] =
-{
-	"Beacon \"MO\"",
-	"Classic Fox 1 \"MOE\"",
-	"Classic Fox 2 \"MOI\"",
-	"Classic Fox 3 \"MOS\"",
-	"Classic Fox 4 \"MOH\"",
-	"Classic Fox 5 \"MO5\"",
-	"Spectator \"S\"",
-	"Sprint Slow 1 \"ME\"",
-	"Sprint Slow 2 \"MI\"",
-	"Sprint Slow 3 \"MS\"",
-	"Sprint Slow 4 \"MH\"",
-	"Sprint Slow 5 \"M5\"",
-	"Sprint Fast 1 \"OE\"",
-	"Sprint Fast 2 \"OI\"",
-	"Sprint Fast 3 \"OS\"",
-	"Sprint Fast 4 \"OH\"",
-	"Sprint Fast 5 \"O5\"",
-	"Foxoring \"Low Freq\" Fox",
-	"Foxoring \"Medium Freq\" Fox",
-	"Foxoring \"High Freq\" Fox",
-	"Frequency Test Beacon"
-};
+static const char *const g_fox_text[USE_CURRENT_FOX] =
+    {
+        "Beacon \"MO\"",
+        "Classic Fox 1 \"MOE\"",
+        "Classic Fox 2 \"MOI\"",
+        "Classic Fox 3 \"MOS\"",
+        "Classic Fox 4 \"MOH\"",
+        "Classic Fox 5 \"MO5\"",
+        "Spectator \"S\"",
+        "Sprint Slow 1 \"ME\"",
+        "Sprint Slow 2 \"MI\"",
+        "Sprint Slow 3 \"MS\"",
+        "Sprint Slow 4 \"MH\"",
+        "Sprint Slow 5 \"M5\"",
+        "Sprint Fast 1 \"OE\"",
+        "Sprint Fast 2 \"OI\"",
+        "Sprint Fast 3 \"OS\"",
+        "Sprint Fast 4 \"OH\"",
+        "Sprint Fast 5 \"O5\"",
+        "Foxoring \"Low Freq\" Fox",
+        "Foxoring \"Medium Freq\" Fox",
+        "Foxoring \"High Freq\" Fox",
+        "Frequency Test Beacon"};
 
-static const char * const g_event_text[EVENT_NUMBER_OF_EVENTS] =
-{
-	"None Set",
-	"Classic",
-	"Sprint",
-	"Foxoring",
-	"Blind ARDF"
-};
+static const char *const g_event_text[EVENT_NUMBER_OF_EVENTS] =
+    {
+        "None Set",
+        "Classic",
+        "Sprint",
+        "Foxoring",
+        "Blind ARDF"};
 
 /**
  * Returns a-b
