@@ -58,7 +58,7 @@ static uint8_t g_serial_rx_field_index = 0;
 static uint8_t g_serial_rx_field_len = 0;
 static int g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
 static uint8_t g_serial_rx_escapeCount = 0;
-static volatile uint16_t g_serial_rx_idle_ticks = 0;
+static volatile uint32_t g_serial_rx_idle_ticks = 0;
 static bool g_serial_rx_receiving_msg = false;
 static bool g_serial_rx_ignoreAllInput = false;
 static bool g_serial_rx_inEscapeSequence = false;
@@ -82,14 +82,14 @@ static bool serialbus_rx_is_delayed_submit_command(void)
 	       g_serial_rx_buff && (g_serial_rx_buff->fields[SB_FIELD1][0] == 'T');
 }
 
-static void serial_rx_idle_ticks_write_atomic(uint16_t value)
+static void serial_rx_idle_ticks_write_atomic(uint32_t value)
 {
 	ENTER_CRITICAL(serial_rx_idle_ticks_write);
 	g_serial_rx_idle_ticks = value;
 	EXIT_CRITICAL(serial_rx_idle_ticks_write);
 }
 
-static uint16_t serialbus_rx_idle_reload_ticks(void)
+static uint32_t serialbus_rx_idle_reload_ticks(void)
 {
 	if(g_serial_rx_invalidCommand || g_serial_rx_inEscapeSequence || g_serial_rx_ignoreAllInput)
 	{
