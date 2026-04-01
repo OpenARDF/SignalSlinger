@@ -43,77 +43,77 @@
 const struct EE_prom EEMEM EepromManager::ee_vars =
     {
         0x00,                                         // 	uint16_t eeprom_initialization_flag;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   // 	time_t event_start_epoch;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   //  time_t event_finish_epoch;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	Guard
-        "\0\0\0\0\0\0\0\0\0",                         // 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
+        "\0\0\0\0\0\0\0\0\0",                         // 	uint8_t reserved_unlock_code[MAX_UNLOCK_CODE_LENGTH + 2];
+        0x00000000,                                   // 	reserved
         (Fox_t)0x00,                                  // Fox_t fox_setting_none;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         (Fox_t)0x00,                                  // Fox_t fox_setting_classic;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         (Fox_t)0x00,                                  // Fox_t fox_setting_sprint;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         (Fox_t)0x00,                                  // Fox_t fox_setting_foxoring;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         (Fox_t)0x00,                                  // Fox_t fox_setting_blind;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00,                                         // 	uint8_t utc_offset;
-        0x00000000,                                   // 	Guard
-        0x00000000,                                   // 	uint32_t rtty_offset;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
+        0x00000000,                                   // 	uint32_t reserved_rtty_offset;
+        0x00000000,                                   // 	reserved
         0x0000,                                       // 	uint16_t rf_power;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00,                                         // 	uint8_t id_codespeed;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00,                                         // 	uint8_t pattern_codespeed;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00,                                         // 	uint8_t foxoring_pattern_codespeed;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x0000,                                       // 	int16_t off_air_seconds;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x0000,                                       // 	int16_t on_air_seconds;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x0000,                                       // 	int16_t ID_period_seconds;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x0000,                                       // 	int16_t intra_cycle_delay_time;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         (Event_t)0x00,                                // Event_t event_setting;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   // uint32_t frequency;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   // uint32_t frequency_low;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   //	uint32_t frequency_med;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   // uint32_t frequency_hi;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x00000000,                                   // uint32_t frequency_beacon;
-        0x00000000,                                   // 	Guard
-        0x00,                                         // 	uint8_t master_setting;
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
+        0x00,                                         // 	uint8_t reserved_master_setting;
+        0x00000000,                                   // 	reserved
         0x00000000,                                   //  float voltage_threshold
-        0x00000000,                                   // 	Guard
+        0x00000000,                                   // 	reserved
         0x0000,                                       //  uint16_t clock_calibration
-        0x00000000,                                   //  Guard
+        0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t days_to_run
-        0x00000000,                                   //  Guard
-        0x0000,                                       // uint16_t i2c_failure_count;
-        0x00000000,                                   //  Guard
+        0x00000000,                                   //  reserved
+        0x0000,                                       // uint16_t reserved_i2c_failure_count;
+        0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t function
-        0x00000000,                                   //  Guard
+        0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t enable_boost_regulator
-        0x00000000,                                   //  Guard
+        0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t enable_external_battery_control
-        0x00000000,                                   //  Guard
+        0x00000000,                                   //  reserved
         0x00                                          //  uint8_t device_enabled
 };
 
@@ -270,6 +270,14 @@ static void avr_eeprom_initialize_string(eeprom_addr_t index, const char *value,
 	avr_eeprom_write_byte(index + count, '\0');
 }
 
+static void avr_eeprom_write_zero_bytes(eeprom_addr_t index, uint8_t length)
+{
+	for(uint8_t i = 0; i < length; i++)
+	{
+		avr_eeprom_write_byte(index + i, 0);
+	}
+}
+
 static Fox_t avr_eeprom_read_clamped_fox(eeprom_addr_t index, Fox_t max_value)
 {
 	return (Fox_t)CLAMP(BEACON, avr_eeprom_read_byte_at(index), max_value);
@@ -290,10 +298,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 			avr_eeprom_write_string_if_changed((eeprom_addr_t)v, (const char *)val, MAX_PATTERN_TEXT_LENGTH);
 			break;
 
-		case UnlockCode:
-			avr_eeprom_write_string_if_changed((eeprom_addr_t)v, (const char *)val, MAX_UNLOCK_CODE_LENGTH);
-			break;
-
 		case Id_codespeed:
 		case Pattern_Code_Speed:
 		case Foxoring_Pattern_Code_Speed:
@@ -302,7 +306,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Fox_setting_sprint:
 		case Fox_setting_foxoring:
 		case Fox_setting_blind:
-		case Master_setting:
 		case Event_setting:
 		case Utc_offset:
 		case Days_to_run:
@@ -320,7 +323,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Frequency_Beacon:
 		case Event_start_epoch:
 		case Event_finish_epoch:
-		case RTTY_offset:
 			avr_eeprom_write_dword_if_changed((eeprom_addr_t)v, *(const uint32_t *)val);
 			break;
 
@@ -331,7 +333,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Intra_Cycle_Delay_Seconds:
 		case Eeprom_initialization_flag:
 		case Clock_calibration:
-		case I2C_failure_count:
 			avr_eeprom_write_word_if_changed((eeprom_addr_t)v, *(const uint16_t *)val);
 			break;
 
@@ -367,8 +368,6 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Pattern_text, (void *)g_messages_text[PATTERN_TEXT]);
 	updateEEPROMVar(Foxoring_pattern_text, (void *)g_messages_text[FOXORING_PATTERN_TEXT]);
 	updateEEPROMVar(StationID_text, (void *)g_messages_text[STATION_ID]);
-	updateEEPROMVar(UnlockCode, (void *)g_unlockCode);
-	updateEEPROMVar(RTTY_offset, (void *)&g_rtty_offset);
 	updateEEPROMVar(RF_Power, (void *)&g_80m_power_level_mW);
 	updateEEPROMVar(Pattern_Code_Speed, (void *)&g_evteng_pattern_codespeed);
 	updateEEPROMVar(Foxoring_Pattern_Code_Speed, (void *)&g_foxoring_pattern_codespeed);
@@ -379,7 +378,6 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Voltage_threshold, (void *)&g_internal_voltage_low_threshold);
 	updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
-	updateEEPROMVar(I2C_failure_count, (void *)&g_i2c_failure_count);
 	updateEEPROMVar(Function, (void *)&g_function);
 	updateEEPROMVar(Enable_Boost_Regulator, (void *)&g_enable_boost_regulator);
 	updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
@@ -393,7 +391,7 @@ bool EepromManager::readNonVols(void)
 
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG) /* EEPROM is up to date */
 	{
-		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT; // (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.master_setting));
+		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
 		g_evteng_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, avr_eeprom_read_byte_at(Id_codespeed), MAX_CODE_SPEED_WPM);
 		g_event = (Event_t)avr_eeprom_read_byte_at(Event_setting);
 		g_frequency = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency), TX_MAXIMUM_FREQUENCY);
@@ -423,9 +421,6 @@ bool EepromManager::readNonVols(void)
 		avr_eeprom_read_string(station_id_text_local, sizeof(station_id_text_local), StationID_text, MAX_PATTERN_TEXT_LENGTH);
 		messages_text_slot_publish_atomic(STATION_ID, station_id_text_local);
 
-		avr_eeprom_read_string((char *)g_unlockCode, sizeof(g_unlockCode), UnlockCode, MAX_UNLOCK_CODE_LENGTH);
-
-		g_rtty_offset = avr_eeprom_read_dword_at(RTTY_offset);
 		g_80m_power_level_mW = CLAMP(MIN_RF_POWER_MW, avr_eeprom_read_word_at(RF_Power), MAX_TX_POWER_80M_MW);
 
 		g_evteng_pattern_codespeed = CLAMP(MIN_CODE_SPEED_WPM, avr_eeprom_read_byte_at(Pattern_Code_Speed), MAX_CODE_SPEED_WPM);
@@ -441,8 +436,6 @@ bool EepromManager::readNonVols(void)
 		g_clock_calibration = avr_eeprom_read_word_at(Clock_calibration);
 
 		g_days_to_run = avr_eeprom_read_byte_at(Days_to_run);
-
-		g_i2c_failure_count = avr_eeprom_read_word_at(I2C_failure_count);
 
 		g_function = (Function_t)avr_eeprom_read_byte_at(Function);
 
@@ -470,7 +463,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
 
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
-		avr_eeprom_write_byte(Master_setting, g_isMaster);
+		avr_eeprom_write_byte(Reserved_Master_Setting, 0);
 
 		fox_setting_slot_write_atomic(EVENT_NONE, EEPROM_FOX_SETTING_NONE_DEFAULT);
 		avr_eeprom_write_byte(Fox_setting_none, (uint8_t)g_fox[EVENT_NONE]);
@@ -523,12 +516,8 @@ bool EepromManager::initializeEEPROMVars(void)
 		avr_eeprom_initialize_string(Foxoring_pattern_text, EEPROM_FOXORING_PATTERN_DEFAULT, MAX_PATTERN_TEXT_LENGTH);
 		messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, EEPROM_FOXORING_PATTERN_DEFAULT);
 
-		avr_eeprom_initialize_string(UnlockCode, EEPROM_DTMF_UNLOCK_CODE_DEFAULT, MAX_UNLOCK_CODE_LENGTH);
-		strncpy((char *)g_unlockCode, EEPROM_DTMF_UNLOCK_CODE_DEFAULT, sizeof(g_unlockCode) - 1);
-		g_unlockCode[sizeof(g_unlockCode) - 1] = '\0';
-
-		g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
-		avr_eeprom_write_dword(RTTY_offset, g_rtty_offset);
+		avr_eeprom_write_zero_bytes(Reserved_Unlock_Code, MAX_UNLOCK_CODE_LENGTH + 2);
+		avr_eeprom_write_dword(Reserved_RTTY_Offset, 0);
 
 		g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
 		avr_eeprom_write_word(RF_Power, g_80m_power_level_mW);
@@ -560,8 +549,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		g_days_to_run = 1;
 		avr_eeprom_write_byte(Days_to_run, g_days_to_run);
 
-		g_i2c_failure_count = 0;
-		avr_eeprom_write_word(I2C_failure_count, g_i2c_failure_count);
+		avr_eeprom_write_word(Reserved_I2C_Failure_Count, 0);
 
 		g_function = EEPROM_FUNCTION_DEFAULT;
 		avr_eeprom_write_byte(Function, (uint8_t)g_function);
