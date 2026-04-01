@@ -23,9 +23,26 @@
  */
 
 #include <tcb.h>
+#include <atomic.h>
 #include "globals.h"
 
-static uint32_t g_ms_counter = 0;
+static volatile uint32_t g_ms_counter = 0;
+
+static uint32_t ms_counter_read_atomic(void)
+{
+	uint32_t value;
+	ENTER_CRITICAL(tcb_ms_counter_read);
+	value = g_ms_counter;
+	EXIT_CRITICAL(tcb_ms_counter_read);
+	return value;
+}
+
+static void ms_counter_write_atomic(uint32_t value)
+{
+	ENTER_CRITICAL(tcb_ms_counter_write);
+	g_ms_counter = value;
+	EXIT_CRITICAL(tcb_ms_counter_write);
+}
 
 /**
  * \brief Initialize tcb interface
@@ -120,7 +137,7 @@ bool util_delay_ms(uint32_t delayValue)
 	{
 		if(counting)
 		{
-			if(!g_ms_counter)
+			if(!ms_counter_read_atomic())
 			{
  				TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 //				TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
@@ -132,10 +149,10 @@ bool util_delay_ms(uint32_t delayValue)
 			{
  				TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 // 				TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
- 				TCA0.SINGLE.CNT = 0x0000;
+				TCA0.SINGLE.CNT = 0x0000;
 				countdownValue = delayValue;
-				g_ms_counter = delayValue;
- 				TCA0.SINGLE.INTCTRL = 1 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: enabled */
+				ms_counter_write_atomic(delayValue);
+				TCA0.SINGLE.INTCTRL = 1 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: enabled */
  				TCA0.SINGLE.CTRLA = 0x01; /* Enable TCA0 */
 				counting = true;
 				return(true);
@@ -147,7 +164,7 @@ bool util_delay_ms(uint32_t delayValue)
 // 			TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
  			TCA0.SINGLE.CNT = 0x0000;
 			countdownValue = delayValue;
-			g_ms_counter = delayValue;
+			ms_counter_write_atomic(delayValue);
  			TCA0.SINGLE.INTCTRL = 1 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: enabled */
  			TCA0.SINGLE.CTRLA = 0x01; /* Enable TCA0 */
 			counting = true;
@@ -160,7 +177,7 @@ bool util_delay_ms(uint32_t delayValue)
 		delay_initialized = false;
 		counting = false;
 		countdownValue = 0;
-		g_ms_counter = 0;
+		ms_counter_write_atomic(0);
 		return(false); /* timer reset */
 	}
 	

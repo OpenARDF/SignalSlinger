@@ -35,6 +35,7 @@
 
 #include <driver_init.h>
 #include <compiler.h>
+#include <atomic.h>
 #include <ctype.h> /* toupper() */
 #include <string.h>
 #include "serialbus.h"
@@ -62,6 +63,13 @@ static bool g_serial_rx_ignoreAllInput = false;
 static bool g_serial_rx_inEscapeSequence = false;
 static volatile bool g_serial_rx_useMeshMode = false;
 static bool g_serial_rx_invalidCommand = false;
+
+static void serial_rx_idle_ticks_write_atomic(uint16_t value)
+{
+	ENTER_CRITICAL(serial_rx_idle_ticks_write);
+	g_serial_rx_idle_ticks = value;
+	EXIT_CRITICAL(serial_rx_idle_ticks_write);
+}
 
 static uint16_t serialbus_rx_idle_reload_ticks(void)
 {
@@ -99,7 +107,7 @@ void serialbus_reset_rx_parser(void)
 	g_serial_rx_field_len = 0;
 	g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
 	g_serial_rx_escapeCount = 0;
-	g_serial_rx_idle_ticks = 0;
+	serial_rx_idle_ticks_write_atomic(0);
 	g_serial_rx_receiving_msg = false;
 	g_serial_rx_ignoreAllInput = false;
 	g_serial_rx_inEscapeSequence = false;
@@ -151,7 +159,7 @@ void serial_Rx(uint8_t rx_char)
 
 	if(g_serial_rx_buff)
 	{
-		g_serial_rx_idle_ticks = serialbus_rx_idle_reload_ticks();
+		serial_rx_idle_ticks_write_atomic(serialbus_rx_idle_reload_ticks());
 
 		if(rx_char == 0x08)
 		{
@@ -425,7 +433,7 @@ void serial_Rx(uint8_t rx_char)
 				(void)sb_echo_char_isr(echo_char); /* Non-blocking ISR-safe echo enqueue */
 			}
 
-			g_serial_rx_idle_ticks = serialbus_rx_idle_reload_ticks();
+			serial_rx_idle_ticks_write_atomic(serialbus_rx_idle_reload_ticks());
 		}
 	}
 }

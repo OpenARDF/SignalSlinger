@@ -1080,12 +1080,13 @@ int main(void)
 	TCB0.INTCTRL = 0; /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0;   /* Disable timer */
 	/* The external battery control load switch is initialized to ON, so we don't need to set it here */
-	g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
-	g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-	float internal_bat_voltage_startup = atomic_read_float(&g_internal_bat_voltage);
+	float internal_bat_voltage_startup = readVoltage(ADCInternalBatteryVoltage);
+	float external_voltage_startup = readVoltage(ADCExternalBatteryVoltage);
+	atomic_write_float(&g_internal_bat_voltage, internal_bat_voltage_startup);
+	atomic_write_float(&g_external_voltage, external_voltage_startup);
 	float internal_voltage_low_threshold_startup = atomic_read_float(&g_internal_voltage_low_threshold);
 
-	g_internal_bat_detected = (g_internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE);
+	g_internal_bat_detected = (internal_bat_voltage_startup > INT_BAT_PRESENT_VOLTAGE);
 
 	if(g_internal_bat_detected && (internal_bat_voltage_startup < internal_voltage_low_threshold_startup) && (g_enable_external_battery_control > 0)) // An internal battery is present & not fully charged & charging from an external battery is enabled
 	{
@@ -1395,9 +1396,10 @@ int main(void)
 							{
 								hold_now = now;
 								system_charging_config();
-								g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
-								g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-								float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+								float internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage); // Throw out first result following sleep
+								float external_voltage = readVoltage(ADCExternalBatteryVoltage);
+								atomic_write_float(&g_internal_bat_voltage, internal_bat_voltage);
+								atomic_write_float(&g_external_voltage, external_voltage);
 								float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 								system_sleep_config();
 								setExtBatLoadSwitch(RE_APPLY_LS_STATE); // Undo any charging configuration changes to the LS setting
@@ -2118,7 +2120,8 @@ int main(void)
 
 					finishTimedEventIfExpired(now);
 					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (g_evteng_on_the_air < 0))
+					int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
+					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (on_the_air < 0))
 					{
 						int32_t timeRemaining = SECONDS_24H; // Any big number will do
 
@@ -2131,11 +2134,13 @@ int main(void)
 						 * extra post-finish slot after the user manually puts the unit back to sleep. */
 						if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
 						{
-							time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-g_evteng_on_the_air - 10));
+							time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-on_the_air - 10));
 							g_evteng_event_enabled = true;
 							g_evteng_event_commenced = true;
 							atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
+							ENTER_CRITICAL(main_sendid_sleep_adjust);
 							g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
+							EXIT_CRITICAL(main_sendid_sleep_adjust);
 							g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
 						}
 						else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
@@ -2336,7 +2341,7 @@ static void loadEventTimingForFox(Fox_t fox)
 			}
 
 			g_evteng_ID_period_seconds = 60;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_ID_period_seconds);
 			g_evteng_on_air_seconds = 60;
 			g_evteng_off_air_seconds = 240;
 		}
@@ -2382,7 +2387,7 @@ static void loadEventTimingForFox(Fox_t fox)
 			}
 
 			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = 600;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, 600);
 			g_evteng_on_air_seconds = 12;
 			g_evteng_off_air_seconds = 48;
 		}
@@ -2425,7 +2430,7 @@ static void loadEventTimingForFox(Fox_t fox)
 			}
 
 			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_ID_period_seconds);
 			g_evteng_on_air_seconds = 12;
 			g_evteng_off_air_seconds = 48;
 		}
@@ -2445,7 +2450,7 @@ static void loadEventTimingForFox(Fox_t fox)
 		{
 			g_evteng_intra_cycle_delay_time = 0;
 			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_ID_period_seconds);
 			g_evteng_on_air_seconds = 600;
 			g_evteng_off_air_seconds = 0;
 		}
@@ -2455,7 +2460,7 @@ static void loadEventTimingForFox(Fox_t fox)
 		{
 			g_evteng_intra_cycle_delay_time = 0;
 			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_ID_period_seconds);
 			g_evteng_on_air_seconds = 600;
 			g_evteng_off_air_seconds = 0;
 			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
@@ -2468,7 +2473,7 @@ static void loadEventTimingForFox(Fox_t fox)
 		{
 			g_evteng_intra_cycle_delay_time = 0;
 			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_ID_period_seconds);
 			g_evteng_on_air_seconds = 600;
 			g_evteng_off_air_seconds = 0;
 		}
@@ -2647,7 +2652,7 @@ static bool finishTimedEventIfExpired(time_t now)
 		return false;
 	}
 
-	g_evteng_on_the_air = 0;
+	atomic_write_i32(&g_evteng_on_the_air, 0);
 	keyTransmitter(OFF);
 	g_evteng_event_enabled = false;
 	g_evteng_event_commenced = false;
@@ -3857,7 +3862,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				if(g_messages_text[STATION_ID][0])
 				{
-					g_time_needed_for_ID = timeNeededForID();
+					atomic_write_u16(&g_time_needed_for_ID, timeNeededForID());
 				}
 
 				if(g_cloningInProgress)
@@ -3898,7 +3903,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_messages_text[STATION_ID][0])
 							{
-								g_time_needed_for_ID = timeNeededForID();
+								atomic_write_u16(&g_time_needed_for_ID, timeNeededForID());
 							}
 
 							if(g_cloningInProgress)
@@ -4097,13 +4102,14 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							sb_send_string((char *)"* Config err 1\n");
 						}
 
-						if(g_evteng_on_the_air > 0)
+						int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
+						if(on_the_air > 0)
 						{
 							sb_send_string((char *)"* On the air.\n");
 						}
 						else
 						{
-							sprintf(g_tempStr, "* On the air in %d seconds.\n", (int)-g_evteng_on_the_air);
+							sprintf(g_tempStr, "* On the air in %d seconds.\n", (int)-on_the_air);
 							sb_send_string(g_tempStr);
 						}
 
@@ -4654,11 +4660,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				// 				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
 				// 				sb_send_string(g_tempStr);
-				g_internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
-				g_external_voltage = readVoltage(ADCExternalBatteryVoltage);
-				float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
+				float internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
+				float external_voltage = readVoltage(ADCExternalBatteryVoltage);
+				atomic_write_float(&g_internal_bat_voltage, internal_bat_voltage);
+				atomic_write_float(&g_external_voltage, external_voltage);
 				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
-				float external_voltage = atomic_read_float(&g_external_voltage);
 
 				if(!g_meshmode)
 					sb_send_NewLine();
@@ -4908,11 +4914,11 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 			return false;
 		}
 
-		g_time_needed_for_ID = timeNeededForID();
+		atomic_write_u16(&g_time_needed_for_ID, timeNeededForID());
 	}
 	else
 	{
-		g_time_needed_for_ID = 0; /* ID will never be sent */
+		atomic_write_u16(&g_time_needed_for_ID, 0); /* ID will never be sent */
 	}
 
 	g_frequency = getFrequencySetting();
@@ -4924,7 +4930,7 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
-		g_evteng_on_the_air = g_evteng_on_air_seconds;
+		atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds);
 		LEDS.init();
 	}
 	else if(!g_evteng_run_event_until_canceled && (finishTime < now)) /* the event has already finished */
@@ -4938,8 +4944,8 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 
 		if(g_evteng_run_event_until_canceled)
 		{
-			g_evteng_on_the_air = g_evteng_on_air_seconds; // Start transmitting right away, regardless of g_evteng_off_air_seconds
-			g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
+			atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds); // Start transmitting right away, regardless of g_evteng_off_air_seconds
+			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 			LEDS.blink(LEDS_RED_OFF);
 			g_evteng_event_enabled = true;
 			if(!powerToTransmitter(g_device_enabled))
@@ -4964,32 +4970,35 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 				{
 					if(g_evteng_on_air_seconds <= -timeTillTransmit) /* we should have finished transmitting in this cycle */
 					{
-						g_evteng_on_the_air = -(cyclePeriod + timeTillTransmit);
+						int32_t on_the_air = -(cyclePeriod + timeTillTransmit);
+						atomic_write_i32(&g_evteng_on_the_air, on_the_air);
 						if(!g_evteng_event_enabled)
 						{
-							g_evteng_sendID_seconds_countdown = (g_evteng_on_air_seconds - g_evteng_on_the_air) - g_time_needed_for_ID;
+							atomic_write_int(&g_evteng_sendID_seconds_countdown, (g_evteng_on_air_seconds - on_the_air) - atomic_read_u16(&g_time_needed_for_ID));
 						}
 					}
 					else /* we should be transmitting right now */
 					{
-						g_evteng_on_the_air = g_evteng_on_air_seconds + timeTillTransmit;
+						int32_t on_the_air = g_evteng_on_air_seconds + timeTillTransmit;
+						atomic_write_i32(&g_evteng_on_the_air, on_the_air);
 						turnOnTransmitter = true;
 
 						if(!g_evteng_event_enabled)
 						{
-							if(g_time_needed_for_ID < g_evteng_on_the_air)
+							uint16_t time_needed_for_id = atomic_read_u16(&g_time_needed_for_ID);
+							if(time_needed_for_id < on_the_air)
 							{
-								g_evteng_sendID_seconds_countdown = g_evteng_on_the_air - g_time_needed_for_ID;
+								atomic_write_int(&g_evteng_sendID_seconds_countdown, on_the_air - time_needed_for_id);
 							}
 						}
 					}
 				}
 				else /* it is not yet time to transmit in this cycle */
 				{
-					g_evteng_on_the_air = -timeTillTransmit;
+					atomic_write_i32(&g_evteng_on_the_air, -timeTillTransmit);
 					if(!g_evteng_event_enabled)
 					{
-						g_evteng_sendID_seconds_countdown = timeTillTransmit + g_evteng_on_air_seconds - g_time_needed_for_ID;
+						atomic_write_int(&g_evteng_sendID_seconds_countdown, timeTillTransmit + g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 					}
 				}
 
@@ -5028,7 +5037,7 @@ void suspendEvent()
 	setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 	LEDS.setRed(OFF);
 	g_evteng_event_enabled = false;   /* get things stopped immediately */
-	g_evteng_on_the_air = 0;          /* stop transmitting */
+	atomic_write_i32(&g_evteng_on_the_air, 0); /* stop transmitting */
 	g_evteng_event_commenced = false; /* get things stopped immediately */
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
@@ -5307,10 +5316,11 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 	}
 
 	bool event_active = (g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster);
+	int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
 
 	/* When awake but off-air during an active event, keep green illuminated to confirm
 	 * the unit is awake and ready for button commands. */
-	if(event_active && (g_evteng_on_the_air < 0) && !g_sleeping)
+	if(event_active && (on_the_air < 0) && !g_sleeping)
 	{
 		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 	}
@@ -5424,8 +5434,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 	else if(action == START_TRANSMISSIONS_NOW) /* Immediately start transmitting, regardless RTC or time slot */
 	{
 		g_evteng_run_event_until_canceled = true;
-		g_evteng_on_the_air = g_evteng_on_air_seconds; /* start out transmitting */
-		g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
+		atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds); /* start out transmitting */
+		atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 		LEDS.blink(LEDS_RED_OFF);
 		g_event_launched_by_user_action = true;
 
@@ -5813,13 +5823,11 @@ void reportConfigErrors(Settings_t location)
 
 	if(location == SAVED_SETTINGS)
 	{
-		start_epoch = g_event_start_epoch;
-		finish_epoch = g_event_finish_epoch;
+		atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start_epoch, &finish_epoch);
 	}
 	else
 	{
-		start_epoch = g_evteng_loaded_start_epoch;
-		finish_epoch = g_evteng_loaded_finish_epoch;
+		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &start_epoch, &finish_epoch);
 	}
 
 	if(finish_epoch <= MINIMUM_VALID_EPOCH)

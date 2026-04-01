@@ -48,6 +48,13 @@ static inline float atomic_read_float(const volatile float* src)
 	return value;
 }
 
+static inline void atomic_write_float(volatile float* dst, float value)
+{
+	ENTER_CRITICAL(shared_float_write);
+	*dst = value;
+	EXIT_CRITICAL(shared_float_write);
+}
+
 static inline uint32_t atomic_read_u32(const volatile uint32_t* src)
 {
 	uint32_t value;
@@ -55,6 +62,22 @@ static inline uint32_t atomic_read_u32(const volatile uint32_t* src)
 	value = *src;
 	EXIT_CRITICAL(shared_u32_read);
 	return value;
+}
+
+static inline int32_t atomic_read_i32(const volatile int32_t* src)
+{
+	int32_t value;
+	ENTER_CRITICAL(shared_i32_read);
+	value = *src;
+	EXIT_CRITICAL(shared_i32_read);
+	return value;
+}
+
+static inline void atomic_write_i32(volatile int32_t* dst, int32_t value)
+{
+	ENTER_CRITICAL(shared_i32_write);
+	*dst = value;
+	EXIT_CRITICAL(shared_i32_write);
 }
 
 static inline uint16_t atomic_read_u16(const volatile uint16_t* src)
@@ -66,11 +89,27 @@ static inline uint16_t atomic_read_u16(const volatile uint16_t* src)
 	return value;
 }
 
+static inline int atomic_read_int(const volatile int* src)
+{
+	int value;
+	ENTER_CRITICAL(shared_int_read);
+	value = *src;
+	EXIT_CRITICAL(shared_int_read);
+	return value;
+}
+
 static inline void atomic_write_u16(volatile uint16_t* dst, uint16_t value)
 {
 	ENTER_CRITICAL(shared_u16_write);
 	*dst = value;
 	EXIT_CRITICAL(shared_u16_write);
+}
+
+static inline void atomic_write_int(volatile int* dst, int value)
+{
+	ENTER_CRITICAL(shared_int_write);
+	*dst = value;
+	EXIT_CRITICAL(shared_int_write);
 }
 
 static inline uint16_t atomic_exchange_u16(volatile uint16_t* dst, uint16_t value)
