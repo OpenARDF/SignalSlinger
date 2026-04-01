@@ -165,21 +165,23 @@ static bool anyLoadSwitchCallerEnabled(const volatile bool *callerStates)
 {
 	return callerStates[INTERNAL_BATTERY_CHARGING] || callerStates[TRANSMITTER];
 }
+
+static bool getArbitratedLoadSwitchState(volatile bool *callerStates,
+										 bool onoff,
+										 hardwareResourceClients sender,
+										 bool trackInternalBatteryCharging)
+{
+	updateLoadSwitchCallerState(callerStates, onoff, sender, trackInternalBatteryCharging);
+	return anyLoadSwitchCallerEnabled(callerStates);
+}
 /**
  State machine to keep track of multiple controllers of the FET driver load switch. This ensures that the switch is ON if any of the controllers has turned it on.
  */
 bool setFETDriverLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	updateLoadSwitchCallerState(driverCallerStates, onoff, sender, false);
-
-	if(!anyLoadSwitchCallerEnabled(driverCallerStates))
-	{
-		fet_driver(OFF);
-		return OFF;
-	}
-
-	fet_driver(ON);
-	return (ON);
+	bool state = getArbitratedLoadSwitchState(driverCallerStates, onoff, sender, false);
+	fet_driver(state);
+	return state;
 }
 
 static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
@@ -189,22 +191,14 @@ static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF}
 bool setExtBatLoadSwitch(hardwareResourceClients client)
 {
 	(void)client;
-	bool currentState = setExtBatLoadSwitch(OFF, RE_APPLY_LS_STATE);
-	return currentState;
+	return setExtBatLoadSwitch(OFF, RE_APPLY_LS_STATE);
 }
 
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
-	updateLoadSwitchCallerState(chargeLScallerStates, onoff, sender, true);
-
-	if(!anyLoadSwitchCallerEnabled(chargeLScallerStates))
-	{
-		setExtBatLSEnable(OFF);
-		return OFF;
-	}
-
-	setExtBatLSEnable(ON);
-	return (ON);
+	bool state = getArbitratedLoadSwitchState(chargeLScallerStates, onoff, sender, true);
+	setExtBatLSEnable(state);
+	return state;
 }
 
 static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
@@ -213,16 +207,9 @@ static volatile bool SignalGeneratorCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OF
  */
 bool setSignalGeneratorEnable(bool onoff, hardwareResourceClients sender)
 {
-	updateLoadSwitchCallerState(SignalGeneratorCallerStates, onoff, sender, true);
-
-	if(!anyLoadSwitchCallerEnabled(SignalGeneratorCallerStates))
-	{
-		v3V3_enable(OFF);
-		return OFF;
-	}
-
-	v3V3_enable(ON);
-	return (ON);
+	bool state = getArbitratedLoadSwitchState(SignalGeneratorCallerStates, onoff, sender, true);
+	v3V3_enable(state);
+	return state;
 }
 
 /**

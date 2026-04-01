@@ -370,6 +370,9 @@ static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue);
 static void acknowledgeClonedClockValue(const char *reply, time_t epoch);
 static void finalizeLocalClockUpdate(void);
+static Event_t eventFromSerialArg(char eventArg);
+static void persistFoxSettingForCurrentEvent(Fox_t fox);
+static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency);
 static bool cancelManualTransientState(void);
 static bool finishTimedEventIfExpired(time_t now);
 static void captureCloneTimingSnapshot(void);
@@ -1048,6 +1051,85 @@ static void finalizeLocalClockUpdate(void)
 	g_days_to_run = 1;
 	g_days_run = 0;
 	startEventUsingRTC();
+}
+
+static Event_t eventFromSerialArg(char eventArg)
+{
+	switch(eventArg)
+	{
+		case 'F':
+			return EVENT_FOXORING;
+
+		case 'C':
+			return EVENT_CLASSIC;
+
+		case 'S':
+			return EVENT_SPRINT;
+
+		case 'B':
+			return EVENT_BLIND_ARDF;
+
+		default:
+			return EVENT_NONE;
+	}
+}
+
+static void persistFoxSettingForCurrentEvent(Fox_t fox)
+{
+	EE_var_t eeVar = Fox_setting_none;
+
+	switch(g_event)
+	{
+		case EVENT_CLASSIC:
+			eeVar = Fox_setting_classic;
+			break;
+
+		case EVENT_SPRINT:
+			eeVar = Fox_setting_sprint;
+			break;
+
+		case EVENT_FOXORING:
+			eeVar = Fox_setting_foxoring;
+			break;
+
+		case EVENT_BLIND_ARDF:
+			eeVar = Fox_setting_blind;
+			break;
+
+		default:
+			break;
+	}
+
+	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
+}
+
+static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
+{
+	switch(eeVar)
+	{
+		case Frequency_Low:
+			g_frequency_low = frequency;
+			break;
+
+		case Frequency_Med:
+			g_frequency_med = frequency;
+			break;
+
+		case Frequency_Hi:
+			g_frequency_hi = frequency;
+			break;
+
+		case Frequency_Beacon:
+			g_frequency_beacon = frequency;
+			break;
+
+		default:
+			g_frequency = frequency;
+			eeVar = Frequency;
+			break;
+	}
+
+	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&frequency);
 }
 
 /**
@@ -3243,39 +3325,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if((c1 >= BEACON) && (c1 < USE_CURRENT_FOX))
 					{
 						Fox_t holdFox = (Fox_t)c1;
-
-						switch(g_event)
-						{
-							case EVENT_CLASSIC:
-							{
-								g_ee_mgr.updateEEPROMVar(Fox_setting_classic, (void *)&holdFox);
-							}
-							break;
-
-							case EVENT_SPRINT:
-							{
-								g_ee_mgr.updateEEPROMVar(Fox_setting_sprint, (void *)&holdFox);
-							}
-							break;
-
-							case EVENT_FOXORING:
-							{
-								g_ee_mgr.updateEEPROMVar(Fox_setting_foxoring, (void *)&holdFox);
-							}
-							break;
-
-							case EVENT_BLIND_ARDF:
-							{
-								g_ee_mgr.updateEEPROMVar(Fox_setting_blind, (void *)&holdFox);
-							}
-							break;
-
-							default: /* none */
-							{
-								g_ee_mgr.updateEEPROMVar(Fox_setting_none, (void *)&holdFox);
-							}
-							break;
-						}
+						persistFoxSettingForCurrentEvent(holdFox);
 
 						if(holdFox != getFoxSetting())
 						{
@@ -3366,28 +3416,23 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							if(freqTier == 'L')
 							{
-								g_frequency_low = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Low, (void *)&f);
+								persistFrequencyValue(Frequency_Low, f);
 							}
 							else if(freqTier == 'M')
 							{
-								g_frequency_med = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Med, (void *)&f);
+								persistFrequencyValue(Frequency_Med, f);
 							}
 							else if(freqTier == 'H')
 							{
-								g_frequency_hi = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Hi, (void *)&f);
+								persistFrequencyValue(Frequency_Hi, f);
 							}
 							else if(freqTier == 'B')
 							{
-								g_frequency_beacon = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Beacon, (void *)&f);
+								persistFrequencyValue(Frequency_Beacon, f);
 							}
 							else
 							{
-								g_frequency = f;
-								g_ee_mgr.updateEEPROMVar(Frequency, (void *)&f);
+								persistFrequencyValue(Frequency, f);
 							}
 
 							g_event_checksum += f;
@@ -3400,26 +3445,22 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						if((freqTier == '1') || (freqTier == 'L'))
 						{
-							g_frequency_low = f;
-							g_ee_mgr.updateEEPROMVar(Frequency_Low, (void *)&f);
+							persistFrequencyValue(Frequency_Low, f);
 							printFreq = 1;
 						}
 						else if((freqTier == '2') || (freqTier == 'M'))
 						{
-							g_frequency_med = f;
-							g_ee_mgr.updateEEPROMVar(Frequency_Med, (void *)&f);
+							persistFrequencyValue(Frequency_Med, f);
 							printFreq = 2;
 						}
 						else if((freqTier == '3') || (freqTier == 'H'))
 						{
-							g_frequency_hi = f;
-							g_ee_mgr.updateEEPROMVar(Frequency_Hi, (void *)&f);
+							persistFrequencyValue(Frequency_Hi, f);
 							printFreq = 3;
 						}
 						else if(freqTier == 'B')
 						{
-							g_frequency_beacon = f;
-							g_ee_mgr.updateEEPROMVar(Frequency_Beacon, (void *)&f);
+							persistFrequencyValue(Frequency_Beacon, f);
 							printFreq = 4;
 						}
 					}
@@ -3431,28 +3472,24 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							if(getFoxSetting() == BEACON)
 							{
-								g_frequency_beacon = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Beacon, (void *)&f);
+								persistFrequencyValue(Frequency_Beacon, f);
 								printFreq = 4;
 							}
 							else if(g_event == EVENT_FOXORING)
 							{
 								if(getFoxSetting() == FOXORING_FOX1)
 								{
-									g_frequency_low = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Low, (void *)&f);
+									persistFrequencyValue(Frequency_Low, f);
 									printFreq = 1;
 								}
 								else if(getFoxSetting() == FOXORING_FOX2)
 								{
-									g_frequency_med = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Med, (void *)&f);
+									persistFrequencyValue(Frequency_Med, f);
 									printFreq = 2;
 								}
 								else if(getFoxSetting() == FOXORING_FOX3)
 								{
-									g_frequency_hi = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Hi, (void *)&f);
+									persistFrequencyValue(Frequency_Hi, f);
 									printFreq = 3;
 								}
 							}
@@ -3460,33 +3497,28 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							{
 								if((getFoxSetting() >= SPRINT_S1) && (getFoxSetting() <= SPRINT_S5))
 								{
-									g_frequency_low = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Low, (void *)&f);
+									persistFrequencyValue(Frequency_Low, f);
 									printFreq = 1;
 								}
 								else if(getFoxSetting() == SPECTATOR)
 								{
-									g_frequency_med = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Med, (void *)&f);
+									persistFrequencyValue(Frequency_Med, f);
 									printFreq = 2;
 								}
 								else if((getFoxSetting() >= SPRINT_F1) && (getFoxSetting() <= SPRINT_F5))
 								{
-									g_frequency_hi = f;
-									g_ee_mgr.updateEEPROMVar(Frequency_Hi, (void *)&f);
+									persistFrequencyValue(Frequency_Hi, f);
 									printFreq = 3;
 								}
 							}
 							else if(g_event == EVENT_CLASSIC)
 							{
-								g_frequency_low = f;
-								g_ee_mgr.updateEEPROMVar(Frequency_Low, (void *)&f);
+								persistFrequencyValue(Frequency_Low, f);
 								printFreq = 1;
 							}
 							else // No event set
 							{
-								g_frequency = f;
-								g_ee_mgr.updateEEPROMVar(Frequency, (void *)&f);
+								persistFrequencyValue(Frequency, f);
 								printFreq = 5;
 							}
 						}
@@ -4006,27 +4038,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(g_cloningInProgress)
 				{
 					char c = sb_buff->fields[SB_FIELD1][0];
-
-					if(c == 'F')
-					{
-						g_event = EVENT_FOXORING;
-					}
-					else if(c == 'C')
-					{
-						g_event = EVENT_CLASSIC;
-					}
-					else if(c == 'S')
-					{
-						g_event = EVENT_SPRINT;
-					}
-					else if(c == 'B')
-					{
-						g_event = EVENT_BLIND_ARDF;
-					}
-					else
-					{
-						g_event = EVENT_NONE;
-					}
+					g_event = eventFromSerialArg(c);
 
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
@@ -4037,29 +4049,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					bool validArg = false;
 
-					if(sb_buff->fields[SB_FIELD1][0] == 'F')
+					if(sb_buff->fields[SB_FIELD1][0])
 					{
-						g_event = EVENT_FOXORING;
-						validArg = true;
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == 'C')
-					{
-						g_event = EVENT_CLASSIC;
-						validArg = true;
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == 'S')
-					{
-						g_event = EVENT_SPRINT;
-						validArg = true;
-					}
-					else if(sb_buff->fields[SB_FIELD1][0] == 'B')
-					{
-						g_event = EVENT_BLIND_ARDF;
-						validArg = true;
-					}
-					else if(sb_buff->fields[SB_FIELD1][0])
-					{
-						g_event = EVENT_NONE;
+						g_event = eventFromSerialArg(sb_buff->fields[SB_FIELD1][0]);
 						validArg = true;
 					}
 
