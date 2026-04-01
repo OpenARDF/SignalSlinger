@@ -34,77 +34,77 @@
 struct EE_prom
 {
 	uint16_t eeprom_initialization_flag;
-	uint32_t guard4_1;
+	uint32_t reserved_1;
 	time_t event_start_epoch;
-	uint32_t guard4_2;
+	uint32_t reserved_2;
 	time_t event_finish_epoch;
-	uint32_t guard4_3;
+	uint32_t reserved_3;
 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-	uint32_t guard4_4;
+	uint32_t reserved_4;
 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-	uint32_t guard4_5;
+	uint32_t reserved_5;
 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
-	uint32_t guard4_6;
-	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
-	uint32_t guard4_7;
+	uint32_t reserved_6;
+	uint8_t reserved_unlock_code[MAX_UNLOCK_CODE_LENGTH + 2];
+	uint32_t reserved_7;
 	Fox_t fox_setting_none;
-	uint32_t guard4_8;
+	uint32_t reserved_8;
 	Fox_t fox_setting_classic;
-	uint32_t guard4_9;
+	uint32_t reserved_9;
 	Fox_t fox_setting_sprint;
-	uint32_t guard4_10;
+	uint32_t reserved_10;
 	Fox_t fox_setting_foxoring;
-	uint32_t guard4_11;
+	uint32_t reserved_11;
 	Fox_t fox_setting_blind;
-	uint32_t guard4_12;
+	uint32_t reserved_12;
 	uint8_t utc_offset;
-	uint32_t guard4_13;
-	Frequency_Hz rtty_offset;
-	uint32_t guard4_14;
+	uint32_t reserved_13;
+	Frequency_Hz reserved_rtty_offset;
+	uint32_t reserved_14;
 	uint16_t rf_power;
-	uint32_t guard4_15;
+	uint32_t reserved_15;
 	uint8_t id_codespeed;
-	uint32_t guard4_16;
+	uint32_t reserved_16;
 	uint8_t pattern_codespeed;
-	uint32_t guard4_17;
+	uint32_t reserved_17;
 	uint8_t foxoring_pattern_codespeed;
-	uint32_t guard4_18;
+	uint32_t reserved_18;
 	int16_t off_air_seconds;
-	uint32_t guard4_19;
+	uint32_t reserved_19;
 	int16_t on_air_seconds;
-	uint32_t guard4_20;
+	uint32_t reserved_20;
 	int16_t ID_period_seconds;
-	uint32_t guard4_21;
+	uint32_t reserved_21;
 	int16_t intra_cycle_delay_time;
-	uint32_t guard4_22;
+	uint32_t reserved_22;
 	Event_t event_setting;
-	uint32_t guard4_23;
+	uint32_t reserved_23;
 	uint32_t frequency;
-	uint32_t guard4_24;
+	uint32_t reserved_24;
 	uint32_t frequency_low;
-	uint32_t guard4_25;
+	uint32_t reserved_25;
 	uint32_t frequency_med;
-	uint32_t guard4_26;
+	uint32_t reserved_26;
 	uint32_t frequency_high;
-	uint32_t guard4_27;
+	uint32_t reserved_27;
 	uint32_t frequency_beacon;
-	uint32_t guard4_28;
-	bool master_setting;
-	uint32_t guard4_29;
+	uint32_t reserved_28;
+	bool reserved_master_setting;
+	uint32_t reserved_29;
 	float voltage_threshold;
-	uint32_t guard4_30;
+	uint32_t reserved_30;
 	uint16_t clock_calibration;
-	uint32_t guard4_31;
+	uint32_t reserved_31;
 	uint8_t days_to_run;
-	uint32_t guard4_32;
-	uint16_t i2c_failure_count;
-	uint32_t guard4_33;
+	uint32_t reserved_32;
+	uint16_t reserved_i2c_failure_count;
+	uint32_t reserved_33;
 	uint8_t function;
-	uint32_t guard4_34;
+	uint32_t reserved_34;
 	uint8_t enable_boost_regulator;
-	uint32_t guard4_35;
+	uint32_t reserved_35;
 	uint8_t enable_external_battery_control;
-	uint32_t guard4_36;
+	uint32_t reserved_36;
 	uint8_t device_enabled;
 };
 
@@ -112,77 +112,77 @@ typedef enum
 {
 #define EEPROM_OFFSET(field) offsetof(EE_prom, field)
 	Eeprom_initialization_flag = EEPROM_OFFSET(eeprom_initialization_flag),
-	Guard4_1 = EEPROM_OFFSET(guard4_1),
+	Reserved_1 = EEPROM_OFFSET(reserved_1),
 	Event_start_epoch = EEPROM_OFFSET(event_start_epoch),
-	Guard4_2 = EEPROM_OFFSET(guard4_2),
+	Reserved_2 = EEPROM_OFFSET(reserved_2),
 	Event_finish_epoch = EEPROM_OFFSET(event_finish_epoch),
-	Guard4_3 = EEPROM_OFFSET(guard4_3),
+	Reserved_3 = EEPROM_OFFSET(reserved_3),
 	Pattern_text = EEPROM_OFFSET(pattern_text),
-	Guard4_4 = EEPROM_OFFSET(guard4_4),
+	Reserved_4 = EEPROM_OFFSET(reserved_4),
 	Foxoring_pattern_text = EEPROM_OFFSET(foxoring_pattern_text),
-	Guard4_5 = EEPROM_OFFSET(guard4_5),
+	Reserved_5 = EEPROM_OFFSET(reserved_5),
 	StationID_text = EEPROM_OFFSET(stationID_text),
-	Guard4_6 = EEPROM_OFFSET(guard4_6),
-	UnlockCode = EEPROM_OFFSET(unlockCode),
-	Guard4_7 = EEPROM_OFFSET(guard4_7),
+	Reserved_6 = EEPROM_OFFSET(reserved_6),
+	Reserved_Unlock_Code = EEPROM_OFFSET(reserved_unlock_code),
+	Reserved_7 = EEPROM_OFFSET(reserved_7),
 	Fox_setting_none = EEPROM_OFFSET(fox_setting_none),
-	Guard4_8 = EEPROM_OFFSET(guard4_8),
+	Reserved_8 = EEPROM_OFFSET(reserved_8),
 	Fox_setting_classic = EEPROM_OFFSET(fox_setting_classic),
-	Guard4_9 = EEPROM_OFFSET(guard4_9),
+	Reserved_9 = EEPROM_OFFSET(reserved_9),
 	Fox_setting_sprint = EEPROM_OFFSET(fox_setting_sprint),
-	Guard4_10 = EEPROM_OFFSET(guard4_10),
+	Reserved_10 = EEPROM_OFFSET(reserved_10),
 	Fox_setting_foxoring = EEPROM_OFFSET(fox_setting_foxoring),
-	Guard4_11 = EEPROM_OFFSET(guard4_11),
+	Reserved_11 = EEPROM_OFFSET(reserved_11),
 	Fox_setting_blind = EEPROM_OFFSET(fox_setting_blind),
-	Guard4_12 = EEPROM_OFFSET(guard4_12),
+	Reserved_12 = EEPROM_OFFSET(reserved_12),
 	Utc_offset = EEPROM_OFFSET(utc_offset),
-	Guard4_13 = EEPROM_OFFSET(guard4_13),
-	RTTY_offset = EEPROM_OFFSET(rtty_offset),
-	Guard4_14 = EEPROM_OFFSET(guard4_14),
+	Reserved_13 = EEPROM_OFFSET(reserved_13),
+	Reserved_RTTY_Offset = EEPROM_OFFSET(reserved_rtty_offset),
+	Reserved_14 = EEPROM_OFFSET(reserved_14),
 	RF_Power = EEPROM_OFFSET(rf_power),
-	Guard4_15 = EEPROM_OFFSET(guard4_15),
+	Reserved_15 = EEPROM_OFFSET(reserved_15),
 	Id_codespeed = EEPROM_OFFSET(id_codespeed),
-	Guard4_16 = EEPROM_OFFSET(guard4_16),
+	Reserved_16 = EEPROM_OFFSET(reserved_16),
 	Pattern_Code_Speed = EEPROM_OFFSET(pattern_codespeed),
-	Guard4_17 = EEPROM_OFFSET(guard4_17),
+	Reserved_17 = EEPROM_OFFSET(reserved_17),
 	Foxoring_Pattern_Code_Speed = EEPROM_OFFSET(foxoring_pattern_codespeed),
-	Guard4_18 = EEPROM_OFFSET(guard4_18),
+	Reserved_18 = EEPROM_OFFSET(reserved_18),
 	Off_Air_Seconds = EEPROM_OFFSET(off_air_seconds),
-	Guard4_19 = EEPROM_OFFSET(guard4_19),
+	Reserved_19 = EEPROM_OFFSET(reserved_19),
 	On_Air_Seconds = EEPROM_OFFSET(on_air_seconds),
-	Guard4_20 = EEPROM_OFFSET(guard4_20),
+	Reserved_20 = EEPROM_OFFSET(reserved_20),
 	ID_Period_Seconds = EEPROM_OFFSET(ID_period_seconds),
-	Guard4_21 = EEPROM_OFFSET(guard4_21),
+	Reserved_21 = EEPROM_OFFSET(reserved_21),
 	Intra_Cycle_Delay_Seconds = EEPROM_OFFSET(intra_cycle_delay_time),
-	Guard4_22 = EEPROM_OFFSET(guard4_22),
+	Reserved_22 = EEPROM_OFFSET(reserved_22),
 	Event_setting = EEPROM_OFFSET(event_setting),
-	Guard4_23 = EEPROM_OFFSET(guard4_23),
+	Reserved_23 = EEPROM_OFFSET(reserved_23),
 	Frequency = EEPROM_OFFSET(frequency),
-	Guard4_24 = EEPROM_OFFSET(guard4_24),
+	Reserved_24 = EEPROM_OFFSET(reserved_24),
 	Frequency_Low = EEPROM_OFFSET(frequency_low),
-	Guard4_25 = EEPROM_OFFSET(guard4_25),
+	Reserved_25 = EEPROM_OFFSET(reserved_25),
 	Frequency_Med = EEPROM_OFFSET(frequency_med),
-	Guard4_26 = EEPROM_OFFSET(guard4_26),
+	Reserved_26 = EEPROM_OFFSET(reserved_26),
 	Frequency_Hi = EEPROM_OFFSET(frequency_high),
-	Guard4_27 = EEPROM_OFFSET(guard4_27),
+	Reserved_27 = EEPROM_OFFSET(reserved_27),
 	Frequency_Beacon = EEPROM_OFFSET(frequency_beacon),
-	Guard4_28 = EEPROM_OFFSET(guard4_28),
-	Master_setting = EEPROM_OFFSET(master_setting),
-	Guard4_29 = EEPROM_OFFSET(guard4_29),
+	Reserved_28 = EEPROM_OFFSET(reserved_28),
+	Reserved_Master_Setting = EEPROM_OFFSET(reserved_master_setting),
+	Reserved_29 = EEPROM_OFFSET(reserved_29),
 	Voltage_threshold = EEPROM_OFFSET(voltage_threshold),
-	Guard4_30 = EEPROM_OFFSET(guard4_30),
+	Reserved_30 = EEPROM_OFFSET(reserved_30),
 	Clock_calibration = EEPROM_OFFSET(clock_calibration),
-	Guard4_31 = EEPROM_OFFSET(guard4_31),
+	Reserved_31 = EEPROM_OFFSET(reserved_31),
 	Days_to_run = EEPROM_OFFSET(days_to_run),
-	Guard4_32 = EEPROM_OFFSET(guard4_32),
-	I2C_failure_count = EEPROM_OFFSET(i2c_failure_count),
-	Guard4_33 = EEPROM_OFFSET(guard4_33),
+	Reserved_32 = EEPROM_OFFSET(reserved_32),
+	Reserved_I2C_Failure_Count = EEPROM_OFFSET(reserved_i2c_failure_count),
+	Reserved_33 = EEPROM_OFFSET(reserved_33),
 	Function = EEPROM_OFFSET(function),
-	Guard4_34 = EEPROM_OFFSET(guard4_34),
+	Reserved_34 = EEPROM_OFFSET(reserved_34),
 	Enable_Boost_Regulator = EEPROM_OFFSET(enable_boost_regulator),
-	Guard4_35 = EEPROM_OFFSET(guard4_35),
+	Reserved_35 = EEPROM_OFFSET(reserved_35),
 	Enable_External_Battery_Control = EEPROM_OFFSET(enable_external_battery_control),
-	Guard4_36 = EEPROM_OFFSET(guard4_36),
+	Reserved_36 = EEPROM_OFFSET(reserved_36),
 	Device_Enabled = EEPROM_OFFSET(device_enabled)
 #undef EEPROM_OFFSET
 } EE_var_t;

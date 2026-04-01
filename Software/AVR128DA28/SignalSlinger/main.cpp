@@ -385,753 +385,11 @@ static bool currentLoadedEventWindowCanceled(void);
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error);
 static void reviveLedActivityForCurrentState(void);
 
-static bool cancelManualTransientState(void)
-{
-	bool pending_start_after_keydown = g_start_event_after_keydown;
-	bool had_transient_state = pending_start_after_keydown || atomic_read_u16(&g_key_down_countdown) || g_foreground_reset_after_keydown || atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_demo;
-
-	if(had_transient_state)
-	{
-		atomic_write_u16(&g_key_down_countdown, 0);
-		atomic_write_u16(&g_demo_event_countdown, 0);
-		g_foreground_reset_after_keydown = false;
-		g_foreground_reset_after_demo = false;
-		g_start_event_after_keydown = false;
-		g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-	}
-
-	return pending_start_after_keydown;
-}
-
-static void captureCloneTimingSnapshot(void)
-{
-	time_t saved_start_epoch;
-	time_t saved_finish_epoch;
-	time_t loaded_start_epoch;
-	time_t loaded_finish_epoch;
-	uint8_t total_days = g_days_to_run;
-	uint8_t completed_days = g_days_run;
-	uint8_t days_remaining = (completed_days < total_days) ? (total_days - completed_days) : 1;
-
-	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
-	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-
-	g_clone_timing_snapshot.event_start_epoch = saved_start_epoch;
-	g_clone_timing_snapshot.event_finish_epoch = saved_finish_epoch;
-	g_clone_timing_snapshot.days_to_run = total_days ? total_days : 1;
-
-	bool loaded_window_is_active = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-	bool loaded_window_differs_from_saved = (loaded_start_epoch != saved_start_epoch) || (loaded_finish_epoch != saved_finish_epoch);
-
-	if(loaded_window_is_active && loaded_window_differs_from_saved)
-	{
-		g_clone_timing_snapshot.event_start_epoch = loaded_start_epoch;
-		g_clone_timing_snapshot.event_finish_epoch = loaded_finish_epoch;
-		g_clone_timing_snapshot.days_to_run = days_remaining ? days_remaining : 1;
-	}
-}
-
-static void reinitializeEventEngine(void)
-{
-	g_evteng_initialize_event = true;
-	util_delay_ms(0);
-	while(util_delay_ms(17) && g_evteng_initialize_event)
-		; // Wait for event engine to initialize
-}
-
-static void loadEventTimingForFox(Fox_t fox)
-{
-	bool delayNotSet = true;
-
-	if(fox == USE_CURRENT_FOX)
-	{
-		fox = getFoxSetting();
-	}
-
-	switch(fox)
-	{
-		case FOX_1:
-		{
-			delayNotSet = false;
-			g_evteng_intra_cycle_delay_time = 0;
-		}
-		case FOX_2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 60;
-			}
-		}
-		case FOX_3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 120;
-			}
-		}
-		case FOX_4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 180;
-			}
-		}
-		case FOX_5:
-		{
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 240;
-			}
-
-			g_evteng_ID_period_seconds = 60;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
-			g_evteng_on_air_seconds = 60;
-			g_evteng_off_air_seconds = 240;
-		}
-		break;
-
-		case SPRINT_S1:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 0;
-			}
-		}
-		case SPRINT_S2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 12;
-			}
-		}
-		case SPRINT_S3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 24;
-			}
-		}
-		case SPRINT_S4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 36;
-			}
-		}
-		case SPRINT_S5:
-		{
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 48;
-			}
-
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = 600;
-			g_evteng_on_air_seconds = 12;
-			g_evteng_off_air_seconds = 48;
-		}
-		break;
-
-		case SPRINT_F1:
-		{
-			delayNotSet = false;
-			g_evteng_intra_cycle_delay_time = 0;
-		}
-		case SPRINT_F2:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 12;
-			}
-		}
-		case SPRINT_F3:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 24;
-			}
-		}
-		case SPRINT_F4:
-		{
-			if(delayNotSet)
-			{
-				delayNotSet = false;
-				g_evteng_intra_cycle_delay_time = 36;
-			}
-		}
-		case SPRINT_F5:
-		{
-			if(delayNotSet)
-			{
-				g_evteng_intra_cycle_delay_time = 48;
-			}
-
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
-			g_evteng_on_air_seconds = 12;
-			g_evteng_off_air_seconds = 48;
-		}
-		break;
-
-#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-		case REPORT_BATTERY:
-		{
-			g_evteng_intra_cycle_delay_time = 0;
-		}
-		break;
-#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-
-		case FOXORING_FOX1:
-		case FOXORING_FOX2:
-		case FOXORING_FOX3:
-		{
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
-			g_evteng_on_air_seconds = 600;
-			g_evteng_off_air_seconds = 0;
-		}
-		break;
-
-		case FREQUENCY_TEST_BEACON:
-		{
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
-			g_evteng_on_air_seconds = 600;
-			g_evteng_off_air_seconds = 0;
-			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-		}
-		break;
-
-		case SPECTATOR:
-		case BEACON:
-		default:
-		{
-			g_evteng_intra_cycle_delay_time = 0;
-			g_evteng_ID_period_seconds = 600;
-			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
-			g_evteng_on_air_seconds = 600;
-			g_evteng_off_air_seconds = 0;
-		}
-		break;
-	}
-}
-
-static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
-{
-	bool should_resume_loaded_event = loadedEventShouldBeEnabled();
-	time_t loaded_start_epoch;
-	time_t loaded_finish_epoch;
-
-	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-
-	if(deferStartIfAlreadyRunning && should_resume_loaded_event && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
-	{
-		g_defer_cloned_event_start = true;
-		g_foreground_start_event = false;
-	}
-	else
-	{
-		g_defer_cloned_event_start = false;
-		g_foreground_start_event = should_resume_loaded_event;
-	}
-}
-
-static bool reloadLoadedEventWindowFromSavedSettings(void)
-{
-	time_t saved_start_epoch;
-	time_t saved_finish_epoch;
-	time_t loaded_start_epoch;
-	time_t loaded_finish_epoch;
-
-	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
-
-	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
-	{
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
-		return false;
-	}
-
-	loaded_start_epoch = saved_start_epoch;
-	loaded_finish_epoch = saved_finish_epoch;
-
-	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
-	{
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
-		return false;
-	}
-
-	uint8_t day_index = MIN(g_days_run, (uint8_t)((g_days_to_run > 0) ? (g_days_to_run - 1) : 0));
-	loaded_start_epoch += ((time_t)day_index * SECONDS_24H);
-	loaded_finish_epoch += ((time_t)day_index * SECONDS_24H);
-
-	if(timeIsSet())
-	{
-		time_t now = time(null);
-		while((loaded_finish_epoch <= now) && ((day_index + 1) < g_days_to_run))
-		{
-			day_index++;
-			loaded_start_epoch += SECONDS_24H;
-			loaded_finish_epoch += SECONDS_24H;
-		}
-	}
-
-	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
-
-	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-}
-
-static bool resyncLoadedEventWindowAfterClockSet(void)
-{
-	time_t saved_start_epoch;
-	time_t saved_finish_epoch;
-	time_t prior_loaded_start_epoch;
-	time_t prior_loaded_finish_epoch;
-	uint8_t total_days = g_days_to_run ? g_days_to_run : 1;
-
-	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
-	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &prior_loaded_start_epoch, &prior_loaded_finish_epoch);
-
-	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
-	{
-		return reloadLoadedEventWindowFromSavedSettings();
-	}
-
-	uint8_t day_index = 0;
-	time_t loaded_start_epoch = saved_start_epoch;
-	time_t loaded_finish_epoch = saved_finish_epoch;
-	time_t now = time(null);
-	bool have_schedulable_window = false;
-
-	while((loaded_finish_epoch <= now) && ((day_index + 1) < total_days))
-	{
-		day_index++;
-		loaded_start_epoch += SECONDS_24H;
-		loaded_finish_epoch += SECONDS_24H;
-	}
-
-	if(loaded_finish_epoch <= now)
-	{
-		day_index = total_days;
-		loaded_start_epoch = 0;
-		loaded_finish_epoch = 0;
-	}
-	else
-	{
-		have_schedulable_window = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
-		                          eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-	}
-
-	g_days_run = day_index;
-	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
-
-	/* A clock change can move us onto a different day's window. Only preserve the cancel
-	 * latch if the resync kept us on the same loaded window and that window is still
-	 * current. */
-	if((prior_loaded_start_epoch != loaded_start_epoch) || (prior_loaded_finish_epoch != loaded_finish_epoch) ||
-	   !eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
-	{
-		g_event_canceled_by_user = false;
-	}
-
-	return have_schedulable_window;
-}
-
-static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
-{
-	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
-	{
-		return false;
-	}
-
-	g_days_run++;
-	return reloadLoadedEventWindowFromSavedSettings();
-}
-
-static bool currentLoadedEventWindowCanceled(void)
-{
-	if(!g_event_canceled_by_user)
-	{
-		return false;
-	}
-
-	if(!timeIsSet())
-	{
-		return false;
-	}
-
-	time_t loaded_start_epoch;
-	time_t loaded_finish_epoch;
-	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-
-	/* The latch only applies to the currently loaded event window. Once the loaded window
-	 * has advanced to the future, passive wake/scheduler logic must stop treating it as
-	 * canceled. */
-	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-}
-
-static inline void extendMasterModeTimeout(void)
-{
-	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
-}
-
-static bool finishTimedEventIfExpired(time_t now)
-{
-	if(!(g_evteng_event_commenced && !g_evteng_run_event_until_canceled))
-	{
-		return false;
-	}
-
-	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-	if(!loaded_finish_epoch || (now < loaded_finish_epoch))
-	{
-		return false;
-	}
-
-	g_evteng_on_the_air = 0;
-	keyTransmitter(OFF);
-	g_evteng_event_enabled = false;
-	g_evteng_event_commenced = false;
-	LEDS.init();
-	g_days_run++;
-	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
-
-	if(g_days_run < g_days_to_run)
-	{
-		time_t loaded_start_epoch;
-		time_t loaded_finish_epoch_pair;
-		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
-		time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
-		time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
-		atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
-		g_sleepType = SLEEP_UNTIL_START_TIME;
-		g_go_to_sleep_now = true;
-	}
-	else
-	{
-		g_sleepType = SLEEP_FOREVER;
-		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
-	}
-
-	return true;
-}
-
-static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
-{
-	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
-	char *pattern = getCurrentPatternText();
-	if((pattern == g_messages_text[PATTERN_TEXT]) || (pattern == g_messages_text[FOXORING_PATTERN_TEXT]))
-	{
-		uint8_t slot = (pattern == g_messages_text[PATTERN_TEXT]) ? PATTERN_TEXT : FOXORING_PATTERN_TEXT;
-		messages_text_slot_copy_atomic(slot, pattern_snapshot, sizeof(pattern_snapshot));
-	}
-	else
-	{
-		strncpy(pattern_snapshot, pattern, sizeof(pattern_snapshot) - 1);
-		pattern_snapshot[sizeof(pattern_snapshot) - 1] = '\0';
-	}
-	makeMorse(pattern_snapshot, repeat, NULL, caller);
-}
-
-static void loadStationIDMorse(bool *repeat, callerID_t caller)
-{
-	static char station_id_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
-	messages_text_slot_copy_atomic(STATION_ID, station_id_snapshot, sizeof(station_id_snapshot));
-	makeMorse(station_id_snapshot, repeat, NULL, caller);
-}
-
-static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch)
-{
-	time_t epoch = atomic_read_time(currentEpoch);
-	return completeTimeString(partialString, &epoch);
-}
-
-static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes)
-{
-	if(hours)
-	{
-		*hours = 0;
-	}
-
-	if(minutes)
-	{
-		*minutes = 0;
-	}
-
-	if(hasMinutes)
-	{
-		*hasMinutes = false;
-	}
-
-	if(!offsetString || (offsetString[0] != '+'))
-	{
-		return false;
-	}
-
-	const char *hours_str = offsetString + 1;
-	if(!hours_str[0])
-	{
-		return false;
-	}
-
-	const char *colon = strchr(hours_str, ':');
-	if(colon && strchr(colon + 1, ':'))
-	{
-		return false;
-	}
-
-	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
-	if(hour_len > 3)
-	{
-		return false;
-	}
-
-	uint16_t parsed_hours = 0;
-	for(size_t i = 0; i < hour_len; i++)
-	{
-		if(!isdigit((unsigned char)hours_str[i]))
-		{
-			return false;
-		}
-
-		parsed_hours = (parsed_hours * 10) + (uint16_t)(hours_str[i] - '0');
-	}
-
-	if(parsed_hours > 480)
-	{
-		return false;
-	}
-
-	uint8_t parsed_minutes = 0;
-	bool parsed_has_minutes = false;
-	if(colon)
-	{
-		const char *minutes_str = colon + 1;
-		size_t minute_len = strlen(minutes_str);
-		if((minute_len == 0) || (minute_len > 2))
-		{
-			return false;
-		}
-
-		parsed_has_minutes = true;
-
-		for(size_t i = 0; i < minute_len; i++)
-		{
-			if(!isdigit((unsigned char)minutes_str[i]))
-			{
-				return false;
-			}
-
-			parsed_minutes = (parsed_minutes * 10) + (uint8_t)(minutes_str[i] - '0');
-		}
-
-		if(parsed_minutes > 59)
-		{
-			return false;
-		}
-	}
-
-	if(hours)
-	{
-		*hours = parsed_hours;
-	}
-
-	if(minutes)
-	{
-		*minutes = parsed_minutes;
-	}
-
-	if(hasMinutes)
-	{
-		*hasMinutes = parsed_has_minutes;
-	}
-
-	return true;
-}
-
-static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch)
-{
-	if(!boundary)
-	{
-		return epoch;
-	}
-
-	time_t aligned = ((epoch + (boundary / 2)) / boundary) * boundary;
-	if(aligned < minimumEpoch)
-	{
-		aligned = ((minimumEpoch + boundary - 1) / boundary) * boundary;
-	}
-
-	return aligned;
-}
-
-static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg)
-{
-	if(resolvedEpoch)
-	{
-		*resolvedEpoch = 0;
-	}
-
-	if(baseEpoch < MINIMUM_VALID_EPOCH)
-	{
-		if(errMsg)
-		{
-			if(suppressBaseEpochError)
-			{
-				errMsg[0] = '\0';
-			}
-			else
-			{
-				strcpy(errMsg, baseEpochError ? baseEpochError : "* Err: Invalid offset!\n");
-			}
-		}
-
-		return false;
-	}
-
-	uint16_t hours = 0;
-	uint8_t minutes = 0;
-	bool hasMinutes = false;
-	if(!parseClockHourMinuteOffset(offsetString, &hours, &minutes, &hasMinutes))
-	{
-		if(errMsg)
-		{
-			strcpy(errMsg, "* Err: Invalid offset!\n");
-		}
-
-		return false;
-	}
-
-	time_t target = baseEpoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
-	time_t boundary = hasMinutes ? minuteBoundary : hourBoundary;
-
-	if(resolvedEpoch)
-	{
-		*resolvedEpoch = alignEpochToNearestBoundary(target, boundary, baseEpoch);
-	}
-
-	if(errMsg)
-	{
-		errMsg[0] = '\0';
-	}
-
-	return true;
-}
-
-static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue)
-{
-	atomic_write_time_pair(loadedEpoch, savedEpoch, epoch, epoch);
-	g_ee_mgr.updateEEPROMVar(eeVar, eeValue);
-}
-
-static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
-{
-	sb_send_string((char *)reply);
-	atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-	g_event_checksum += epoch;
-}
-
-static void finalizeLocalClockUpdate(void)
-{
-	cancelManualTransientState();
-	g_days_to_run = 1;
-	g_days_run = 0;
-	startEventUsingRTC();
-}
-
-static Event_t eventFromSerialArg(char eventArg)
-{
-	switch(eventArg)
-	{
-		case 'F':
-			return EVENT_FOXORING;
-
-		case 'C':
-			return EVENT_CLASSIC;
-
-		case 'S':
-			return EVENT_SPRINT;
-
-		case 'B':
-			return EVENT_BLIND_ARDF;
-
-		default:
-			return EVENT_NONE;
-	}
-}
-
-static void persistFoxSettingForCurrentEvent(Fox_t fox)
-{
-	EE_var_t eeVar = Fox_setting_none;
-
-	switch(g_event)
-	{
-		case EVENT_CLASSIC:
-			eeVar = Fox_setting_classic;
-			break;
-
-		case EVENT_SPRINT:
-			eeVar = Fox_setting_sprint;
-			break;
-
-		case EVENT_FOXORING:
-			eeVar = Fox_setting_foxoring;
-			break;
-
-		case EVENT_BLIND_ARDF:
-			eeVar = Fox_setting_blind;
-			break;
-
-		default:
-			break;
-	}
-
-	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
-}
-
-static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
-{
-	switch(eeVar)
-	{
-		case Frequency_Low:
-			g_frequency_low = frequency;
-			break;
-
-		case Frequency_Med:
-			g_frequency_med = frequency;
-			break;
-
-		case Frequency_Hi:
-			g_frequency_hi = frequency;
-			break;
-
-		case Frequency_Beacon:
-			g_frequency_beacon = frequency;
-			break;
-
-		default:
-			g_frequency = frequency;
-			eeVar = Frequency;
-			break;
-	}
-
-	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&frequency);
-}
-
-/**
-1-second interrupt ISR
-*/
+/***********************************************************************
+ * Interrupt Service Routines
+ ************************************************************************/
+
+/* 1-second interrupt ISR. */
 ISR(RTC_CNT_vect)
 {
 	uint8_t x = RTC.INTFLAGS;
@@ -1186,144 +444,7 @@ ISR(RTC_CNT_vect)
 	RTC.INTFLAGS = (RTC_OVF_bm | RTC_CMP_bm);
 }
 
-/**
-1-Second Interrupts:
-One-second counter based on RTC.
-*/
-void handle_1sec_tasks(void)
-{
-	time_t temp_time = 0;
-
-	g_seconds_since_wakeup++;
-
-	if(isMasterCountdownSeconds)
-		isMasterCountdownSeconds--;
-
-	if(!g_cloningInProgress)
-	{
-		temp_time = time(null);
-		finishTimedEventIfExpired(temp_time);
-
-		if(g_evteng_event_enabled && !g_isMaster)
-		{
-			if(g_evteng_event_commenced) /* an event is in progress */
-			{
-				if(g_evteng_sendID_seconds_countdown)
-				{
-					g_evteng_sendID_seconds_countdown--;
-				}
-			}
-			else if(g_evteng_run_event_until_canceled)
-			{
-				if(!g_foreground_enable_transmitter)
-				{
-					if(g_evteng_intra_cycle_delay_time)
-					{
-						g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
-						g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
-					}
-					else
-					{
-						g_evteng_on_the_air = g_evteng_on_air_seconds;
-						g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
-					}
-
-					g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
-					bool repeat = true;
-					loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
-
-					g_foreground_enable_transmitter = true;
-					LEDS.init();
-				}
-			}
-			else /* waiting for the start time to arrive */
-			{
-				time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
-				if(loaded_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
-				{
-					temp_time = time(null);
-
-					if(temp_time >= loaded_start_epoch) /* Time for the event to start */
-					{
-						loadEventTimingForFox(USE_CURRENT_FOX);
-						g_evteng_event_commenced = true;
-						g_evteng_initialize_event = true;
-						g_sleepType = SLEEP_AFTER_EVENT;
-
-						if(g_evteng_intra_cycle_delay_time)
-						{
-							g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
-							g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
-						}
-						else
-						{
-							g_evteng_on_the_air = g_evteng_on_air_seconds;
-							g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
-						}
-
-						g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
-						bool repeat = true;
-						loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
-
-						g_foreground_enable_transmitter = true;
-						LEDS.init();
-					}
-				}
-			}
-		}
-	}
-
-	/**************************************
-	 * Delay before sleep
-	 ***************************************/
-	if(g_evteng_sleepshutdown_seconds)
-	{
-		g_evteng_sleepshutdown_seconds--;
-
-		if(!g_evteng_sleepshutdown_seconds)
-		{
-			if(g_isMaster || g_cloningInProgress)
-			{
-				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep while cloning or while master */
-			}
-			else if(g_evteng_event_commenced && g_evteng_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (getFoxSetting() != FREQUENCY_TEST_BEACON))
-			{
-				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep during active transmissions */
-			}
-			else
-			{
-				if(g_sleepType == SLEEP_AFTER_EVENT)
-				{
-					if(noEventWillRun()) /* Event is done; fall through and request the appropriate sleep state now. */
-					{
-						g_sleepType = SLEEP_FOREVER;
-					}
-				}
-
-				if((g_sleepType != SLEEP_AFTER_EVENT) && !g_go_to_sleep_now)
-				{
-					if(g_sleepType == SLEEP_FOREVER)
-					{
-						time_t loaded_start_epoch;
-						time_t loaded_finish_epoch;
-						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-						if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch)) /* Should never evaluate to true here, but checking just in case */
-						{
-							g_sleepType = SLEEP_UNTIL_START_TIME;
-						}
-					}
-
-					/* If we reach here, g_sleepType = 	SLEEP_UNTIL_START_TIME, SLEEP_UNTIL_NEXT_XMSN, or SLEEP_FOREVER */
-					g_go_to_sleep_now = true;
-				}
-			}
-		}
-	}
-}
-
-/**
-Periodic tasks not requiring precise timing. Rate = 300 Hz
-*/
+/* Periodic tasks not requiring precise timing. Rate = 300 Hz. */
 ISR(TCB0_INT_vect)
 {
 	static uint8_t fiftyMS = 6;
@@ -1823,10 +944,7 @@ ISR(TCB0_INT_vect)
 
 	TCB0.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* clear all interrupt flags */
 }
-
-/**
-Handle port D pushbutton interrupts
-*/
+/* Handle port D pushbutton interrupts. */
 ISR(PORTD_PORT_vect)
 {
 	uint8_t x = VPORTD.INTFLAGS;
@@ -1853,9 +971,7 @@ ISR(PORTD_PORT_vect)
 	VPORTD.INTFLAGS = 0xFF; /* Clear all flags */
 }
 
-/**
-Handle port C interrupts (Serial Port during sleep)
-*/
+/* Handle port C interrupts (serial port during sleep). */
 ISR(PORTC_PORT_vect)
 {
 	uint8_t x = VPORTC.INTFLAGS;
@@ -1876,26 +992,6 @@ ISR(PORTC_PORT_vect)
 
 	VPORTC.INTFLAGS = 0xFF; /* Clear all flags */
 }
-
-bool switchIsClosed(void)
-{
-	/* Intentionally re-prime the debounce history so stale samples from earlier runtime
-	 * do not affect this wake-qualification check. */
-	debounce();
-	debounce();
-	debounce();
-	debounce();
-	return (!(portDdebouncedVals() & (1 << SWITCH)));
-}
-
-static inline void clearPendingWakeInterruptFlags(void)
-{
-	/* Drop any stale edge flags captured while we were still awake so only a
-	 * new button press or fresh serial activity can wake the device. */
-	VPORTC.INTFLAGS = 0xFF;
-	VPORTD.INTFLAGS = 0xFF;
-}
-
 /* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
@@ -3131,6 +2227,915 @@ int main(void)
 		}
 	}
 }
+
+/***********************************************************************
+ * Support Functions
+ ************************************************************************/
+
+/* Event engine state and scheduling helpers. */
+
+static bool cancelManualTransientState(void)
+{
+	bool pending_start_after_keydown = g_start_event_after_keydown;
+	bool had_transient_state = pending_start_after_keydown || atomic_read_u16(&g_key_down_countdown) || g_foreground_reset_after_keydown || atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_demo;
+
+	if(had_transient_state)
+	{
+		atomic_write_u16(&g_key_down_countdown, 0);
+		atomic_write_u16(&g_demo_event_countdown, 0);
+		g_foreground_reset_after_keydown = false;
+		g_foreground_reset_after_demo = false;
+		g_start_event_after_keydown = false;
+		g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+	}
+
+	return pending_start_after_keydown;
+}
+
+static void captureCloneTimingSnapshot(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	uint8_t total_days = g_days_to_run;
+	uint8_t completed_days = g_days_run;
+	uint8_t days_remaining = (completed_days < total_days) ? (total_days - completed_days) : 1;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	g_clone_timing_snapshot.event_start_epoch = saved_start_epoch;
+	g_clone_timing_snapshot.event_finish_epoch = saved_finish_epoch;
+	g_clone_timing_snapshot.days_to_run = total_days ? total_days : 1;
+
+	bool loaded_window_is_active = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+	bool loaded_window_differs_from_saved = (loaded_start_epoch != saved_start_epoch) || (loaded_finish_epoch != saved_finish_epoch);
+
+	if(loaded_window_is_active && loaded_window_differs_from_saved)
+	{
+		g_clone_timing_snapshot.event_start_epoch = loaded_start_epoch;
+		g_clone_timing_snapshot.event_finish_epoch = loaded_finish_epoch;
+		g_clone_timing_snapshot.days_to_run = days_remaining ? days_remaining : 1;
+	}
+}
+
+static void reinitializeEventEngine(void)
+{
+	g_evteng_initialize_event = true;
+	util_delay_ms(0);
+	while(util_delay_ms(17) && g_evteng_initialize_event)
+		; // Wait for event engine to initialize
+}
+
+static void loadEventTimingForFox(Fox_t fox)
+{
+	bool delayNotSet = true;
+
+	if(fox == USE_CURRENT_FOX)
+	{
+		fox = getFoxSetting();
+	}
+
+	switch(fox)
+	{
+		case FOX_1:
+		{
+			delayNotSet = false;
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		case FOX_2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 60;
+			}
+		}
+		case FOX_3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 120;
+			}
+		}
+		case FOX_4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 180;
+			}
+		}
+		case FOX_5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 240;
+			}
+
+			g_evteng_ID_period_seconds = 60;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 60;
+			g_evteng_off_air_seconds = 240;
+		}
+		break;
+
+		case SPRINT_S1:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 0;
+			}
+		}
+		case SPRINT_S2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 12;
+			}
+		}
+		case SPRINT_S3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 24;
+			}
+		}
+		case SPRINT_S4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 36;
+			}
+		}
+		case SPRINT_S5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 48;
+			}
+
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = 600;
+			g_evteng_on_air_seconds = 12;
+			g_evteng_off_air_seconds = 48;
+		}
+		break;
+
+		case SPRINT_F1:
+		{
+			delayNotSet = false;
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		case SPRINT_F2:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 12;
+			}
+		}
+		case SPRINT_F3:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 24;
+			}
+		}
+		case SPRINT_F4:
+		{
+			if(delayNotSet)
+			{
+				delayNotSet = false;
+				g_evteng_intra_cycle_delay_time = 36;
+			}
+		}
+		case SPRINT_F5:
+		{
+			if(delayNotSet)
+			{
+				g_evteng_intra_cycle_delay_time = 48;
+			}
+
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 12;
+			g_evteng_off_air_seconds = 48;
+		}
+		break;
+
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+		case REPORT_BATTERY:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+		}
+		break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+
+		case FOXORING_FOX1:
+		case FOXORING_FOX2:
+		case FOXORING_FOX3:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+		}
+		break;
+
+		case FREQUENCY_TEST_BEACON:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+		}
+		break;
+
+		case SPECTATOR:
+		case BEACON:
+		default:
+		{
+			g_evteng_intra_cycle_delay_time = 0;
+			g_evteng_ID_period_seconds = 600;
+			g_evteng_sendID_seconds_countdown = g_evteng_ID_period_seconds;
+			g_evteng_on_air_seconds = 600;
+			g_evteng_off_air_seconds = 0;
+		}
+		break;
+	}
+}
+
+static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
+{
+	bool should_resume_loaded_event = loadedEventShouldBeEnabled();
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	if(deferStartIfAlreadyRunning && should_resume_loaded_event && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+	{
+		g_defer_cloned_event_start = true;
+		g_foreground_start_event = false;
+	}
+	else
+	{
+		g_defer_cloned_event_start = false;
+		g_foreground_start_event = should_resume_loaded_event;
+	}
+}
+
+static bool reloadLoadedEventWindowFromSavedSettings(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+
+	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
+	{
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
+		return false;
+	}
+
+	loaded_start_epoch = saved_start_epoch;
+	loaded_finish_epoch = saved_finish_epoch;
+
+	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
+	{
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+		return false;
+	}
+
+	uint8_t day_index = MIN(g_days_run, (uint8_t)((g_days_to_run > 0) ? (g_days_to_run - 1) : 0));
+	loaded_start_epoch += ((time_t)day_index * SECONDS_24H);
+	loaded_finish_epoch += ((time_t)day_index * SECONDS_24H);
+
+	if(timeIsSet())
+	{
+		time_t now = time(null);
+		while((loaded_finish_epoch <= now) && ((day_index + 1) < g_days_to_run))
+		{
+			day_index++;
+			loaded_start_epoch += SECONDS_24H;
+			loaded_finish_epoch += SECONDS_24H;
+		}
+	}
+
+	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+
+	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+}
+
+static bool resyncLoadedEventWindowAfterClockSet(void)
+{
+	time_t saved_start_epoch;
+	time_t saved_finish_epoch;
+	time_t prior_loaded_start_epoch;
+	time_t prior_loaded_finish_epoch;
+	uint8_t total_days = g_days_to_run ? g_days_to_run : 1;
+
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &prior_loaded_start_epoch, &prior_loaded_finish_epoch);
+
+	if((saved_start_epoch <= MINIMUM_VALID_EPOCH) || (saved_finish_epoch <= saved_start_epoch))
+	{
+		return reloadLoadedEventWindowFromSavedSettings();
+	}
+
+	uint8_t day_index = 0;
+	time_t loaded_start_epoch = saved_start_epoch;
+	time_t loaded_finish_epoch = saved_finish_epoch;
+	time_t now = time(null);
+	bool have_schedulable_window = false;
+
+	while((loaded_finish_epoch <= now) && ((day_index + 1) < total_days))
+	{
+		day_index++;
+		loaded_start_epoch += SECONDS_24H;
+		loaded_finish_epoch += SECONDS_24H;
+	}
+
+	if(loaded_finish_epoch <= now)
+	{
+		day_index = total_days;
+		loaded_start_epoch = 0;
+		loaded_finish_epoch = 0;
+	}
+	else
+	{
+		have_schedulable_window = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) ||
+		                          eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+	}
+
+	g_days_run = day_index;
+	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
+
+	/* A clock change can move us onto a different day's window. Only preserve the cancel
+	 * latch if the resync kept us on the same loaded window and that window is still
+	 * current. */
+	if((prior_loaded_start_epoch != loaded_start_epoch) || (prior_loaded_finish_epoch != loaded_finish_epoch) ||
+	   !eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+	{
+		g_event_canceled_by_user = false;
+	}
+
+	return have_schedulable_window;
+}
+
+static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
+{
+	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
+	{
+		return false;
+	}
+
+	g_days_run++;
+	return reloadLoadedEventWindowFromSavedSettings();
+}
+
+static bool currentLoadedEventWindowCanceled(void)
+{
+	if(!g_event_canceled_by_user)
+	{
+		return false;
+	}
+
+	if(!timeIsSet())
+	{
+		return false;
+	}
+
+	time_t loaded_start_epoch;
+	time_t loaded_finish_epoch;
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	/* The latch only applies to the currently loaded event window. Once the loaded window
+	 * has advanced to the future, passive wake/scheduler logic must stop treating it as
+	 * canceled. */
+	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+}
+
+static inline void extendMasterModeTimeout(void)
+{
+	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
+}
+
+static bool finishTimedEventIfExpired(time_t now)
+{
+	if(!(g_evteng_event_commenced && !g_evteng_run_event_until_canceled))
+	{
+		return false;
+	}
+
+	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+	if(!loaded_finish_epoch || (now < loaded_finish_epoch))
+	{
+		return false;
+	}
+
+	g_evteng_on_the_air = 0;
+	keyTransmitter(OFF);
+	g_evteng_event_enabled = false;
+	g_evteng_event_commenced = false;
+	LEDS.init();
+	g_days_run++;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
+
+	if(g_days_run < g_days_to_run)
+	{
+		time_t loaded_start_epoch;
+		time_t loaded_finish_epoch_pair;
+		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
+		time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
+		time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
+		atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
+		g_sleepType = SLEEP_UNTIL_START_TIME;
+		g_go_to_sleep_now = true;
+	}
+	else
+	{
+		g_sleepType = SLEEP_FOREVER;
+		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
+	}
+
+	return true;
+}
+
+/* Morse generation and clock-setting helpers. */
+
+static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
+{
+	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
+	char *pattern = getCurrentPatternText();
+	if((pattern == g_messages_text[PATTERN_TEXT]) || (pattern == g_messages_text[FOXORING_PATTERN_TEXT]))
+	{
+		uint8_t slot = (pattern == g_messages_text[PATTERN_TEXT]) ? PATTERN_TEXT : FOXORING_PATTERN_TEXT;
+		messages_text_slot_copy_atomic(slot, pattern_snapshot, sizeof(pattern_snapshot));
+	}
+	else
+	{
+		strncpy(pattern_snapshot, pattern, sizeof(pattern_snapshot) - 1);
+		pattern_snapshot[sizeof(pattern_snapshot) - 1] = '\0';
+	}
+	makeMorse(pattern_snapshot, repeat, NULL, caller);
+}
+
+static void loadStationIDMorse(bool *repeat, callerID_t caller)
+{
+	static char station_id_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
+	messages_text_slot_copy_atomic(STATION_ID, station_id_snapshot, sizeof(station_id_snapshot));
+	makeMorse(station_id_snapshot, repeat, NULL, caller);
+}
+
+static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch)
+{
+	time_t epoch = atomic_read_time(currentEpoch);
+	return completeTimeString(partialString, &epoch);
+}
+
+static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes)
+{
+	if(hours)
+	{
+		*hours = 0;
+	}
+
+	if(minutes)
+	{
+		*minutes = 0;
+	}
+
+	if(hasMinutes)
+	{
+		*hasMinutes = false;
+	}
+
+	if(!offsetString || (offsetString[0] != '+'))
+	{
+		return false;
+	}
+
+	const char *hours_str = offsetString + 1;
+	if(!hours_str[0])
+	{
+		return false;
+	}
+
+	const char *colon = strchr(hours_str, ':');
+	if(colon && strchr(colon + 1, ':'))
+	{
+		return false;
+	}
+
+	size_t hour_len = colon ? (size_t)(colon - hours_str) : strlen(hours_str);
+	if(hour_len > 3)
+	{
+		return false;
+	}
+
+	uint16_t parsed_hours = 0;
+	for(size_t i = 0; i < hour_len; i++)
+	{
+		if(!isdigit((unsigned char)hours_str[i]))
+		{
+			return false;
+		}
+
+		parsed_hours = (parsed_hours * 10) + (uint16_t)(hours_str[i] - '0');
+	}
+
+	if(parsed_hours > 480)
+	{
+		return false;
+	}
+
+	uint8_t parsed_minutes = 0;
+	bool parsed_has_minutes = false;
+	if(colon)
+	{
+		const char *minutes_str = colon + 1;
+		size_t minute_len = strlen(minutes_str);
+		if((minute_len == 0) || (minute_len > 2))
+		{
+			return false;
+		}
+
+		parsed_has_minutes = true;
+
+		for(size_t i = 0; i < minute_len; i++)
+		{
+			if(!isdigit((unsigned char)minutes_str[i]))
+			{
+				return false;
+			}
+
+			parsed_minutes = (parsed_minutes * 10) + (uint8_t)(minutes_str[i] - '0');
+		}
+
+		if(parsed_minutes > 59)
+		{
+			return false;
+		}
+	}
+
+	if(hours)
+	{
+		*hours = parsed_hours;
+	}
+
+	if(minutes)
+	{
+		*minutes = parsed_minutes;
+	}
+
+	if(hasMinutes)
+	{
+		*hasMinutes = parsed_has_minutes;
+	}
+
+	return true;
+}
+
+static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch)
+{
+	if(!boundary)
+	{
+		return epoch;
+	}
+
+	time_t aligned = ((epoch + (boundary / 2)) / boundary) * boundary;
+	if(aligned < minimumEpoch)
+	{
+		aligned = ((minimumEpoch + boundary - 1) / boundary) * boundary;
+	}
+
+	return aligned;
+}
+
+static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg)
+{
+	if(resolvedEpoch)
+	{
+		*resolvedEpoch = 0;
+	}
+
+	if(baseEpoch < MINIMUM_VALID_EPOCH)
+	{
+		if(errMsg)
+		{
+			if(suppressBaseEpochError)
+			{
+				errMsg[0] = '\0';
+			}
+			else
+			{
+				strcpy(errMsg, baseEpochError ? baseEpochError : "* Err: Invalid offset!\n");
+			}
+		}
+
+		return false;
+	}
+
+	uint16_t hours = 0;
+	uint8_t minutes = 0;
+	bool hasMinutes = false;
+	if(!parseClockHourMinuteOffset(offsetString, &hours, &minutes, &hasMinutes))
+	{
+		if(errMsg)
+		{
+			strcpy(errMsg, "* Err: Invalid offset!\n");
+		}
+
+		return false;
+	}
+
+	time_t target = baseEpoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
+	time_t boundary = hasMinutes ? minuteBoundary : hourBoundary;
+
+	if(resolvedEpoch)
+	{
+		*resolvedEpoch = alignEpochToNearestBoundary(target, boundary, baseEpoch);
+	}
+
+	if(errMsg)
+	{
+		errMsg[0] = '\0';
+	}
+
+	return true;
+}
+
+static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue)
+{
+	atomic_write_time_pair(loadedEpoch, savedEpoch, epoch, epoch);
+	g_ee_mgr.updateEEPROMVar(eeVar, eeValue);
+}
+
+static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
+{
+	sb_send_string((char *)reply);
+	atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+	g_event_checksum += epoch;
+}
+
+static void finalizeLocalClockUpdate(void)
+{
+	cancelManualTransientState();
+	g_days_to_run = 1;
+	g_days_run = 0;
+	startEventUsingRTC();
+}
+
+/* Serial-argument parsing and settings persistence helpers. */
+
+static Event_t eventFromSerialArg(char eventArg)
+{
+	switch(eventArg)
+	{
+		case 'F':
+			return EVENT_FOXORING;
+
+		case 'C':
+			return EVENT_CLASSIC;
+
+		case 'S':
+			return EVENT_SPRINT;
+
+		case 'B':
+			return EVENT_BLIND_ARDF;
+
+		default:
+			return EVENT_NONE;
+	}
+}
+
+static void persistFoxSettingForCurrentEvent(Fox_t fox)
+{
+	EE_var_t eeVar = Fox_setting_none;
+
+	switch(g_event)
+	{
+		case EVENT_CLASSIC:
+			eeVar = Fox_setting_classic;
+			break;
+
+		case EVENT_SPRINT:
+			eeVar = Fox_setting_sprint;
+			break;
+
+		case EVENT_FOXORING:
+			eeVar = Fox_setting_foxoring;
+			break;
+
+		case EVENT_BLIND_ARDF:
+			eeVar = Fox_setting_blind;
+			break;
+
+		default:
+			break;
+	}
+
+	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
+}
+
+static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
+{
+	switch(eeVar)
+	{
+		case Frequency_Low:
+			g_frequency_low = frequency;
+			break;
+
+		case Frequency_Med:
+			g_frequency_med = frequency;
+			break;
+
+		case Frequency_Hi:
+			g_frequency_hi = frequency;
+			break;
+
+		case Frequency_Beacon:
+			g_frequency_beacon = frequency;
+			break;
+
+		default:
+			g_frequency = frequency;
+			eeVar = Frequency;
+			break;
+	}
+
+	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&frequency);
+}
+
+/* Foreground periodic and wake helpers. `handle_1sec_tasks()` runs from the RTC ISR. */
+void handle_1sec_tasks(void)
+{
+	time_t temp_time = 0;
+
+	g_seconds_since_wakeup++;
+
+	if(isMasterCountdownSeconds)
+		isMasterCountdownSeconds--;
+
+	if(!g_cloningInProgress)
+	{
+		temp_time = time(null);
+		finishTimedEventIfExpired(temp_time);
+
+		if(g_evteng_event_enabled && !g_isMaster)
+		{
+			if(g_evteng_event_commenced) /* an event is in progress */
+			{
+				if(g_evteng_sendID_seconds_countdown)
+				{
+					g_evteng_sendID_seconds_countdown--;
+				}
+			}
+			else if(g_evteng_run_event_until_canceled)
+			{
+				if(!g_foreground_enable_transmitter)
+				{
+					if(g_evteng_intra_cycle_delay_time)
+					{
+						g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
+						g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
+					}
+					else
+					{
+						g_evteng_on_the_air = g_evteng_on_air_seconds;
+						g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
+					}
+
+					g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
+					bool repeat = true;
+					loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
+
+					g_foreground_enable_transmitter = true;
+					LEDS.init();
+				}
+			}
+			else /* waiting for the start time to arrive */
+			{
+				time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+				if(loaded_start_epoch > MINIMUM_VALID_EPOCH) /* a start time has been set */
+				{
+					temp_time = time(null);
+
+					if(temp_time >= loaded_start_epoch) /* Time for the event to start */
+					{
+						loadEventTimingForFox(USE_CURRENT_FOX);
+						g_evteng_event_commenced = true;
+						g_evteng_initialize_event = true;
+						g_sleepType = SLEEP_AFTER_EVENT;
+
+						if(g_evteng_intra_cycle_delay_time)
+						{
+							g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
+							g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
+						}
+						else
+						{
+							g_evteng_on_the_air = g_evteng_on_air_seconds;
+							g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
+						}
+
+						g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
+						bool repeat = true;
+						loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
+
+						g_foreground_enable_transmitter = true;
+						LEDS.init();
+					}
+				}
+			}
+		}
+	}
+
+	/**************************************
+	 * Delay before sleep
+	 ***************************************/
+	if(g_evteng_sleepshutdown_seconds)
+	{
+		g_evteng_sleepshutdown_seconds--;
+
+		if(!g_evteng_sleepshutdown_seconds)
+		{
+			if(g_isMaster || g_cloningInProgress)
+			{
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep while cloning or while master */
+			}
+			else if(g_evteng_event_commenced && g_evteng_event_enabled && ((g_sleepType != SLEEP_UNTIL_NEXT_XMSN) && (g_sleepType != SLEEP_UNTIL_START_TIME)) && (getFoxSetting() != FREQUENCY_TEST_BEACON))
+			{
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300); /* Never sleep during active transmissions */
+			}
+			else
+			{
+				if(g_sleepType == SLEEP_AFTER_EVENT)
+				{
+					if(noEventWillRun()) /* Event is done; fall through and request the appropriate sleep state now. */
+					{
+						g_sleepType = SLEEP_FOREVER;
+					}
+				}
+
+				if((g_sleepType != SLEEP_AFTER_EVENT) && !g_go_to_sleep_now)
+				{
+					if(g_sleepType == SLEEP_FOREVER)
+					{
+						time_t loaded_start_epoch;
+						time_t loaded_finish_epoch;
+						atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+						if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch)) /* Should never evaluate to true here, but checking just in case */
+						{
+							g_sleepType = SLEEP_UNTIL_START_TIME;
+						}
+					}
+
+					/* If we reach here, g_sleepType = 	SLEEP_UNTIL_START_TIME, SLEEP_UNTIL_NEXT_XMSN, or SLEEP_FOREVER */
+					g_go_to_sleep_now = true;
+				}
+			}
+		}
+	}
+}
+
+/* Wake-input helper functions. */
+
+bool switchIsClosed(void)
+{
+	/* Intentionally re-prime the debounce history so stale samples from earlier runtime
+	 * do not affect this wake-qualification check. */
+	debounce();
+	debounce();
+	debounce();
+	debounce();
+	return (!(portDdebouncedVals() & (1 << SWITCH)));
+}
+
+static inline void clearPendingWakeInterruptFlags(void)
+{
+	/* Drop any stale edge flags captured while we were still awake so only a
+	 * new button press or fresh serial activity can wake the device. */
+	VPORTC.INTFLAGS = 0xFF;
+	VPORTD.INTFLAGS = 0xFF;
+}
+
+/* Serial command handling. */
 
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 // void handleSerialBusMsgs()
@@ -4760,11 +4765,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 	}
 }
 
-/***********************************************************************
- * Private Functions
- *
- * These functions are available only within this file
- ************************************************************************/
+/* Event activation, wake restoration, and LED-state helpers. */
 bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 {
 	time_t loaded_start_epoch;
@@ -5462,6 +5463,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		}
 	}
 }
+
+/* Time validation and configuration reporting helpers. */
 
 /*
  * Function: validateTimeString
@@ -6197,6 +6200,8 @@ void reportSettings(void)
 #endif
 }
 
+/* Pattern, frequency, and cloning helpers. */
+
 uint16_t timeNeededForID(void)
 {
 	return ((uint16_t)(((float)timeRequiredToSendStrAtWPM((char *)g_messages_text[STATION_ID], g_evteng_id_codespeed)) / 1000.));
@@ -6758,6 +6763,8 @@ void handleSerialCloning(void)
 	if(sb_buff)
 		sb_buff->id = SB_MESSAGE_EMPTY;
 }
+
+/* Event-state queries and user-triggered start helpers. */
 
 /*
  * Checks if any event will run
