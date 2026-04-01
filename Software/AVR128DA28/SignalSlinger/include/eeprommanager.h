@@ -27,10 +27,9 @@
 
 #include "defs.h"
 
+#include <stddef.h>
 #include <time.h>
 #include <avr/eeprom.h>
-
-#define GUARDSIZE sizeof(uint32_t)
 
 struct EE_prom
 {
@@ -111,79 +110,81 @@ struct EE_prom
 
 typedef enum
 {
-	Eeprom_initialization_flag = 0, /* 2 bytes */
-	Guard4_1 = Eeprom_initialization_flag + sizeof(uint16_t),		/**** Guard = 4 bytes ****/
-	Event_start_epoch = Guard4_1 + GUARDSIZE, /* 4 bytes */
-	Guard4_2 = Event_start_epoch + sizeof(time_t),					/**** Guard = 4 bytes ****/
-	Event_finish_epoch =  Guard4_2 + GUARDSIZE, /* 4 bytes */
-	Guard4_3 = Event_finish_epoch + sizeof(time_t),					/**** Guard = 4 bytes ****/
-	Pattern_text =  Guard4_3 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1  bytes */
-	Guard4_4 = Pattern_text + MAX_PATTERN_TEXT_LENGTH+2,			/**** Guard = 4 bytes ****/
-	Foxoring_pattern_text =  Guard4_4 + GUARDSIZE,  /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_5 = Foxoring_pattern_text + MAX_PATTERN_TEXT_LENGTH+2,	/**** Guard = 4 bytes ****/
-	StationID_text =  Guard4_5 + GUARDSIZE, /* MAX_PATTERN_TEXT_LENGTH + 1 bytes */
-	Guard4_6 = StationID_text + MAX_PATTERN_TEXT_LENGTH+2,		/**** Guard = 4 bytes ****/
-	UnlockCode =  Guard4_6 + GUARDSIZE, /* UNLOCK_CODE_SIZE + 2 bytes */
-	Guard4_7 = UnlockCode + UNLOCK_CODE_SIZE+2,					/**** Guard = 4 bytes ****/
-	Fox_setting_none =  Guard4_7 + GUARDSIZE, /* 1 bytes */
-	Guard4_8 = Fox_setting_none + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
-	Fox_setting_classic =  Guard4_8 + GUARDSIZE, /* 1 bytes */
-	Guard4_9 = Fox_setting_classic + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
-	Fox_setting_sprint =  Guard4_9 + GUARDSIZE, /* 1 bytes */
-	Guard4_10 = Fox_setting_sprint + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
-	Fox_setting_foxoring =  Guard4_10 + GUARDSIZE, /* 1 bytes */
-	Guard4_11 = Fox_setting_foxoring + sizeof(Fox_t),				/**** Guard = 4 bytes ****/
-	Fox_setting_blind =  Guard4_11 + GUARDSIZE, /* 1 bytes */
-	Guard4_12 = Fox_setting_blind + sizeof(Fox_t),					/**** Guard = 4 bytes ****/
-	Utc_offset =  Guard4_12 + GUARDSIZE, /* 1 byte */
-	Guard4_13 = Utc_offset + sizeof(uint8_t),						/**** Guard = 4 bytes ****/
-	RTTY_offset =  Guard4_13 + GUARDSIZE, /* 4 bytes */
-	Guard4_14 = RTTY_offset + sizeof(Frequency_Hz),					/**** Guard = 4 bytes ****/
-	RF_Power =  Guard4_14 + GUARDSIZE, /* 2 bytes */
-	Guard4_15 = RF_Power + sizeof(int16_t),							/**** Guard = 4 bytes ****/
-	Id_codespeed =  Guard4_15 + GUARDSIZE, /* 1 byte */
-	Guard4_16 = Id_codespeed + sizeof(uint8_t),						/**** Guard = 4 bytes ****/
-	Pattern_Code_Speed =  Guard4_16 + GUARDSIZE, /* 1 byte */
-	Guard4_17 = Pattern_Code_Speed + sizeof(uint8_t),				/**** Guard = 4 bytes ****/
-	Foxoring_Pattern_Code_Speed =  Guard4_17 + GUARDSIZE, /* 1 byte */
-	Guard4_18 = Foxoring_Pattern_Code_Speed + sizeof(uint8_t),		/**** Guard = 4 bytes ****/
-	Off_Air_Seconds =  Guard4_18 + GUARDSIZE, /* 2 bytes */
-	Guard4_19 = Off_Air_Seconds + sizeof(int16_t),					/**** Guard = 4 bytes ****/
-	On_Air_Seconds =  Guard4_19 + GUARDSIZE, /* 2 bytes */
-	Guard4_20 = On_Air_Seconds + sizeof(int16_t),					/**** Guard = 4 bytes ****/
-	ID_Period_Seconds =  Guard4_20 + GUARDSIZE, /* 2 bytes */
-	Guard4_21 = ID_Period_Seconds + sizeof(int16_t),				/**** Guard = 4 bytes ****/
-	Intra_Cycle_Delay_Seconds =  Guard4_21 + GUARDSIZE, /* 2 bytes */
-	Guard4_22 = Intra_Cycle_Delay_Seconds + sizeof(int16_t),		/**** Guard = 4 bytes ****/
-	Event_setting =  Guard4_22 + GUARDSIZE, /* 1 byte */ 
-	Guard4_23 = Event_setting + sizeof(Event_t),					/**** Guard = 4 bytes ****/
-	Frequency =  Guard4_23 + GUARDSIZE,  /* 4 bytes */
-	Guard4_24 = Frequency + sizeof(Frequency_Hz),					/**** Guard = 4 bytes ****/
-	Frequency_Low =  Guard4_24 + GUARDSIZE,  /* 4 bytes */
-	Guard4_25 = Frequency_Low + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
-	Frequency_Med =  Guard4_25 + GUARDSIZE,  /* 4 bytes */
-	Guard4_26 = Frequency_Med + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
-	Frequency_Hi =  Guard4_26 + GUARDSIZE,  /* 4 bytes */
-	Guard4_27 = Frequency_Hi + sizeof(Frequency_Hz),				/**** Guard = 4 bytes ****/
-	Frequency_Beacon =  Guard4_27 + GUARDSIZE,  /* 4 bytes */
-	Guard4_28 = Frequency_Beacon + sizeof(Frequency_Hz),			/**** Guard = 4 bytes ****/
-	Master_setting =  Guard4_28 + GUARDSIZE, /* bool: 1 byte */ 
-	Guard4_29 = Master_setting + sizeof(bool),						/**** Guard = 4 bytes ****/
-	Voltage_threshold =  Guard4_29 + GUARDSIZE,   /* 4 bytes */
-	Guard4_30 = Voltage_threshold + sizeof(float),					/**** Guard = 4 bytes ****/
-	Clock_calibration =  Guard4_30 + GUARDSIZE,   /* 2 bytes */
-	Guard4_31 = Clock_calibration + sizeof(uint16_t),				/**** Guard = 4 bytes ****/
-	Days_to_run = Guard4_31 + GUARDSIZE,   /* 1 byte */
-	Guard4_32 = Days_to_run + sizeof(uint16_t),	                    /**** Guard = 4 bytes ****/
-	I2C_failure_count = Guard4_32 + GUARDSIZE,   /* 2 bytes */
-	Guard4_33 = I2C_failure_count + sizeof(uint8_t),				/**** Guard = 4 bytes ****/
-	Function = Guard4_33 + GUARDSIZE,   /* 1 byte */
-	Guard4_34 = Function + sizeof(uint8_t),							/**** Guard = 4 bytes ****/
-	Enable_Boost_Regulator = Guard4_34 + GUARDSIZE, /* 1 byte */
-	Guard4_35 = Enable_Boost_Regulator + sizeof(uint8_t),			/**** Guard = 4 bytes ****/
-	Enable_External_Battery_Control = Guard4_35 + GUARDSIZE, /* 1 byte */
-	Guard4_36 = Enable_External_Battery_Control + sizeof(uint8_t),  /**** Guard = 4 bytes ****/
-	Device_Enabled = Guard4_36 + GUARDSIZE /* 1 byte */
+#define EEPROM_OFFSET(field) offsetof(EE_prom, field)
+	Eeprom_initialization_flag = EEPROM_OFFSET(eeprom_initialization_flag),
+	Guard4_1 = EEPROM_OFFSET(guard4_1),
+	Event_start_epoch = EEPROM_OFFSET(event_start_epoch),
+	Guard4_2 = EEPROM_OFFSET(guard4_2),
+	Event_finish_epoch = EEPROM_OFFSET(event_finish_epoch),
+	Guard4_3 = EEPROM_OFFSET(guard4_3),
+	Pattern_text = EEPROM_OFFSET(pattern_text),
+	Guard4_4 = EEPROM_OFFSET(guard4_4),
+	Foxoring_pattern_text = EEPROM_OFFSET(foxoring_pattern_text),
+	Guard4_5 = EEPROM_OFFSET(guard4_5),
+	StationID_text = EEPROM_OFFSET(stationID_text),
+	Guard4_6 = EEPROM_OFFSET(guard4_6),
+	UnlockCode = EEPROM_OFFSET(unlockCode),
+	Guard4_7 = EEPROM_OFFSET(guard4_7),
+	Fox_setting_none = EEPROM_OFFSET(fox_setting_none),
+	Guard4_8 = EEPROM_OFFSET(guard4_8),
+	Fox_setting_classic = EEPROM_OFFSET(fox_setting_classic),
+	Guard4_9 = EEPROM_OFFSET(guard4_9),
+	Fox_setting_sprint = EEPROM_OFFSET(fox_setting_sprint),
+	Guard4_10 = EEPROM_OFFSET(guard4_10),
+	Fox_setting_foxoring = EEPROM_OFFSET(fox_setting_foxoring),
+	Guard4_11 = EEPROM_OFFSET(guard4_11),
+	Fox_setting_blind = EEPROM_OFFSET(fox_setting_blind),
+	Guard4_12 = EEPROM_OFFSET(guard4_12),
+	Utc_offset = EEPROM_OFFSET(utc_offset),
+	Guard4_13 = EEPROM_OFFSET(guard4_13),
+	RTTY_offset = EEPROM_OFFSET(rtty_offset),
+	Guard4_14 = EEPROM_OFFSET(guard4_14),
+	RF_Power = EEPROM_OFFSET(rf_power),
+	Guard4_15 = EEPROM_OFFSET(guard4_15),
+	Id_codespeed = EEPROM_OFFSET(id_codespeed),
+	Guard4_16 = EEPROM_OFFSET(guard4_16),
+	Pattern_Code_Speed = EEPROM_OFFSET(pattern_codespeed),
+	Guard4_17 = EEPROM_OFFSET(guard4_17),
+	Foxoring_Pattern_Code_Speed = EEPROM_OFFSET(foxoring_pattern_codespeed),
+	Guard4_18 = EEPROM_OFFSET(guard4_18),
+	Off_Air_Seconds = EEPROM_OFFSET(off_air_seconds),
+	Guard4_19 = EEPROM_OFFSET(guard4_19),
+	On_Air_Seconds = EEPROM_OFFSET(on_air_seconds),
+	Guard4_20 = EEPROM_OFFSET(guard4_20),
+	ID_Period_Seconds = EEPROM_OFFSET(ID_period_seconds),
+	Guard4_21 = EEPROM_OFFSET(guard4_21),
+	Intra_Cycle_Delay_Seconds = EEPROM_OFFSET(intra_cycle_delay_time),
+	Guard4_22 = EEPROM_OFFSET(guard4_22),
+	Event_setting = EEPROM_OFFSET(event_setting),
+	Guard4_23 = EEPROM_OFFSET(guard4_23),
+	Frequency = EEPROM_OFFSET(frequency),
+	Guard4_24 = EEPROM_OFFSET(guard4_24),
+	Frequency_Low = EEPROM_OFFSET(frequency_low),
+	Guard4_25 = EEPROM_OFFSET(guard4_25),
+	Frequency_Med = EEPROM_OFFSET(frequency_med),
+	Guard4_26 = EEPROM_OFFSET(guard4_26),
+	Frequency_Hi = EEPROM_OFFSET(frequency_high),
+	Guard4_27 = EEPROM_OFFSET(guard4_27),
+	Frequency_Beacon = EEPROM_OFFSET(frequency_beacon),
+	Guard4_28 = EEPROM_OFFSET(guard4_28),
+	Master_setting = EEPROM_OFFSET(master_setting),
+	Guard4_29 = EEPROM_OFFSET(guard4_29),
+	Voltage_threshold = EEPROM_OFFSET(voltage_threshold),
+	Guard4_30 = EEPROM_OFFSET(guard4_30),
+	Clock_calibration = EEPROM_OFFSET(clock_calibration),
+	Guard4_31 = EEPROM_OFFSET(guard4_31),
+	Days_to_run = EEPROM_OFFSET(days_to_run),
+	Guard4_32 = EEPROM_OFFSET(guard4_32),
+	I2C_failure_count = EEPROM_OFFSET(i2c_failure_count),
+	Guard4_33 = EEPROM_OFFSET(guard4_33),
+	Function = EEPROM_OFFSET(function),
+	Guard4_34 = EEPROM_OFFSET(guard4_34),
+	Enable_Boost_Regulator = EEPROM_OFFSET(enable_boost_regulator),
+	Guard4_35 = EEPROM_OFFSET(guard4_35),
+	Enable_External_Battery_Control = EEPROM_OFFSET(enable_external_battery_control),
+	Guard4_36 = EEPROM_OFFSET(guard4_36),
+	Device_Enabled = EEPROM_OFFSET(device_enabled)
+#undef EEPROM_OFFSET
 } EE_var_t;
 
 
