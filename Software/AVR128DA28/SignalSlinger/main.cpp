@@ -1453,7 +1453,7 @@ int main(void)
 					CLKCTRL_init();
 					/* Re-enable BOD? */
 					g_sleeping = false;
-					g_seconds_since_wakeup = 0;
+					atomic_write_time(&g_seconds_since_wakeup, 0);
 					atmel_start_init();
 					if(!sb_enabled())
 						serialbus_init(SB_BAUD, SERIALBUS_USART);
