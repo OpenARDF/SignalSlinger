@@ -35,15 +35,15 @@ struct EE_prom
 {
 	uint16_t eeprom_initialization_flag;
 	uint32_t guard4_1;
-	time_t event_start_epoch; 
+	time_t event_start_epoch;
 	uint32_t guard4_2;
-	time_t event_finish_epoch; 
+	time_t event_finish_epoch;
 	uint32_t guard4_3;
- 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
+	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
 	uint32_t guard4_4;
-	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
+	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
 	uint32_t guard4_5;
- 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2]; 
+	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
 	uint32_t guard4_6;
 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 2];
 	uint32_t guard4_7;
@@ -57,9 +57,9 @@ struct EE_prom
 	uint32_t guard4_11;
 	Fox_t fox_setting_blind;
 	uint32_t guard4_12;
-	uint8_t utc_offset; 
+	uint8_t utc_offset;
 	uint32_t guard4_13;
-	Frequency_Hz rtty_offset; 
+	Frequency_Hz rtty_offset;
 	uint32_t guard4_14;
 	uint16_t rf_power;
 	uint32_t guard4_15;
@@ -69,21 +69,21 @@ struct EE_prom
 	uint32_t guard4_17;
 	uint8_t foxoring_pattern_codespeed;
 	uint32_t guard4_18;
-	int16_t off_air_seconds; 
+	int16_t off_air_seconds;
 	uint32_t guard4_19;
-	int16_t on_air_seconds; 
+	int16_t on_air_seconds;
 	uint32_t guard4_20;
-	int16_t ID_period_seconds; 
+	int16_t ID_period_seconds;
 	uint32_t guard4_21;
-	int16_t intra_cycle_delay_time; 
+	int16_t intra_cycle_delay_time;
 	uint32_t guard4_22;
-	Event_t event_setting; 
+	Event_t event_setting;
 	uint32_t guard4_23;
 	uint32_t frequency;
 	uint32_t guard4_24;
 	uint32_t frequency_low;
 	uint32_t guard4_25;
-	uint32_t frequency_med; 
+	uint32_t frequency_med;
 	uint32_t guard4_26;
 	uint32_t frequency_high;
 	uint32_t guard4_27;
@@ -187,29 +187,27 @@ typedef enum
 #undef EEPROM_OFFSET
 } EE_var_t;
 
-
 class EepromManager
 {
 	/*variables */
-	public:
-	protected:
-	private:
-
+  public:
+  protected:
+  private:
 	/*functions */
-	public:
+  public:
 	EepromManager() {}
 
 	static const struct EE_prom ee_vars;
 
 	bool initializeEEPROMVars(void);
 	bool readNonVols(void);
-	void updateEEPROMVar(EE_var_t v, void* val);
+	void updateEEPROMVar(EE_var_t v, void *val);
 	void saveAllEEPROM();
 
-	protected:
-	private:
-	EepromManager( const EepromManager &c );
-	EepromManager& operator=( const EepromManager &c );
-};  /*EepromManager */
+  protected:
+  private:
+	EepromManager(const EepromManager &c);
+	EepromManager &operator=(const EepromManager &c);
+}; /*EepromManager */
 
-#endif  /*__EEPROMMANAGER_H__ */
+#endif /*__EEPROMMANAGER_H__ */
