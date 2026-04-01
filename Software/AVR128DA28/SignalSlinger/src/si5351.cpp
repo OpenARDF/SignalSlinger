@@ -525,14 +525,14 @@ Frequency_Hz si5351_get_frequency(Si5351_clock clock)
  * enable - 1 to enable, 0 to disable
  *
  */
-EC si5351_clock_enable(Si5351_clock clk, bool enable)
+bool si5351_clock_enable(Si5351_clock clk, bool enable)
 {
 	uint8_t reg_val;
 	uint8_t data[2];
 
 	if(si5351_read_bulk(SI5351_OUTPUT_ENABLE_CTRL, data, 1))
 	{
-		return ERROR_CODE_RTC_NONRESPONSIVE;
+		return false;
 	}
 
 	reg_val = data[0];
@@ -548,9 +548,9 @@ EC si5351_clock_enable(Si5351_clock clk, bool enable)
 
 	data[0] = reg_val;
 	if(si5351_write_bulk(SI5351_OUTPUT_ENABLE_CTRL, data, 1))
-		return ERROR_CODE_RTC_NONRESPONSIVE;
+		return false;
 
-	return ERROR_CODE_NO_ERROR;
+	return true;
 }
 
 /*
@@ -562,7 +562,7 @@ EC si5351_clock_enable(Si5351_clock clk, bool enable)
  * drive - Desired drive level
  *
  */
-EC si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
+bool si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
 {
 	uint8_t reg_val;
 	uint8_t data[2];
@@ -570,7 +570,7 @@ EC si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
 
 	if(si5351_read_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1))
 	{
-		return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+		return false;
 	}
 
 	reg_val = data[0];
@@ -613,9 +613,9 @@ EC si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
 
 	data[0] = reg_val;
 	if(si5351_write_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1))
-		return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+		return false;
 
-	return ERROR_CODE_NO_ERROR;
+	return true;
 }
 
 /*
@@ -623,7 +623,7 @@ EC si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
  *
  * Returns the oscillator correction factor.
  */
-EC si5351_set_phase(Si5351_clock clk, uint8_t phase)
+bool si5351_set_phase(Si5351_clock clk, uint8_t phase)
 {
 	uint8_t reg_val;
 	uint8_t data[2];
@@ -632,9 +632,9 @@ EC si5351_set_phase(Si5351_clock clk, uint8_t phase)
 	reg_val = phase & mask;
 	data[0] = reg_val;
 	if(si5351_write_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1))
-		return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+		return false;
 
-	return ERROR_CODE_NO_ERROR;
+	return true;
 }
 
 /*
@@ -642,19 +642,19 @@ EC si5351_set_phase(Si5351_clock clk, uint8_t phase)
  *
  * Returns the oscillator correction factor.
  */
-EC si5351_get_phase(Si5351_clock clk, uint8_t *phase)
+bool si5351_get_phase(Si5351_clock clk, uint8_t *phase)
 {
 	uint8_t data[2];
 
 	if(si5351_read_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1))
 	{
-		return ERROR_CODE_CLKGEN_NONRESPONSIVE;
+		return false;
 	}
 
 	if(phase)
 		*phase = data[0];
 
-	return ERROR_CODE_NO_ERROR;
+	return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */

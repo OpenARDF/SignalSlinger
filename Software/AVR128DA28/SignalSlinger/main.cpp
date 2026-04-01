@@ -99,8 +99,6 @@ typedef struct
  ************************************************************************/
 #define TEMP_STRING_SIZE 50
 static char g_tempStr[TEMP_STRING_SIZE + 1] = {'\0'};
-static volatile EC g_last_error_code = ERROR_CODE_NO_ERROR;
-static volatile SC g_last_status_code = STATUS_CODE_IDLE;
 
 volatile bool g_device_enabled = false;
 
@@ -317,8 +315,8 @@ void handle_1sec_tasks(void);
 bool loadedEventShouldBeEnabled(void);
 void handleSerialBusMsgs(void);
 uint16_t throttleValue(uint8_t speed);
-EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, time_t finishTime);
-EC launchLoadedEvent(SC *statusCode);
+bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime);
+bool launchLoadedEvent(void);
 void reportSettings(void);
 uint16_t timeNeededForID(void);
 Frequency_Hz getFrequencySetting(void);
@@ -800,7 +798,6 @@ static bool finishTimedEventIfExpired(time_t now)
 		return false;
 	}
 
-	g_last_status_code = STATUS_CODE_EVENT_FINISHED;
 	g_evteng_on_the_air = 0;
 	keyTransmitter(OFF);
 	g_evteng_event_enabled = false;
@@ -1222,13 +1219,11 @@ void handle_1sec_tasks(void)
 				{
 					if(g_evteng_intra_cycle_delay_time)
 					{
-						g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
 						g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
 						g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
 					}
 					else
 					{
-						g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 						g_evteng_on_the_air = g_evteng_on_air_seconds;
 						g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
 					}
@@ -1257,13 +1252,11 @@ void handle_1sec_tasks(void)
 
 						if(g_evteng_intra_cycle_delay_time)
 						{
-							g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
 							g_evteng_on_the_air = -g_evteng_intra_cycle_delay_time;
 							g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
 						}
 						else
 						{
-							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 							g_evteng_on_the_air = g_evteng_on_air_seconds;
 							g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
 						}
@@ -1543,7 +1536,6 @@ ISR(TCB0_INT_vect)
 				/* Interrupt transmissions and send the ID under these conditions */
 				if(!g_evteng_sending_station_ID && (!g_evteng_off_air_seconds || (g_evteng_on_the_air <= g_time_needed_for_ID)) && !g_evteng_sendID_seconds_countdown && g_time_needed_for_ID) /* Time to identify on the air */
 				{
-					g_last_status_code = STATUS_CODE_SENDING_ID;
 					g_evteng_code_throttle = throttleValue(g_evteng_id_codespeed);
 					repeat = false;
 					loadStationIDMorse(&repeat, CALLER_AUTOMATED_EVENT); /* Send only once */
@@ -1564,7 +1556,6 @@ ISR(TCB0_INT_vect)
 
 						if(!repeat && finished) /* ID has completed or timed out, so resume pattern */
 						{
-							g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 							g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 							repeat = true;
 							loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
@@ -1625,7 +1616,6 @@ ISR(TCB0_INT_vect)
 							if((temp_time < loaded_finish_epoch) && (loaded_start_epoch != loaded_finish_epoch))
 							{
 								timeRemaining = timeDif(loaded_finish_epoch, temp_time);
-								g_last_status_code = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
 							}
 						}
 
@@ -2429,15 +2419,13 @@ int main(void)
 
 					// Restore the transmitter power state that matches the logical state we just woke into.
 					bool should_power_tx = shouldPowerTransmitterAfterWake();
-					if(powerToTransmitter(should_power_tx) != ERROR_CODE_NO_ERROR)
+					if(!powerToTransmitter(should_power_tx))
 					{
 						if(should_power_tx)
 						{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						}
 					}
-
-					g_last_status_code = STATUS_CODE_RETURNED_FROM_SLEEP;
 				}
 			}
 			else
@@ -2526,7 +2514,7 @@ int main(void)
 								atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 								if(!txIsInitialized())
 								{
-									if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+									if(!powerToTransmitter(g_device_enabled))
 									{
 										sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 									}
@@ -2602,7 +2590,7 @@ int main(void)
 										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 										g_event_launched_by_user_action = false;
-										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+										if(!powerToTransmitter(g_device_enabled))
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 										}
@@ -2645,7 +2633,7 @@ int main(void)
 #else
 											atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
-											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+											if(!powerToTransmitter(g_device_enabled))
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 											}
@@ -2671,7 +2659,7 @@ int main(void)
 												atomic_write_u16(&g_demo_event_countdown, 9000); // 30 seconds
 											}
 
-											if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+											if(!powerToTransmitter(g_device_enabled))
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 											}
@@ -2720,7 +2708,7 @@ int main(void)
 										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 										g_start_event_after_keydown = true;
-										if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+										if(!powerToTransmitter(g_device_enabled))
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 										}
@@ -2826,9 +2814,7 @@ int main(void)
 					reinitializeEventEngine();
 
 					LEDS.init();
-					g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
-
-					if(g_last_error_code != ERROR_CODE_NO_ERROR)
+					if(!launchLoadedEvent())
 					{
 						sb_send_string((char *)"* Err: event not launched\n");
 					}
@@ -2841,7 +2827,7 @@ int main(void)
 			if(g_foreground_enable_transmitter) // This flag to the foreground allows the transmitter to be turned on using I2C by interrupts
 			{
 				g_foreground_enable_transmitter = false;
-				if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+				if(!powerToTransmitter(g_device_enabled))
 				{
 					sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				}
@@ -2854,7 +2840,7 @@ int main(void)
 			// 					if((g_sleepType != SLEEP_FOREVER) || ((g_evteng_loaded_start_epoch) && (g_evteng_loaded_finish_epoch)))
 			// 					{
 			// 						sb_send_string((char*)"* Error: power not applied to tx stages\n");
-			// 						if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+			// 						if(!powerToTransmitter(g_device_enabled))
 			// 						{
 			// 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 			// 						}
@@ -3699,7 +3685,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(!txIsInitialized())
 							{
-								if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+								if(!powerToTransmitter(g_device_enabled))
 								{
 									sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 								}
@@ -3769,7 +3755,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						// 						{
 						// 							g_event_launched_by_user_action = true;
 						// 							suspendEvent(); // Stop any running event and initialize loaded event engine settings
-						// 							if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+						// 							if(!powerToTransmitter(g_device_enabled))
 						// 							{
 						// 								sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						// 							}
@@ -4059,7 +4045,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						cancelManualTransientState();
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
-						if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+						if(!powerToTransmitter(g_device_enabled))
 						{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						}
@@ -4833,7 +4819,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 
 	if(dif >= -30) /* Don't sleep if the event starts in 30 seconds or less, or has already started */
 	{
-		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+		if(!powerToTransmitter(g_device_enabled))
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
@@ -4855,26 +4841,22 @@ uint16_t throttleValue(uint8_t speed)
 	return ((uint16_t)temp);
 }
 
-EC __attribute__((optimize("O0"))) launchLoadedEvent(SC *statusCode)
+bool __attribute__((optimize("O0"))) launchLoadedEvent(void)
 {
 	time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
 	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-	EC ec = activateEventEngineUsingCurrentSettings(statusCode, loaded_start_epoch, loaded_finish_epoch);
+	bool launched = activateEventEngineUsingCurrentSettings(loaded_start_epoch, loaded_finish_epoch);
 
-	if(ec)
-	{
-		g_last_error_code = ec;
-	}
-	else
+	if(launched)
 	{
 		g_evteng_event_enabled = loadedEventShouldBeEnabled();
 		configRedLEDforEvent();
 	}
 
-	return (ec);
+	return launched;
 }
 
-EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, time_t finishTime)
+bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime)
 {
 	time_t now = time(null);
 
@@ -4883,46 +4865,46 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 	{
 		if(now < MINIMUM_VALID_EPOCH) /* The RTC has not been set */
 		{
-			return (ERROR_CODE_EVENT_NOT_CONFIGURED);
+			return false;
 		}
 
 		if(!startTime)
 		{
-			return (ERROR_CODE_EVENT_MISSING_START_TIME);
+			return false;
 		}
 
 		if(startTime >= finishTime) /* Finish must be later than start */
 		{
-			return (ERROR_CODE_EVENT_NOT_CONFIGURED);
+			return false;
 		}
 	}
 
 	if(!g_evteng_on_air_seconds)
 	{
-		return (ERROR_CODE_EVENT_MISSING_TRANSMIT_DURATION);
+		return false;
 	}
 
 	if(g_evteng_intra_cycle_delay_time > (g_evteng_off_air_seconds + g_evteng_on_air_seconds))
 	{
-		return (ERROR_CODE_EVENT_TIMING_ERROR);
+		return false;
 	}
 
 	char *c = getCurrentPatternText();
 	if(c[0] == '\0')
 	{
-		return (ERROR_CODE_EVENT_PATTERN_NOT_SPECIFIED);
+		return false;
 	}
 
 	if((g_evteng_pattern_codespeed < MIN_CODE_SPEED_WPM) || (g_evteng_pattern_codespeed > MAX_CODE_SPEED_WPM))
 	{
-		return (ERROR_CODE_EVENT_PATTERN_CODE_SPEED_NOT_SPECIFIED);
+		return false;
 	}
 
 	if(g_messages_text[STATION_ID][0] != '\0')
 	{
 		if((!g_evteng_id_codespeed || !g_evteng_ID_period_seconds))
 		{
-			return (ERROR_CODE_EVENT_STATION_ID_ERROR);
+			return false;
 		}
 
 		g_time_needed_for_ID = timeNeededForID();
@@ -4937,37 +4919,29 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 
 	if(getFoxSetting() == FREQUENCY_TEST_BEACON)
 	{
-		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
-		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+		if(!powerToTransmitter(g_device_enabled))
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
-		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		g_evteng_on_the_air = g_evteng_on_air_seconds;
 		LEDS.init();
 	}
 	else if(!g_evteng_run_event_until_canceled && (finishTime < now)) /* the event has already finished */
 	{
-		if(statusCode)
-		{
-			*statusCode = STATUS_CODE_NO_EVENT_TO_RUN;
-		}
 	}
 	else
 	{
-		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
 		bool repeat = true;
 		loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
 
 		if(g_evteng_run_event_until_canceled)
 		{
-			g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 			g_evteng_on_the_air = g_evteng_on_air_seconds; // Start transmitting right away, regardless of g_evteng_off_air_seconds
 			g_evteng_sendID_seconds_countdown = g_evteng_on_air_seconds - g_time_needed_for_ID;
 			LEDS.blink(LEDS_RED_OFF);
 			g_evteng_event_enabled = true;
-			if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+			if(!powerToTransmitter(g_device_enabled))
 			{
 				sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 			}
@@ -4990,11 +4964,6 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 					if(g_evteng_on_air_seconds <= -timeTillTransmit) /* we should have finished transmitting in this cycle */
 					{
 						g_evteng_on_the_air = -(cyclePeriod + timeTillTransmit);
-						if(statusCode)
-						{
-							*statusCode = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
-						}
-
 						if(!g_evteng_event_enabled)
 						{
 							g_evteng_sendID_seconds_countdown = (g_evteng_on_air_seconds - g_evteng_on_the_air) - g_time_needed_for_ID;
@@ -5004,10 +4973,6 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 					{
 						g_evteng_on_the_air = g_evteng_on_air_seconds + timeTillTransmit;
 						turnOnTransmitter = true;
-						if(statusCode)
-						{
-							*statusCode = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
-						}
 
 						if(!g_evteng_event_enabled)
 						{
@@ -5021,11 +4986,6 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 				else /* it is not yet time to transmit in this cycle */
 				{
 					g_evteng_on_the_air = -timeTillTransmit;
-					if(statusCode)
-					{
-						*statusCode = STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT;
-					}
-
 					if(!g_evteng_event_enabled)
 					{
 						g_evteng_sendID_seconds_countdown = timeTillTransmit + g_evteng_on_air_seconds - g_time_needed_for_ID;
@@ -5037,7 +4997,7 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 
 				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-				if(powerToTransmitter(turnOnTransmitter) != ERROR_CODE_NO_ERROR)
+				if(!powerToTransmitter(turnOnTransmitter))
 				{
 					sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				}
@@ -5047,10 +5007,6 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 			}
 			else /* start time is in the future */
 			{
-				if(statusCode)
-				{
-					*statusCode = STATUS_CODE_WAITING_FOR_EVENT_START;
-				}
 				keyTransmitter(OFF);
 				powerToTransmitter(OFF);
 				atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, startTime, finishTime);
@@ -5062,7 +5018,7 @@ EC activateEventEngineUsingCurrentSettings(SC *statusCode, time_t startTime, tim
 		}
 	}
 
-	return (ERROR_CODE_NO_ERROR);
+	return true;
 }
 
 void suspendEvent()
@@ -5143,7 +5099,7 @@ bool startEventUsingRTC(void)
 			}
 			else
 			{
-				if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+				if(!powerToTransmitter(g_device_enabled))
 				{
 					sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				}
@@ -5387,8 +5343,6 @@ static void reviveLedActivityForCurrentState(void)
 
 void setupForFox(Fox_t fox, EventAction_t action)
 {
-	SC sc;
-
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
@@ -5427,7 +5381,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				forceForever = true; // Avoid activating as a forever event
 			}
 
-			activateEventEngineUsingCurrentSettings(&sc, top_of_last_midnight, newFinish);
+			activateEventEngineUsingCurrentSettings(top_of_last_midnight, newFinish);
 
 			if(forceForever)
 			{
@@ -5444,9 +5398,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		else
 		{
 			g_evteng_run_event_until_canceled = true;
-			g_last_error_code = launchLoadedEvent((SC *)&g_last_status_code);
-
-			if(g_last_error_code != ERROR_CODE_NO_ERROR)
+			if(!launchLoadedEvent())
 			{
 				sb_send_string((char *)"* Err: event not launched\n");
 			}
@@ -5457,7 +5409,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_evteng_event_commenced = true;
 		g_evteng_event_enabled = true;
 
-		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+		if(!powerToTransmitter(g_device_enabled))
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
@@ -5473,12 +5425,11 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_evteng_run_event_until_canceled = true;
 		g_evteng_on_the_air = g_evteng_on_air_seconds; /* start out transmitting */
 		g_evteng_sendID_seconds_countdown = g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - g_time_needed_for_ID;
-		g_last_status_code = STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING;
 		LEDS.blink(LEDS_RED_OFF);
 		g_event_launched_by_user_action = true;
 
 		loadCurrentPatternMorse(NULL, CALLER_AUTOMATED_EVENT);
-		if(powerToTransmitter(g_device_enabled) != ERROR_CODE_NO_ERROR)
+		if(!powerToTransmitter(g_device_enabled))
 		{
 			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 		}
@@ -5503,8 +5454,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			time_t loaded_finish_epoch;
 			atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 			g_evteng_run_event_until_canceled = false;
-			EC ec = activateEventEngineUsingCurrentSettings(&sc, loaded_start_epoch, loaded_finish_epoch);
-			if(ec == ERROR_CODE_NO_ERROR)
+			if(activateEventEngineUsingCurrentSettings(loaded_start_epoch, loaded_finish_epoch))
 			{
 				g_evteng_event_enabled = true;
 			}

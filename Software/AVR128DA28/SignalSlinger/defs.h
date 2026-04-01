@@ -1,6 +1,6 @@
 
 /**********************************************************************************************
- * Copyright © 2017 Digital Confections LLC
+ * Copyright (c) 2017 Digital Confections LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in the
@@ -57,60 +57,6 @@
  * Include only the necessary hardware and software support */
 #define INCLUDE_SI5351_SUPPORT true // Silicon Labs Programmable Clock
 #define DATE_STRING_SUPPORT_ENABLED
-
-/*******************************************************/
-/* Error Codes                                         */
-/*******************************************************/
-typedef enum
-{
-	ERROR_CODE_NO_ERROR = 0x00,
-	ERROR_CODE_REPORT_NO_ERROR = 0x01,
-	ERROR_CODE_EVENT_STATION_ID_ERROR = 0xC7,
-	ERROR_CODE_EVENT_PATTERN_CODE_SPEED_NOT_SPECIFIED = 0xC8,
-	ERROR_CODE_EVENT_PATTERN_NOT_SPECIFIED = 0xC9,
-	ERROR_CODE_EVENT_TIMING_ERROR = 0xCA,
-	ERROR_CODE_EVENT_MISSING_TRANSMIT_DURATION = 0xCB,
-	ERROR_CODE_EVENT_MISSING_START_TIME = 0xCC,
-	ERROR_CODE_EVENT_NOT_CONFIGURED = 0xCD,
-	ERROR_CODE_ILLEGAL_COMMAND_RCVD = 0xCE,
-	ERROR_CODE_SW_LOGIC_ERROR = 0xCF,
-	ERROR_CODE_EVENT_ENDED_IN_PAST = 0xD0,
-	ERROR_CODE_ATMEGA_NOT_RESPONDING = 0xD1,
-	ERROR_CODE_RF_OSCILLATOR_ERROR = 0xD2,
-	ERROR_CODE_POWER_LEVEL_NOT_SUPPORTED = 0xF5,
-	ERROR_CODE_NO_ANTENNA_PREVENTS_POWER_SETTING = 0xF6,
-	ERROR_CODE_NO_ANTENNA_FOR_BAND = 0xF7,
-	ERROR_CODE_WD_TIMEOUT = 0xF8,
-	ERROR_CODE_SUPPLY_VOLTAGE_ERROR = 0xF9,
-	ERROR_CODE_BUCK_REG_OUTOFSPEC = 0xFA,
-	ERROR_CODE_CLKGEN_NONRESPONSIVE = 0xFB,
-	ERROR_CODE_RTC_NONRESPONSIVE = 0xFC,
-	ERROR_CODE_DAC3_NONRESPONSIVE = 0xFD,
-	ERROR_CODE_DAC2_NONRESPONSIVE = 0xFE,
-	ERROR_CODE_DAC1_NONRESPONSIVE = 0xFF
-} EC;
-
-/*******************************************************/
-/* Status Codes                                                                 */
-/*******************************************************/
-typedef enum
-{
-	STATUS_CODE_IDLE = 0x00,
-	STATUS_CODE_REPORT_IDLE = 0x01,
-	STATUS_CODE_NO_ANT_ATTACHED = 0xE9,
-	//	STATUS_CODE_2M_ANT_ATTACHED = 0xEA,
-	STATUS_CODE_80M_ANT_ATTACHED = 0xEB,
-	STATUS_CODE_RECEIVING_EVENT_DATA = 0xEC,
-	STATUS_CODE_RETURNED_FROM_SLEEP = 0xED,
-	STATUS_CODE_BEGINNING_XMSN_THIS_CYCLE = 0xEE,
-	STATUS_CODE_SENDING_ID = 0xEF,
-	STATUS_CODE_NO_EVENT_TO_RUN = 0xFA,
-	STATUS_CODE_EVENT_NEVER_ENDS = 0xFB,
-	STATUS_CODE_EVENT_FINISHED = 0xFC,
-	STATUS_CODE_EVENT_STARTED_NOW_TRANSMITTING = 0xFD,
-	STATUS_CODE_EVENT_STARTED_WAITING_FOR_TIME_SLOT = 0xFE,
-	STATUS_CODE_WAITING_FOR_EVENT_START = 0xFF
-} SC;
 
 typedef enum
 {

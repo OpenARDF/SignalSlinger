@@ -451,19 +451,19 @@ Frequency_Hz si5351_get_frequency(Si5351_clock clock);
 
 /**
  */
-EC si5351_clock_enable(Si5351_clock, bool);
+bool si5351_clock_enable(Si5351_clock, bool);
 
 /**
  */
-EC si5351_drive_strength(Si5351_clock, Si5351_drive);
+bool si5351_drive_strength(Si5351_clock, Si5351_drive);
 
 /**
  */
-EC si5351_set_phase(Si5351_clock clk, uint8_t phase);
+bool si5351_set_phase(Si5351_clock clk, uint8_t phase);
 
 /**
  */
-EC si5351_get_phase(Si5351_clock clk, uint8_t* phase);
+bool si5351_get_phase(Si5351_clock clk, uint8_t* phase);
 
 /**
  */

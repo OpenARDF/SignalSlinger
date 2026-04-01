@@ -90,8 +90,9 @@ bool keyTransmitter(bool on);
 
 /**
  * Apply or remove power from the transmitter hardware.
+ * Returns true when the requested state is reached.
  */
-EC powerToTransmitter(bool on);
+bool powerToTransmitter(bool on);
 
 /**
  * Globally enable or disable any RF transmissions.
