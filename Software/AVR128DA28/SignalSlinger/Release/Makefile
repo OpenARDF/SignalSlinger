@@ -62,6 +62,7 @@ C_SRCS +=  \
 ../src/si5351.cpp \
 ../src/slpctrl.cpp \
 ../src/tcb.cpp \
+../src/timeutil.cpp \
 ../src/transmitter.cpp \
 ../src/usart_basic.cpp \
 ../src/util.cpp
@@ -95,6 +96,7 @@ src/serialbus.o \
 src/si5351.o \
 src/slpctrl.o \
 src/tcb.o \
+src/timeutil.o \
 src/transmitter.o \
 src/usart_basic.o \
 src/util.o
@@ -120,6 +122,7 @@ src/serialbus.o \
 src/si5351.o \
 src/slpctrl.o \
 src/tcb.o \
+src/timeutil.o \
 src/transmitter.o \
 src/usart_basic.o \
 src/util.o
@@ -145,6 +148,7 @@ src/serialbus.d \
 src/si5351.d \
 src/slpctrl.d \
 src/tcb.d \
+src/timeutil.d \
 src/transmitter.d \
 src/usart_basic.d \
 src/util.d
@@ -170,6 +174,7 @@ src/serialbus.d \
 src/si5351.d \
 src/slpctrl.d \
 src/tcb.d \
+src/timeutil.d \
 src/transmitter.d \
 src/usart_basic.d \
 src/util.d
@@ -335,6 +340,12 @@ src/usart_basic.o: ../src/usart_basic.cpp
 	@echo Finished building: $<
 	
 
+src/timeutil.o: ../src/timeutil.cpp
+	@echo Building file: $<
+	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DNDEBUG  -I"../Config" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.10.114\include"  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=avr128da28 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\AVR-Dx_DFP\1.10.114\gcc\dev\avr128da28" -c -fno-threadsafe-statics -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<"
+	@echo Finished building: $<
+
 src/util.o: ../src/util.cpp
 	@echo Building file: $<
 	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
@@ -394,4 +405,3 @@ clean:
 	-$(RM) $(OBJS_AS_ARGS) $(EXECUTABLES)  
 	-$(RM) $(C_DEPS_AS_ARGS)   
 	rm -rf "SignalSlinger.elf" "SignalSlinger.a" "SignalSlinger.hex" "SignalSlinger.lss" "SignalSlinger.eep" "SignalSlinger.map" "SignalSlinger.srec" "SignalSlinger.usersignatures"
-	

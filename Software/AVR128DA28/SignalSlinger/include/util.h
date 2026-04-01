@@ -32,6 +32,7 @@
 #define UTIL_H_
 
 #include "defs.h"
+#include "timeutil.h"
 #include <time.h>
 
 /**
@@ -50,59 +51,6 @@ int32_t timeDif(time_t a, time_t b);
  * @return true if every character in the string is a numeric digit; otherwise false.
  */
 bool only_digits(char *s);
-
-/***********************************************************************************************
- *  Print Formatting Utility Functions
- ************************************************************************************************/
-
-/**
- * Convert a time string of the form "yyyy-mm-ddThh:mm:ss" to seconds since 1900.
- *
- * @param s Pointer to a null-terminated string containing the timestamp.
- * @return Seconds elapsed since 1 January 1900.
- */
-uint32_t convertTimeStringToEpoch(char * s);
-
-
-char* convertEpochToTimeString(time_t epoch, char* buf, size_t size);
-
-time_t String2Epoch(bool *error, char *datetime);
-
-
-/**
- * @brief Completes or offsets a timestamp and returns a 12-character time string.
- *
- * This function accepts either:
- *  - A partial timestamp string (up to 10 characters) representing YYMMDDhhmm,
- *    in which case missing leading fields are filled using the current local time.
- *
- *  - An offset string beginning with '+', such as "+5h", "+0500", "+2d", "+7m",
- *    "+1M", or "+1y". These are interpreted as offsets from the current local
- *    time in hours, minutes, days, months, or years. Multi-digit "+HHMM" format
- *    (e.g., "+0530") is interpreted as +5 hours 30 minutes.
- *
- * The returned timestamp always consists of 12 characters in the form:
- *
- *        YYMMDDhhmmSS
- *
- * with seconds (SS) always set to "00". The caller must supply `buf`, which
- * must be large enough to hold at least 13 bytes (12 characters + null terminator).
- *
- * @param partialString  A partial YYMMDDhhmm string, or an offset string.
- *
- * @return A pointer to the completed 12-character timestamp stored in `buf`.
- */
-char* completeTimeString(const char* partialString, time_t* currentEpoch);
-
-
-/**
- * Parse a timestamp string formatted as "yyyy-mm-ddThh:mm:ssZ" into a tm structure.
- *
- * @param s   Pointer to the input string (with optional trailing 'Z').
- * @param ltm Pointer to a tm structure to populate.
- * @return true on error, false on success.
- */
-bool mystrptime(char* s, struct tm* ltm);
 
 /**
  * Format a frequency value in Hz as a human-readable string.

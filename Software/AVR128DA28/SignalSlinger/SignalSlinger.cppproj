@@ -301,6 +301,9 @@
     <Compile Include="include\tcb.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\timeutil.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\transmitter.h">
       <SubType>compile</SubType>
     </Compile>
@@ -362,6 +365,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\tcb.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\timeutil.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\transmitter.cpp">
