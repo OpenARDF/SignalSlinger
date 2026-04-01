@@ -944,6 +944,7 @@ ISR(TCB0_INT_vect)
 
 	TCB0.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* clear all interrupt flags */
 }
+
 /* Handle port D pushbutton interrupts. */
 ISR(PORTD_PORT_vect)
 {
@@ -992,6 +993,7 @@ ISR(PORTC_PORT_vect)
 
 	VPORTC.INTFLAGS = 0xFF; /* Clear all flags */
 }
+
 /* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
@@ -1930,21 +1932,6 @@ int main(void)
 					sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				}
 			}
-
-			// 			if(eventIsScheduledToRunNow(g_evteng_loaded_start_epoch, g_evteng_loaded_finish_epoch) || g_evteng_run_event_until_canceled)
-			// 			{
-			// 				if(!get_fet_driver() || !get_V3V3_enable())
-			// 				{
-			// 					if((g_sleepType != SLEEP_FOREVER) || ((g_evteng_loaded_start_epoch) && (g_evteng_loaded_finish_epoch)))
-			// 					{
-			// 						sb_send_string((char*)"* Error: power not applied to tx stages\n");
-			// 						if(!powerToTransmitter(g_device_enabled))
-			// 						{
-			// 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
-			// 						}
-			// 					}
-			// 				}
-			// 			}
 
 			if(g_foreground_report_settings)
 			{
