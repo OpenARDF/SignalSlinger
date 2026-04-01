@@ -1074,7 +1074,6 @@ int main(void)
 
 	g_evteng_run_event_until_canceled = false;
 	g_foreground_start_event = g_device_enabled && loadedEventShouldBeEnabled(); /* Start any event stored in EEPROM */
-	sb_send_NewPrompt();
 
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
@@ -1108,6 +1107,7 @@ int main(void)
 			if(!sb_enabled())
 			{
 				serialbus_init(SB_BAUD, SERIALBUS_USART);
+				serialbus_set_rx_accepting_input(true);
 			}
 		}
 
@@ -1157,6 +1157,7 @@ int main(void)
 				g_foreground_reset_after_demo = false;
 				atomic_write_u16(&g_key_down_countdown, 0);
 				g_foreground_reset_after_keydown = false;
+				serialbus_set_rx_accepting_input(true);
 
 				configRedLEDforEvent();
 				if(!g_meshmode)
@@ -1515,6 +1516,10 @@ int main(void)
 								g_foreground_start_event = true;
 							}
 						}
+					}
+					if(g_awakenedBy != AWAKENED_BY_BUTTONPRESS)
+					{
+						serialbus_set_rx_accepting_input(true);
 					}
 
 					// Restore the transmitter power state that matches the logical state we just woke into.

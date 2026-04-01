@@ -42,7 +42,7 @@ extern "C"
 #define SERIALBUS_MIN_MSG_LENGTH 2 /* shortest message: GO */
 #define SERIALBUS_MAX_MSG_FIELD_LENGTH 20
 #define SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS 3
-#define SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS 2
+#define SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS 4
 #define SERIALBUS_MAX_TX_MSG_LENGTH 41
 #define SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS 3
 #define SERIALBUS_MAX_MSG_ID_LENGTH 3
@@ -149,6 +149,11 @@ extern "C"
 	 * Synchronize the ISR-side RX echo/parser mesh-mode flag with foreground state.
 	 */
 	void serialbus_set_rx_mesh_mode(bool enabled);
+
+	/**
+	 * Allow or suppress ISR-side RX parsing while preserving mesh-mode selection.
+	 */
+	void serialbus_set_rx_accepting_input(bool enabled);
 
 	/**
 	 * Advance the ISR RX parser idle timer by one TCB2 tick.

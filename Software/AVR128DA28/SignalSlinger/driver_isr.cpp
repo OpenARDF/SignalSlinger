@@ -48,6 +48,7 @@ static int serialbus_parse_msg_id(const char *text, uint8_t len);
 
 #define SERIALBUS_MAX_ESC_SEQUENCE_LENGTH 16
 #define SERIALBUS_RX_IDLE_TIMEOUT_HUMAN_MS 8000U
+#define SERIALBUS_RX_IDLE_TIMEOUT_DELAYED_SUBMIT_MS 300000U
 #define SERIALBUS_RX_IDLE_TIMEOUT_NOISE_MS 500U
 
 static char g_serial_rx_textBuff[SERIALBUS_MAX_MSG_LENGTH];
@@ -62,7 +63,24 @@ static bool g_serial_rx_receiving_msg = false;
 static bool g_serial_rx_ignoreAllInput = false;
 static bool g_serial_rx_inEscapeSequence = false;
 static volatile bool g_serial_rx_useMeshMode = false;
+static volatile bool g_serial_rx_accepting_input = false;
 static bool g_serial_rx_invalidCommand = false;
+
+static bool serialbus_rx_is_delayed_submit_command(void)
+{
+	if(g_serial_rx_useMeshMode || g_serial_rx_invalidCommand || !g_serial_rx_receiving_msg)
+	{
+		return false;
+	}
+
+	if((g_serial_rx_msg_ID == 'G') || (g_serial_rx_msg_ID == SB_MESSAGE_GO))
+	{
+		return true;
+	}
+
+	return (g_serial_rx_msg_ID == SB_MESSAGE_CLOCK) && (g_serial_rx_field_index > 0) &&
+	       g_serial_rx_buff && (g_serial_rx_buff->fields[SB_FIELD1][0] == 'T');
+}
 
 static void serial_rx_idle_ticks_write_atomic(uint16_t value)
 {
@@ -76,6 +94,11 @@ static uint16_t serialbus_rx_idle_reload_ticks(void)
 	if(g_serial_rx_invalidCommand || g_serial_rx_inEscapeSequence || g_serial_rx_ignoreAllInput)
 	{
 		return SERIALBUS_RX_IDLE_TIMEOUT_NOISE_MS;
+	}
+
+	if(serialbus_rx_is_delayed_submit_command())
+	{
+		return SERIALBUS_RX_IDLE_TIMEOUT_DELAYED_SUBMIT_MS;
 	}
 
 	if(g_serial_rx_receiving_msg || g_serial_rx_charIndex)
@@ -119,6 +142,12 @@ void serialbus_set_rx_mesh_mode(bool enabled)
 	g_serial_rx_useMeshMode = enabled;
 }
 
+void serialbus_set_rx_accepting_input(bool enabled)
+{
+	g_serial_rx_accepting_input = enabled;
+	serialbus_reset_rx_parser();
+}
+
 void serialbus_rx_idle_tick(void)
 {
 	if(g_serial_rx_idle_ticks)
@@ -151,6 +180,12 @@ ISR(USART0_RXC_vect)
 void serial_Rx(uint8_t rx_char)
 {
 	uint8_t echo_char = rx_char;
+
+	if(!g_serial_rx_accepting_input)
+	{
+		serialbus_reset_rx_parser();
+		return;
+	}
 
 	if(!g_serial_rx_buff)
 	{

@@ -175,10 +175,10 @@ uint8_t USART1_get_data()
  * \retval true The USART has received data
  * \retval false The USART has not received data
  */
-// bool USART1_is_rx_ready()
-// {
-// 	return (USART1.STATUS & USART_RXCIF_bm);
-// }
+bool USART1_is_rx_ready()
+{
+	return ((USART1.STATUS & USART_RXCIF_bm) != 0);
+}
 
 /**
  * \brief Check if USART1 data is transmitted
@@ -364,10 +364,10 @@ uint8_t USART0_get_data()
  * \retval true The USART has received data
  * \retval false The USART has not received data
  */
-// bool USART0_is_rx_ready()
-// {
-// 	return (USART0.STATUS & USART_RXCIF_bm);
-// }
+bool USART0_is_rx_ready()
+{
+	return ((USART0.STATUS & USART_RXCIF_bm) != 0);
+}
 
 /**
  * \brief Check if USART0 data is transmitted
@@ -410,4 +410,3 @@ uint8_t USART0_get_data()
 // 		;
 // 	USART0.TXDATAL = data;
 // }
-

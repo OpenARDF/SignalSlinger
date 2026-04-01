@@ -35,7 +35,12 @@
 #include <stdio.h>
 #include "atmel_start_pins.h"
 
-volatile uint16_t g_serial_timeout_ticks = 200;
+static const uint16_t SERIALBUS_DEFAULT_TIMEOUT_TICKS = 200;
+static const uint16_t SERIALBUS_TX_BUFFER_RETRY_COUNT = 200;
+static const uint16_t SERIALBUS_TX_BUFFER_WAIT_SPINS = 500;
+static const uint32_t SERIALBUS_TX_COMPLETION_SPIN_GUARD = 120000UL;
+
+volatile uint16_t g_serial_timeout_ticks = SERIALBUS_DEFAULT_TIMEOUT_TICKS;
 volatile USART_Number_t g_serialbus_usart_number = USART_NOT_SET;
 static volatile bool g_serialbus_disabled = true;
 static const char crlf[] = "\n";
@@ -255,7 +260,7 @@ void USART0_initialization(uint32_t baud)
 void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
 	memset((void *)rx_buffer, 0, sizeof(rx_buffer));
-	serialbus_reset_rx_parser();
+	serialbus_set_rx_accepting_input(false);
 	serialbus_end_tx();
 	serialbus_echo_fifo_reset();
 
@@ -289,15 +294,13 @@ void serialbus_flush_rx(void)
 
 	if(g_serialbus_usart_number == USART_0)
 	{
-		char c = USART0_get_data();
-		while((c = USART0_get_data()))
-			; // flush the buffer
+		while(USART0_is_rx_ready())
+			(void)USART0_get_data();
 	}
 	else
 	{
-		char c = USART1_get_data();
-		while((c = USART1_get_data()))
-			; // flush the buffer
+		while(USART1_is_rx_ready())
+			(void)USART1_get_data();
 	}
 
 	return;
@@ -320,7 +323,7 @@ void serialbus_disable(void)
 	}
 
 	memset((void *)rx_buffer, 0, sizeof(rx_buffer));
-	serialbus_reset_rx_parser();
+	serialbus_set_rx_accepting_input(false);
 	serialbus_echo_fifo_reset();
 
 	for(bufferIndex = 0; bufferIndex < SERIALBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
@@ -348,11 +351,11 @@ bool serialbus_send_text(char *text)
 		SerialbusTxBuffer local_copy;
 		snprintf(local_copy, SERIALBUS_MAX_TX_MSG_LENGTH, "%s", text);
 		SerialbusTxBuffer *buff = nextEmptySBTxBuffer();
-		tries = 200;
+		tries = SERIALBUS_TX_BUFFER_RETRY_COUNT;
 
 		while(!buff && tries--)
 		{
-			uint16_t spin = 500;
+			uint16_t spin = SERIALBUS_TX_BUFFER_WAIT_SPINS;
 			while(serialbusTxInProgress() && spin--)
 				; /* Wait for previous transmission to complete */
 			buff = nextEmptySBTxBuffer();
@@ -502,10 +505,10 @@ bool sb_send_master_string(char *str)
 		buf[lengthToSend] = '\0';
 		err = serialbus_send_text(buf);
 
-		atomic_write_u16(&g_serial_timeout_ticks, 200);
+		atomic_write_u16(&g_serial_timeout_ticks, SERIALBUS_DEFAULT_TIMEOUT_TICKS);
 		if(!err)
 		{
-			uint32_t spin_guard = 120000UL;
+			uint32_t spin_guard = SERIALBUS_TX_COMPLETION_SPIN_GUARD;
 			while(serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks) && spin_guard--)
 			{
 				;
@@ -538,9 +541,9 @@ void sb_send_value(uint16_t value, char *label)
 		;
 	}
 
-	atomic_write_u16(&g_serial_timeout_ticks, 200);
+	atomic_write_u16(&g_serial_timeout_ticks, SERIALBUS_DEFAULT_TIMEOUT_TICKS);
 	{
-		uint32_t spin_guard = 120000UL;
+		uint32_t spin_guard = SERIALBUS_TX_COMPLETION_SPIN_GUARD;
 		while(!err && serialbusTxInProgress() && atomic_read_u16(&g_serial_timeout_ticks) && spin_guard--)
 		{
 			;

@@ -31,6 +31,10 @@
 #include "tcb.h"
 #include "globals.h"
 
+static const uint8_t TX_POWER_ON_INIT_RETRY_COUNT = 10;
+static const uint8_t TX_CONTROL_RETRY_COUNT = 5;
+static const uint16_t TX_POWER_SETTLE_DELAY_MS = 100;
+
 static volatile bool g_tx_initialized = false;
 volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
 volatile uint16_t g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
@@ -158,10 +162,10 @@ bool powerToTransmitter(bool state)
 
 		if(state)
 		{
-			int tries = 10;
+			int tries = TX_POWER_ON_INIT_RETRY_COUNT;
 
 			util_delay_ms(0);
-			while(util_delay_ms(100))
+			while(util_delay_ms(TX_POWER_SETTLE_DELAY_MS))
 				;
 			while(tries && !init_transmitter(g_80m_frequency, true))
 			{
@@ -189,7 +193,7 @@ bool keyTransmitter(bool on)
 {
 	if(g_tx_initialized)
 	{
-		int tries = 5;
+		int tries = TX_CONTROL_RETRY_COUNT;
 
 		if(on)
 		{
@@ -258,7 +262,7 @@ bool init_transmitter(Frequency_Hz freq, bool leave_clock_off)
 
 bool init_transmitter(bool leave_clock_off)
 {
-	int tries = 5;
+	int tries = TX_CONTROL_RETRY_COUNT;
 
 	while(--tries && si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0))
 		; /* Initialize SI5351 */
@@ -268,7 +272,7 @@ bool init_transmitter(bool leave_clock_off)
 		return false;
 	}
 
-	tries = 5;
+	tries = TX_CONTROL_RETRY_COUNT;
 
 	while(--tries && !si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA))
 		; /* Initialize SI5351 */
@@ -278,7 +282,7 @@ bool init_transmitter(bool leave_clock_off)
 		return false;
 	}
 
-	tries = 5;
+	tries = TX_CONTROL_RETRY_COUNT;
 
 	while(--tries && !si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED))
 		; /* Initialize SI5351 */
@@ -292,7 +296,7 @@ bool init_transmitter(bool leave_clock_off)
 		g_tx_initialized = true;
 	}
 
-	tries = 5;
+	tries = TX_CONTROL_RETRY_COUNT;
 
 	while(--tries && (txSetFrequency((Frequency_Hz *)&g_80m_frequency, leave_clock_off)))
 		; /* Initialize SI5351 */

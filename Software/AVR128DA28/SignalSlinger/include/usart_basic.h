@@ -61,7 +61,7 @@ uint8_t USART1_get_data();
 
 // bool USART1_is_tx_ready();
 
-// bool USART1_is_rx_ready();
+bool USART1_is_rx_ready();
 
 // bool USART1_is_tx_busy();
 
@@ -86,7 +86,7 @@ uint8_t USART0_get_data();
 
 // bool USART0_is_tx_ready();
 
-// bool USART0_is_rx_ready();
+bool USART0_is_rx_ready();
 
 // bool USART0_is_tx_busy();
 
