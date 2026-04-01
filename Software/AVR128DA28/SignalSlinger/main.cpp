@@ -2193,6 +2193,8 @@ int main(void)
 
 		if(g_foreground_reset_after_keydown)
 		{
+			bool should_resume_scheduled_event = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+
 			atomic_write_u16(&g_key_down_countdown, 0);
 			g_foreground_reset_after_keydown = false;
 
@@ -2205,18 +2207,15 @@ int main(void)
 			}
 
 #ifndef TEST_MODE_SOFTWARE
-			if(!g_event_canceled_by_user && g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
+			if(!g_event_canceled_by_user && should_resume_scheduled_event)
 			{
-				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
-				{
-					g_event_launched_by_user_action = false;
-					startEventUsingRTC();
-				}
-				else
-				{
-					g_sleepType = SLEEP_FOREVER;
-					startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
-				}
+				g_event_launched_by_user_action = false;
+				startEventUsingRTC();
+			}
+			else if(!g_event_canceled_by_user && g_start_event_after_keydown) // indicates that a keypress was used to initiate the keydown when no event was scheduled
+			{
+				g_sleepType = SLEEP_FOREVER;
+				startSyncdEventNow(true); // Immediately start the event, synchronized to the clock if possible
 			}
 #endif
 
