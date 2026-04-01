@@ -248,63 +248,60 @@ typedef enum
 	FREQ_SOURCE_BEACON
 } FrequencySource_t;
 
-static const char * const g_fixed_fox_pattern_text[USE_CURRENT_FOX] =
-{
-	"MO",
-	"MOE",
-	"MOI",
-	"MOS",
-	"MOH",
-	"MO5",
-	"S",
-	"ME",
-	"MI",
-	"MS",
-	"MH",
-	"M5",
-	"OE",
-	"OI",
-	"OS",
-	"OH",
-	"O5",
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
+static const char *const g_fixed_fox_pattern_text[USE_CURRENT_FOX] =
+    {
+        "MO",
+        "MOE",
+        "MOI",
+        "MOS",
+        "MOH",
+        "MO5",
+        "S",
+        "ME",
+        "MI",
+        "MS",
+        "MH",
+        "M5",
+        "OE",
+        "OI",
+        "OS",
+        "OH",
+        "O5",
+        NULL,
+        NULL,
+        NULL,
+        NULL};
 
 static const FrequencySource_t g_fox_frequency_source[USE_CURRENT_FOX] =
-{
-	FREQ_SOURCE_BEACON,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_MED,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_LOW,
-	FREQ_SOURCE_MED,
-	FREQ_SOURCE_HIGH,
-	FREQ_SOURCE_LOW
-};
+    {
+        FREQ_SOURCE_BEACON,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_MED,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_LOW,
+        FREQ_SOURCE_MED,
+        FREQ_SOURCE_HIGH,
+        FREQ_SOURCE_LOW};
 
-static const char * const g_frequency_test_pattern_text[NUMBER_OF_TEST_FREQUENCIES] =
-{
-	"< E<",
-	"< EE<",
-	"< EEE<",
-	"< EEEE<"
-};
+static const char *const g_frequency_test_pattern_text[NUMBER_OF_TEST_FREQUENCIES] =
+    {
+        "< E<",
+        "< EE<",
+        "< EEE<",
+        "< EEEE<"};
 
 /***********************************************************************
  * Private Function Prototypes
@@ -5027,9 +5024,9 @@ void suspendEvent()
 	keyTransmitter(OFF);
 	setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 	LEDS.setRed(OFF);
-	g_evteng_event_enabled = false;   /* get things stopped immediately */
+	g_evteng_event_enabled = false;            /* get things stopped immediately */
 	atomic_write_i32(&g_evteng_on_the_air, 0); /* stop transmitting */
-	g_evteng_event_commenced = false; /* get things stopped immediately */
+	g_evteng_event_commenced = false;          /* get things stopped immediately */
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	reloadLoadedEventWindowFromSavedSettings();
