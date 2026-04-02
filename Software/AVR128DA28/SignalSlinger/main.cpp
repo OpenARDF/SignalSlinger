@@ -169,7 +169,7 @@ static volatile uint8_t g_button_wake_prior_sleep_type = SLEEP_FOREVER;
 static volatile bool g_button_wake_prior_event_enabled = false;
 static volatile bool g_button_wake_prior_event_commenced = false;
 static volatile time_t g_seconds_since_wakeup = 0;
-static volatile bool g_foreground_check_for_long_wakeup_press = true;
+static volatile bool g_foreground_check_for_long_wakeup_press = false;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_foreground_enable_serialbus = false;
 static volatile bool g_charge_battery = false;
@@ -994,13 +994,15 @@ ISR(PORTC_PORT_vect)
 /* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
-	bool buttonHeldClosed = true;
+	bool buttonHeldClosed = false;
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
 
 	atmel_start_init();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
+	buttonHeldClosed = switchIsClosed();
+	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	g_ee_mgr.initializeEEPROMVars();
 
@@ -1019,9 +1021,12 @@ int main(void)
 
 	RTC_set_calibration(g_clock_calibration);
 
-	LEDS.init();
-	LEDS.setWakeAuthorizationBlink(true);
-	atomic_write_u16(&g_button_hold_countdown, 1000);
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		LEDS.init();
+		LEDS.setWakeAuthorizationBlink(true);
+		atomic_write_u16(&g_button_hold_countdown, 1000);
+	}
 
 	while(util_delay_ms(2500))
 		; /* Avoid possible race conditions with peripheral devices powering up */
