@@ -1109,16 +1109,11 @@ int main(void)
 
 		if(g_foreground_check_for_long_wakeup_press)
 		{
-			buttonHeldClosed = switchIsClosed();
-
-			if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
-			{
-				g_go_to_sleep_now = true;
-				g_foreground_check_for_long_wakeup_press = false;
-				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
-				LEDS.blink(LEDS_OFF);
-			}
-			else if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
+			/* Once the authorization countdown has completed, treat the wake as
+			 * successful even if the user releases the button before foreground
+			 * reaches this branch again.
+			 */
+			if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
@@ -1172,9 +1167,21 @@ int main(void)
 				if(!g_meshmode)
 					sb_send_NewPrompt();
 			}
-			else /* Spin your wheels waiting for above condition to test true */
+			else
 			{
-				LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+				buttonHeldClosed = switchIsClosed();
+
+				if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
+				{
+					g_go_to_sleep_now = true;
+					g_foreground_check_for_long_wakeup_press = false;
+					atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+					LEDS.blink(LEDS_OFF);
+				}
+				else /* Spin your wheels waiting for above condition to test true */
+				{
+					LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+				}
 			}
 		}
 		else
