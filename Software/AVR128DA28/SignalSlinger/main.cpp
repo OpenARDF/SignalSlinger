@@ -89,6 +89,7 @@ typedef struct
 } CloneTimingSnapshot_t;
 
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
+#define WAKE_AUTH_HOLD_TICKS 600
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -1025,7 +1026,7 @@ int main(void)
 	{
 		LEDS.init();
 		LEDS.setWakeAuthorizationBlink(true);
-		atomic_write_u16(&g_button_hold_countdown, 1000);
+		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
 	}
 
 	while(util_delay_ms(2500))
@@ -1064,6 +1065,14 @@ int main(void)
 	{
 		g_hardware_error |= (int)HARDWARE_NO_RTC;
 		RTC_init_backup();
+
+		if((g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press)
+		{
+			LEDS.blink(LEDS_OFF);
+			PORTA_set_pin_level(POWER_ENABLE, LOW);
+			while(1)
+				;
+		}
 	}
 
 	int tries = 5;
@@ -1116,7 +1125,7 @@ int main(void)
 	{
 		LEDS.init();
 		LEDS.setWakeAuthorizationBlink(true);
-		atomic_write_u16(&g_button_hold_countdown, 1000);
+		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
 	}
 
 	while(1)
@@ -1513,9 +1522,9 @@ int main(void)
 
 					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~5 secs) for us to consider it
+					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~4 secs) for us to consider it
 					{
-						atomic_write_u16(&g_button_hold_countdown, 1000);
+						atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
 						atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 
 						if((g_button_wake_prior_sleep_type == SLEEP_UNTIL_START_TIME) || (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN)) /* User woke up the transmitter early, before transmissions were to start */
