@@ -5291,6 +5291,11 @@ bool shouldPowerTransmitterAfterWake(void)
 
 void configRedLEDforEvent(void)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 	bool active_event_window;
@@ -5320,6 +5325,11 @@ void configRedLEDforEvent(void)
 
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	if(external_pwr_error)
 	{
 		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
@@ -5355,6 +5365,11 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 
 static void reviveLedActivityForCurrentState(void)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
 	float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 	float external_voltage = atomic_read_float(&g_external_voltage);
