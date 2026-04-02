@@ -1101,6 +1101,17 @@ int main(void)
 	TIMERB_init();
 	powerToTransmitter(OFF);
 
+	/* Cold-start authorization should begin only after startup bring-up has
+	 * completed. Re-arm the wake-auth blink and restart its countdown here so
+	 * "fast blink stopped" means the unit is actually ready to stay awake when
+	 * the button is released.
+	 */
+	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
+	{
+		LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+		atomic_write_u16(&g_button_hold_countdown, 1000);
+	}
+
 	while(1)
 	{
 		if(g_foreground_enable_serialbus)
