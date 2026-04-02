@@ -1035,8 +1035,14 @@ int main(void)
 
 	if(now == time(null))
 	{
-		LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
-		LEDS.blink(LEDS_RED_OFF);
+		/* Keep the wake-authorization blink active through cold-start bring-up so
+		 * its end still lines up with the eventual "* Awake" transition.
+		 */
+		if((g_awakenedBy != POWER_UP_START) || !g_foreground_check_for_long_wakeup_press)
+		{
+			LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
+			LEDS.blink(LEDS_RED_OFF);
+		}
 		while((util_delay_ms(3000)) && (now == time(null)))
 			;
 	}
@@ -1109,16 +1115,20 @@ int main(void)
 
 		if(g_foreground_check_for_long_wakeup_press)
 		{
-			bool authorization_already_earned =
-			    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
-			    !atomic_read_u16(&g_button_hold_countdown);
+			bool countdown_complete = !atomic_read_u16(&g_button_hold_countdown);
+			bool button_wake_authorization_earned =
+			    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && countdown_complete;
 
 			/* Once the authorization countdown has completed, treat the wake as
 			 * successful even if the user releases the button before foreground
-			 * reaches this branch again. Limit this to true button-wake resumes so
-			 * initial power-up still powers back off if the button is released.
+			 * reaches this branch again for button-wake resumes. During initial
+			 * power-up, still require the button to be held at the moment we
+			 * actually transition into the awake state.
 			 */
-			if(authorization_already_earned) /* Pushbutton held down long enough; power up */
+			buttonHeldClosed = switchIsClosed();
+
+			if(button_wake_authorization_earned ||
+			   ((g_awakenedBy == POWER_UP_START) && countdown_complete && buttonHeldClosed)) /* Pushbutton held down long enough; power up */
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
@@ -1172,21 +1182,16 @@ int main(void)
 				if(!g_meshmode)
 					sb_send_NewPrompt();
 			}
-			else
+			else if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
 			{
-				buttonHeldClosed = switchIsClosed();
-
-				if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
-				{
-					g_go_to_sleep_now = true;
-					g_foreground_check_for_long_wakeup_press = false;
-					atomic_write_u16(&g_foreground_handle_counted_presses, 0);
-					LEDS.blink(LEDS_OFF);
-				}
-				else /* Spin your wheels waiting for above condition to test true */
-				{
-					LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
-				}
+				g_go_to_sleep_now = true;
+				g_foreground_check_for_long_wakeup_press = false;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+				LEDS.blink(LEDS_OFF);
+			}
+			else /* Spin your wheels waiting for above condition to test true */
+			{
+				LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
 			}
 		}
 		else
