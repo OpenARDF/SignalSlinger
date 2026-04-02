@@ -256,6 +256,15 @@ void leds::init(void)
 
 void leds::init(Blink_t setBlink)
 {
+	if(force_wake_authorization_blink)
+	{
+		if(setBlink != LEDS_OFF)
+		{
+			led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
+		}
+		return;
+	}
+
 	ENTER_CRITICAL(leds_init);
 	TCB1.INTCTRL &= ~TCB_CAPT_bm; /* Disable timer interrupt */
 	reset();
@@ -336,6 +345,17 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 		EXIT_CRITICAL(leds_blink);
 		return;
 	}
+
+	/* While wake authorization is active, the fast blink is the only LED
+	 * indication that should be visible. Ignore all competing LED mode changes
+	 * until the authorization flow explicitly clears the override.
+	 */
+	if(force_wake_authorization_blink)
+	{
+		EXIT_CRITICAL(leds_blink);
+		return;
+	}
+
 	if(!led_timeout_count_read_atomic() && (blinkMode != LEDS_OFF))
 	{
 		EXIT_CRITICAL(leds_blink);
