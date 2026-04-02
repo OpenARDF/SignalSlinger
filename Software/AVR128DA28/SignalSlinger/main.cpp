@@ -1133,6 +1133,13 @@ int main(void)
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
 
+				/* Reassert the main power latch at the exact moment the wake-auth
+				 * blink ends so releasing the pushbutton immediately afterward is
+				 * guaranteed to leave the unit powered.
+				 */
+				PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT);
+				PORTA_set_pin_level(POWER_ENABLE, HIGH);
+
 				if(g_enable_external_battery_control)
 					setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
 
