@@ -22,7 +22,6 @@
  *  SOFTWARE.
  */
 
-
 #ifndef __BINIO_H__
 #define __BINIO_H__
 
@@ -36,8 +35,8 @@
 #endif
 
 #define STRAIGHTKEY 6 /* Straight key */
-#define PADDLE_DAH 5 /* Paddle Dah */
-#define PADDLE_DIT 4 /* Paddle Dit */
+#define PADDLE_DAH 5  /* Paddle Dah */
+#define PADDLE_DIT 4  /* Paddle Dit */
 #define POWER_ENABLE 3
 #define V3V3_PWR_ENABLE 2
 #define FET_DRIVER_ENABLE 1
@@ -73,7 +72,8 @@
 #define X32KHZ_SQUAREWAVE 0
 #define unusedF1 1
 
-enum hardwareResourceClients {
+enum hardwareResourceClients
+{
 	INTERNAL_BATTERY_CHARGING,
 	TRANSMITTER,
 	NUMBER_OF_LS_CONTROLLERS,
@@ -92,6 +92,10 @@ void debounce(void);
 /**
  */
 uint8_t portDdebouncedVals(void);
+
+/**
+ */
+bool debouncedSwitchIsClosed(void);
 
 /**
  */

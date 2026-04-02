@@ -335,7 +335,6 @@ static inline void clearPendingWakeInterruptFlags(void);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
-static inline bool rawSwitchIsClosed(void);
 bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
@@ -999,11 +998,12 @@ int main(void)
 	bool buttonHeldClosed = false;
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
+	bool startup_should_behave_as_poweroff = false;
 
 	atmel_start_init();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
-	buttonHeldClosed = rawSwitchIsClosed();
+	buttonHeldClosed = switchIsClosed();
 	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	g_ee_mgr.initializeEEPROMVars();
@@ -1068,13 +1068,7 @@ int main(void)
 		RTC_init_backup();
 	}
 
-	if((g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet())
-	{
-		LEDS.blink(LEDS_OFF);
-		PORTA_set_pin_level(POWER_ENABLE, LOW);
-		while(1)
-			;
-	}
+	startup_should_behave_as_poweroff = (g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet();
 
 	int tries = 5;
 	powerToTransmitter(ON);
@@ -1124,17 +1118,15 @@ int main(void)
 	 */
 	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
 	{
-		g_foreground_check_for_long_wakeup_press = rawSwitchIsClosed();
-		if(!g_foreground_check_for_long_wakeup_press)
-		{
-			LEDS.setWakeAuthorizationBlink(false);
-		}
-		else
-		{
-			LEDS.init();
-			LEDS.setWakeAuthorizationBlink(true);
-			atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
-		}
+		LEDS.init();
+		LEDS.setWakeAuthorizationBlink(true);
+		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+	}
+
+	if(startup_should_behave_as_poweroff)
+	{
+		suspendEvent();
+		g_go_to_sleep_now = true;
 	}
 
 	while(1)
@@ -3169,18 +3161,7 @@ void handle_1sec_tasks(void)
 
 bool switchIsClosed(void)
 {
-	/* Intentionally re-prime the debounce history so stale samples from earlier runtime
-	 * do not affect this wake-qualification check. */
-	debounce();
-	debounce();
-	debounce();
-	debounce();
-	return (!(portDdebouncedVals() & (1 << SWITCH)));
-}
-
-static inline bool rawSwitchIsClosed(void)
-{
-	return !PORTD_get_pin_level(SWITCH);
+	return debouncedSwitchIsClosed();
 }
 
 static inline void clearPendingWakeInterruptFlags(void)
