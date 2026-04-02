@@ -1019,7 +1019,8 @@ int main(void)
 
 	RTC_set_calibration(g_clock_calibration);
 
-	LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+	LEDS.init();
+	LEDS.setWakeAuthorizationBlink(true);
 	atomic_write_u16(&g_button_hold_countdown, 1000);
 
 	while(util_delay_ms(2500))
@@ -1108,7 +1109,8 @@ int main(void)
 	 */
 	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
 	{
-		LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+		LEDS.init();
+		LEDS.setWakeAuthorizationBlink(true);
 		atomic_write_u16(&g_button_hold_countdown, 1000);
 	}
 
@@ -1143,6 +1145,7 @@ int main(void)
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
+				LEDS.setWakeAuthorizationBlink(false);
 
 				/* Reassert the main power latch at the exact moment the wake-auth
 				 * blink ends so releasing the pushbutton immediately afterward is
@@ -1205,11 +1208,12 @@ int main(void)
 				g_go_to_sleep_now = true;
 				g_foreground_check_for_long_wakeup_press = false;
 				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+				LEDS.setWakeAuthorizationBlink(false);
 				LEDS.blink(LEDS_OFF);
 			}
 			else /* Spin your wheels waiting for above condition to test true */
 			{
-				LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+				LEDS.setWakeAuthorizationBlink(true);
 			}
 		}
 		else
@@ -1495,7 +1499,8 @@ int main(void)
 					{
 						g_device_wakeup_complete = false;                // Set the flag to ignore key presses other than an initial long press
 						g_foreground_check_for_long_wakeup_press = true; // Set the flag to check for an initial long keypress before waking up the device
-						LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
+						LEDS.init();
+						LEDS.setWakeAuthorizationBlink(true);
 						buttonHeldClosed = true;
 						while(util_delay_ms(2000))
 							;

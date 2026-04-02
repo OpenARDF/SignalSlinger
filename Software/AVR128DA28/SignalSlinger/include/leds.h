@@ -45,6 +45,7 @@ class leds
 	void setRed(bool on);
 	void setGreen(bool on);
 	void sendCode(char *str);
+	void setWakeAuthorizationBlink(bool active);
 
   protected:
 	void reset(void);

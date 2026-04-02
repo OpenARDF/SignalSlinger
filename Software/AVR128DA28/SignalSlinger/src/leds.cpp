@@ -25,10 +25,12 @@
 
 static volatile bool timer_red_blink_inhibit = false;   /* disable blinking by timer */
 static volatile bool timer_green_blink_inhibit = false; /* disable blinking by timer */
+static volatile bool force_wake_authorization_blink = false;
 static volatile Blink_t lastRedBlinkSetting = LEDS_OFF;
 static volatile Blink_t lastGreenBlinkSetting = LEDS_OFF;
 static volatile Blink_t lastBothBlinkSetting = LEDS_OFF;
 static volatile uint32_t led_timeout_count = LED_TIMEOUT_DELAY;
+static volatile int16_t wake_auth_blink_count = 0;
 static volatile int16_t red_blink_on_period = 0;
 static volatile int16_t red_blink_off_period = 0;
 static volatile int16_t green_blink_on_period = 0;
@@ -70,6 +72,34 @@ ISR(TCB1_INT_vect)
 
 	if(x & TCB_CAPT_bm)
 	{
+		if(force_wake_authorization_blink)
+		{
+			if(wake_auth_blink_count > 1)
+			{
+				LED_set_RED_level(ON);
+				LED_set_GREEN_level(ON);
+				wake_auth_blink_count--;
+			}
+			else if(wake_auth_blink_count < -1)
+			{
+				LED_set_RED_level(OFF);
+				LED_set_GREEN_level(OFF);
+				wake_auth_blink_count++;
+			}
+
+			if(wake_auth_blink_count == 1)
+			{
+				wake_auth_blink_count = -WAKE_AUTH_OFF;
+			}
+			else if(wake_auth_blink_count == -1)
+			{
+				wake_auth_blink_count = WAKE_AUTH_ON;
+			}
+
+			TCB1.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* clear interrupt flag */
+			return;
+		}
+
 		if(led_timeout_count)
 		{
 			led_timeout_count--;
@@ -262,6 +292,26 @@ void leds::sendCode(char *str)
 		g_enable_manual_transmissions = holdMan;
 	}
 	EXIT_CRITICAL(leds_send_code_text_buff);
+}
+
+void leds::setWakeAuthorizationBlink(bool active)
+{
+	ENTER_CRITICAL(leds_wake_auth_blink);
+	force_wake_authorization_blink = active;
+
+	if(active)
+	{
+		wake_auth_blink_count = WAKE_AUTH_ON;
+		led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
+		LED_set_RED_level(ON);
+		LED_set_GREEN_level(ON);
+	}
+	else
+	{
+		wake_auth_blink_count = 0;
+	}
+
+	EXIT_CRITICAL(leds_wake_auth_blink);
 }
 
 /* Public wrapper that leaves the LED timeout unchanged. */
