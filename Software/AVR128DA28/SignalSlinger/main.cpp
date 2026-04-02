@@ -1109,11 +1109,16 @@ int main(void)
 
 		if(g_foreground_check_for_long_wakeup_press)
 		{
+			bool authorization_already_earned =
+			    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
+			    !atomic_read_u16(&g_button_hold_countdown);
+
 			/* Once the authorization countdown has completed, treat the wake as
 			 * successful even if the user releases the button before foreground
-			 * reaches this branch again.
+			 * reaches this branch again. Limit this to true button-wake resumes so
+			 * initial power-up still powers back off if the button is released.
 			 */
-			if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
+			if(authorization_already_earned) /* Pushbutton held down long enough; power up */
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
