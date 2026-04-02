@@ -1065,14 +1065,14 @@ int main(void)
 	{
 		g_hardware_error |= (int)HARDWARE_NO_RTC;
 		RTC_init_backup();
+	}
 
-		if((g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press)
-		{
-			LEDS.blink(LEDS_OFF);
-			PORTA_set_pin_level(POWER_ENABLE, LOW);
-			while(1)
-				;
-		}
+	if((g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet())
+	{
+		LEDS.blink(LEDS_OFF);
+		PORTA_set_pin_level(POWER_ENABLE, LOW);
+		while(1)
+			;
 	}
 
 	int tries = 5;
