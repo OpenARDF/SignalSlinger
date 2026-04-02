@@ -306,14 +306,24 @@ void leds::sendCode(char *str)
 void leds::setWakeAuthorizationBlink(bool active)
 {
 	ENTER_CRITICAL(leds_wake_auth_blink);
+	bool was_active = force_wake_authorization_blink;
 	force_wake_authorization_blink = active;
 
 	if(active)
 	{
-		wake_auth_blink_count = WAKE_AUTH_ON;
 		led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
-		LED_set_RED_level(ON);
-		LED_set_GREEN_level(ON);
+
+		/* Foreground may call this repeatedly while waiting for wake authorization.
+		 * Only seed the blink state when transitioning from inactive to active;
+		 * otherwise we would keep forcing both LEDs back on and the blink would
+		 * appear to freeze solid.
+		 */
+		if(!was_active)
+		{
+			wake_auth_blink_count = WAKE_AUTH_ON;
+			LED_set_RED_level(ON);
+			LED_set_GREEN_level(ON);
+		}
 	}
 	else
 	{
