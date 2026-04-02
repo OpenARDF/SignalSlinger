@@ -335,6 +335,7 @@ static inline void clearPendingWakeInterruptFlags(void);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
+static inline bool rawSwitchIsClosed(void);
 bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
@@ -1002,7 +1003,7 @@ int main(void)
 	atmel_start_init();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
-	buttonHeldClosed = switchIsClosed();
+	buttonHeldClosed = rawSwitchIsClosed();
 	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	g_ee_mgr.initializeEEPROMVars();
@@ -1123,9 +1124,17 @@ int main(void)
 	 */
 	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
 	{
-		LEDS.init();
-		LEDS.setWakeAuthorizationBlink(true);
-		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+		g_foreground_check_for_long_wakeup_press = rawSwitchIsClosed();
+		if(!g_foreground_check_for_long_wakeup_press)
+		{
+			LEDS.setWakeAuthorizationBlink(false);
+		}
+		else
+		{
+			LEDS.init();
+			LEDS.setWakeAuthorizationBlink(true);
+			atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+		}
 	}
 
 	while(1)
@@ -3167,6 +3176,11 @@ bool switchIsClosed(void)
 	debounce();
 	debounce();
 	return (!(portDdebouncedVals() & (1 << SWITCH)));
+}
+
+static inline bool rawSwitchIsClosed(void)
+{
+	return !PORTD_get_pin_level(SWITCH);
 }
 
 static inline void clearPendingWakeInterruptFlags(void)
