@@ -1019,8 +1019,7 @@ int main(void)
 
 	RTC_set_calibration(g_clock_calibration);
 
-	LEDS.blink(LEDS_RED_ON_CONSTANT);
-	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+	LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
 	atomic_write_u16(&g_button_hold_countdown, 1000);
 
 	while(util_delay_ms(2500))
@@ -1121,7 +1120,6 @@ int main(void)
 			}
 			else if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
 			{
-				LEDS.init();
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
 
@@ -1156,7 +1154,7 @@ int main(void)
 				g_foreground_reset_after_keydown = false;
 				serialbus_set_rx_accepting_input(true);
 
-				configRedLEDforEvent();
+				reviveLedActivityForCurrentState();
 				if(!g_meshmode)
 				{
 					sb_send_NewLine();
@@ -1176,8 +1174,7 @@ int main(void)
 			}
 			else /* Spin your wheels waiting for above condition to test true */
 			{
-				LEDS.blink(LEDS_RED_ON_CONSTANT);
-				LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+				LEDS.blink(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
 			}
 		}
 		else
@@ -1463,9 +1460,7 @@ int main(void)
 					{
 						g_device_wakeup_complete = false;                // Set the flag to ignore key presses other than an initial long press
 						g_foreground_check_for_long_wakeup_press = true; // Set the flag to check for an initial long keypress before waking up the device
-						LEDS.init();
-						LEDS.blink(LEDS_RED_ON_CONSTANT);
-						LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+						LEDS.init(LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH);
 						buttonHeldClosed = true;
 						while(util_delay_ms(2000))
 							;
