@@ -360,6 +360,7 @@ void reportConfigErrors(Settings_t location);
 
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller);
 static void loadStationIDMorse(bool *repeat, callerID_t caller);
+static void refreshActiveAutomatedPattern(void);
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch);
 static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes);
 static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch);
@@ -2713,6 +2714,15 @@ static void loadStationIDMorse(bool *repeat, callerID_t caller)
 	makeMorse(station_id_snapshot, repeat, NULL, caller);
 }
 
+static void refreshActiveAutomatedPattern(void)
+{
+	if(g_evteng_event_commenced && !g_evteng_sending_station_ID)
+	{
+		bool repeat = true;
+		loadCurrentPatternMorse(&repeat, CALLER_AUTOMATED_EVENT);
+	}
+}
+
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch)
 {
 	time_t epoch = atomic_read_time(currentEpoch);
@@ -3655,6 +3665,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								messages_text_slot_write_atomic(FOXORING_PATTERN_TEXT, g_tempStr, strlen(g_tempStr));
 								g_ee_mgr.updateEEPROMVar(Foxoring_pattern_text, g_messages_text[FOXORING_PATTERN_TEXT]);
 
+								Fox_t fox = getFoxSetting();
+								if((fox == FOXORING_FOX1) || (fox == FOXORING_FOX2) || (fox == FOXORING_FOX3))
+								{
+									refreshActiveAutomatedPattern();
+								}
+
 								sb_send_string((char *)"* PAT:");
 								sb_send_string(g_tempStr);
 								sb_send_NewLine();
@@ -3943,6 +3959,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							g_evteng_pattern_codespeed = speed;
 							g_ee_mgr.updateEEPROMVar(Pattern_Code_Speed, (void *)&g_evteng_pattern_codespeed);
+
+							if(g_evteng_event_commenced && !g_evteng_sending_station_ID && (g_event != EVENT_FOXORING))
+							{
+								g_evteng_code_throttle = throttleValue(getFoxCodeSpeed());
+							}
 
 							if(g_cloningInProgress)
 							{
@@ -4565,7 +4586,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{
-							cancelManualTransientState();
+							bool pending_start_after_keydown = cancelManualTransientState();
+							bool had_active_or_pending_event = g_evteng_event_commenced || g_evteng_event_enabled || pending_start_after_keydown;
 							time_t event_start_epoch;
 							time_t event_finish_epoch;
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
@@ -4575,8 +4597,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_ee_mgr.updateEEPROMVar(Event_finish_epoch, (void *)&g_event_finish_epoch);
 
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
-							eventIsScheduledToRun(&event_start_epoch, &event_finish_epoch);
+							bool should_resume_loaded_event = eventIsScheduledToRun(&event_start_epoch, &event_finish_epoch);
 							atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_finish_epoch);
+
+							if(should_resume_loaded_event && !currentLoadedEventWindowCanceled())
+							{
+								startEventUsingRTC();
+							}
+							else if(had_active_or_pending_event || !should_resume_loaded_event)
+							{
+								suspendEvent();
+							}
 						}
 					}
 
