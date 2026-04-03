@@ -317,6 +317,8 @@ bool launchLoadedEvent(void);
 void reportSettings(void);
 uint16_t timeNeededForID(void);
 Frequency_Hz getFrequencySetting(void);
+bool syncCurrentFrequencySetting(bool leaveClockOff);
+bool refreshCurrentFrequencySetting(Frequency_Hz previousFrequency, bool leaveClockOff);
 char *getCurrentPatternText(void);
 int getPatternCodeSpeed(void);
 int getFoxCodeSpeed(void);
@@ -1692,6 +1694,10 @@ int main(void)
 										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 										g_event_launched_by_user_action = false;
+										if(syncCurrentFrequencySetting(true))
+										{
+											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+										}
 										if(!powerToTransmitter(g_device_enabled))
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -1735,6 +1741,10 @@ int main(void)
 #else
 											atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
+											if(syncCurrentFrequencySetting(true))
+											{
+												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+											}
 											if(!powerToTransmitter(g_device_enabled))
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -1761,6 +1771,10 @@ int main(void)
 												atomic_write_u16(&g_demo_event_countdown, 9000); // 30 seconds
 											}
 
+											if(syncCurrentFrequencySetting(true))
+											{
+												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+											}
 											if(!powerToTransmitter(g_device_enabled))
 											{
 												sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -1810,6 +1824,10 @@ int main(void)
 										atomic_write_u16(&g_key_down_countdown, 9000); // 30 seconds
 #endif
 										g_start_event_after_keydown = true;
+										if(syncCurrentFrequencySetting(true))
+										{
+											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+										}
 										if(!powerToTransmitter(g_device_enabled))
 										{
 											sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -3390,6 +3408,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				atomic_write_u16(&g_report_settings_countdown, 0);
 				char freqTier = sb_buff->fields[SB_FIELD1][0];
 				char buf[TEMP_STRING_SIZE];
+				Frequency_Hz previousFrequency = getFrequencySetting();
 
 				if(freqTier)
 				{
@@ -3420,6 +3439,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 
 							g_event_checksum += f;
+							refreshCurrentFrequencySetting(previousFrequency, true);
 
 							sb_send_string((char *)"FRE\n");
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
@@ -3447,66 +3467,67 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							persistFrequencyValue(Frequency_Beacon, f);
 							printFreq = 4;
 						}
+
+						if(printFreq && refreshCurrentFrequencySetting(previousFrequency, true))
+						{
+							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+						}
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f)) // set freq based on current EVT and FOX
 					{
-						g_frequency = f;
-
-						if(!txSetFrequency(&f, true))
+						if(getFoxSetting() == BEACON)
 						{
-							if(getFoxSetting() == BEACON)
-							{
-								persistFrequencyValue(Frequency_Beacon, f);
-								printFreq = 4;
-							}
-							else if(g_event == EVENT_FOXORING)
-							{
-								if(getFoxSetting() == FOXORING_FOX1)
-								{
-									persistFrequencyValue(Frequency_Low, f);
-									printFreq = 1;
-								}
-								else if(getFoxSetting() == FOXORING_FOX2)
-								{
-									persistFrequencyValue(Frequency_Med, f);
-									printFreq = 2;
-								}
-								else if(getFoxSetting() == FOXORING_FOX3)
-								{
-									persistFrequencyValue(Frequency_Hi, f);
-									printFreq = 3;
-								}
-							}
-							else if(g_event == EVENT_SPRINT)
-							{
-								if((getFoxSetting() >= SPRINT_S1) && (getFoxSetting() <= SPRINT_S5))
-								{
-									persistFrequencyValue(Frequency_Low, f);
-									printFreq = 1;
-								}
-								else if(getFoxSetting() == SPECTATOR)
-								{
-									persistFrequencyValue(Frequency_Med, f);
-									printFreq = 2;
-								}
-								else if((getFoxSetting() >= SPRINT_F1) && (getFoxSetting() <= SPRINT_F5))
-								{
-									persistFrequencyValue(Frequency_Hi, f);
-									printFreq = 3;
-								}
-							}
-							else if(g_event == EVENT_CLASSIC)
+							persistFrequencyValue(Frequency_Beacon, f);
+							printFreq = 4;
+						}
+						else if(g_event == EVENT_FOXORING)
+						{
+							if(getFoxSetting() == FOXORING_FOX1)
 							{
 								persistFrequencyValue(Frequency_Low, f);
 								printFreq = 1;
 							}
-							else // No event set
+							else if(getFoxSetting() == FOXORING_FOX2)
 							{
-								persistFrequencyValue(Frequency, f);
-								printFreq = 5;
+								persistFrequencyValue(Frequency_Med, f);
+								printFreq = 2;
+							}
+							else if(getFoxSetting() == FOXORING_FOX3)
+							{
+								persistFrequencyValue(Frequency_Hi, f);
+								printFreq = 3;
 							}
 						}
-						else
+						else if(g_event == EVENT_SPRINT)
+						{
+							if((getFoxSetting() >= SPRINT_S1) && (getFoxSetting() <= SPRINT_S5))
+							{
+								persistFrequencyValue(Frequency_Low, f);
+								printFreq = 1;
+							}
+							else if(getFoxSetting() == SPECTATOR)
+							{
+								persistFrequencyValue(Frequency_Med, f);
+								printFreq = 2;
+							}
+							else if((getFoxSetting() >= SPRINT_F1) && (getFoxSetting() <= SPRINT_F5))
+							{
+								persistFrequencyValue(Frequency_Hi, f);
+								printFreq = 3;
+							}
+						}
+						else if(g_event == EVENT_CLASSIC)
+						{
+							persistFrequencyValue(Frequency_Low, f);
+							printFreq = 1;
+						}
+						else // No event set
+						{
+							persistFrequencyValue(Frequency, f);
+							printFreq = 5;
+						}
+
+						if(printFreq && refreshCurrentFrequencySetting(previousFrequency, true))
 						{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 						}
@@ -3680,6 +3701,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							cancelManualTransientState();
 							setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
+
+							if(syncCurrentFrequencySetting(true))
+							{
+								sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+							}
 
 							if(!txIsInitialized())
 							{
@@ -4909,8 +4935,10 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 		atomic_write_u16(&g_time_needed_for_ID, 0); /* ID will never be sent */
 	}
 
-	g_frequency = getFrequencySetting();
-	txSetFrequency(&g_frequency, true);
+	if(syncCurrentFrequencySetting(true))
+	{
+		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+	}
 
 	if(getFoxSetting() == FREQUENCY_TEST_BEACON)
 	{
@@ -6313,6 +6341,24 @@ Frequency_Hz getFrequencySetting(void)
 	}
 
 	return g_frequency;
+}
+
+bool syncCurrentFrequencySetting(bool leaveClockOff)
+{
+	bool txReady = txIsInitialized();
+	g_frequency = getFrequencySetting();
+	bool err = txSetFrequency(&g_frequency, leaveClockOff);
+	return txReady && err;
+}
+
+bool refreshCurrentFrequencySetting(Frequency_Hz previousFrequency, bool leaveClockOff)
+{
+	if(getFrequencySetting() != previousFrequency)
+	{
+		return syncCurrentFrequencySetting(leaveClockOff);
+	}
+
+	return false;
 }
 
 /*
