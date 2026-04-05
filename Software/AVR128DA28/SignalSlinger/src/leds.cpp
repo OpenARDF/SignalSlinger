@@ -16,7 +16,6 @@
 #define FAST_ON 25
 #define FAST_OFF 25
 #define WAKE_AUTH_ON 12
-#define WAKE_AUTH_OFF 12
 #define SLOW_ON 250
 #define SLOW_OFF 250
 #define BRIEF_ON 15
@@ -30,7 +29,6 @@ static volatile Blink_t lastRedBlinkSetting = LEDS_OFF;
 static volatile Blink_t lastGreenBlinkSetting = LEDS_OFF;
 static volatile Blink_t lastBothBlinkSetting = LEDS_OFF;
 static volatile uint32_t led_timeout_count = LED_TIMEOUT_DELAY;
-static volatile int16_t wake_auth_blink_count = 0;
 static volatile int16_t red_blink_on_period = 0;
 static volatile int16_t red_blink_off_period = 0;
 static volatile int16_t green_blink_on_period = 0;
@@ -74,27 +72,8 @@ ISR(TCB1_INT_vect)
 	{
 		if(force_wake_authorization_blink)
 		{
-			if(wake_auth_blink_count > 1)
-			{
-				LED_set_RED_level(ON);
-				LED_set_GREEN_level(ON);
-				wake_auth_blink_count--;
-			}
-			else if(wake_auth_blink_count < -1)
-			{
-				LED_set_RED_level(OFF);
-				LED_set_GREEN_level(OFF);
-				wake_auth_blink_count++;
-			}
-
-			if(wake_auth_blink_count == 1)
-			{
-				wake_auth_blink_count = -WAKE_AUTH_OFF;
-			}
-			else if(wake_auth_blink_count == -1)
-			{
-				wake_auth_blink_count = WAKE_AUTH_ON;
-			}
+			LED_set_RED_level(ON);
+			LED_set_GREEN_level(ON);
 
 			TCB1.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* clear interrupt flag */
 			return;
@@ -312,22 +291,11 @@ void leds::setWakeAuthorizationBlink(bool active)
 	if(active)
 	{
 		led_timeout_count_write_atomic(LED_TIMEOUT_DELAY);
-
-		/* Foreground may call this repeatedly while waiting for wake authorization.
-		 * Only seed the blink state when transitioning from inactive to active;
-		 * otherwise we would keep forcing both LEDs back on and the blink would
-		 * appear to freeze solid.
-		 */
 		if(!was_active)
 		{
-			wake_auth_blink_count = WAKE_AUTH_ON;
 			LED_set_RED_level(ON);
 			LED_set_GREEN_level(ON);
 		}
-	}
-	else
-	{
-		wake_auth_blink_count = 0;
 	}
 
 	EXIT_CRITICAL(leds_wake_auth_blink);
@@ -356,9 +324,9 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 		return;
 	}
 
-	/* While wake authorization is active, the fast blink is the only LED
-	 * indication that should be visible. Ignore all competing LED mode changes
-	 * until the authorization flow explicitly clears the override.
+	/* While wake authorization is active, the steady red+green indication is the
+	 * only LED state that should be visible. Ignore all competing LED mode
+	 * changes until the authorization flow explicitly clears the override.
 	 */
 	if(force_wake_authorization_blink)
 	{
@@ -497,15 +465,15 @@ void leds::blink(Blink_t blinkMode, bool resetTimeout)
 
 			case LEDS_RED_AND_GREEN_BLINK_WAKE_AUTH:
 			{
-				/* The LED timer runs at roughly 240 Hz, so 12 ticks on / 12 ticks off
-				 * yields an approximately 10 Hz wake-authorization blink.
-				 */
+				/* Wake authorization now uses a steady simultaneous red+green indication. */
 				green_blink_on_period = WAKE_AUTH_ON;
-				green_blink_off_period = WAKE_AUTH_OFF;
+				green_blink_off_period = 0;
 				green_blink_count = green_blink_on_period;
 				red_blink_on_period = WAKE_AUTH_ON;
-				red_blink_off_period = WAKE_AUTH_OFF;
+				red_blink_off_period = 0;
 				red_blink_count = red_blink_on_period;
+				LED_set_RED_level(ON);
+				LED_set_GREEN_level(ON);
 				timer_red_blink_inhibit = timer_green_blink_inhibit = false; /* Enable timer LED control */
 			}
 			break;
