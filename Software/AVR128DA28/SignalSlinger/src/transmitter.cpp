@@ -83,18 +83,20 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 	if(!freq)
 		return (err);
 
-	if(g_tx_initialized)
+	if(!g_tx_initialized)
 	{
-		if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY)) /* 80m */
-		{
-			if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
-			{
-				err = false;
-			}
-		}
+		g_80m_frequency = *freq;
+		return false;
 	}
 
-	g_80m_frequency = *freq;
+	if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY)) /* 80m */
+	{
+		if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
+		{
+			g_80m_frequency = *freq;
+			err = false;
+		}
+	}
 
 	return (err);
 }
