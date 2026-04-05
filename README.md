@@ -17,7 +17,7 @@ Project: SignalSlinger
 Firmware version: v1.1
 Supported hardware revisions: 3.5 and 3.4
 
-Firmware files are named to indicate software version and hardware supported:
+Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
 
 * SignalSlinger-v1.1-3.5.hex
 * SignalSlinger-v1.1-3.4.hex
