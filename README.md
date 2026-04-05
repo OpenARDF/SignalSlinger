@@ -11,24 +11,27 @@ A matching antenna: <a href="https://github.com/OpenARDF/SignalStreamer">SignalS
 
 Also, check out SignalSlinger's sibling receiver project: <a href="https://github.com/OpenARDF/SignalSnagger">SignalSnagger</a>.
 
-# SignalSlinger – Programming Instructions
+# SignalSlinger - Programming Instructions
 
 Project: SignalSlinger
 Firmware version: v1.1
 Supported hardware revisions: 3.5 and 3.4
+Release channel: Stable release
 
-Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
+This `main` branch is intended to pair with the stable release assets on the GitHub Releases page. Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
 
 * SignalSlinger-v1.1-3.5.hex
 * SignalSlinger-v1.1-3.4.hex
 
-## IMPORTANT – READ FIRST
+If you are intentionally using the `Development2` branch, look for the matching prerelease assets there instead, such as v1.2o.
+
+## IMPORTANT - READ FIRST
 
 You MUST program the firmware file that matches the hardware revision of
 your SignalSlinger board.
 
-* Hardware revision 3.5 → SignalSlinger-v1.1-3.5.hex
-* Hardware revision 3.4 → SignalSlinger-v1.1-3.4.hex
+* Hardware revision 3.5 -> SignalSlinger-v1.1-3.5.hex
+* Hardware revision 3.4 -> SignalSlinger-v1.1-3.4.hex
 
 Programming the wrong file may result in incorrect operation.
 
@@ -41,7 +44,7 @@ Programming is performed using:
 
 * avrdude
 * An Atmel-ICE programmer
-* The on-board 6-pin programming header labeled P101 (“Programming”)
+* The on-board 6-pin programming header labeled P101 ("Programming")
 
 ## Target MCU
 
@@ -54,7 +57,7 @@ All supported SignalSlinger boards provide a dedicated 6-pin programming
 header:
 
 * Reference designator: P101
-* Silkscreen label: “Programming”
+* Silkscreen label: "Programming"
 
 Connect the Atmel-ICE directly to this header.
 No additional wiring, adapters, or external components are required.
@@ -96,5 +99,3 @@ verification OK
 * Do NOT disable UPDI.
 * No EEPROM programming is required.
 * Reprogramming with a newer firmware version uses the same procedure.
-
-
