@@ -14,21 +14,21 @@ Also, check out SignalSlinger's sibling receiver project: <a href="https://githu
 # SignalSlinger – Programming Instructions
 
 Project: SignalSlinger
-Firmware version: v1.1
+Firmware version: v1.2o
 Supported hardware revisions: 3.5 and 3.4
 
 Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
 
-* SignalSlinger-v1.1-3.5.hex
-* SignalSlinger-v1.1-3.4.hex
+* SignalSlinger-v1.2o-3.5.hex
+* SignalSlinger-v1.2o-3.4.hex
 
 ## IMPORTANT – READ FIRST
 
 You MUST program the firmware file that matches the hardware revision of
 your SignalSlinger board.
 
-* Hardware revision 3.5 → SignalSlinger-v1.1-3.5.hex
-* Hardware revision 3.4 → SignalSlinger-v1.1-3.4.hex
+* Hardware revision 3.5 → SignalSlinger-v1.2o-3.5.hex
+* Hardware revision 3.4 → SignalSlinger-v1.2o-3.4.hex
 
 Programming the wrong file may result in incorrect operation.
 
@@ -78,13 +78,13 @@ Typical installation:
 ### Hardware revision 3.5
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.5.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2o-3.5.hex
 ```
 
 ### Hardware revision 3.4
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.4.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2o-3.4.hex
 ```
 
 Successful programming will end with:
