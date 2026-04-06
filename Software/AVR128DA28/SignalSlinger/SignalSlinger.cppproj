@@ -80,6 +80,7 @@
     </custom>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainName>com.Atmel.AVRGCC8.CPP</ToolchainName>
     <ToolchainSettings>
       <AvrGccCpp>
         <avrgcc.common.Device>-mmcu=avr128da28 -B "%24(PackRepoDir)\atmel\AVR-Dx_DFP\1.10.114\gcc\dev\avr128da28"</avrgcc.common.Device>
@@ -147,6 +148,7 @@
     </ToolchainSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainName>com.Atmel.AVRGCC8.CPP</ToolchainName>
     <ToolchainSettings>
       <AvrGccCpp>
         <avrgcc.common.Device>-mmcu=avr128da28 -B "%24(PackRepoDir)\atmel\AVR-Dx_DFP\1.10.114\gcc\dev\avr128da28"</avrgcc.common.Device>

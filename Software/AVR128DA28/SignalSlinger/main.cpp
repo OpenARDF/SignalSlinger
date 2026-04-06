@@ -90,6 +90,8 @@ typedef struct
 
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
 #define WAKE_AUTH_HOLD_TICKS 600
+#define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
+#define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -189,6 +191,7 @@ static bool g_start_event_after_keydown = false; /* Foreground-only: one-press k
 static volatile bool g_consume_current_press_for_led_wake = false;
 static volatile bool g_pending_led_revival = false;
 static volatile bool g_event_canceled_by_user = false;
+static volatile bool g_button_hold_preview_active = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
@@ -334,6 +337,7 @@ bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
 static inline void clearPendingWakeInterruptFlags(void);
+static inline void setButtonHoldPreviewIndicator(bool active);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
@@ -482,6 +486,7 @@ ISR(TCB0_INT_vect)
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
 		static uint16_t switch_closed_time = 0;
+		static bool consumeHeldPreviewPress = false;
 
 		if(g_key_down_countdown)
 		{
@@ -523,6 +528,7 @@ ISR(TCB0_INT_vect)
 		if(g_device_wakeup_complete)
 		{
 			fiftyMS++;
+			/* Sample the pushbutton once every 6 TCB0 periods, or about every 50 ms. */
 			if(!(fiftyMS % 6))
 			{
 				holdSwitch = portDdebouncedVals() & (1 << SWITCH);
@@ -543,19 +549,30 @@ ISR(TCB0_INT_vect)
 							switch_closures_count_period = 0;
 							switch_closed_time = 0;
 							longPressEnabled = false;
+							consumeHeldPreviewPress = false;
+							setButtonHoldPreviewIndicator(false);
 						}
 						else
 						{
 							g_switch_presses_count++;
 							buttonReleased = false;
 							switch_closures_count_period = 40;
+							consumeHeldPreviewPress = false;
 						}
 					}
 					else /* Switch is now open */
 					{
 						switch_closed_time = 0;
 						buttonReleased = true;
-						if(g_consume_current_press_for_led_wake)
+						if(consumeHeldPreviewPress)
+						{
+							setButtonHoldPreviewIndicator(false);
+							consumeHeldPreviewPress = false;
+							longPressEnabled = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
+						}
+						else if(g_consume_current_press_for_led_wake)
 						{
 							g_consume_current_press_for_led_wake = false;
 							longPressEnabled = true;
@@ -572,12 +589,22 @@ ISR(TCB0_INT_vect)
 				{
 					if(!g_consume_current_press_for_led_wake && !g_long_button_press && longPressEnabled)
 					{
-						if(++switch_closed_time >= 200)
+						if(++switch_closed_time >= BUTTON_LONG_PRESS_SAMPLE_TICKS)
 						{
+							setButtonHoldPreviewIndicator(false);
+							consumeHeldPreviewPress = false;
 							g_long_button_press = true;
 							switch_closed_time = 0;
 							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
 							longPressEnabled = false;
+						}
+						else if((switch_closed_time >= BUTTON_HOLD_PREVIEW_SAMPLE_TICKS) && !consumeHeldPreviewPress)
+						{
+							setButtonHoldPreviewIndicator(true);
+							consumeHeldPreviewPress = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
 						}
 					}
 				}
@@ -626,6 +653,8 @@ ISR(TCB0_INT_vect)
 			switch_closed_time = 0;
 			g_switch_presses_count = 0;
 			g_consume_current_press_for_led_wake = false;
+			consumeHeldPreviewPress = false;
+			setButtonHoldPreviewIndicator(false);
 			//			switch_closures_count_period = 0;
 			g_long_button_press = false;
 		}
@@ -3198,6 +3227,22 @@ static inline void clearPendingWakeInterruptFlags(void)
 	 * new button press or fresh serial activity can wake the device. */
 	VPORTC.INTFLAGS = 0xFF;
 	VPORTD.INTFLAGS = 0xFF;
+}
+
+static inline void setButtonHoldPreviewIndicator(bool active)
+{
+	if(g_button_hold_preview_active == active)
+	{
+		return;
+	}
+
+	g_button_hold_preview_active = active;
+	LEDS.setWakeAuthorizationBlink(active);
+
+	if(!active)
+	{
+		g_pending_led_revival = true;
+	}
 }
 
 /* Serial command handling. */
