@@ -4,7 +4,7 @@ SignalSlinger is an open-source 80-meter radio orienteering (ARDF) transmitter k
 
 ## Product Photo
 
-_Product photo placeholder: add a finished-product image here later._
+![SignalSlinger finished product](images/signal-slinger-finished-product.jpg)
 
 ## Documentation
 
