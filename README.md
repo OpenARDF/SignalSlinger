@@ -14,14 +14,14 @@ Also, check out SignalSlinger's sibling receiver project: <a href="https://githu
 # SignalSlinger - Programming Instructions
 
 Project: SignalSlinger
-Firmware version: v1.2o
+Firmware version: v1.2p
 Supported hardware revisions: 3.5 and 3.4
 Release channel: Development prerelease
 
 This `Development2` branch is intended to pair with the matching prerelease assets on the GitHub Releases page. Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
 
-* SignalSlinger-v1.2o-3.5.hex
-* SignalSlinger-v1.2o-3.4.hex
+* SignalSlinger-v1.2p-3.5.hex
+* SignalSlinger-v1.2p-3.4.hex
 
 If you want the stable public release instead, switch to the `main` branch and use the v1.1 release assets listed there.
 
@@ -30,8 +30,8 @@ If you want the stable public release instead, switch to the `main` branch and u
 You MUST program the firmware file that matches the hardware revision of
 your SignalSlinger board.
 
-* Hardware revision 3.5 -> SignalSlinger-v1.2o-3.5.hex
-* Hardware revision 3.4 -> SignalSlinger-v1.2o-3.4.hex
+* Hardware revision 3.5 -> SignalSlinger-v1.2p-3.5.hex
+* Hardware revision 3.4 -> SignalSlinger-v1.2p-3.4.hex
 
 Programming the wrong file may result in incorrect operation.
 
@@ -81,13 +81,13 @@ Typical installation:
 ### Hardware revision 3.5
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2o-3.5.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2p-3.5.hex
 ```
 
 ### Hardware revision 3.4
 
 ```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2o-3.4.hex
+avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.2p-3.4.hex
 ```
 
 Successful programming will end with:
