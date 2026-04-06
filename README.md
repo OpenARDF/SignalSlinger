@@ -1,101 +1,33 @@
 # SignalSlinger
-SignalSlinger is an 80-meter band radio orienteering (ARDF) transmitter kit designed to operate in the Amateur Radio Service 3.5 MHz to 3.7 MHz frequency range. The transmitter supports all common radio orienteering event formats: classic, sprint, and foxoring. Using its own high-accuracy real-time clock, it keeps all transmissions closely synchronized and allows precise start and finish dates and times to be specified.
 
-The SignalSlinger project is 100% Open Source. All software and hardware design documents are available for download from this GitHub repository.
+SignalSlinger is an open-source 80-meter radio orienteering (ARDF) transmitter kit for the 3.5 MHz to 3.7 MHz amateur band. It supports classic, sprint, and foxoring events, with a high-accuracy real-time clock for synchronized transmissions and scheduled start and finish times.
 
-BOM: <a href="https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi867AKD0zTovbhvcYbqc/edit?usp=sharing">Bill of Material</a>.
+## Product Photo
 
-User Manual: <a href="https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing">Online Manual</a>.
+<img src="images/signal-slinger-finished-product.jpg" alt="SignalSlinger finished product" width="50%">
 
-A matching antenna: <a href="https://github.com/OpenARDF/SignalStreamer">SignalStreamer</a>.
+## Documentation
 
-Also, check out SignalSlinger's sibling receiver project: <a href="https://github.com/OpenARDF/SignalSnagger">SignalSnagger</a>.
+* [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing)
+* [Bill of Material](https://docs.google.com/spreadsheets/d/182rCsEmR_KNoESYd0NLeVXOi867AKD0zTovbhvcYbqc/edit?usp=sharing)
+* [GitHub Releases](https://github.com/OpenARDF/SignalSlinger/releases)
 
-# SignalSlinger - Programming Instructions
+## Availability
 
-Project: SignalSlinger
-Firmware version: v1.1
-Supported hardware revisions: 3.5 and 3.4
-Release channel: Stable release
+SignalSlinger is planned to be available in kit form from [Backwoods Orienteering Klub](https://backwoodsok.org/). Please check the club website for current kit availability and pricing; if it is not listed there yet, it should be coming soon.
 
-This `main` branch is intended to pair with the stable release assets on the GitHub Releases page. Look in the rightmost column on this web page, then click "Releases." There you will find firmware files named to indicate the software version and hardware supported:
+## Updating Software
 
-* SignalSlinger-v1.1-3.5.hex
-* SignalSlinger-v1.1-3.4.hex
+This `main` branch corresponds to the current stable firmware release. Download the release file that matches your hardware revision:
 
-If you are intentionally using the `Development2` branch, look for the matching prerelease assets there instead, such as v1.2o.
+* `SignalSlinger-v1.1-3.5.hex`
+* `SignalSlinger-v1.1-3.4.hex`
 
-## IMPORTANT - READ FIRST
+Use an Atmel-ICE programmer over the board's UPDI programming header (`P101`) to install the firmware. Always choose the `.hex` file that matches your hardware revision, and do not modify fuses or disable UPDI.
 
-You MUST program the firmware file that matches the hardware revision of
-your SignalSlinger board.
+For complete programming steps, avrdude examples, and hardware connection details, see the [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing). If you want the current development prerelease instead of the stable public release, switch to the `Development2` branch and use the release files referenced there.
 
-* Hardware revision 3.5 -> SignalSlinger-v1.1-3.5.hex
-* Hardware revision 3.4 -> SignalSlinger-v1.1-3.4.hex
+## Related Projects
 
-Programming the wrong file may result in incorrect operation.
-
-## Overview
-
-SignalSlinger firmware is distributed as prebuilt .hex files.
-You do NOT need to build the firmware or install an IDE.
-
-Programming is performed using:
-
-* avrdude
-* An Atmel-ICE programmer
-* The on-board 6-pin programming header labeled P101 ("Programming")
-
-## Target MCU
-
-Microcontroller: AVR128DA28
-Programming interface: UPDI (via Atmel-ICE)
-
-## Hardware Connection
-
-All supported SignalSlinger boards provide a dedicated 6-pin programming
-header:
-
-* Reference designator: P101
-* Silkscreen label: "Programming"
-
-Connect the Atmel-ICE directly to this header.
-No additional wiring, adapters, or external components are required.
-
-## Power
-
-Ensure the SignalSlinger board is powered during programming. The board may be powered by applying 5-12VDC to its primary power input jack, or by connecting an FTDI configuration cable between a USB power source and the 9-pin serial connector.
-
-## Computer Software Requirement
-
-Avrdude must be installed on the host computer.
-
-Typical installation:
-
-* macOS:  brew install avrdude
-* Linux: sudo apt install avrdude
-* Windows: Use a precompiled avrdude package that supports Atmel-ICE
-
-## Programming Commands
-
-### Hardware revision 3.5
-
-```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.5.hex
-```
-
-### Hardware revision 3.4
-
-```bash
-avrdude -c atmelice_updi -p avr128da28 -U flash:w:SignalSlinger-v1.1-3.4.hex
-```
-
-Successful programming will end with:
-verification OK
-
-## Notes and Warnings
-
-* Do NOT modify fuses.
-* Do NOT disable UPDI.
-* No EEPROM programming is required.
-* Reprogramming with a newer firmware version uses the same procedure.
+* [SignalStreamer](https://github.com/OpenARDF/SignalStreamer), a matching antenna
+* [SignalSnagger](https://github.com/OpenARDF/SignalSnagger), a companion receiver project
