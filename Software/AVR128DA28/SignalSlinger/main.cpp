@@ -89,6 +89,9 @@ typedef struct
 } CloneTimingSnapshot_t;
 
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
+#define WAKE_AUTH_HOLD_TICKS 600
+#define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
+#define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -169,7 +172,7 @@ static volatile uint8_t g_button_wake_prior_sleep_type = SLEEP_FOREVER;
 static volatile bool g_button_wake_prior_event_enabled = false;
 static volatile bool g_button_wake_prior_event_commenced = false;
 static volatile time_t g_seconds_since_wakeup = 0;
-static volatile bool g_foreground_check_for_long_wakeup_press = true;
+static volatile bool g_foreground_check_for_long_wakeup_press = false;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_foreground_enable_serialbus = false;
 static volatile bool g_charge_battery = false;
@@ -188,6 +191,7 @@ static bool g_start_event_after_keydown = false; /* Foreground-only: one-press k
 static volatile bool g_consume_current_press_for_led_wake = false;
 static volatile bool g_pending_led_revival = false;
 static volatile bool g_event_canceled_by_user = false;
+static volatile bool g_button_hold_preview_active = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
@@ -333,6 +337,7 @@ bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
 static inline void clearPendingWakeInterruptFlags(void);
+static inline void setButtonHoldPreviewIndicator(bool active);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
@@ -481,6 +486,7 @@ ISR(TCB0_INT_vect)
 		static uint8_t buttonReleased = false;
 		static uint8_t longPressEnabled = true;
 		static uint16_t switch_closed_time = 0;
+		static bool consumeHeldPreviewPress = false;
 
 		if(g_key_down_countdown)
 		{
@@ -522,6 +528,7 @@ ISR(TCB0_INT_vect)
 		if(g_device_wakeup_complete)
 		{
 			fiftyMS++;
+			/* Sample the pushbutton once every 6 TCB0 periods, or about every 50 ms. */
 			if(!(fiftyMS % 6))
 			{
 				holdSwitch = portDdebouncedVals() & (1 << SWITCH);
@@ -542,19 +549,30 @@ ISR(TCB0_INT_vect)
 							switch_closures_count_period = 0;
 							switch_closed_time = 0;
 							longPressEnabled = false;
+							consumeHeldPreviewPress = false;
+							setButtonHoldPreviewIndicator(false);
 						}
 						else
 						{
 							g_switch_presses_count++;
 							buttonReleased = false;
 							switch_closures_count_period = 40;
+							consumeHeldPreviewPress = false;
 						}
 					}
 					else /* Switch is now open */
 					{
 						switch_closed_time = 0;
 						buttonReleased = true;
-						if(g_consume_current_press_for_led_wake)
+						if(consumeHeldPreviewPress)
+						{
+							setButtonHoldPreviewIndicator(false);
+							consumeHeldPreviewPress = false;
+							longPressEnabled = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
+						}
+						else if(g_consume_current_press_for_led_wake)
 						{
 							g_consume_current_press_for_led_wake = false;
 							longPressEnabled = true;
@@ -571,12 +589,22 @@ ISR(TCB0_INT_vect)
 				{
 					if(!g_consume_current_press_for_led_wake && !g_long_button_press && longPressEnabled)
 					{
-						if(++switch_closed_time >= 200)
+						if(++switch_closed_time >= BUTTON_LONG_PRESS_SAMPLE_TICKS)
 						{
+							setButtonHoldPreviewIndicator(false);
+							consumeHeldPreviewPress = false;
 							g_long_button_press = true;
 							switch_closed_time = 0;
 							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
 							longPressEnabled = false;
+						}
+						else if((switch_closed_time >= BUTTON_HOLD_PREVIEW_SAMPLE_TICKS) && !consumeHeldPreviewPress)
+						{
+							setButtonHoldPreviewIndicator(true);
+							consumeHeldPreviewPress = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
 						}
 					}
 				}
@@ -625,6 +653,8 @@ ISR(TCB0_INT_vect)
 			switch_closed_time = 0;
 			g_switch_presses_count = 0;
 			g_consume_current_press_for_led_wake = false;
+			consumeHeldPreviewPress = false;
+			setButtonHoldPreviewIndicator(false);
 			//			switch_closures_count_period = 0;
 			g_long_button_press = false;
 		}
@@ -997,13 +1027,16 @@ ISR(PORTC_PORT_vect)
 /* Entry point for firmware; performs hardware initialization and main loop. */
 int main(void)
 {
-	bool buttonHeldClosed = true;
+	bool buttonHeldClosed = false;
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
+	bool startup_should_behave_as_poweroff = false;
 
 	atmel_start_init();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
+	buttonHeldClosed = switchIsClosed();
+	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	g_ee_mgr.initializeEEPROMVars();
 
@@ -1022,9 +1055,12 @@ int main(void)
 
 	RTC_set_calibration(g_clock_calibration);
 
-	LEDS.blink(LEDS_RED_ON_CONSTANT);
-	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-	atomic_write_u16(&g_button_hold_countdown, 1000);
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		LEDS.init();
+		LEDS.setWakeAuthorizationBlink(true);
+		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+	}
 
 	while(util_delay_ms(2500))
 		; /* Avoid possible race conditions with peripheral devices powering up */
@@ -1039,8 +1075,14 @@ int main(void)
 
 	if(now == time(null))
 	{
-		LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
-		LEDS.blink(LEDS_RED_OFF);
+		/* Keep the wake-authorization blink active through cold-start bring-up so
+		 * its end still lines up with the eventual "* Awake" transition.
+		 */
+		if((g_awakenedBy != POWER_UP_START) || !g_foreground_check_for_long_wakeup_press)
+		{
+			LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
+			LEDS.blink(LEDS_RED_OFF);
+		}
 		while((util_delay_ms(3000)) && (now == time(null)))
 			;
 	}
@@ -1057,6 +1099,8 @@ int main(void)
 		g_hardware_error |= (int)HARDWARE_NO_RTC;
 		RTC_init_backup();
 	}
+
+	startup_should_behave_as_poweroff = (g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet();
 
 	int tries = 5;
 	powerToTransmitter(ON);
@@ -1099,6 +1143,24 @@ int main(void)
 	TIMERB_init();
 	powerToTransmitter(OFF);
 
+	/* Cold-start authorization should begin only after startup bring-up has
+	 * completed. Re-arm the wake-auth blink and restart its countdown here so
+	 * "fast blink stopped" means the unit is actually ready to stay awake when
+	 * the button is released.
+	 */
+	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
+	{
+		LEDS.init();
+		LEDS.setWakeAuthorizationBlink(true);
+		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+	}
+
+	if(startup_should_behave_as_poweroff)
+	{
+		suspendEvent();
+		g_go_to_sleep_now = true;
+	}
+
 	while(1)
 	{
 		if(g_foreground_enable_serialbus)
@@ -1113,20 +1175,31 @@ int main(void)
 
 		if(g_foreground_check_for_long_wakeup_press)
 		{
+			bool countdown_complete = !atomic_read_u16(&g_button_hold_countdown);
+			bool button_wake_authorization_earned =
+			    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && countdown_complete;
+
+			/* Once the authorization countdown has completed, treat the wake as
+			 * successful even if the user releases the button before foreground
+			 * reaches this branch again for button-wake resumes. During initial
+			 * power-up, still require the button to be held at the moment we
+			 * actually transition into the awake state.
+			 */
 			buttonHeldClosed = switchIsClosed();
 
-			if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
+			if(button_wake_authorization_earned ||
+			   ((g_awakenedBy == POWER_UP_START) && countdown_complete && buttonHeldClosed)) /* Pushbutton held down long enough; power up */
 			{
-				g_go_to_sleep_now = true;
-				g_foreground_check_for_long_wakeup_press = false;
-				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
-				LEDS.blink(LEDS_OFF);
-			}
-			else if(!atomic_read_u16(&g_button_hold_countdown)) /* Pushbutton held down long enough; power up */
-			{
-				LEDS.init();
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
+				LEDS.setWakeAuthorizationBlink(false);
+
+				/* Reassert the main power latch at the exact moment the wake-auth
+				 * blink ends so releasing the pushbutton immediately afterward is
+				 * guaranteed to leave the unit powered.
+				 */
+				PORTA_set_pin_dir(POWER_ENABLE, PORT_DIR_OUT);
+				PORTA_set_pin_level(POWER_ENABLE, HIGH);
 
 				if(g_enable_external_battery_control)
 					setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
@@ -1159,7 +1232,7 @@ int main(void)
 				g_foreground_reset_after_keydown = false;
 				serialbus_set_rx_accepting_input(true);
 
-				configRedLEDforEvent();
+				reviveLedActivityForCurrentState();
 				if(!g_meshmode)
 				{
 					sb_send_NewLine();
@@ -1177,10 +1250,17 @@ int main(void)
 				if(!g_meshmode)
 					sb_send_NewPrompt();
 			}
+			else if(!buttonHeldClosed) /* Pushbutton not held; go back to sleep */
+			{
+				g_go_to_sleep_now = true;
+				g_foreground_check_for_long_wakeup_press = false;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+				LEDS.setWakeAuthorizationBlink(false);
+				LEDS.blink(LEDS_OFF);
+			}
 			else /* Spin your wheels waiting for above condition to test true */
 			{
-				LEDS.blink(LEDS_RED_ON_CONSTANT);
-				LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+				LEDS.setWakeAuthorizationBlink(true);
 			}
 		}
 		else
@@ -1467,8 +1547,7 @@ int main(void)
 						g_device_wakeup_complete = false;                // Set the flag to ignore key presses other than an initial long press
 						g_foreground_check_for_long_wakeup_press = true; // Set the flag to check for an initial long keypress before waking up the device
 						LEDS.init();
-						LEDS.blink(LEDS_RED_ON_CONSTANT);
-						LEDS.blink(LEDS_GREEN_ON_CONSTANT);
+						LEDS.setWakeAuthorizationBlink(true);
 						buttonHeldClosed = true;
 						while(util_delay_ms(2000))
 							;
@@ -1476,9 +1555,9 @@ int main(void)
 
 					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~5 secs) for us to consider it
+					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~4 secs) for us to consider it
 					{
-						atomic_write_u16(&g_button_hold_countdown, 1000);
+						atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
 						atomic_write_u16(&g_foreground_handle_counted_presses, 0);
 
 						if((g_button_wake_prior_sleep_type == SLEEP_UNTIL_START_TIME) || (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN)) /* User woke up the transmitter early, before transmissions were to start */
@@ -3139,13 +3218,7 @@ void handle_1sec_tasks(void)
 
 bool switchIsClosed(void)
 {
-	/* Intentionally re-prime the debounce history so stale samples from earlier runtime
-	 * do not affect this wake-qualification check. */
-	debounce();
-	debounce();
-	debounce();
-	debounce();
-	return (!(portDdebouncedVals() & (1 << SWITCH)));
+	return debouncedSwitchIsClosed();
 }
 
 static inline void clearPendingWakeInterruptFlags(void)
@@ -3154,6 +3227,22 @@ static inline void clearPendingWakeInterruptFlags(void)
 	 * new button press or fresh serial activity can wake the device. */
 	VPORTC.INTFLAGS = 0xFF;
 	VPORTD.INTFLAGS = 0xFF;
+}
+
+static inline void setButtonHoldPreviewIndicator(bool active)
+{
+	if(g_button_hold_preview_active == active)
+	{
+		return;
+	}
+
+	g_button_hold_preview_active = active;
+	LEDS.setWakeAuthorizationBlink(active);
+
+	if(!active)
+	{
+		g_pending_led_revival = true;
+	}
 }
 
 /* Serial command handling. */
@@ -5315,6 +5404,11 @@ bool shouldPowerTransmitterAfterWake(void)
 
 void configRedLEDforEvent(void)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 	bool active_event_window;
@@ -5344,6 +5438,11 @@ void configRedLEDforEvent(void)
 
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	if(external_pwr_error)
 	{
 		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
@@ -5379,6 +5478,11 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 
 static void reviveLedActivityForCurrentState(void)
 {
+	if(g_foreground_check_for_long_wakeup_press)
+	{
+		return;
+	}
+
 	float internal_bat_voltage = atomic_read_float(&g_internal_bat_voltage);
 	float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 	float external_voltage = atomic_read_float(&g_external_voltage);

@@ -65,6 +65,28 @@ uint8_t portDdebouncedVals(void)
 	return portDdebounced;
 }
 
+bool debouncedSwitchIsClosed(void)
+{
+	uint8_t current_portd = PORTD_get_port_level();
+	uint8_t current_porta = PORTA_get_port_level();
+
+	/* Seed the existing debounce history from the current raw levels so a
+	 * one-shot switch qualification is not polluted by stale runtime samples.
+	 */
+	portDpinReadings[0] = current_portd;
+	portDpinReadings[1] = current_portd;
+	portDpinReadings[2] = current_portd;
+	portDdebounced = current_portd;
+
+	portApinReadings[0] = current_porta;
+	portApinReadings[1] = current_porta;
+	portApinReadings[2] = current_porta;
+	portAdebounced = current_porta;
+
+	debounce();
+	return (!(portDdebounced & (1 << SWITCH)));
+}
+
 void BINIO_init(void)
 {
 	/* PORTA *************************************************************************************/
@@ -128,9 +150,9 @@ void BINIO_init(void)
 static volatile bool driverCallerStates[NUMBER_OF_LS_CONTROLLERS] = {OFF, OFF};
 
 static void updateLoadSwitchCallerState(volatile bool *callerStates,
-										bool onoff,
-										hardwareResourceClients sender,
-										bool trackInternalBatteryCharging)
+                                        bool onoff,
+                                        hardwareResourceClients sender,
+                                        bool trackInternalBatteryCharging)
 {
 	switch(sender)
 	{
@@ -167,9 +189,9 @@ static bool anyLoadSwitchCallerEnabled(const volatile bool *callerStates)
 }
 
 static bool getArbitratedLoadSwitchState(volatile bool *callerStates,
-										 bool onoff,
-										 hardwareResourceClients sender,
-										 bool trackInternalBatteryCharging)
+                                         bool onoff,
+                                         hardwareResourceClients sender,
+                                         bool trackInternalBatteryCharging)
 {
 	updateLoadSwitchCallerState(callerStates, onoff, sender, trackInternalBatteryCharging);
 	return anyLoadSwitchCallerEnabled(callerStates);
