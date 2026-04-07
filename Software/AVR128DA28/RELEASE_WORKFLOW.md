@@ -50,3 +50,13 @@ $env:ALL_PROXY=''
 - The release-prep flow should build `Release`, not `Debug`.
 - The expected asset naming pattern is `SignalSlinger-vX.Y-3.4.hex` and `SignalSlinger-vX.Y-3.5.hex`.
 - `prepare-release.ps1` should restore the default hardware target after the dual-build process completes.
+
+## Branch Merge Policy
+
+- Use `.\merge-development2-into-main.ps1` for `Development2` to `main` merges instead of a raw `git merge`.
+- The merge worktree must start clean so the renormalization step only stages merge content.
+- The policy for this repository is `core.autocrlf=false` with `.gitattributes` controlling line endings.
+- The merge helper also enforces `core.safecrlf=true` so Git rejects mixed or lossy line-ending conversions.
+- The merge must be performed with `--no-commit`, then `git add --renormalize .` must run before the merge commit is created.
+- If conflicts occur, resolve them first, rerun the helper, and only then create the merge commit.
+- Review `git status` and `git diff --cached --stat` before finalizing the merge commit.
