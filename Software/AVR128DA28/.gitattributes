@@ -17,6 +17,8 @@
 *.c text eol=lf
 *.cpp text eol=lf
 *.S text eol=lf
+Makefile text eol=lf
+*.mk text eol=lf
 
 # Preserve Windows-native line endings for local tooling.
 *.ps1 text eol=crlf

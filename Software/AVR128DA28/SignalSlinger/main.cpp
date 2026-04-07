@@ -487,6 +487,7 @@ ISR(TCB0_INT_vect)
 		static uint8_t longPressEnabled = true;
 		static uint16_t switch_closed_time = 0;
 		static bool consumeHeldPreviewPress = false;
+		static bool wakeAuthSwitchClosed = true;
 
 		if(g_key_down_countdown)
 		{
@@ -649,6 +650,27 @@ ISR(TCB0_INT_vect)
 		}
 		else
 		{
+			if(g_foreground_check_for_long_wakeup_press)
+			{
+				/* Foreground can spend a while finishing wake-up or cold-start
+				 * work before it reevaluates the hold-to-wake state. Keep the
+				 * fast authorization blink aligned with the debounced switch
+				 * during that window so releasing the button stops the blink
+				 * promptly without changing whether the wake was already earned.
+				 */
+				debounce();
+				bool switchClosed = !(portDdebouncedVals() & (1 << SWITCH));
+				if(switchClosed != wakeAuthSwitchClosed)
+				{
+					wakeAuthSwitchClosed = switchClosed;
+					LEDS.setWakeAuthorizationBlink(switchClosed);
+				}
+			}
+			else
+			{
+				wakeAuthSwitchClosed = true;
+			}
+
 			longPressEnabled = false;
 			switch_closed_time = 0;
 			g_switch_presses_count = 0;

@@ -322,6 +322,14 @@ void leds::setWakeAuthorizationBlink(bool active)
 	else
 	{
 		wake_auth_blink_count = 0;
+		/* Releasing the button during wake authorization or hold-preview should
+		 * blank the LEDs immediately rather than letting stale blink state leak
+		 * through until foreground restores the next logical indication.
+		 */
+		red_blink_count = 0;
+		green_blink_count = 0;
+		LED_set_RED_level(OFF);
+		LED_set_GREEN_level(OFF);
 	}
 
 	EXIT_CRITICAL(leds_wake_auth_blink);
