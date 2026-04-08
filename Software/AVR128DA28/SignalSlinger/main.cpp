@@ -5574,19 +5574,11 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 		return;
 	}
 
-	bool event_active = (g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster);
-	int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
-
-	/* When awake but off-air during an active event, keep green illuminated to confirm
-	 * the unit is awake and ready for button commands. */
-	if(event_active && (on_the_air < 0) && !g_sleeping)
-	{
-		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-	}
-	else
-	{
-		LEDS.blink(event_active ? LEDS_GREEN_OFF : LEDS_GREEN_ON_CONSTANT);
-	}
+	/* Green should continue to report power status throughout an active event.
+	 * Red already tracks Morse keying separately, so there is no need to blank
+	 * green while the transmitter is on the air.
+	 */
+	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 }
 
 static void reviveLedActivityForCurrentState(void)
