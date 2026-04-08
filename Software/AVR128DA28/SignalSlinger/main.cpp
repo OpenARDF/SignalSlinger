@@ -92,6 +92,8 @@ typedef struct
 #define WAKE_AUTH_HOLD_TICKS 600
 #define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
 #define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
+#define STARTUP_SWITCH_SETTLE_SAMPLE_COUNT 12
+#define STARTUP_SWITCH_SETTLE_DELAY_MS 5
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -173,6 +175,7 @@ static volatile bool g_button_wake_prior_event_enabled = false;
 static volatile bool g_button_wake_prior_event_commenced = false;
 static volatile time_t g_seconds_since_wakeup = 0;
 static volatile bool g_foreground_check_for_long_wakeup_press = false;
+static volatile bool g_ignore_sleep_button_wake_until_release = false;
 static volatile bool g_device_wakeup_complete = false;
 static volatile bool g_foreground_enable_serialbus = false;
 static volatile bool g_charge_battery = false;
@@ -341,6 +344,10 @@ static inline void setButtonHoldPreviewIndicator(bool active);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
+static inline bool rawSwitchIsClosed(void);
+static bool switchIsClosedAtStartup(void);
+static inline void configureSwitchInterruptForAwake(void);
+static inline void configureSwitchInterruptForSleepWake(void);
 bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
@@ -698,7 +705,17 @@ ISR(TCB0_INT_vect)
 			}
 		}
 
-		if(g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster) /* Handle cycling transmissions */
+		if(g_go_to_sleep_now)
+		{
+			/* A foreground shutdown request may spend a short time printing status
+			 * before the later sleep-entry block deactivates the LEDs entirely.
+			 * Keep the ISR from reasserting red LED/keying state during that tail.
+			 */
+			key = OFF;
+			keyTransmitter(OFF);
+			LEDS.setRed(OFF);
+		}
+		else if(g_evteng_event_enabled && g_evteng_event_commenced && !g_isMaster) /* Handle cycling transmissions */
 		{
 			if((g_evteng_on_the_air > 0) || (g_evteng_sending_station_ID && !id_timed_out) || (!g_evteng_off_air_seconds))
 			{
@@ -1006,19 +1023,31 @@ ISR(PORTD_PORT_vect)
 	{
 		if(g_sleeping)
 		{
-			g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
-			g_button_wake_prior_event_enabled = g_evteng_event_enabled;
-			g_button_wake_prior_event_commenced = g_evteng_event_commenced;
-			g_go_to_sleep_now = false;
-			g_sleeping = false;
-			g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
+			if(g_ignore_sleep_button_wake_until_release)
+			{
+				if(!rawSwitchIsClosed())
+				{
+					g_ignore_sleep_button_wake_until_release = false;
+					configureSwitchInterruptForSleepWake();
+				}
+			}
+			else if(rawSwitchIsClosed())
+			{
+				PORTD_pin_set_isc(SWITCH, PORT_ISC_INTDISABLE_gc);
+				g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
+				g_button_wake_prior_event_enabled = g_evteng_event_enabled;
+				g_button_wake_prior_event_commenced = g_evteng_event_commenced;
+				g_go_to_sleep_now = false;
+				g_sleeping = false;
+				g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
+				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+			}
 		}
 		else if(!sb_enabled())
 		{
 			g_foreground_enable_serialbus = true;
+			atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 		}
-
-		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	}
 
 	VPORTD.INTFLAGS = 0xFF; /* Clear all flags */
@@ -1055,9 +1084,10 @@ int main(void)
 	bool startup_should_behave_as_poweroff = false;
 
 	atmel_start_init();
+	configureSwitchInterruptForAwake();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
-	buttonHeldClosed = switchIsClosed();
+	buttonHeldClosed = switchIsClosedAtStartup();
 	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	g_ee_mgr.initializeEEPROMVars();
@@ -1170,11 +1200,15 @@ int main(void)
 	 * "fast blink stopped" means the unit is actually ready to stay awake when
 	 * the button is released.
 	 */
-	if((g_awakenedBy == POWER_UP_START) && g_foreground_check_for_long_wakeup_press)
+	if(g_awakenedBy == POWER_UP_START)
 	{
-		LEDS.init();
-		LEDS.setWakeAuthorizationBlink(true);
-		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+		g_foreground_check_for_long_wakeup_press = g_foreground_check_for_long_wakeup_press || switchIsClosedAtStartup();
+		if(g_foreground_check_for_long_wakeup_press)
+		{
+			LEDS.init();
+			LEDS.setWakeAuthorizationBlink(true);
+			atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+		}
 	}
 
 	if(startup_should_behave_as_poweroff)
@@ -1482,6 +1516,8 @@ int main(void)
 					LEDS.deactivate();
 					serialbus_disable();
 					system_sleep_config();
+					g_ignore_sleep_button_wake_until_release = rawSwitchIsClosed();
+					configureSwitchInterruptForSleepWake();
 					clearPendingWakeInterruptFlags();
 					SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_STDBY_gc);
 					g_sleeping = true;
@@ -1546,6 +1582,7 @@ int main(void)
 						set_sleep_mode(SLEEP_MODE_STANDBY);
 						//					set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 						DISABLE_INTERRUPTS();
+						configureSwitchInterruptForSleepWake();
 						clearPendingWakeInterruptFlags();
 						sleep_enable();
 						ENABLE_INTERRUPTS();
@@ -1558,6 +1595,7 @@ int main(void)
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					atmel_start_init();
+					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
 						serialbus_init(SB_BAUD, SERIALBUS_USART);
 
@@ -3238,9 +3276,56 @@ void handle_1sec_tasks(void)
 
 /* Wake-input helper functions. */
 
+static inline bool rawSwitchIsClosed(void)
+{
+	return (PORTD_get_pin_level(SWITCH) == LOW);
+}
+
+static bool switchIsClosedAtStartup(void)
+{
+	uint8_t closed_samples = 0;
+
+	for(uint8_t sample = 0; sample < STARTUP_SWITCH_SETTLE_SAMPLE_COUNT; ++sample)
+	{
+		if(rawSwitchIsClosed())
+		{
+			if(++closed_samples >= 3)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			closed_samples = 0;
+		}
+
+		while(util_delay_ms(STARTUP_SWITCH_SETTLE_DELAY_MS))
+			;
+	}
+
+	return false;
+}
+
 bool switchIsClosed(void)
 {
 	return debouncedSwitchIsClosed();
+}
+
+static inline void configureSwitchInterruptForAwake(void)
+{
+	PORTD_pin_set_isc(SWITCH, PORT_ISC_FALLING_gc);
+}
+
+static inline void configureSwitchInterruptForSleepWake(void)
+{
+	if(g_ignore_sleep_button_wake_until_release)
+	{
+		PORTD_pin_set_isc(SWITCH, PORT_ISC_RISING_gc);
+	}
+	else
+	{
+		PORTD_pin_set_isc(SWITCH, PORT_ISC_LEVEL_gc);
+	}
 }
 
 static inline void clearPendingWakeInterruptFlags(void)
@@ -5426,7 +5511,7 @@ bool shouldPowerTransmitterAfterWake(void)
 
 void configRedLEDforEvent(void)
 {
-	if(g_foreground_check_for_long_wakeup_press)
+	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
 	{
 		return;
 	}
@@ -5460,7 +5545,7 @@ void configRedLEDforEvent(void)
 
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
 {
-	if(g_foreground_check_for_long_wakeup_press)
+	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
 	{
 		return;
 	}
@@ -5500,7 +5585,7 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 
 static void reviveLedActivityForCurrentState(void)
 {
-	if(g_foreground_check_for_long_wakeup_press)
+	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
 	{
 		return;
 	}
