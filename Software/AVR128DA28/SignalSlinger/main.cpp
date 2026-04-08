@@ -4915,20 +4915,26 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				sprintf(g_tempStr, "* Int. Bat =%s Volts\n", txt);
 				sb_send_string(g_tempStr);
 
-				dtostrf(internal_voltage_low_threshold, 5, 1, txt);
-				txt[5] = '\0';
-				sprintf(g_tempStr, "* thresh   =%s Volts\n", txt);
-				sb_send_string(g_tempStr);
+				if(!g_meshmode)
+				{
+					dtostrf(internal_voltage_low_threshold, 5, 1, txt);
+					txt[5] = '\0';
+					sprintf(g_tempStr, "* thresh   =%s Volts\n", txt);
+					sb_send_string(g_tempStr);
+				}
 
 				dtostrf(external_voltage, 5, 1, txt);
 				txt[5] = '\0';
 				sprintf(g_tempStr, "* Ext. Bat =%s Volts\n", txt);
 				sb_send_string(g_tempStr);
 
-				sprintf(g_tempStr, "* Ext. Bat. Ctrl = %s\n", g_enable_external_battery_control ? "ON" : "OFF");
-				sb_send_string(g_tempStr);
-				sprintf(g_tempStr, "* Transmitter = %s\n", getDisableTransmissions() ? "Disabled" : "Enabled");
-				sb_send_string(g_tempStr);
+				if(!g_meshmode)
+				{
+					sprintf(g_tempStr, "* Ext. Bat. Ctrl = %s\n", g_enable_external_battery_control ? "ON" : "OFF");
+					sb_send_string(g_tempStr);
+					sprintf(g_tempStr, "* Transmitter = %s\n", getDisableTransmissions() ? "Disabled" : "Enabled");
+					sb_send_string(g_tempStr);
+				}
 			}
 			break;
 
