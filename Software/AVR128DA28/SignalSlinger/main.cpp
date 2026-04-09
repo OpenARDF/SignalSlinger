@@ -1,3 +1,27 @@
+/*
+ *  MIT License
+ *
+ *  Copyright (c) 2026 DigitalConfections
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
 #include "atmel_start.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -29,12 +53,12 @@
 /*
  * Main firmware orchestration for SignalSlinger.
  *
- * This file owns the top-level runtime state, the interrupt handlers, the
- * event-engine coordination logic, user interaction flow, and the serial
- * command handling that ties the rest of the modules together.
+ * This module owns the top-level runtime state, interrupt handlers, event
+ * engine coordination, user interaction flow, and serial command handling that
+ * ties the rest of the firmware together.
  *
- * Because many subsystems meet here, comments in this file focus on intent and
- * ownership boundaries rather than line-by-line mechanics.
+ * Lower-level hardware drivers and focused utility logic belong in their own
+ * modules; this file is where those pieces are sequenced into device behavior.
  */
 
 /***********************************************************************
@@ -140,7 +164,15 @@ volatile uint8_t g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile int16_t g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;   /* amount of time to spend on the air */
 volatile int16_t g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT; /* amount of time to wait before returning to the air */
 
-/* Update the software clock, optionally re-zeroing the external RTC in the same critical section. */
+/**
+ * Update the system clock, optionally re-zeroing the external RTC at the same time.
+ *
+ * The foreground uses this helper when a clock-setting operation must keep the
+ * software time base and the hardware RTC aligned through one critical section.
+ *
+ * @param epoch New epoch value to install.
+ * @param reset_rtc true to zero the RTC counter before updating system time.
+ */
 static inline void atomic_set_system_time(time_t epoch, bool reset_rtc)
 {
 	ENTER_CRITICAL(main_set_system_time);
@@ -2403,7 +2435,14 @@ int main(void)
 
 /* Event engine state and scheduling helpers. */
 
-/* Clear temporary manual-start/demo state and report whether a start was pending. */
+/**
+ * Clear any temporary manual-start or demo state and report whether a start was pending.
+ *
+ * This helper resets transient foreground-only launch state that should not
+ * survive a clock change, clone exit, or similar control-flow reset.
+ *
+ * @return true if a one-shot start-after-keydown request had been pending.
+ */
 static bool cancelManualTransientState(void)
 {
 	bool pending_start_after_keydown = g_start_event_after_keydown;
@@ -2422,7 +2461,12 @@ static bool cancelManualTransientState(void)
 	return pending_start_after_keydown;
 }
 
-/* Snapshot the event window that should be restored after serial cloning ends. */
+/**
+ * Snapshot the event window that should be restored when serial cloning exits.
+ *
+ * The snapshot normally mirrors the saved event window, but if a shifted loaded
+ * window is already active it preserves that currently relevant day instead.
+ */
 static void captureCloneTimingSnapshot(void)
 {
 	time_t saved_start_epoch;
@@ -2451,7 +2495,12 @@ static void captureCloneTimingSnapshot(void)
 	}
 }
 
-/* Ask the event-engine ISR pair to rebuild its internal state from current globals. */
+/**
+ * Ask the event engine to rebuild its internal state from the current globals.
+ *
+ * The helper sets the foreground-to-ISR initialization flag, then waits until
+ * the event engine clears it after rebuilding its runtime state.
+ */
 static void reinitializeEventEngine(void)
 {
 	g_evteng_initialize_event = true;
@@ -2460,7 +2509,15 @@ static void reinitializeEventEngine(void)
 		; // Wait for event engine to initialize
 }
 
-/* Load timing parameters that correspond to the selected fox or beacon role. */
+/**
+ * Load event timing parameters that correspond to the selected fox or beacon role.
+ *
+ * The chosen fox determines the intra-cycle offset and the on-air/off-air/ID
+ * cadence that the event engine should use for the current event family.
+ *
+ * @param fox Fox or beacon role whose timing profile should be applied. Passing
+ *            USE_CURRENT_FOX causes the current event selection to be used.
+ */
 static void loadEventTimingForFox(Fox_t fox)
 {
 	bool delayNotSet = true;
@@ -2649,7 +2706,12 @@ static void loadEventTimingForFox(Fox_t fox)
 	}
 }
 
-/* Restore the loaded event after cloning, optionally deferring a restart until foreground is ready. */
+/**
+ * Restore the loaded event after cloning, optionally deferring the restart.
+ *
+ * @param deferStartIfAlreadyRunning true to defer the restart when the restored
+ *                                   window is already active at clone exit.
+ */
 static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
 {
 	bool should_resume_loaded_event = loadedEventShouldBeEnabled();
@@ -2670,7 +2732,14 @@ static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
 	}
 }
 
-/* Rebuild the currently loaded event window from saved settings and the current day counter. */
+/**
+ * Rebuild the currently loaded event window from saved settings and day counters.
+ *
+ * The helper advances the saved start/finish pair to the day that should be
+ * active now, publishes the loaded window, and reports whether it is schedulable.
+ *
+ * @return true if the rebuilt loaded window is in the future or currently active.
+ */
 static bool reloadLoadedEventWindowFromSavedSettings(void)
 {
 	time_t saved_start_epoch;
@@ -2715,7 +2784,15 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
-/* Recompute the loaded event window after the system clock changes. */
+/**
+ * Recompute the loaded event window after the system clock changes.
+ *
+ * A clock update can move the firmware onto a different day of a multi-day
+ * schedule, so this helper recomputes the loaded window and adjusts cancel
+ * state when that happens.
+ *
+ * @return true if a loaded event window remains schedulable after the resync.
+ */
 static bool resyncLoadedEventWindowAfterClockSet(void)
 {
 	time_t saved_start_epoch;
@@ -2772,7 +2849,11 @@ static bool resyncLoadedEventWindowAfterClockSet(void)
 	return have_schedulable_window;
 }
 
-/* Advance the loaded event window to the next day after the user cancels today’s run. */
+/**
+ * Advance the loaded event window to the next day after canceling today's run.
+ *
+ * @return true if a later day exists and the loaded window was advanced.
+ */
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 {
 	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
@@ -2784,7 +2865,14 @@ static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 	return reloadLoadedEventWindowFromSavedSettings();
 }
 
-/* Report whether the currently loaded event window is still latched as user-canceled. */
+/**
+ * Report whether the currently loaded event window is still latched as canceled.
+ *
+ * The cancellation latch only applies to the day that is currently loaded and
+ * actively runnable.
+ *
+ * @return true if the current loaded window should still be treated as canceled.
+ */
 static bool currentLoadedEventWindowCanceled(void)
 {
 	if(!g_event_canceled_by_user)
@@ -2807,13 +2895,23 @@ static bool currentLoadedEventWindowCanceled(void)
 	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
-/* Extend the temporary “master” role long enough for another sync/programming session. */
+/**
+ * Extend the temporary master role long enough for another sync/programming session.
+ */
 static inline void extendMasterModeTimeout(void)
 {
 	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 }
 
-/* End the current timed event once its loaded finish time has passed. */
+/**
+ * End the current timed event once its loaded finish time has passed.
+ *
+ * The helper shuts down the active event, updates multi-day scheduling state,
+ * and schedules the next wake-up when another day remains.
+ *
+ * @param now Current epoch time.
+ * @return true if an active timed event was finished, false otherwise.
+ */
 static bool finishTimedEventIfExpired(time_t now)
 {
 	if(!(g_evteng_event_commenced && !g_evteng_run_event_until_canceled))
@@ -2858,7 +2956,15 @@ static bool finishTimedEventIfExpired(time_t now)
 
 /* Morse generation and clock-setting helpers. */
 
-/* Load the currently active automated pattern into the Morse generator using a stable snapshot. */
+/**
+ * Load the currently active automated pattern into the Morse generator safely.
+ *
+ * Shared pattern text is copied into a local snapshot first so the Morse
+ * generator sees stable text even if other code updates the shared message slots.
+ *
+ * @param repeat Output flag controlling Morse repeat behavior.
+ * @param caller Caller identifier forwarded to the Morse module.
+ */
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
 {
 	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
@@ -2876,7 +2982,12 @@ static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
 	makeMorse(pattern_snapshot, repeat, NULL, caller);
 }
 
-/* Load the station ID text into the Morse generator using a stable snapshot. */
+/**
+ * Load the station ID text into the Morse generator using a stable snapshot.
+ *
+ * @param repeat Output flag controlling Morse repeat behavior.
+ * @param caller Caller identifier forwarded to the Morse module.
+ */
 static void loadStationIDMorse(bool *repeat, callerID_t caller)
 {
 	static char station_id_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
@@ -2884,7 +2995,9 @@ static void loadStationIDMorse(bool *repeat, callerID_t caller)
 	makeMorse(station_id_snapshot, repeat, NULL, caller);
 }
 
-/* Refresh the active automated Morse pattern when an event is running but not currently sending the ID. */
+/**
+ * Refresh the active automated Morse pattern when an event is running normally.
+ */
 static void refreshActiveAutomatedPattern(void)
 {
 	if(g_evteng_event_commenced && !g_evteng_sending_station_ID)
@@ -2894,14 +3007,28 @@ static void refreshActiveAutomatedPattern(void)
 	}
 }
 
-/* Adapt completeTimeString() to a volatile time source by first taking an atomic snapshot. */
+/**
+ * Adapt completeTimeString() to a volatile time source by first taking a snapshot.
+ *
+ * @param partialString Partial time string supplied by the caller.
+ * @param currentEpoch Volatile time source to snapshot.
+ * @return Pointer returned by completeTimeString() for the snapped epoch value.
+ */
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch)
 {
 	time_t epoch = atomic_read_time(currentEpoch);
 	return completeTimeString(partialString, &epoch);
 }
 
-/* Parse a +HHH or +HHH:MM clock offset used by the serial clock-setting commands. */
+/**
+ * Parse a +HHH or +HHH:MM clock offset used by serial clock-setting commands.
+ *
+ * @param offsetString Offset string to parse.
+ * @param hours Optional output pointer for the parsed hour component.
+ * @param minutes Optional output pointer for the parsed minute component.
+ * @param hasMinutes Optional output flag indicating whether a :MM suffix was supplied.
+ * @return true on success, false if the string is not a valid offset.
+ */
 static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes)
 {
 	if(hours)
@@ -3005,7 +3132,14 @@ static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours
 	return true;
 }
 
-/* Round an epoch to the nearest requested boundary while never moving earlier than the minimum epoch. */
+/**
+ * Round an epoch to the nearest requested boundary without moving earlier than a minimum.
+ *
+ * @param epoch Epoch value to align.
+ * @param boundary Boundary size in seconds.
+ * @param minimumEpoch Minimum acceptable aligned value.
+ * @return Aligned epoch value.
+ */
 static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch)
 {
 	if(!boundary)
@@ -3022,7 +3156,19 @@ static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t 
 	return aligned;
 }
 
-/* Resolve a user-supplied +hours or +hours:minutes offset into an absolute epoch. */
+/**
+ * Resolve a user-supplied +hours or +hours:minutes offset into an absolute epoch.
+ *
+ * @param offsetString Offset string to resolve.
+ * @param baseEpoch Base epoch from which the offset is applied.
+ * @param baseEpochError Error text to use when the base epoch is invalid.
+ * @param suppressBaseEpochError true to suppress the base-epoch error message.
+ * @param hourBoundary Alignment boundary used for whole-hour offsets.
+ * @param minuteBoundary Alignment boundary used for hour:minute offsets.
+ * @param resolvedEpoch Optional output pointer for the resolved epoch.
+ * @param errMsg Optional output buffer for a user-facing error string.
+ * @return true on success, false on invalid input or invalid base time.
+ */
 static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg)
 {
 	if(resolvedEpoch)
@@ -3076,14 +3222,27 @@ static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch
 	return true;
 }
 
-/* Persist a clock value to both runtime state and EEPROM in one helper call. */
+/**
+ * Persist a clock value to both runtime state and EEPROM in one helper call.
+ *
+ * @param loadedEpoch Loaded-event epoch variable to update.
+ * @param savedEpoch Saved epoch variable to update.
+ * @param epoch New epoch value.
+ * @param eeVar EEPROM field that should be updated.
+ * @param eeValue Pointer to the value passed through to EEPROM storage.
+ */
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue)
 {
 	atomic_write_time_pair(loadedEpoch, savedEpoch, epoch, epoch);
 	g_ee_mgr.updateEEPROMVar(eeVar, eeValue);
 }
 
-/* Acknowledge a cloned clock update and fold it into the session checksum. */
+/**
+ * Acknowledge a cloned clock update and fold it into the clone-session checksum.
+ *
+ * @param reply Reply string to send over the serial bus.
+ * @param epoch Epoch value that should contribute to the checksum.
+ */
 static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
 {
 	sb_send_string((char *)reply);
@@ -3091,7 +3250,9 @@ static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
 	g_event_checksum += epoch;
 }
 
-/* Reset day tracking and restart event scheduling after a local clock update. */
+/**
+ * Reset day tracking and restart event scheduling after a local clock update.
+ */
 static void finalizeLocalClockUpdate(void)
 {
 	cancelManualTransientState();
@@ -3102,7 +3263,12 @@ static void finalizeLocalClockUpdate(void)
 
 /* Serial-argument parsing and settings persistence helpers. */
 
-/* Map a single-letter serial command argument to the corresponding event enum. */
+/**
+ * Map a single-letter serial command argument to the corresponding event enum.
+ *
+ * @param eventArg Serial command character.
+ * @return Event enum that corresponds to the supplied command letter.
+ */
 static Event_t eventFromSerialArg(char eventArg)
 {
 	switch(eventArg)
@@ -3124,7 +3290,11 @@ static Event_t eventFromSerialArg(char eventArg)
 	}
 }
 
-/* Persist the fox setting associated with the currently selected event family. */
+/**
+ * Persist the fox setting associated with the currently selected event family.
+ *
+ * @param fox Fox value to persist for the current event family.
+ */
 static void persistFoxSettingForCurrentEvent(Fox_t fox)
 {
 	EE_var_t eeVar = Fox_setting_none;
@@ -3154,7 +3324,12 @@ static void persistFoxSettingForCurrentEvent(Fox_t fox)
 	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
 }
 
-/* Persist one frequency value to the matching in-memory slot and EEPROM field. */
+/**
+ * Persist one frequency value to the matching in-memory slot and EEPROM field.
+ *
+ * @param eeVar EEPROM field that identifies which frequency slot is being updated.
+ * @param frequency New frequency value in Hz.
+ */
 static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
 {
 	switch(eeVar)
