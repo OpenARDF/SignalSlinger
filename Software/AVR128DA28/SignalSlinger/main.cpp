@@ -6090,29 +6090,45 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 /* Time validation and configuration reporting helpers. */
 
-/*
- * Function: validateTimeString
- * ----------------------------
- * This function validates a given time string and converts it to an epoch value if valid.
- * It ensures that the provided time string represents a valid future time.
+/**
+ * Validate a time string using the default "current time" rules.
  *
- * Parameters:
- *  - str: A pointer to a string representing the time to validate.
- *  - epochVar: A pointer to the time variable to compare against for validation.
- *
- * Return Value:
- *  - Returns the validated time as an epoch value (`time_t`) if valid, otherwise returns 0.
+ * @param str Mutable time string to validate.
+ * @param errMsg Optional output buffer for a user-facing error string.
+ * @return Validated epoch value, or 0 on failure.
  */
 time_t validateTimeString(char *str, char *errMsg)
 {
 	return validateTimeString(str, null, false, errMsg, null);
 }
 
+/**
+ * Validate a time string relative to a specific event epoch variable.
+ *
+ * @param str Mutable time string to validate.
+ * @param epochVar Optional event epoch used to choose start/finish validation rules.
+ * @param align5min true to align successful results to a 5-minute boundary.
+ * @param errMsg Optional output buffer for a user-facing error string.
+ * @return Validated epoch value, or 0 on failure.
+ */
 time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg)
 {
 	return validateTimeString(str, epochVar, align5min, errMsg, null);
 }
 
+/**
+ * Validate and normalize a YYMMDDhhmmss-style time string into an epoch value.
+ *
+ * The helper supports partial input expansion, start/finish specific validation
+ * rules, and optional 5-minute alignment for commands that require it.
+ *
+ * @param str Mutable time string to validate and normalize.
+ * @param epochVar Optional event epoch used to choose start/finish validation rules.
+ * @param align5min true to align successful results to a 5-minute boundary.
+ * @param errMsg Optional output buffer for a user-facing error string.
+ * @param rawInput Optional raw user input used when retrying partial start-time expansion.
+ * @return Validated epoch value, or 0 on failure.
+ */
 time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg, const char *rawInput)
 {
 	time_t valid = 0;                          // Initialize return value to 0 (indicating invalid by default).
@@ -6232,20 +6248,14 @@ time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, 
 	return (valid);
 }
 
-/*
- * Function: reportTimeTill
- * ------------------------
- * This function calculates the time difference between two time points (`from` and `until`) and reports it.
- * It also prints a failure message if the `from` time is greater than or equal to the `until` time.
+/**
+ * Report the positive time difference between two epochs in human-readable form.
  *
- * Parameters:
- *  - from: The starting time (`time_t` format).
- *  - until: The ending time (`time_t` format).
- *  - prefix: A string that is printed before the time difference if the time difference is positive.
- *  - failMsg: A message to print if `from` is greater than or equal to `until`.
- *
- * Return Value:
- *  - A boolean indicating whether the reporting failed (`true` if failed, `false` otherwise).
+ * @param from Starting epoch.
+ * @param until Ending epoch.
+ * @param prefix Optional text printed before the formatted time difference.
+ * @param failMsg Optional text printed when until is not later than from.
+ * @return true if the interval was non-positive, false on successful reporting.
  */
 bool reportTimeTill(time_t from, time_t until, const char *prefix, const char *failMsg)
 {
@@ -6340,6 +6350,12 @@ bool reportTimeTill(time_t from, time_t until, const char *prefix, const char *f
 	return failure;
 }
 
+/**
+ * Report whether the saved or loaded event clocks are currently usable.
+ *
+ * @param location Selects whether the saved or loaded event window is checked.
+ * @return true if both start and finish times are valid and ordered correctly.
+ */
 bool allClocksSet(Settings_t location)
 {
 	time_t now = time(null);
@@ -6368,6 +6384,12 @@ bool allClocksSet(Settings_t location)
 	return (true);
 }
 
+/**
+ * Classify the current event clock configuration for saved or loaded settings.
+ *
+ * @param location Selects whether the saved or loaded event window is checked.
+ * @return Configuration state describing whether the event is valid, running, or impossible.
+ */
 ConfigurationState_t clockConfigurationCheck(Settings_t location)
 {
 	time_t start_epoch;
@@ -6416,6 +6438,11 @@ ConfigurationState_t clockConfigurationCheck(Settings_t location)
 	return (WAITING_FOR_START); /* Future event hasn't started yet */
 }
 
+/**
+ * Report the configuration actions still needed before an event can run correctly.
+ *
+ * @param location Selects whether the saved or loaded event window is inspected.
+ */
 void reportConfigErrors(Settings_t location)
 {
 	time_t now = time(null);
@@ -6483,16 +6510,12 @@ void reportConfigErrors(Settings_t location)
 	}
 }
 
-/*
- * Function: reportSettings
- * ------------------------
- * This function generates a report of the current settings and sends it through
- * the serial interface. It includes information about the software version, hardware errors,
- * current event and fox settings, frequency settings, and other configuration details.
- * Parameters:
- *  None.
- * Return Value:
- *  None.
+/**
+ * Report the current firmware, event, and hardware status over the serial interface.
+ *
+ * The report includes version information, current temperatures, event settings,
+ * current or effective event windows, and any actions still required before the
+ * schedule can run.
  */
 void reportSettings(void)
 {
@@ -6824,16 +6847,31 @@ void reportSettings(void)
 
 /* Pattern, frequency, and cloning helpers. */
 
+/**
+ * Calculate how long the current station ID Morse message will take to send.
+ *
+ * @return Time required to send the station ID at the configured ID code speed.
+ */
 uint16_t timeNeededForID(void)
 {
 	return ((uint16_t)(((float)timeRequiredToSendStrAtWPM((char *)g_messages_text[STATION_ID], g_evteng_id_codespeed)) / 1000.));
 }
 
+/**
+ * Return the fox setting that applies to the current event family.
+ *
+ * @return Current fox selection for g_event.
+ */
 Fox_t getFoxSetting(void)
 {
 	return fox_setting_current_atomic();
 }
 
+/**
+ * Return the code speed used for the currently active pattern.
+ *
+ * @return Code speed in WPM for the current fox/pattern selection.
+ */
 int getFoxCodeSpeed(void)
 {
 	Fox_t fox;
@@ -6851,6 +6889,11 @@ int getFoxCodeSpeed(void)
 	return (g_evteng_pattern_codespeed);
 }
 
+/**
+ * Return the code speed the foreground should currently display or use.
+ *
+ * @return Pattern code speed in WPM.
+ */
 int getPatternCodeSpeed(void)
 {
 	if(!g_evteng_event_commenced)
@@ -6861,30 +6904,13 @@ int getPatternCodeSpeed(void)
 	return (getFoxCodeSpeed());
 }
 
-/*
- * Function: getCurrentPatternText
- * -------------------------------
- * This function returns a string containing the current Morse pattern based on the value
- * of the global variable g_fox[g_event]. The pattern is determined by a switch statement
- * that checks the specific value of g_fox[g_event] and assigns the corresponding text.
-
- * Return:
- *  A pointer to a string representing the pattern text, based on the value of g_fox[g_event].
- *  Possible return values include:
- *  - "MOE", "MOI", "MOS", "MOH", "MO5": Specific patterns for FOX_1 to FOX_5.
- *  - "S": Represents a spectator state.
- *  - "ME", "MI", "MS", "MH", "M5": Patterns for Sprint transmitters S1 to S5.
- *  - "OE", "OI", "OS", "OH", "O5": Patterns for Sprint finishers F1 to F5.
- *  - g_messages_text[FOXORING_PATTERN_TEXT]: Pattern for FOXORING states FOXORING_FOX1, FOXORING_FOX2, and FOXORING_FOX3.
- *  - "<": Indicates a frequency test beacon.
- *  - "MO": Represents the Beacon state.
- *  - g_messages_text[PATTERN_TEXT]: Default pattern text for any unhandled cases.
-
- * Parameters:
- *  None.
-
- * Return Value:
- *  A pointer to a constant character string indicating the current pattern.
+/**
+ * Return the pattern text that should currently be transmitted.
+ *
+ * Fixed fox roles map to built-in pattern strings, while foxoring and editable
+ * patterns return the appropriate shared message buffer.
+ *
+ * @return Pointer to the active pattern string.
  */
 char *getCurrentPatternText(void)
 {
@@ -6912,9 +6938,10 @@ char *getCurrentPatternText(void)
 	return g_messages_text[PATTERN_TEXT];
 }
 
-/*
- * Retrieves the appropriate frequency setting based on the current event type and fox setting.
- * @return Frequency_Hz - the frequency setting for the given event
+/**
+ * Return the transmitter frequency that applies to the current fox/event selection.
+ *
+ * @return Active frequency in Hz.
  */
 Frequency_Hz getFrequencySetting(void)
 {
@@ -6941,6 +6968,12 @@ Frequency_Hz getFrequencySetting(void)
 	return g_frequency;
 }
 
+/**
+ * Synchronize the transmitter hardware to the current logical frequency selection.
+ *
+ * @param leaveClockOff true to keep the Si5351 output disabled after retuning.
+ * @return true on failure, false on success.
+ */
 bool syncCurrentFrequencySetting(bool leaveClockOff)
 {
 	bool txReady = txIsInitialized();
@@ -6949,6 +6982,13 @@ bool syncCurrentFrequencySetting(bool leaveClockOff)
 	return txReady && err;
 }
 
+/**
+ * Refresh the transmitter frequency only when the logical setting has changed.
+ *
+ * @param previousFrequency Previously applied frequency in Hz.
+ * @param leaveClockOff true to keep the Si5351 output disabled after retuning.
+ * @return true on failure, false on success or when no retune was needed.
+ */
 bool refreshCurrentFrequencySetting(Frequency_Hz previousFrequency, bool leaveClockOff)
 {
 	if(getFrequencySetting() != previousFrequency)
@@ -6959,14 +6999,13 @@ bool refreshCurrentFrequencySetting(Frequency_Hz previousFrequency, bool leaveCl
 	return false;
 }
 
-/*
- * Handles the process of serial cloning between master and slave devices.
- * This function manages the entire communication and synchronization process, including
- * initiating cloning, handling replies, synchronizing event data, and ensuring proper state transitions.
- * It uses various states to handle different stages of communication, waiting for appropriate replies
- * from the slave and adjusting timings and configurations as needed.
+/**
+ * Handle the foreground side of serial cloning between master and slave devices.
+ *
+ * The helper advances the cloning state machine, exchanges configuration over
+ * the serial link, and coordinates any temporary event pause or restore needed
+ * while the clone session is active.
  */
-
 void handleSerialCloning(void)
 {
 	if(atomic_read_u16(&g_programming_countdown) == 0)
@@ -7406,9 +7445,10 @@ void handleSerialCloning(void)
 
 /* Event-state queries and user-triggered start helpers. */
 
-/*
- * Checks if any event will run
- * @return true if no event is scheduled or event is disabled or sleep mode is a permanent variety
+/**
+ * Report whether no scheduled event remains that the firmware intends to run.
+ *
+ * @return true if no future/current event window remains runnable.
  */
 bool noEventWillRun(void)
 {
@@ -7434,9 +7474,10 @@ bool noEventWillRun(void)
 	return !event_is_scheduled || (!eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) && !g_evteng_event_enabled);
 }
 
-/*
- * Checks if any event is currently running
- * @return true if an event is currently in progress
+/**
+ * Report whether an event is currently running with transmitter support initialized.
+ *
+ * @return true if an event is currently in progress.
  */
 bool eventRunning(void)
 {
@@ -7447,9 +7488,12 @@ bool eventRunning(void)
 	return result;
 }
 
-/*
- * Checks if an event is scheduled to run at the current time
- * @return true if an event is scheduled for the current time
+/**
+ * Report whether the supplied event window should be running at the current time.
+ *
+ * @param start_epoch Event start epoch.
+ * @param finish_epoch Event finish epoch.
+ * @return true if the event window currently contains now.
  */
 bool eventIsScheduledToRunNow(time_t start_epoch, time_t finish_epoch)
 {
@@ -7464,9 +7508,12 @@ bool eventIsScheduledToRunNow(time_t start_epoch, time_t finish_epoch)
 	return (result);
 }
 
-/*
- * Checks if an event is scheduled to occur in the future
- * @return true if an event is scheduled for a future time
+/**
+ * Report whether the supplied event window lies entirely in the future.
+ *
+ * @param start_epoch Event start epoch.
+ * @param finish_epoch Event finish epoch.
+ * @return true if the window is valid and starts after now.
  */
 bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch)
 {
@@ -7481,9 +7528,15 @@ bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch)
 	return (result);
 }
 
-/*
- * Determines whether an event is scheduled based on the current time, future event time, and the number of days remaining
- * @return true if an event is scheduled
+/**
+ * Determine whether a volatile loaded/saved event window is still schedulable.
+ *
+ * The helper snapshots the volatile start/finish pair, runs the scheduling
+ * logic on local copies, then writes back any adjusted multi-day window.
+ *
+ * @param start_epoch Pointer to the start epoch to inspect and possibly update.
+ * @param finish_epoch Pointer to the finish epoch to inspect and possibly update.
+ * @return true if a current or future event window remains schedulable.
  */
 bool eventIsScheduledToRun(volatile time_t *start_epoch, volatile time_t *finish_epoch)
 {
@@ -7511,6 +7564,13 @@ bool eventIsScheduledToRun(volatile time_t *start_epoch, volatile time_t *finish
 	return result;
 }
 
+/**
+ * Determine whether a start/finish pair is schedulable, accounting for multi-day events.
+ *
+ * @param start_epoch Pointer to the start epoch to inspect and possibly update.
+ * @param finish_epoch Pointer to the finish epoch to inspect and possibly update.
+ * @return true if the event should still run now or in the future.
+ */
 bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 {
 	bool result = false;
@@ -7585,12 +7645,25 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 	return (result);
 }
 
+/**
+ * Report whether the system clock has been set to a plausible post-2021 value.
+ *
+ * @return true if the current time is beyond the minimum valid epoch.
+ */
 bool timeIsSet(void)
 {
 	time_t now = time(null);
 	return (now > MINIMUM_VALID_EPOCH);
 }
 
+/**
+ * Start the configured event, using the scheduled window when one exists.
+ *
+ * If no schedulable window remains, the helper falls back to immediately
+ * starting the event and leaving it running until canceled.
+ *
+ * @return true on failure, false on success.
+ */
 bool startEvent(void)
 {
 	bool error = true;
