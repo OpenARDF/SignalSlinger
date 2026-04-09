@@ -5285,6 +5285,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
 						g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
 
+						/* Reapply any active load-switch-controlled power path using the
+						 * newly selected control policy.
+						 */
 						if(g_enable_external_battery_control && should_reapply_controlled_power)
 						{
 							powerToTransmitter(ON);
@@ -5350,7 +5353,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_NewLine();
 					}
 
-					// Buffer for storing temporary strings.
+					/* Temporary buffer for the formatted hardware revision string. */
 					char buf[10];
 
 #ifdef HW_TARGET_3_5
@@ -5409,6 +5412,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		}
 
 		sb_buff->id = SB_MESSAGE_EMPTY;
+		/* Emit a fresh prompt after ordinary command handling once any deferred
+		 * settings report has finished.
+		 */
 		if(!g_cloningInProgress && !suppressResponse && !atomic_read_u16(&g_report_settings_countdown) && !g_meshmode)
 		{
 			sb_send_NewLine();
@@ -5447,7 +5453,7 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 		g_sleepType = SLEEP_FOREVER;
 		atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
 		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-		return (false); /* completed events are never enabled */
+		return (false);
 	}
 
 	loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
@@ -5467,20 +5473,26 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	time_t now = time(null);
 	int32_t dif = timeDif(now, loaded_start_epoch);
 
-	if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch)) // An event should be running right now
+	/* If the device is already asleep between transmissions, avoid disturbing the
+	 * established wake-up schedule for the next on-air slot.
+	 */
+	if(eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 	{
 		if(g_sleepType == SLEEP_UNTIL_NEXT_XMSN)
 		{
-			if(time_to_wake_up > now) // Wake-up for the next transmission is scheduled for the future
+			if(time_to_wake_up > now)
 			{
-				return (true); // return without making any changes to sleep type or other settings that could affect waking up for the next transmission
+				return (true);
 			}
 		}
 	}
 
-	atomic_write_time(&g_time_to_wake_up, loaded_start_epoch - 15); /* sleep time needs to be calculated to allow time for power-up (coming out of sleep) prior to the event start */
+	/* Wake slightly before the scheduled start so the transmitter can power up
+	 * and settle before the event should begin.
+	 */
+	atomic_write_time(&g_time_to_wake_up, loaded_start_epoch - 15);
 
-	if(dif >= -30) /* Don't sleep if the event starts in 30 seconds or less, or has already started */
+	if(dif >= -30)
 	{
 		if(!powerToTransmitter(g_device_enabled))
 		{
@@ -5492,7 +5504,6 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	}
 
 	g_sleepType = SLEEP_UNTIL_START_TIME;
-	/* If we reach here, we have an event that will not start for at least 30 seconds. */
 	return (true);
 }
 
@@ -5596,7 +5607,7 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 	}
 	else
 	{
-		atomic_write_u16(&g_time_needed_for_ID, 0); /* ID will never be sent */
+		atomic_write_u16(&g_time_needed_for_ID, 0);
 	}
 
 	if(syncCurrentFrequencySetting(true))
@@ -5624,7 +5635,10 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 
 		if(g_evteng_run_event_until_canceled)
 		{
-			atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds); // Start transmitting right away, regardless of g_evteng_off_air_seconds
+			/* "Run forever" mode enters the on-air phase immediately instead of
+			 * waiting for a scheduled slot.
+			 */
+			atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds);
 			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 			LEDS.blink(LEDS_RED_OFF);
 			g_evteng_event_enabled = true;
@@ -5637,7 +5651,7 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 		{
 			int32_t dif = timeDif(now, startTime); /* returns arg1 - arg2 */
 
-			if(dif >= 0) /* start time is in the past */
+			if(dif >= 0)
 			{
 				bool turnOnTransmitter = false;
 				int cyclePeriod = g_evteng_on_air_seconds + g_evteng_off_air_seconds;
@@ -5646,9 +5660,13 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 
 				g_evteng_event_commenced = true;
 
-				if(timeTillTransmit <= 0) /* we should have started transmitting already in this cycle */
+				/* Align the event engine to the correct point within the current
+				 * transmit/off-air cycle when the requested start time is already
+				 * in the past.
+				 */
+				if(timeTillTransmit <= 0)
 				{
-					if(g_evteng_on_air_seconds <= -timeTillTransmit) /* we should have finished transmitting in this cycle */
+					if(g_evteng_on_air_seconds <= -timeTillTransmit)
 					{
 						int32_t on_the_air = -(cyclePeriod + timeTillTransmit);
 						atomic_write_i32(&g_evteng_on_the_air, on_the_air);
@@ -5657,7 +5675,7 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 							atomic_write_int(&g_evteng_sendID_seconds_countdown, (g_evteng_on_air_seconds - on_the_air) - atomic_read_u16(&g_time_needed_for_ID));
 						}
 					}
-					else /* we should be transmitting right now */
+					else
 					{
 						int32_t on_the_air = g_evteng_on_air_seconds + timeTillTransmit;
 						atomic_write_i32(&g_evteng_on_the_air, on_the_air);
@@ -5673,7 +5691,7 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 						}
 					}
 				}
-				else /* it is not yet time to transmit in this cycle */
+				else
 				{
 					atomic_write_i32(&g_evteng_on_the_air, -timeTillTransmit);
 					if(!g_evteng_event_enabled)
@@ -5682,7 +5700,10 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 					}
 				}
 
-				atomic_write_time(&g_time_to_wake_up, now); // Don't sleep during the first cycle
+				/* Stay awake through the first resumed cycle once the event engine
+				 * has been aligned to "now".
+				 */
+				atomic_write_time(&g_time_to_wake_up, now);
 				g_sleepType = SLEEP_AFTER_EVENT;
 
 				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
@@ -5695,13 +5716,16 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 				atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, startTime, finishTime);
 				LEDS.init();
 			}
-			else /* start time is in the future */
+			else
 			{
 				keyTransmitter(OFF);
 				powerToTransmitter(OFF);
 				atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, startTime, finishTime);
 				g_evteng_event_commenced = false;
-				atomic_write_time(&g_time_to_wake_up, (time_t)(startTime - 15)); // Wake up before the event starts
+				/* For a future start, keep the transmitter off and sleep until the
+				 * normal pre-start wake-up point.
+				 */
+				atomic_write_time(&g_time_to_wake_up, (time_t)(startTime - 15));
 				g_sleepType = SLEEP_UNTIL_START_TIME;
 				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 			}
