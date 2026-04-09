@@ -1420,7 +1420,9 @@ int main(void)
 			float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 			time_t seconds_since_wakeup = atomic_read_time(&g_seconds_since_wakeup);
 
-			// Set internal battery charging
+			/* Decide whether the internal battery should be charged from the
+			 * external source, if one is present.
+			 */
 			if((internal_bat_voltage > INT_BAT_PRESENT_VOLTAGE) && (external_voltage > EXT_BAT_CHARGE_SUPPORT_THRESH_LOW))
 			{
 				if(internal_bat_voltage < internal_voltage_low_threshold) // An adequate external voltage is present and an internal battery is present & not fully charged
@@ -1489,9 +1491,7 @@ int main(void)
 			}
 #endif
 
-			/********************************
-			 * Handle sleep
-			 ******************************/
+			/* Handle transitions into and out of standby sleep. */
 			if(g_go_to_sleep_now && !g_cloningInProgress)
 			{
 				bool enterSleep = true;
@@ -1571,7 +1571,9 @@ int main(void)
 							;
 					}
 
-					/* If sleeping until start time, make sure everything is set up properly for when that time arrives */
+					/* Sleeping until a scheduled start should leave the loaded event
+					 * window intact so the wake-up path can resume normal scheduling.
+					 */
 					if((g_sleepType == SLEEP_UNTIL_START_TIME) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 					{
 						g_evteng_run_event_until_canceled = false;
@@ -1618,7 +1620,9 @@ int main(void)
 					g_awakenedBy = AWAKENED_INIT;
 					ENABLE_INTERRUPTS();
 
-					/* Disable BOD? */
+					/* Standby sleep happens inside this loop until an ISR clears the
+					 * foreground sleep request and records the wake source.
+					 */
 
 					while(g_go_to_sleep_now)
 					{
@@ -1627,7 +1631,10 @@ int main(void)
 							volatile time_t now = time(null);
 							static volatile time_t hold_now = 0;
 
-							if(timeDif(now, hold_now) > 90) // Periodically check to see if the internal battery should be charged
+							/* Long sleeps periodically wake just enough to refresh battery
+							 * measurements and charging decisions.
+							 */
+							if(timeDif(now, hold_now) > 90)
 							{
 								hold_now = now;
 								system_charging_config();
@@ -1685,7 +1692,10 @@ int main(void)
 					}
 
 					CLKCTRL_init();
-					/* Re-enable BOD? */
+					/* Re-run the normal startup helpers after standby wake so the
+					 * peripheral drivers and GPIO configuration are back in the
+					 * awake-state configuration expected by the foreground loop.
+					 */
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					atmel_start_init();
@@ -1709,7 +1719,10 @@ int main(void)
 
 					atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS) // A button press woke us up, but need to check that it is held down long enough (~4 secs) for us to consider it
+					/* A button wake must earn authorization again before the unit is
+					 * allowed to remain fully awake.
+					 */
+					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
 					{
 						atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
 						atomic_write_u16(&g_foreground_handle_counted_presses, 0);
@@ -1723,7 +1736,10 @@ int main(void)
 							}
 						}
 					}
-					else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT) // Similar to being awakened by a button press, but without the 5-second "hold down the button" timing constraint
+					/* Serial-port wake resumes the user interface immediately without
+					 * the long-hold authorization step used for button wakes.
+					 */
+					else if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT)
 					{
 						LEDS.init();
 						atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
@@ -1734,10 +1750,11 @@ int main(void)
 							atomic_write_u16(&g_report_settings_countdown, 100);
 						}
 					}
-					else // Awakened by = AWAKENED_BY_CLOCK (AWAKENED_INIT and POWER_UP_START should not be possibilities here)
+					/* Clock wake resumes the pending event window or transitions into
+					 * the event's active phase, depending on the prior sleep mode.
+					 */
+					else
 					{
-						// Sleep type must be either SLEEP_UNTIL_NEXT_XMSN or SLEEP_UNTIL_START_TIME
-						// In either case it is time to power up the transmit circuits
 						if(g_sleepType == SLEEP_UNTIL_NEXT_XMSN)
 						{
 							g_sleepType = SLEEP_AFTER_EVENT;
@@ -1755,7 +1772,9 @@ int main(void)
 						serialbus_set_rx_accepting_input(true);
 					}
 
-					// Restore the transmitter power state that matches the logical state we just woke into.
+					/* Restore the transmitter power state that matches the logical
+					 * wake state we just transitioned into.
+					 */
 					bool should_power_tx = shouldPowerTransmitterAfterWake();
 					if(!powerToTransmitter(should_power_tx))
 					{
@@ -3654,8 +3673,13 @@ static inline void setButtonHoldPreviewIndicator(bool active)
 	}
 }
 
-/* Serial command handling. */
-
+/**
+ * Consume and handle all pending serialbus commands.
+ *
+ * This foreground dispatcher parses each queued command message, updates
+ * persistent/runtime state as requested, and emits the associated reply
+ * traffic once the command has been applied.
+ */
 void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 // void handleSerialBusMsgs()
 {
