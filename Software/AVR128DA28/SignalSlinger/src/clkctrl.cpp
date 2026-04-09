@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,26 @@
  *  SOFTWARE.
  */
 
+/*
+ * Clock-controller initialization helpers.
+ *
+ * This module contains support functions for:
+ * - configuring the external 32 kHz clock source
+ * - setting up the high-frequency oscillator used as the system clock
+ *
+ * Runtime clock-policy changes and peripheral timing decisions belong elsewhere.
+ */
+
 #include <clkctrl.h>
 #include <ccp.h>
 /**
- * \brief Initialize clkctrl interface
+ * Initialize the device clock controller for the firmware's expected clock sources.
  *
- * \return Initialization status.
+ * @return Initialization status code, with 0 indicating success.
  */
 int8_t CLKCTRL_init()
 {
+	/* Enable the external 32 kHz source used by timekeeping-related peripherals. */
 	ccp_write_io((void *)&(CLKCTRL.XOSC32KCTRLA),CLKCTRL_CSUT_1K_gc /* 1k cycles */
 	| 1 << CLKCTRL_ENABLE_bp   /* Enable: enabled */
 	| 1 << CLKCTRL_RUNSTDBY_bp /* Run standby: enabled */
@@ -47,6 +58,7 @@ int8_t CLKCTRL_init()
 	//		 | CLKCTRL_MULFAC_DISABLE_gc /* 1 */
 	//		 | 0 << CLKCTRL_SOURCE_bp /* Select Source for PLL: disabled */);
 
+	/* Configure the high-frequency oscillator as the primary fast clock source. */
 	ccp_write_io((void*)&(CLKCTRL.OSCHFCTRLA),CLKCTRL_FRQSEL_24M_gc /* 4 */
 	| 1 << CLKCTRL_AUTOTUNE_bp /* Auto-Tune enable: enabled */
 	| 0 << CLKCTRL_RUNSTDBY_bp /* Run standby: disabled */);

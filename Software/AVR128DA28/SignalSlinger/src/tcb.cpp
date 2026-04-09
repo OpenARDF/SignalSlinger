@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,28 @@
  *  SOFTWARE.
  */
 
+/*
+ * Timer-counter helper functions used by periodic firmware services.
+ *
+ * This module contains support functions for:
+ * - configuring the TCB timers used for periodic tasks and timeout tracking
+ * - providing a lightweight millisecond delay primitive
+ * - stopping those timers when the device enters sleep
+ *
+ * Higher-level scheduling policy and ISR-side work belong elsewhere.
+ */
+
 #include <tcb.h>
 #include <atomic.h>
 #include "globals.h"
 
 static volatile uint32_t g_ms_counter = 0;
 
+/**
+ * Read the shared millisecond countdown atomically.
+ *
+ * @return Current millisecond countdown value.
+ */
 static uint32_t ms_counter_read_atomic(void)
 {
 	uint32_t value;
@@ -37,6 +53,11 @@ static uint32_t ms_counter_read_atomic(void)
 	return value;
 }
 
+/**
+ * Update the shared millisecond countdown atomically.
+ *
+ * @param value New countdown value to store.
+ */
 static void ms_counter_write_atomic(uint32_t value)
 {
 	ENTER_CRITICAL(tcb_ms_counter_write);
@@ -45,15 +66,16 @@ static void ms_counter_write_atomic(uint32_t value)
 }
 
 /**
- * \brief Initialize tcb interface
+ * Initialize the timer-counter peripherals used by periodic firmware services.
  *
- * \return Initialization status.
+ * TCB0 services coarse periodic foreground tasks, TCB1 drives LED timing, and
+ * TCB2 provides timeout ticks for I2C and serial-related logic.
+ *
+ * @return Initialization status code, with 0 indicating success.
  */
 int8_t TIMERB_init()
 {
-/**
-TB0: Periodic tasks not requiring precise timing. Rate = 300 Hz
-*/
+	/* TCB0: periodic tasks not requiring precise timing. */
 
 TCB0.INTCTRL = 1 << TCB_CAPT_bp   /* Capture or Timeout: enabled */
 | 0 << TCB_OVF_bp; /* OverFlow Interrupt: disabled */
@@ -69,10 +91,7 @@ TCB0.CTRLA = TCB_CLKSEL_DIV2_gc     /* CLK_PER */
 
 TCB0.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* Clear flag */
 
-/********************************************************************************/
-/** 
-LED Timer
-*/
+/* TCB1: LED timer. */
 TCB1.INTCTRL = 1 << TCB_CAPT_bp   /* Capture or Timeout: enabled */
 | 0 << TCB_OVF_bp; /* OverFlow Interrupt: disabled */
 
@@ -88,10 +107,7 @@ TCB1.CTRLA = TCB_CLKSEL_DIV2_gc     /* CLK_PER */
 TCB1.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* Clear flag */
 
 
-/********************************************************************************/
-/** 
-I2C Timeout Flag Timer
-*/
+/* TCB2: timeout tick source for I2C and serial idle tracking. */
 
 CPUINT.LVL1VEC = 30; /* Set to level 1 - highest priority interrupt */
 TCB2.INTCTRL = 1 << TCB_CAPT_bp   /* Capture or Timeout: enabled */
@@ -117,6 +133,15 @@ CPUINT.LVL1VEC = 30; /* Set to level 1 - highest priority interrupt */
 
 static bool delay_initialized = false;
 
+/**
+ * Start, update, or stop the shared millisecond delay timer.
+ *
+ * Passing a nonzero delay starts or refreshes the countdown. Passing 0 stops the
+ * timer and clears the shared delay state.
+ *
+ * @param delayValue Delay in milliseconds, or 0 to reset the delay timer.
+ * @return true while the delay is still active, false when it has expired or been reset.
+ */
 bool util_delay_ms(uint32_t delayValue)
 {
 	static uint32_t countdownValue=0;
@@ -124,6 +149,7 @@ bool util_delay_ms(uint32_t delayValue)
 	
 	if(!delay_initialized)
 	{
+		/* Lazily configure TCA0 the first time delay service is requested. */
 		delay_initialized = true;
 		
 		TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
@@ -137,6 +163,7 @@ bool util_delay_ms(uint32_t delayValue)
 	{
 		if(counting)
 		{
+			/* Once the shared counter reaches zero, the requested delay has expired. */
 			if(!ms_counter_read_atomic())
 			{
  				TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
@@ -147,6 +174,7 @@ bool util_delay_ms(uint32_t delayValue)
 			}
 			else if(delayValue != countdownValue) /* countdown delay changed while counting */
 			{
+				/* Refresh the countdown if the caller changes the requested delay mid-flight. */
  				TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 // 				TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
 				TCA0.SINGLE.CNT = 0x0000;
@@ -172,6 +200,7 @@ bool util_delay_ms(uint32_t delayValue)
 	}
 	else /* Shut down the counter */
 	{
+		/* Reset the shared delay service completely when the caller passes zero. */
  		TCA0.SINGLE.INTCTRL = 0 << TCA_SINGLE_OVF_bp; /* OverFlow Interrupt: disabled */
 		TCA0.SINGLE.CTRLA = 0x00; /* Disable TCA0 */
 		delay_initialized = false;
@@ -185,6 +214,9 @@ bool util_delay_ms(uint32_t delayValue)
 	return(true);
 }
 
+/**
+ * TCA0 overflow ISR backing the shared millisecond delay service.
+ */
 ISR(TCA0_OVF_vect)
 {
 	uint8_t x = TCA0.SINGLE.INTFLAGS;
@@ -197,6 +229,9 @@ ISR(TCA0_OVF_vect)
 	TCA0.SINGLE.INTFLAGS = (TCA_SINGLE_OVF_bm | TCA_SINGLE_CMP0_bm | TCA_SINGLE_CMP1_bm | TCA_SINGLE_CMP2_bm); /* Clear all interrupt flags */
 }
 
+/**
+ * TCB2 ISR backing I2C/serial timeout tracking and receive-idle detection.
+ */
 ISR(TCB2_INT_vect)
 {
 	uint8_t x = TCB2.INTFLAGS;
@@ -212,6 +247,11 @@ ISR(TCB2_INT_vect)
 }
 
 
+/**
+ * Stop the TCB timers before entering a low-power sleep state.
+ *
+ * @return Initialization status code, with 0 indicating success.
+ */
 int8_t TIMERB_sleep()
 {
 	TCB0.INTCTRL = 0;   /* Capture or Timeout: disable interrupts */

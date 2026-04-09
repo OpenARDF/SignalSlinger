@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,24 @@
  *  SOFTWARE.
  */
 
+/*
+ * CPU interrupt-controller initialization helpers.
+ *
+ * This module contains support functions for:
+ * - enabling the AVR CPU interrupt controller
+ * - providing a centralized place for future interrupt-priority setup
+ *
+ * ISR behavior and interrupt ownership belong elsewhere.
+ */
+
 #include <compiler.h>
 #include <cpuint.h>
 #include <ccp.h>
 #include <atomic.h>
 /**
- * \brief Initialize cpuint interface
+ * Initialize the CPU interrupt controller and enable global interrupts.
  *
- * \return Initialization status
+ * @return Initialization status code, with 0 indicating success.
  */
 int8_t CPUINT_init()
 {
@@ -44,6 +54,7 @@ int8_t CPUINT_init()
 
 	// CPUINT.LVL1VEC = 0x0 << CPUINT_LVL1VEC_gp; /* Interrupt Vector with High Priority: 0x0 */
 
+	/* This firmware expects interrupts to be globally enabled after controller setup. */
 	ENABLE_INTERRUPTS();
 
 	return 0;

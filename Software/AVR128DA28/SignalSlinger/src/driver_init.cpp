@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,17 @@
  */
 
 
+/*
+ * High-level board bring-up and alternate hardware-configuration entry points.
+ *
+ * This module contains support functions for:
+ * - full system initialization during normal firmware startup
+ * - reduced pin/peripheral setup for charging-specific operation
+ * - low-power hardware preparation before sleep
+ *
+ * Application behavior after initialization belongs elsewhere.
+ */
+
 #include "defs.h"
 #include "driver_init.h"
 #include <system.h>
@@ -34,12 +45,13 @@
 
 
 /**
- * \brief System initialization
+ * Perform the normal firmware hardware bring-up sequence.
  */
 void system_init()
 {
 	mcu_init();
 
+	/* Bring up the foundational clock/timer/RTC path before enabling interrupts. */
 	CLKCTRL_init(); /* Set CPU clock speed appropriately */
 	TIMERB_init(); /* Timers must be initialized before utility_delay functions will work */
 	RTC_init(); /* Start 1-second timer and interrupts */
@@ -54,6 +66,9 @@ void system_init()
 	BOD_init();
 }
 
+/**
+ * Configure the subset of hardware needed for charging-related operation.
+ */
 void system_charging_config()
 {
 	ADC0_SYSTEM_init(SINGLE_CONVERSION);
@@ -66,6 +81,7 @@ void system_charging_config()
 //	CPUINT_init(); /* Interrupts must also be enabled before timer interrupts will function */
 
 //	BINIO_init();
+	/* Enable only the hardware required for power and battery monitoring in this mode. */
 		/* PORTA *************************************************************************************/
   	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
   	PORTA_set_pin_level(AUX_SWITCH_ENABLE, HIGH); // Turn on the shared auxiliary switch
@@ -127,11 +143,15 @@ void system_charging_config()
 //	BOD_init();
 }
 
+/**
+ * Reconfigure hardware into the low-power sleep arrangement expected by the firmware.
+ */
 void system_sleep_config()
 {
 	mcu_init();
 	ADC0_SYSTEM_shutdown();
 
+	/* Shut down timer-driven services that are not meant to run through deep sleep. */
 //	CLKCTRL_init(); /* Set CPU clock speed appropriately */
 	TIMERB_sleep(); /* Timers must be initialized before utility_delay functions will work */
 //	CPUINT_init(); /* Interrupts must also be enabled before timer interrupts will function */
@@ -142,6 +162,7 @@ void system_sleep_config()
 	LED_set_GREEN_dir(PORT_DIR_OUT);
 	LED_set_GREEN_level(OFF);
 
+	/* Re-drive externally visible outputs into known low-power states before sleeping. */
 // 	PORTA_set_pin_dir(AUX_SWITCH_ENABLE, PORT_DIR_OUT);
 // 	PORTA_set_pin_level(AUX_SWITCH_ENABLE, LOW);
 // 	PORTA_set_pin_dir(FET_DRIVER_ENABLE, PORT_DIR_OUT); /* Don't turn off charging in case internal battery is charging */
