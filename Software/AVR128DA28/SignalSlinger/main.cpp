@@ -5689,6 +5689,13 @@ bool startEventUsingRTC(void)
 	return err;
 }
 
+/**
+ * Restore the event and sleep state after the user wakes the device with the button.
+ *
+ * This helper reconstructs the correct post-authorization state from the sleep
+ * mode that was active before the button wake, while also respecting any event
+ * window that has expired or been explicitly canceled in the meantime.
+ */
 void restoreStateAfterButtonWakeAuthorization(void)
 {
 	time_t loaded_start_epoch;
@@ -5799,6 +5806,15 @@ void restoreStateAfterButtonWakeAuthorization(void)
 	}
 }
 
+/**
+ * Decide whether transmitter power should be re-applied after waking.
+ *
+ * Button wakes are more conservative than other wake sources, because the user
+ * may only be inspecting or authorizing wake without intending to resume RF
+ * output immediately.
+ *
+ * @return true if transmitter power should be restored after wake.
+ */
 bool shouldPowerTransmitterAfterWake(void)
 {
 	if(g_awakenedBy != AWAKENED_BY_BUTTONPRESS)
@@ -5828,6 +5844,13 @@ bool shouldPowerTransmitterAfterWake(void)
 	}
 }
 
+/**
+ * Update the red LED to reflect the current event/schedule state.
+ *
+ * Red is used to communicate whether an event window is active, pending, or no
+ * further event will run, unless a higher-priority wake/sleep interaction is
+ * temporarily controlling the LEDs.
+ */
 void configRedLEDforEvent(void)
 {
 	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
@@ -5862,6 +5885,12 @@ void configRedLEDforEvent(void)
 	}
 }
 
+/**
+ * Update the green LED to reflect the current power and battery state.
+ *
+ * @param internal_bat_error true if the internal battery is present but below its threshold.
+ * @param external_pwr_error true if external power is expected but currently invalid.
+ */
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
 {
 	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
@@ -5894,6 +5923,12 @@ static void configGreenLEDForCurrentState(bool internal_bat_error, bool external
 	LEDS.blink(LEDS_GREEN_ON_CONSTANT);
 }
 
+/**
+ * Restore the current logical LED indication after a temporary suppression period.
+ *
+ * This helper is used when wake-authorization or timeout handling has blanked
+ * or repurposed the LEDs and the normal state display should be resumed.
+ */
 static void reviveLedActivityForCurrentState(void)
 {
 	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
@@ -5921,6 +5956,16 @@ static void reviveLedActivityForCurrentState(void)
 	configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
 }
 
+/**
+ * Prepare the event engine and runtime state for the requested fox/action combination.
+ *
+ * This helper is the main foreground entry point for switching fox timing and
+ * choosing whether the result should stop, start immediately, transmit
+ * immediately, or remain scheduled against saved start/finish times.
+ *
+ * @param fox Fox role whose timing/pattern state should be loaded.
+ * @param action High-level action to take after applying that fox configuration.
+ */
 void setupForFox(Fox_t fox, EventAction_t action)
 {
 	g_evteng_run_event_until_canceled = false;
