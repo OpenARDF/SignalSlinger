@@ -5006,6 +5006,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(s || g_cloningInProgress || explicitMirrorToFinish)
 						{
+							/* Updating the saved start time also refreshes the currently
+							 * loaded event window used by the event engine.
+							 */
 							persistClockEpochValue(&g_evteng_loaded_start_epoch, &g_event_start_epoch, s, Event_start_epoch, (void *)&g_event_start_epoch);
 
 							if(g_cloningInProgress)
@@ -5014,6 +5017,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 							else
 							{
+								/* If the user set a new start without explicitly setting a
+								 * finish, preserve or synthesize a finish at least 24 hours
+								 * later so the saved window remains valid.
+								 */
 								if(!setSequalF)
 								{
 									time_t event_start_epoch;
@@ -5091,6 +5098,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(f || g_cloningInProgress || explicitMirrorToStart)
 						{
+							/* Finish-time changes update both the saved event definition and
+							 * the currently loaded event-engine window.
+							 */
 							persistClockEpochValue(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, f, Event_finish_epoch, (void *)&g_event_finish_epoch);
 
 							if(g_cloningInProgress)
@@ -5148,6 +5158,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_days_to_run = 1;
 						}
 
+						/* Reset the day counter whenever the programmed multi-day length
+						 * changes so scheduling restarts from day one of the new window.
+						 */
 						g_days_run = 0;
 
 						g_ee_mgr.updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
@@ -5160,6 +5173,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{
+							/* Changing the number of scheduled days can invalidate or move the
+							 * current loaded window, so rebuild it and resume only if it still
+							 * lands on a runnable day.
+							 */
 							bool pending_start_after_keydown = cancelManualTransientState();
 							bool had_active_or_pending_event = g_evteng_event_commenced || g_evteng_event_enabled || pending_start_after_keydown;
 							time_t event_start_epoch;
@@ -5195,6 +5212,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else if(f1 == 'C' && !g_cloningInProgress) /* Clock calibration */
 				{
+					/* CLK C adjusts the RTC calibration trim without changing wall-clock time. */
 					strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 					uint16_t cal;
 
@@ -5240,6 +5258,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					     txIsInitialized() ||
 					     (g_evteng_event_enabled && (g_evteng_event_commenced || g_evteng_run_event_until_canceled)));
 
+					/* BAT X selects how the external source is used: fully managed for
+					 * transmit + charge, charge-only, or disabled/repurposed.
+					 */
 					if(c == '1') // Control the external battery to connect it for transmissions and internal battery charging
 					{
 						setDisableTransmissions(false);
