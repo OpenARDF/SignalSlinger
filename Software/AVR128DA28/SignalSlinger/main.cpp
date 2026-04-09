@@ -6530,7 +6530,7 @@ bool allClocksSet(Settings_t location)
 		return (false);
 	}
 
-	if(finish_epoch <= start_epoch) /* Event configured to finish before it started */
+	if(finish_epoch <= start_epoch)
 	{
 		return (false);
 	}
@@ -6565,22 +6565,22 @@ ConfigurationState_t clockConfigurationCheck(Settings_t location)
 		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &start_epoch, &finish_epoch);
 	}
 
-	if(now > finish_epoch) /* The scheduled event is over */
+	if(now > finish_epoch)
 	{
 		return (CONFIGURATION_ERROR);
 	}
 
 	if(location == LOADED_SETTINGS)
 	{
-		if(now > start_epoch) /* Event should be running */
+		if(now > start_epoch)
 		{
 			if(!g_evteng_event_enabled)
 			{
-				return (SCHEDULED_EVENT_DID_NOT_START); /* Event scheduled to be running isn't */
+				return (SCHEDULED_EVENT_DID_NOT_START);
 			}
 			else
 			{
-				return (EVENT_IN_PROGRESS); /* Event is running, so clock settings don't matter */
+				return (EVENT_IN_PROGRESS);
 			}
 		}
 		else if(!g_evteng_event_enabled)
@@ -6589,7 +6589,7 @@ ConfigurationState_t clockConfigurationCheck(Settings_t location)
 		}
 	}
 
-	return (WAITING_FOR_START); /* Future event hasn't started yet */
+	return (WAITING_FOR_START);
 }
 
 /**
@@ -6611,7 +6611,7 @@ void reportConfigErrors(Settings_t location)
 		sb_send_string(TEXT_SET_ID_TXT);
 	}
 
-	if(now <= MINIMUM_VALID_EPOCH) /* Current time is invalid */
+	if(now <= MINIMUM_VALID_EPOCH)
 	{
 		sb_send_string(TEXT_SET_TIME_TXT);
 	}
@@ -6634,18 +6634,18 @@ void reportConfigErrors(Settings_t location)
 			sb_send_string(TEXT_SET_START_TXT);
 		}
 	}
-	else if(finish_epoch <= now) /* Event has already finished */
+	else if(finish_epoch <= now)
 	{
-		if(start_epoch < now) /* Event has already started */
+		if(start_epoch < now)
 		{
 			sb_send_string(TEXT_SET_START_TXT);
 		}
 
 		sb_send_string(TEXT_SET_FINISH_TXT);
 	}
-	else if(start_epoch < now) /* Event has already started */
+	else if(start_epoch < now)
 	{
-		if(start_epoch < MINIMUM_VALID_EPOCH) /* Start invalid */
+		if(start_epoch < MINIMUM_VALID_EPOCH)
 		{
 			sb_send_string(TEXT_SET_START_TXT);
 		}
@@ -7735,7 +7735,7 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 	{
 		result = eventScheduledForTheFuture(*start_epoch, *finish_epoch) || eventIsScheduledToRunNow(*start_epoch, *finish_epoch);
 
-		if(!result) // If current settings won't run, see if it should run for more days
+		if(!result)
 		{
 			if(g_days_to_run > 1)
 			{
@@ -7765,6 +7765,9 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 						day_offset = MIN((uint8_t)(delta / SECONDS_24H), (uint8_t)(g_days_to_run - 1));
 					}
 
+					/* Advance the loaded window by whole-day increments until it lands
+					 * on the next remaining runnable day, if any.
+					 */
 					uint8_t shifts_remaining = ((g_days_to_run - 1) > day_offset) ? ((g_days_to_run - 1) - day_offset) : 0;
 					while((f <= now) && shifts_remaining)
 					{
@@ -7823,7 +7826,10 @@ bool startEvent(void)
 	else
 	{
 		g_sleepType = SLEEP_FOREVER;
-		startEventNow(true); // Immediately start the event
+		/* With no schedulable window left, treat the user request as an immediate
+		 * manual start instead of a timed launch.
+		 */
+		startEventNow(true);
 		error = false;
 	}
 
