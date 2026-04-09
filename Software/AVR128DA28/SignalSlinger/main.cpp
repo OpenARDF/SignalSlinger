@@ -451,7 +451,14 @@ static void reviveLedActivityForCurrentState(void);
  * Interrupt Service Routines
  ************************************************************************/
 
-/* 1-second interrupt ISR. */
+/**
+ * Advance one-second timekeeping and wake/sleep state.
+ *
+ * This ISR owns the coarse 1 Hz heartbeat. It updates system time,
+ * nudges the event-engine on-air countdown toward zero, and either
+ * runs foreground-safe once-per-second work or wakes the unit when a
+ * sleep deadline has been reached.
+ */
 ISR(RTC_CNT_vect)
 {
 	uint8_t x = RTC.INTFLAGS;
@@ -506,7 +513,13 @@ ISR(RTC_CNT_vect)
 	RTC.INTFLAGS = (RTC_OVF_bm | RTC_CMP_bm);
 }
 
-/* Periodic tasks not requiring precise timing. Rate = 300 Hz. */
+/**
+ * Run high-rate event-engine and input-service work.
+ *
+ * This 300 Hz ISR handles Morse timing, pushbutton sampling, ADC
+ * scheduling/completion, and other short-latency state updates that
+ * would be too jitter-sensitive for the foreground loop.
+ */
 ISR(TCB0_INT_vect)
 {
 	static uint8_t fiftyMS = 6;
@@ -1064,7 +1077,13 @@ ISR(TCB0_INT_vect)
 	TCB0.INTFLAGS = (TCB_CAPT_bm | TCB_OVF_bm); /* clear all interrupt flags */
 }
 
-/* Handle port D pushbutton interrupts. */
+/**
+ * Handle pushbutton-driven wake and serialbus-enable requests.
+ *
+ * While asleep, the switch can wake the unit and restore the prior
+ * sleep/event context. While awake, a press is treated as a request to
+ * bring the serial interface back online.
+ */
 ISR(PORTD_PORT_vect)
 {
 	uint8_t x = VPORTD.INTFLAGS;
@@ -1103,7 +1122,13 @@ ISR(PORTD_PORT_vect)
 	VPORTD.INTFLAGS = 0xFF; /* Clear all flags */
 }
 
-/* Handle port C interrupts (serial port during sleep). */
+/**
+ * Wake the unit when serial activity arrives during sleep.
+ *
+ * The RX pin interrupt is only armed while asleep. Once it fires, the
+ * ISR disables the edge interrupt and lets the foreground re-enable the
+ * serialbus stack after wake-up.
+ */
 ISR(PORTC_PORT_vect)
 {
 	uint8_t x = VPORTC.INTFLAGS;
@@ -1125,7 +1150,16 @@ ISR(PORTC_PORT_vect)
 	VPORTC.INTFLAGS = 0xFF; /* Clear all flags */
 }
 
-/* Entry point for firmware; performs hardware initialization and main loop. */
+/**
+ * Initialize hardware, restore persisted settings, and run the
+ * foreground control loop.
+ *
+ * Startup performs the one-time bring-up that is too bulky for the
+ * ISRs, then the forever loop arbitrates sleep, charging, user
+ * interaction, and event control.
+ *
+ * @return Never returns.
+ */
 int main(void)
 {
 	bool buttonHeldClosed = false;
@@ -1140,9 +1174,11 @@ int main(void)
 	buttonHeldClosed = switchIsClosedAtStartup();
 	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
+	/* Register the EEPROM-backed variables before reading persisted values. */
 	g_ee_mgr.initializeEEPROMVars();
 
 	g_ee_mgr.readNonVols();
+	/* Rebuild the currently loaded event window from the saved settings. */
 	reloadLoadedEventWindowFromSavedSettings();
 	g_isMaster = false; /* Never start up as master */
 
@@ -1202,9 +1238,15 @@ int main(void)
 		RTC_init_backup();
 	}
 
+	/* A cold start with no valid clock should fall back to the "power off"
+	 * behavior once startup bring-up has completed.
+	 */
 	startup_should_behave_as_poweroff = (g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet();
 
 	int tries = 5;
+	/* Power the transmitter briefly so the firmware can detect whether the
+	 * frequency generator responded during startup.
+	 */
 	powerToTransmitter(ON);
 
 	while(tries && (!txIsInitialized()))
@@ -1223,7 +1265,9 @@ int main(void)
 
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
-	/* Disable automatic ADC readings */
+	/* Disable automatic ADC readings so startup can take synchronized voltage
+	 * samples before the periodic conversion loop resumes.
+	 */
 	TCB0.INTCTRL = 0; /* Capture or Timeout: disable interrupts */
 	TCB0.CTRLA = 0;   /* Disable timer */
 	/* The external battery control load switch is initialized to ON, so we don't need to set it here */
