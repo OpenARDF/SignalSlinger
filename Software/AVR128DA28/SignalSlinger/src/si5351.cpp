@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -19,10 +19,17 @@
  *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
+ */
+
+/*
+ * Si5351 clock-generator control for firmware RF outputs.
  *
- * si5353.c
+ * This module holds the low-level Si5351 register sequencing, cached local
+ * state, and the helper math that converts requested output frequencies into
+ * PLL and multisynth register values.
  *
+ * It stays intentionally compact: callers are expected to choose legal clock
+ * plans, while this module focuses on programming the device efficiently.
  */
 
 #include "defs.h"
@@ -41,9 +48,7 @@
 
 #define SI5351_I2C_SLAVE_ADDR 0xC0 /* I2C slave address */
 
-/*******************************
- * Global Variables
- ********************************/
+/* Cached calibration, PLLB VCO state, and last-requested output frequencies. */
 static int32_t g_si5351_ref_correction = EEPROM_SI5351_CALIBRATION_DEFAULT;
 static Frequency_Hz freqVCOB = 0;
 
@@ -56,9 +61,7 @@ Si5351Status dev_status;
 Si5351IntStatus dev_int_status;
 #endif
 
-/*******************************
- * Private function prototypes
- ********************************/
+/* Internal helpers used to translate requested clock plans into register writes. */
 
 void pll_reset(Si5351_pll);
 
@@ -120,15 +123,16 @@ void si5351_start_comms(void)
 	I2C_0_Init();
 }
 
-/*
- * init(Si5351_Xtal_load_pF xtal_load_c, Frequency_Hz ref_osc_freq)
+/**
+ * Initialize the Si5351 communication path and baseline device state.
  *
- * Setup communications to the Si5351 and set the crystal
- * load capacitance.
+ * The routine disables all outputs, powers down the three used clock drivers,
+ * applies the requested crystal load setting, and optionally updates the
+ * expected reference-clock frequency used by later PLL calculations.
  *
- * xtal_load_c - Crystal load capacitance.
- * ref_osc_freq - Crystal/reference oscillator frequency (Hz).
- *
+ * @param xtal_load_c Crystal load capacitance selection.
+ * @param ref_osc_freq Reference oscillator frequency in Hz, or 0 for the default crystal.
+ * @return true on failure, false on success.
  */
 bool si5351_init(Si5351_Xtal_load_pF xtal_load_c, Frequency_Hz ref_osc_freq)
 {
@@ -216,16 +220,17 @@ bool si5351_init(Si5351_Xtal_load_pF xtal_load_c, Frequency_Hz ref_osc_freq)
 	return err;
 }
 
-/*
- * bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
+/**
+ * Program one Si5351 output clock to the requested frequency.
  *
- * Sets the clock frequency of the specified CLK output
+ * CLK0 always uses PLLA. CLK1 and CLK2 share PLLB, so the first configured
+ * PLLB-backed clock establishes the VCO unless the caller already fixed it
+ * with si5351_set_vcoB_freq().
  *
- * freq - Output frequency in Hz
- * clk - Clock output (use the si5351_clock enum)
- *
- * Returns true on failure
- *
+ * @param freq_Fout Requested output frequency in Hz.
+ * @param clk Output clock to configure.
+ * @param clocksOff true to keep the enabled outputs disabled after programming.
+ * @return true on failure, false on success.
  */
 bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
 {
@@ -271,11 +276,7 @@ bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
 	}
 #endif
 
-	/* Determine which PLL to use: CLK0 gets PLLA, CLK1 and CLK2 get PLLB */
-	/* The first of CLK1 or CLK2 to be configured, determines the VCO frequency used for PLLB. */
-	/* The second of CLK1 or CLK2 to be configured will attempt to achieve Fout by adjusting the */
-	/* Multisynth Divider values only. */
-	/* Only good for Si5351A3 variant */
+	/* CLK1 and CLK2 share PLLB, so only the first configured one gets to choose its VCO. */
 	switch(clk)
 	{
 		case SI5351_CLK0:
@@ -502,28 +503,25 @@ bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
 	return (false);
 }
 
-/*
- * Frequency_Hz si5351_get_freq(Si5351_clock output)
+/**
+ * Return the last frequency requested for a clock output.
  *
- * Returns the clock frequency setting of the specified CLK output
+ * This is the library's cached value, not a hardware readback from the Si5351.
  *
- * output - Clock output (use the si5351_clock enum)
- *
- * Returns true on failure
- *
+ * @param clock Output clock to query.
+ * @return Cached frequency in Hz.
  */
 Frequency_Hz si5351_get_frequency(Si5351_clock clock)
 {
 	return (clock_out[clock]);
 }
 
-/*
- * si5351_clock_enable(Si5351_clock clk, bool enable)
+/**
+ * Enable or disable one Si5351 output through the output-enable register.
  *
- * Enable or disable a chosen clock
- * clk - Clock output
- * enable - 1 to enable, 0 to disable
- *
+ * @param clk Output clock to update.
+ * @param enable true to enable the output, false to disable it.
+ * @return true on success, false on I2C failure.
  */
 bool si5351_clock_enable(Si5351_clock clk, bool enable)
 {
@@ -553,14 +551,12 @@ bool si5351_clock_enable(Si5351_clock clk, bool enable)
 	return true;
 }
 
-/*
- * si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
+/**
+ * Set the configured output drive strength for one clock pin.
  *
- * Sets the drive strength of the specified clock output
- *
- * clk - Clock output
- * drive - Desired drive level
- *
+ * @param clk Output clock to update.
+ * @param drive Requested output drive level.
+ * @return true on success, false on I2C failure.
  */
 bool si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
 {
@@ -618,10 +614,12 @@ bool si5351_drive_strength(Si5351_clock clk, Si5351_drive drive)
 	return true;
 }
 
-/*
- * si5351_set_phase(void)
+/**
+ * Write the raw phase-offset register for one output clock.
  *
- * Returns the oscillator correction factor.
+ * @param clk Output clock to update.
+ * @param phase Raw 7-bit phase-offset value.
+ * @return true on success, false on I2C failure.
  */
 bool si5351_set_phase(Si5351_clock clk, uint8_t phase)
 {
@@ -637,10 +635,12 @@ bool si5351_set_phase(Si5351_clock clk, uint8_t phase)
 	return true;
 }
 
-/*
- * si5351_get_phase(void)
+/**
+ * Read the raw phase-offset register for one output clock.
  *
- * Returns the oscillator correction factor.
+ * @param clk Output clock to query.
+ * @param phase Output pointer for the returned register value.
+ * @return true on success, false on I2C failure.
  */
 bool si5351_get_phase(Si5351_clock clk, uint8_t *phase)
 {
@@ -661,13 +661,10 @@ bool si5351_get_phase(Si5351_clock clk, uint8_t *phase)
 /* Private functions */
 /*///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 
-/*
- * pll_reset(Si5351_pll target_pll)
+/**
+ * Apply a soft reset to one or both PLLs.
  *
- * target_pll - Which PLL to reset (use the si5351_pll enum)
- *
- * Apply a reset to the indicated PLL(s).
- *
+ * @param target_pll PLL selection mask indicating PLLA, PLLB, or both.
  */
 void pll_reset(Si5351_pll target_pll)
 {
@@ -686,12 +683,15 @@ void pll_reset(Si5351_pll target_pll)
 	}
 }
 
-/*
- * uint8_t select_r_div(Frequency_Hz *freq)
+/**
+ * Choose the output R-divider needed for very low frequencies.
  *
- * The R dividers can be used to generate frequencies below about 500 kHz. Each individual output R divider can be
- * set to 1, 2, 4, 8,....128 by writing the proper setting for Rx_DIV. Set this parameter to generate frequencies down to
- * 8kHz.
+ * The Si5351 multisynth math is performed on an internally scaled-up frequency.
+ * This helper multiplies `*freq` accordingly and returns the divider setting
+ * that must later be programmed into the output path.
+ *
+ * @param freq In/out frequency value in Hz.
+ * @return Encoded R-divider setting for the target output.
  */
 #ifdef SUPPORT_FOUT_BELOW_1024KHZ
 uint8_t select_r_div(Frequency_Hz *freq)
@@ -744,14 +744,15 @@ uint8_t select_r_div(Frequency_Hz *freq)
 }
 #endif /*#ifdef SUPPORT_FOUT_BELOW_1024KHZ */
 
-/*
- * set_pll(Frequency_Hz freq_VCO, Si5351_pll target_pll)
+/**
+ * Program PLLA or PLLB for the requested VCO frequency.
  *
- * Set the specified PLL to a specific oscillation frequency
+ * The helper derives the packed P1/P2/P3 register values and writes them to
+ * the correct PLL register block.
  *
- * freq_VCO - Desired PLL frequency
- * target_pll - Which PLL to set (use the si5351_pll enum)
- *
+ * @param freq_VCO Desired PLL VCO frequency in Hz.
+ * @param target_pll PLL to program.
+ * @return true on failure, false on success.
  */
 #ifdef DEBUGGING_ONLY
 uint32_t set_pll(Frequency_Hz freq_VCO, Si5351_pll target_pll)
@@ -828,15 +829,8 @@ bool set_pll(Frequency_Hz freq_VCO, Si5351_pll target_pll)
 }
 
 #ifdef SUPPORT_STATUS_READS
-/*
- * si5351_read_status(void)
- *
- * Call this to read the status structs, then access them
- * via the dev_status and dev_int_status global variables.
- *
- * See the header file for the struct definitions. These
- * correspond to the flag names for registers 0 and 1 in
- * the Si5351 datasheet.
+/**
+ * Refresh the cached device and interrupt status snapshots from the Si5351.
  */
 void si5351_read_status(void)
 {
@@ -845,52 +839,38 @@ void si5351_read_status(void)
 }
 #endif
 
-/*
- * si5351_set_correction(int32_t corr)
+/**
+ * Update the reference-oscillator correction value used by PLL calculations.
  *
- * Use this to set the oscillator correction factor. Caller
- * is responsible for storing an EEPROM value for this
- * if it is to be saved to non-volatile memory.
+ * The caller is responsible for persisting this value elsewhere if it should
+ * survive reset. The library simply applies it to later frequency calculations.
  *
- * This value is a signed 32-bit integer of the
- * parts-per-10 million value that the actual oscillation
- * frequency deviates from the specified frequency.
- *
- * Any desired test frequency within the normal range of the
- * Si5351 should be set, then the actual output frequency
- * should be measured as accurately as possible. The
- * difference between the measured and specified frequencies
- * should be calculated in Hertz, then multiplied by 10 in
- * order to get the parts-per-10 million value.
- *
- * Since the Si5351 itself has an intrinsic 0 PPM error, this
- * correction factor is good across the entire tuning range of
- * the Si5351. Once this calibration is done accurately, it
- * should not have to be done again for the same Si5351 and
- * crystal. The library will read the correction factor from
- * EEPROM during initialization for use by the tuning
- * algorithms.
+ * @param corr Signed reference correction term.
  */
 void si5351_set_correction(int32_t corr)
 {
 	g_si5351_ref_correction = corr;
 }
 
-/*
- * si5351_get_correction(void)
+/**
+ * Return the currently configured reference-oscillator correction value.
  *
- * Returns the oscillator correction factor.
+ * @return Signed reference correction term.
  */
 int32_t si5351_get_correction(void)
 {
 	return (g_si5351_ref_correction);
 }
 
-/*
- * bool pll_calc(Frequency_Hz vco_freq, Union_si5351_regs *reg, int32_t correction)
+/**
+ * Convert a target VCO frequency into packed Si5351 PLL register fields.
  *
- * Returns true on failure
+ * The result is expressed in the device's P1/P2/P3 form derived from the
+ * crystal reference and optional correction value.
  *
+ * @param vco_freq Requested PLL VCO frequency in Hz.
+ * @param reg Output register bundle.
+ * @return true on failure, false on success.
  */
 #ifdef DEBUGGING_ONLY
 Frequency_Hz pll_calc(Frequency_Hz vco_freq, Union_si5351_regs *reg, int32_t correction)
@@ -974,11 +954,11 @@ bool pll_calc(Frequency_Hz vco_freq, Union_si5351_regs *reg)
 #endif
 }
 
-/*
- * uint32_t calc_gcd(uint32_t m, uint32_t n)
+/**
+ * Reduce a fraction in place by dividing numerator and denominator by their GCD.
  *
- * Simple implementation of Euclid's Algorithm for calculating GCD of two uint32's
- *
+ * @param m In/out numerator.
+ * @param n In/out denominator.
  */
 void reduce_by_gcd(uint32_t *m, uint32_t *n)
 {
@@ -1005,18 +985,18 @@ void reduce_by_gcd(uint32_t *m, uint32_t *n)
 	return;
 }
 
-/*
- * Frequency_Hz multisynth_calc(Frequency_Hz freq_Fout, Union_si5351_regs *reg, bool *int_mode, bool *divBy4)
+/**
+ * Choose a PLL VCO frequency and multisynth settings for a requested output.
  *
- * Valid Multisynth divider ratios are 4, 6, 8, and any fractional value between 8 + 1/1,048,575 and 900 + 0/1.
- * This means that if any output is greater than 112.5 MHz (900 MHz/8), then this output frequency sets one
- * of the VCO frequencies.
+ * This implementation intentionally restricts itself to even integer divider
+ * solutions, which keeps the generated clocks simple and predictable at the
+ * cost of excluding some otherwise legal Si5351 fractional combinations.
  *
- * Notes: This implementation only supports even integer divider ratios 4 <= div <= 900.
- *        This implementation always sets *int_mode to true
- *
- * Returns zero on failure. Returns with int_mode and divBy4 set appropriately.
- *
+ * @param freq_Fout Requested output frequency in Hz.
+ * @param reg Output register bundle for the selected multisynth settings.
+ * @param int_mode Output flag indicating whether integer mode should be enabled.
+ * @param divBy4 Output flag indicating whether divide-by-4 mode is required.
+ * @return Selected PLL VCO frequency in Hz, or 0 on failure.
  */
 #ifdef DEBUGGING_ONLY
 Frequency_Hz multisynth_calc(Frequency_Hz freq_Fout, Union_si5351_regs *reg, bool *int_mode, bool *divBy4, uint32_t *div)
@@ -1054,7 +1034,7 @@ Frequency_Hz multisynth_calc(Frequency_Hz freq_Fout, Union_si5351_regs *reg, boo
 		uint8_t success = false;
 		uint8_t count = 0;
 
-		/* Find a VCO frequency that is an even integer multiple of the desired Fout frequency */
+		/* Search downward from the maximum VCO until an even integer divider is found. */
 		while(!done)
 		{
 			temp = SI5351_PLL_VCO_MAX - (count * freq_Fout); /* SI5351_PLL_VCO_MAX assumed even */
@@ -1095,14 +1075,13 @@ Frequency_Hz multisynth_calc(Frequency_Hz freq_Fout, Union_si5351_regs *reg, boo
 	return (freq_VCO);
 }
 
-/*
- * void si5351_set_vcoB_freq(Frequency_Hz freq_VCO)
+/**
+ * Force PLLB to a caller-selected VCO frequency.
  *
- * This function provides the ability to specify a particular VCO frequency to be used for the target PLL,
- * allowing a specific clock design (calculated by ClockBuilder for instance) to be implemented.
+ * This is useful when CLK1 and CLK2 must share a specific precomputed PLLB
+ * plan rather than letting the first configured output choose the VCO.
  *
- * Currently this only works for PLLB.
- *
+ * @param freq_VCO Desired PLLB VCO frequency in Hz.
  */
 void si5351_set_vcoB_freq(Frequency_Hz freq_VCO)
 {
@@ -1111,10 +1090,17 @@ void si5351_set_vcoB_freq(Frequency_Hz freq_VCO)
 	return;
 }
 
-/*
- * Frequency_Hz multisynth_estimate(Frequency_Hz freq_Fout, Union_si5351_regs *reg, bool *int_mode, bool *divBy4)
+/**
+ * Derive multisynth settings for CLK1 or CLK2 from an already-fixed PLLB VCO.
  *
- * Note: do not call this function with global value freqVCOB == zero
+ * The returned frequency may differ slightly from the requested frequency when
+ * PLLB cannot realize it exactly with the available divider resolution.
+ *
+ * @param freq_Fout Requested output frequency in Hz.
+ * @param reg Output register bundle for the derived multisynth settings.
+ * @param int_mode Output flag indicating whether integer mode should be enabled.
+ * @param divBy4 Output flag indicating whether divide-by-4 mode is required.
+ * @return Achievable output frequency in Hz, or 0 on failure.
  */
 Frequency_Hz multisynth_estimate(Frequency_Hz freq_Fout, Union_si5351_regs *reg, bool *int_mode, bool *divBy4)
 {
@@ -1146,7 +1132,8 @@ Frequency_Hz multisynth_estimate(Frequency_Hz freq_Fout, Union_si5351_regs *reg,
 	a = freqVCOB / freq_Fout;
 	b = freqVCOB % freq_Fout;
 	c = freq_Fout;
-	reduce_by_gcd(&b, &c); /* prevents overflow conditions and makes results agree with ClockBuilder */
+	/* Reduce the fraction before packing to avoid overflow and match ClockBuilder math. */
+	reduce_by_gcd(&b, &c);
 
 	/* Calculate the approximated output frequency given by fOUT = fvco / (a + b/c) */
 	freq_Fout = freqVCOB;
@@ -1175,6 +1162,14 @@ Frequency_Hz multisynth_estimate(Frequency_Hz freq_Fout, Union_si5351_regs *reg,
 	return (freq_Fout);
 }
 
+/**
+ * Write a contiguous block of Si5351 registers over I2C with simple retries.
+ *
+ * @param regAddr First register address to write.
+ * @param data Pointer to the source bytes.
+ * @param bytes Number of bytes to write.
+ * @return true on failure, false on success.
+ */
 bool si5351_write_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 {
 	uint8_t tries = 5;
@@ -1184,6 +1179,14 @@ bool si5351_write_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 	return (fail);
 }
 
+/**
+ * Read a contiguous block of Si5351 registers over I2C with simple retries.
+ *
+ * @param regAddr First register address to read.
+ * @param data Destination buffer for the returned bytes.
+ * @param bytes Number of bytes to read.
+ * @return true on failure, false on success.
+ */
 bool si5351_read_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 {
 	uint8_t tries = 5;
@@ -1194,6 +1197,12 @@ bool si5351_read_bulk(uint8_t regAddr, uint8_t *data, uint8_t bytes)
 }
 
 #ifdef SUPPORT_STATUS_READS
+/**
+ * Read and decode the current device-status register.
+ *
+ * @param status Output structure to receive the decoded bits.
+ * @return true on failure, false on success.
+ */
 bool si5351_read_sys_status(Si5351Status *status)
 {
 	uint8_t reg_val = 0;
@@ -1216,6 +1225,12 @@ bool si5351_read_sys_status(Si5351Status *status)
 	return (false);
 }
 
+/**
+ * Read and decode the interrupt-status register.
+ *
+ * @param status Output structure to receive the decoded bits.
+ * @return true on failure, false on success.
+ */
 bool si5351_read_int_status(Si5351IntStatus *status)
 {
 	uint8_t reg_val = 0;
@@ -1238,14 +1253,12 @@ bool si5351_read_int_status(Si5351IntStatus *status)
 }
 #endif /* #ifdef SUPPORT_STATUS_READS */
 
-/*
- * set_multisynth_registers_source(Si5351_clock clk, Si5351_pll pll)
+/**
+ * Select whether a clock's multisynth is fed from PLLA or PLLB.
  *
- * clk - Clock output (use the si5351_clock enum)
- * pll - Which PLL to use as the source (use the si5351_pll enum)
- *
- * Set the desired PLL source for a multisynth.
- *
+ * @param clk Output clock to update.
+ * @param pll PLL to select as the multisynth source.
+ * @return true on failure, false on success.
  */
 bool set_multisynth_registers_source(Si5351_clock clk, Si5351_pll pll)
 {
@@ -1277,16 +1290,18 @@ bool set_multisynth_registers_source(Si5351_clock clk, Si5351_pll pll)
 	return (false);
 }
 
-/*
- * set_multisynth_registers(Si5351_clock clk, Union_si5351_regs ms_reg, bool int_mode, uint8_t r_div, bool div_by_4)
+/**
+ * Write the packed multisynth register block for one output clock.
  *
- * Set the specified multisynth parameters.
+ * The helper writes P1/P2/P3, then applies the associated integer-mode and
+ * output-divider settings stored in separate control bits.
  *
- * clk - Clock output (use the si5351_clock enum)
- * int_mode - 1 to enable, 0 to disable
- * r_div - Desired r_div ratio
- * div_by_4 - 1 Divide By 4 mode: 0 to disable
- *
+ * @param clk Output clock to configure.
+ * @param ms_reg Packed multisynth register values.
+ * @param int_mode true to enable integer mode.
+ * @param r_div Encoded output R-divider setting.
+ * @param div_by_4 true to enable the dedicated divide-by-4 mode.
+ * @return true on failure, false on success.
  */
 bool set_multisynth_registers(Si5351_clock clk, Union_si5351_regs ms_reg, bool int_mode, uint8_t r_div, bool div_by_4)
 {
@@ -1371,13 +1386,12 @@ bool set_multisynth_registers(Si5351_clock clk, Union_si5351_regs ms_reg, bool i
 	return (false);
 }
 
-/*
- * set_integer_mode(Si5351_clock clk, bool int_mode)
+/**
+ * Enable or disable integer mode for one output clock's multisynth.
  *
- * clk - Clock output (use the si5351_clock enum)
- * enable - 1 to enable, 0 to disable
- *
- * Set the indicated multisynth into integer mode.
+ * @param clk Output clock to update.
+ * @param enable true to enable integer mode, false to clear it.
+ * @return true on failure, false on success.
  */
 bool set_integer_mode(Si5351_clock clk, bool enable)
 {
@@ -1404,6 +1418,14 @@ bool set_integer_mode(Si5351_clock clk, bool enable)
 	return (si5351_write_bulk(SI5351_CLK0_CTRL + (uint8_t)clk, data, 1));
 }
 
+/**
+ * Apply the output divider and divide-by-4 bits for one multisynth.
+ *
+ * @param clk Output clock to update.
+ * @param r_div Encoded R-divider value.
+ * @param div_by_4 true to enable divide-by-4 mode.
+ * @return true on failure, false on success.
+ */
 bool ms_div(Si5351_clock clk, uint8_t r_div, bool div_by_4)
 {
 	uint8_t reg_val, reg_addr;
