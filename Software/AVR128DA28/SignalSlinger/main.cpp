@@ -7430,8 +7430,11 @@ void handleSerialCloning(void)
 						}
 
 						g_event_checksum += c;
+						/* Clone the event selector after the pattern speeds so the slave
+						 * can map subsequent frequency slots against the correct event type.
+						 */
 						sprintf(g_tempStr, "EVT %c\n", c);
-						sb_send_master_string(g_tempStr); /* Set slave's event */
+						sb_send_master_string(g_tempStr);
 						g_programming_state = SYNC_Waiting_for_EVT_reply;
 						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
