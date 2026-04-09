@@ -26,10 +26,22 @@
 #include <cpuint.h>
 #include <ccp.h>
 
+/*
+ * Main firmware orchestration for SignalSlinger.
+ *
+ * This file owns the top-level runtime state, the interrupt handlers, the
+ * event-engine coordination logic, user interaction flow, and the serial
+ * command handling that ties the rest of the modules together.
+ *
+ * Because many subsystems meet here, comments in this file focus on intent and
+ * ownership boundaries rather than line-by-line mechanics.
+ */
+
 /***********************************************************************
  * Local Typedefs
  ************************************************************************/
 
+/* Select how watchdog-related resets should be handled. */
 typedef enum
 {
 	WD_SW_RESETS,
@@ -38,6 +50,7 @@ typedef enum
 	WD_DISABLE
 } WDReset;
 
+/* Record what caused the device to wake or start running. */
 typedef enum
 {
 	AWAKENED_INIT,
@@ -47,6 +60,7 @@ typedef enum
 	AWAKENED_BY_SERIAL_PORT
 } Awakened_t;
 
+/* Track missing hardware discovered during startup or runtime checks. */
 typedef enum
 {
 	HARDWARE_OK,
@@ -54,6 +68,7 @@ typedef enum
 	HARDWARE_NO_SI5351 = 0x02
 } HardwareError_t;
 
+/* Track the current step in the serial cloning/synchronization exchange. */
 typedef enum
 {
 	SYNC_Searching_for_slave,
@@ -81,6 +96,7 @@ typedef enum
 	SYNC_Waiting_for_ACK
 } SyncState_t;
 
+/* Preserve the event window that should be restored after clone mode exits. */
 typedef struct
 {
 	time_t event_start_epoch;
@@ -123,6 +139,8 @@ volatile uint8_t g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_evteng_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile int16_t g_evteng_on_air_seconds = EEPROM_ON_AIR_TIME_DEFAULT;   /* amount of time to spend on the air */
 volatile int16_t g_evteng_off_air_seconds = EEPROM_OFF_AIR_TIME_DEFAULT; /* amount of time to wait before returning to the air */
+
+/* Update the software clock, optionally re-zeroing the external RTC in the same critical section. */
 static inline void atomic_set_system_time(time_t epoch, bool reset_rtc)
 {
 	ENTER_CRITICAL(main_set_system_time);
@@ -2385,6 +2403,7 @@ int main(void)
 
 /* Event engine state and scheduling helpers. */
 
+/* Clear temporary manual-start/demo state and report whether a start was pending. */
 static bool cancelManualTransientState(void)
 {
 	bool pending_start_after_keydown = g_start_event_after_keydown;
@@ -2403,6 +2422,7 @@ static bool cancelManualTransientState(void)
 	return pending_start_after_keydown;
 }
 
+/* Snapshot the event window that should be restored after serial cloning ends. */
 static void captureCloneTimingSnapshot(void)
 {
 	time_t saved_start_epoch;
@@ -2431,6 +2451,7 @@ static void captureCloneTimingSnapshot(void)
 	}
 }
 
+/* Ask the event-engine ISR pair to rebuild its internal state from current globals. */
 static void reinitializeEventEngine(void)
 {
 	g_evteng_initialize_event = true;
@@ -2439,6 +2460,7 @@ static void reinitializeEventEngine(void)
 		; // Wait for event engine to initialize
 }
 
+/* Load timing parameters that correspond to the selected fox or beacon role. */
 static void loadEventTimingForFox(Fox_t fox)
 {
 	bool delayNotSet = true;
@@ -2627,6 +2649,7 @@ static void loadEventTimingForFox(Fox_t fox)
 	}
 }
 
+/* Restore the loaded event after cloning, optionally deferring a restart until foreground is ready. */
 static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
 {
 	bool should_resume_loaded_event = loadedEventShouldBeEnabled();
@@ -2647,6 +2670,7 @@ static void resumeLoadedEventAfterCloneExit(bool deferStartIfAlreadyRunning)
 	}
 }
 
+/* Rebuild the currently loaded event window from saved settings and the current day counter. */
 static bool reloadLoadedEventWindowFromSavedSettings(void)
 {
 	time_t saved_start_epoch;
@@ -2691,6 +2715,7 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
+/* Recompute the loaded event window after the system clock changes. */
 static bool resyncLoadedEventWindowAfterClockSet(void)
 {
 	time_t saved_start_epoch;
@@ -2747,6 +2772,7 @@ static bool resyncLoadedEventWindowAfterClockSet(void)
 	return have_schedulable_window;
 }
 
+/* Advance the loaded event window to the next day after the user cancels today’s run. */
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 {
 	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
@@ -2758,6 +2784,7 @@ static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 	return reloadLoadedEventWindowFromSavedSettings();
 }
 
+/* Report whether the currently loaded event window is still latched as user-canceled. */
 static bool currentLoadedEventWindowCanceled(void)
 {
 	if(!g_event_canceled_by_user)
@@ -2780,11 +2807,13 @@ static bool currentLoadedEventWindowCanceled(void)
 	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 }
 
+/* Extend the temporary “master” role long enough for another sync/programming session. */
 static inline void extendMasterModeTimeout(void)
 {
 	atomic_write_u16(&isMasterCountdownSeconds, 600); /* Remain Master for 10 minutes */
 }
 
+/* End the current timed event once its loaded finish time has passed. */
 static bool finishTimedEventIfExpired(time_t now)
 {
 	if(!(g_evteng_event_commenced && !g_evteng_run_event_until_canceled))
@@ -2829,6 +2858,7 @@ static bool finishTimedEventIfExpired(time_t now)
 
 /* Morse generation and clock-setting helpers. */
 
+/* Load the currently active automated pattern into the Morse generator using a stable snapshot. */
 static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
 {
 	static char pattern_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
@@ -2846,6 +2876,7 @@ static void loadCurrentPatternMorse(bool *repeat, callerID_t caller)
 	makeMorse(pattern_snapshot, repeat, NULL, caller);
 }
 
+/* Load the station ID text into the Morse generator using a stable snapshot. */
 static void loadStationIDMorse(bool *repeat, callerID_t caller)
 {
 	static char station_id_snapshot[MAX_PATTERN_TEXT_LENGTH + 2];
@@ -2853,6 +2884,7 @@ static void loadStationIDMorse(bool *repeat, callerID_t caller)
 	makeMorse(station_id_snapshot, repeat, NULL, caller);
 }
 
+/* Refresh the active automated Morse pattern when an event is running but not currently sending the ID. */
 static void refreshActiveAutomatedPattern(void)
 {
 	if(g_evteng_event_commenced && !g_evteng_sending_station_ID)
@@ -2862,12 +2894,14 @@ static void refreshActiveAutomatedPattern(void)
 	}
 }
 
+/* Adapt completeTimeString() to a volatile time source by first taking an atomic snapshot. */
 static const char *completeTimeString_volatile(const char *partialString, volatile time_t *currentEpoch)
 {
 	time_t epoch = atomic_read_time(currentEpoch);
 	return completeTimeString(partialString, &epoch);
 }
 
+/* Parse a +HHH or +HHH:MM clock offset used by the serial clock-setting commands. */
 static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours, uint8_t *minutes, bool *hasMinutes)
 {
 	if(hours)
@@ -2971,6 +3005,7 @@ static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours
 	return true;
 }
 
+/* Round an epoch to the nearest requested boundary while never moving earlier than the minimum epoch. */
 static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch)
 {
 	if(!boundary)
@@ -2987,6 +3022,7 @@ static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t 
 	return aligned;
 }
 
+/* Resolve a user-supplied +hours or +hours:minutes offset into an absolute epoch. */
 static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg)
 {
 	if(resolvedEpoch)
@@ -3040,12 +3076,14 @@ static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch
 	return true;
 }
 
+/* Persist a clock value to both runtime state and EEPROM in one helper call. */
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue)
 {
 	atomic_write_time_pair(loadedEpoch, savedEpoch, epoch, epoch);
 	g_ee_mgr.updateEEPROMVar(eeVar, eeValue);
 }
 
+/* Acknowledge a cloned clock update and fold it into the session checksum. */
 static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
 {
 	sb_send_string((char *)reply);
@@ -3053,6 +3091,7 @@ static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
 	g_event_checksum += epoch;
 }
 
+/* Reset day tracking and restart event scheduling after a local clock update. */
 static void finalizeLocalClockUpdate(void)
 {
 	cancelManualTransientState();
@@ -3063,6 +3102,7 @@ static void finalizeLocalClockUpdate(void)
 
 /* Serial-argument parsing and settings persistence helpers. */
 
+/* Map a single-letter serial command argument to the corresponding event enum. */
 static Event_t eventFromSerialArg(char eventArg)
 {
 	switch(eventArg)
@@ -3084,6 +3124,7 @@ static Event_t eventFromSerialArg(char eventArg)
 	}
 }
 
+/* Persist the fox setting associated with the currently selected event family. */
 static void persistFoxSettingForCurrentEvent(Fox_t fox)
 {
 	EE_var_t eeVar = Fox_setting_none;
@@ -3113,6 +3154,7 @@ static void persistFoxSettingForCurrentEvent(Fox_t fox)
 	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
 }
 
+/* Persist one frequency value to the matching in-memory slot and EEPROM field. */
 static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
 {
 	switch(eeVar)
