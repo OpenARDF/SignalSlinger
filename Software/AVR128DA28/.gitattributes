@@ -1,6 +1,8 @@
 * text=auto
 
 # Keep source and text assets consistent across platforms.
+/.gitattributes text eol=lf
+/.gitignore text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
 *.json text eol=lf

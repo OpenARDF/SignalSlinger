@@ -2,6 +2,8 @@
 
 This document captures the standard release process for the AVR128DA28 firmware workspace.
 
+Unless stated otherwise, commands below assume the current directory is `Software/AVR128DA28`.
+
 ## Branch Roles
 
 - `main` is the stable release branch.
@@ -12,11 +14,17 @@ This document captures the standard release process for the AVR128DA28 firmware 
 ## Standard Release Checklist
 
 1. Confirm the current branch and announce it to the user before making changes.
-2. Confirm the intended firmware version in `SignalSlinger/defs.h`.
-3. Decide the release channel:
+2. Confirm the working tree is clean or that any existing changes are intentionally excluded from the release work:
+
+```powershell
+git status --short
+```
+
+3. Confirm the intended firmware version in `SignalSlinger/defs.h` and make sure the repo-root `README.md` references the same asset names for the chosen branch.
+4. Decide the release channel:
    - `main` for a stable release.
    - `Development2` for a prerelease.
-4. For routine patch verification before handoff, run:
+5. For routine patch verification before handoff, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
@@ -28,18 +36,18 @@ Optional: for dual-target `.hex` verification with SHA256 reporting, run:
 powershell -ExecutionPolicy Bypass -File .\verify-firmware-hashes.ps1 -Configuration Release
 ```
 
-5. Run the release preparation script:
+6. Run the release preparation script from the repo root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\prepare-release.ps1
+powershell -ExecutionPolicy Bypass -File ..\..\prepare-release.ps1
 ```
 
-6. Verify the generated `Release` assets exist:
+7. Verify the generated `Release` assets exist:
    - `SignalSlinger-vX.Y-3.4.hex`
    - `SignalSlinger-vX.Y-3.5.hex`
-7. Review `README.md` and confirm it matches the intended branch and release channel.
-8. On `Development2`, leave changes uncommitted unless the user explicitly asks for a commit.
-9. Before using `gh`, ensure the GitHub CLI environment is clean in this VM session:
+8. Review `README.md` and confirm it matches the intended branch and release channel.
+9. On `Development2`, leave changes uncommitted unless the user explicitly asks for a commit.
+10. Before using `gh`, ensure the GitHub CLI environment is clean in this VM session:
 
 ```powershell
 $env:Path = 'C:\Program Files\GitHub CLI;' + [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
@@ -48,11 +56,11 @@ $env:HTTPS_PROXY=''
 $env:ALL_PROXY=''
 ```
 
-10. Create the GitHub release:
+11. Create the GitHub release:
    - Use a prerelease on `Development2`.
    - Use a normal release on `main`.
-11. Upload both hardware assets to the release.
-12. Verify remotely:
+12. Upload both hardware assets to the release.
+13. Verify remotely:
    - the release page includes both `.hex` files
    - `main` README points to stable downloads
    - `Development2` README points to prerelease downloads
@@ -62,9 +70,11 @@ $env:ALL_PROXY=''
 - `build-firmware.ps1` is the standard local build entry point for patch verification and can also be reused by other scripts.
 - `verify-firmware-hashes.ps1` builds both hardware targets, reports SHA256 hashes for the copied `.hex` files, and restores the original active hardware target afterward.
 - Use `-OutputDir` or `-KeepArtifacts` with `verify-firmware-hashes.ps1` if you want to keep the copied comparison artifacts.
+- `prepare-release.ps1` lives at the repository root and updates the repo-root `README.md` unless you pass `-SkipReadmeUpdate`.
 - The release-prep flow should build `Release`, not `Debug`.
 - The expected asset naming pattern is `SignalSlinger-vX.Y-3.4.hex` and `SignalSlinger-vX.Y-3.5.hex`.
 - `prepare-release.ps1` should restore the default hardware target after the dual-build process completes.
+- The generated `.hex` files are release artifacts, not tracked source files; upload them to GitHub releases rather than committing them.
 
 ## Branch Merge Policy
 

@@ -1,5 +1,6 @@
 avr8-gnu-toolchain-win32_x86_64/
 tmp/studio-toolchain-upgrade.log
+tmp/firmware-hash-verification*/
 
 # Visual Studio / Atmel Studio workspace state
 .vs/
@@ -11,3 +12,11 @@ tmp/studio-toolchain-upgrade.log
 *.sln.docstates
 *.atsuo
 *.wsuo
+
+# Temporary build-script byproducts
+SignalSlinger/Debug/Makefile.codex-local
+SignalSlinger/Release/Makefile.codex-local
+SignalSlinger/Debug/makedep.mk
+SignalSlinger/Release/makedep.mk
+SignalSlinger/Debug/src/
+SignalSlinger/Release/src/
