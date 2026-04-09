@@ -25,6 +25,14 @@
  *
  */
 
+/*
+ * Reset-controller helpers for software reset and reset-cause handling.
+ *
+ * This header wraps the AVR reset controller registers with small inline
+ * helpers so the rest of the firmware can trigger a software reset or inspect
+ * reset-cause flags without duplicating register details.
+ */
+
 /**
  * \defgroup doc_driver_system_rstctrl Reset Controller
  * \ingroup doc_driver_system
@@ -44,17 +52,31 @@ extern "C" {
 
 #include <ccp.h>
 
+/**
+ * Request a software reset through the reset controller.
+ *
+ * The SWRR register is CCP-protected, so the helper routes the write through
+ * the shared CCP wrapper.
+ */
 static inline void RSTCTRL_reset(void)
 {
 	/* SWRR is protected with CCP */
 	ccp_write_io((void *)&RSTCTRL.SWRR, 0x1);
 }
 
+/**
+ * Read the raw reset-cause flags latched by the AVR reset controller.
+ *
+ * @return Current contents of the reset flag register.
+ */
 static inline uint8_t RSTCTRL_get_reset_cause(void)
 {
 	return RSTCTRL.RSTFR;
 }
 
+/**
+ * Clear all reset-cause flags currently tracked by the AVR reset controller.
+ */
 static inline void RSTCTRL_clear_reset_cause(void)
 {
 	RSTCTRL.RSTFR
