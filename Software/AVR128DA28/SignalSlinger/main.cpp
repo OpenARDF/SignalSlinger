@@ -6145,18 +6145,18 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 	if(action == START_NOTHING)
 	{
-		g_evteng_event_commenced = false; /* do not get things running yet */
-		g_evteng_event_enabled = false;   /* do not get things running yet */
+		g_evteng_event_commenced = false;
+		g_evteng_event_enabled = false;
 		powerToTransmitter(OFF);
 	}
-	else if((action == START_EVENT_NOW_AND_RUN_FOREVER) || (action == START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT)) /* Start the event now, and align event start to the top of the hour */
+	else if((action == START_EVENT_NOW_AND_RUN_FOREVER) || (action == START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT))
 	{
-		if(timeIsSet() && (action != START_EVENT_NOW_AND_RUN_FOREVER)) // First check if time is valid
+		if(timeIsSet() && (action != START_EVENT_NOW_AND_RUN_FOREVER))
 		{
 			time_t now = time(null);
 			time_t time_since_midnight = now % SECONDS_24H;
 			time_t top_of_last_midnight = timeDif(now, time_since_midnight);
-			time_t newFinish = FOREVER_EPOCH; // If start and finish are not set, run forever
+			time_t newFinish = FOREVER_EPOCH;
 			bool forceForever = false;
 
 			if(allClocksSet(SAVED_SETTINGS))
@@ -6168,9 +6168,15 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			}
 			else
 			{
-				forceForever = true; // Avoid activating as a forever event
+				/* Without a valid saved schedule, fall back to a user-launched
+				 * "run forever" event instead of inventing a timed finish.
+				 */
+				forceForever = true;
 			}
 
+			/* A synchronized immediate start anchors the event to the top of the
+			 * current day so the running cycle matches the saved schedule.
+			 */
 			activateEventEngineUsingCurrentSettings(top_of_last_midnight, newFinish);
 
 			if(forceForever)
@@ -6181,7 +6187,10 @@ void setupForFox(Fox_t fox, EventAction_t action)
 				atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &event_start_epoch, &event_finish_epoch);
 				if(event_start_epoch == event_finish_epoch)
 				{
-					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_start_epoch); // preserve the start = finish flag
+					/* Preserve the sentinel "start == finish" meaning when the saved
+					 * schedule intentionally disables timed auto-start.
+					 */
+					atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, event_start_epoch, event_start_epoch);
 				}
 			}
 		}
@@ -6210,10 +6219,13 @@ void setupForFox(Fox_t fox, EventAction_t action)
 		g_event_launched_by_user_action = true;
 		LEDS.blink(LEDS_RED_OFF);
 	}
-	else if(action == START_TRANSMISSIONS_NOW) /* Immediately start transmitting, regardless RTC or time slot */
+	else if(action == START_TRANSMISSIONS_NOW)
 	{
 		g_evteng_run_event_until_canceled = true;
-		atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds); /* start out transmitting */
+		/* This mode bypasses schedule alignment and begins in the on-air phase
+		 * immediately.
+		 */
+		atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds);
 		atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_intra_cycle_delay_time + g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 		LEDS.blink(LEDS_RED_OFF);
 		g_event_launched_by_user_action = true;
@@ -6229,11 +6241,11 @@ void setupForFox(Fox_t fox, EventAction_t action)
 
 		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 	}
-	else /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
+	else
 	{
 		g_event_launched_by_user_action = false;
-		g_evteng_event_commenced = false; /* do not get things running yet */
-		g_evteng_event_enabled = false;   /* do not get things running yet */
+		g_evteng_event_commenced = false;
+		g_evteng_event_enabled = false;
 		keyTransmitter(OFF);
 		powerToTransmitter(OFF);
 
@@ -7138,14 +7150,18 @@ void handleSerialCloning(void)
 
 	if(sb_buff)
 	{
-		LEDS.init(); /* Extend or resume LED operation */
+		/* Any clone traffic should keep the status LEDs awake long enough for the
+		 * user to see cloning activity.
+		 */
+		LEDS.init();
 	}
 
 	if(!atomic_read_u16(&g_programming_msg_throttle))
 	{
 		if(!g_cloningInProgress)
 		{
-			sb_send_master_string((char *)"MAS P\n"); /* Set slave to active cloning state */
+			/* Periodically probe for a slave until one acknowledges clone mode. */
+			sb_send_master_string((char *)"MAS P\n");
 			atomic_write_u16(&g_programming_msg_throttle, 600);
 			g_programming_state = SYNC_Searching_for_slave;
 		}
@@ -7158,7 +7174,7 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-				if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S')) /* Slave responds ready for cloning */
+				if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S'))
 				{
 					extendMasterModeTimeout();
 					g_cloningInProgress = true;
@@ -7171,7 +7187,10 @@ void handleSerialCloning(void)
 						suspendEvent();
 					}
 					g_event_checksum = 0;
-					sprintf(g_tempStr, "FUN A\n"); /* Set slave to radio orienteering function */
+					/* Reset the slave into the firmware's supported function before
+					 * sending the rest of the cloned settings.
+					 */
+					sprintf(g_tempStr, "FUN A\n");
 					sb_send_master_string(g_tempStr);
 					g_programming_state = SYNC_Waiting_for_FUN_A_reply;
 					atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
@@ -7205,7 +7224,10 @@ void handleSerialCloning(void)
 			{
 				time_t now = time(null);
 				g_event_checksum += now;
-				sprintf(g_tempStr, "CLK T %lu\n", now); /* Set slave's RTC */
+				/* Send the RTC value immediately after a local second transition so
+				 * the master and slave stay aligned as closely as possible.
+				 */
+				sprintf(g_tempStr, "CLK T %lu\n", now);
 				sb_send_master_string(g_tempStr);
 				g_programming_state = SYNC_Waiting_for_CLK_T_reply;
 				atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
@@ -7424,7 +7446,7 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-				if(msg_id == SB_MESSAGE_EVENT) /* Slave responds with EVT message */
+				if(msg_id == SB_MESSAGE_EVENT)
 				{
 					extendMasterModeTimeout();
 					g_event_checksum += g_frequency;
@@ -7443,7 +7465,7 @@ void handleSerialCloning(void)
 			if(sb_buff)
 			{
 				msg_id = sb_buff->id;
-				if(msg_id == SB_MESSAGE_TX_FREQ) /* Slave responds with EVT message */
+				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
 					g_event_checksum += g_frequency_low;
@@ -7542,6 +7564,8 @@ void handleSerialCloning(void)
 					extendMasterModeTimeout();
 					if(sb_buff->fields[SB_FIELD1][0] == 'A')
 					{
+						/* Keep the success indicator active briefly after the clone
+						 * completes so the user gets visible confirmation. */
 						atomic_write_u16(&g_send_clone_success_countdown, 18000);
 					}
 					else
