@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * Low-level I2C/TWI host helpers.
  *
- * i2c.c
+ * This module contains support functions for:
+ * - initializing the primary TWI host peripheral
+ * - sending register-addressed writes and reads
+ * - ending or shutting down an I2C session cleanly
+ *
+ * Device-specific register maps and higher-level retry policy belong elsewhere.
  */
 
 #include "defs.h"
@@ -65,6 +74,9 @@ volatile uint16_t g_i2c_failure_count = 0; /* Legacy */
 /* I2C_0                                                               */
 /************************************************************************/
 
+/**
+ * Disable the primary I2C/TWI host interface.
+ */
 void I2C_0_Shutdown(void)
 {
 	/* Set bus state idle */
@@ -72,6 +84,9 @@ void I2C_0_Shutdown(void)
 	TWI0.MCTRLA = 0;
 }
 
+/**
+ * Initialize the primary I2C/TWI host interface.
+ */
 void I2C_0_Init(void)
 {
 	/* Select I2C pins PC2/PC3 */
@@ -99,11 +114,17 @@ void I2C_0_Init(void)
 	PORTC_set_pin_pull_mode(3, PORT_PULL_UP);
 }
 
+/**
+ * Wait for a write-phase I2C state transition.
+ *
+ * @return I2C state code describing ACK, NACK, ready, or error.
+ */
 static uint8_t i2c_0_WaitW(void)
 {
 	uint8_t state = I2C_INIT;
 	uint32_t spin_guard = 60000UL;
 	
+	/* The timeout counter is serviced elsewhere by a periodic timer tick. */
 	atomic_write_u16(&g_i2c0_timeout_ticks, 50);
 	
 	do
@@ -137,6 +158,11 @@ static uint8_t i2c_0_WaitW(void)
 	return state;
 }
 
+/**
+ * Wait for a read-phase I2C state transition.
+ *
+ * @return I2C state code describing ready or error.
+ */
 static uint8_t i2c_0_WaitR(void)
 {
 	uint8_t state = I2C_INIT;
@@ -166,7 +192,15 @@ static uint8_t i2c_0_WaitR(void)
 	return state;
 }
 
-/* Returns how many bytes have been sent, -1 means NACK at address, 0 means client ACKed to client address */
+/**
+ * Write one or more bytes to a register-addressed I2C peripheral.
+ *
+ * @param slaveAddr 7-bit slave address in write form.
+ * @param regAddr Register address to send before the payload.
+ * @param pData Pointer to the bytes to send.
+ * @param len Number of payload bytes to send.
+ * @return Number of payload bytes acknowledged, or `0xFF` if the slave address is NACKed.
+ */
 uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len)
 {
 	uint8_t retVal = (uint8_t) - 1;
@@ -211,7 +245,15 @@ uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8
 	return retVal;
 }
 
-/* Returns how many bytes have been received, -1 means NACK at address */
+/**
+ * Read one or more bytes from a register-addressed I2C peripheral.
+ *
+ * @param slaveAddr 7-bit slave address in write form.
+ * @param regAddr Register address to read from.
+ * @param pData Destination buffer for received bytes.
+ * @param len Number of bytes to receive.
+ * @return Number of bytes received, or `0xFF` if the slave address is NACKed.
+ */
 uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len)
 {
 	uint8_t retVal = (uint8_t) -1;
@@ -264,6 +306,9 @@ uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_
 	return retVal;
 }
 
+/**
+ * Send a STOP condition to end the current I2C transaction.
+ */
 void I2C_0_EndSession(void)
 {
 	TWI0.MCTRLB = TWI_MCMD_STOP_gc;

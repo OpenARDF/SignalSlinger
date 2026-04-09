@@ -1,8 +1,12 @@
 /*
- * leds.cpp
+ * LEDs status and blink-pattern helpers.
  *
- * Created: 5/5/2022 10:27:49 AM
- * Author: charl
+ * This module contains support functions for:
+ * - driving red/green LED indications through a timer-backed blink engine
+ * - coordinating temporary overrides such as wake-authorization blinking
+ * - queuing short LED-enunciated character sequences
+ *
+ * Higher-level UI policy and state selection belong elsewhere.
  */
 
 #include "defs.h"
@@ -38,6 +42,11 @@ static volatile int16_t green_blink_off_period = 0;
 static volatile int16_t red_blink_count = 0;
 static volatile int16_t green_blink_count = 0;
 
+/**
+ * Read the LED inactivity timeout atomically.
+ *
+ * @return Current inactivity timeout countdown.
+ */
 static uint32_t led_timeout_count_read_atomic(void)
 {
 	uint32_t value;
@@ -47,6 +56,11 @@ static uint32_t led_timeout_count_read_atomic(void)
 	return value;
 }
 
+/**
+ * Update the LED inactivity timeout atomically.
+ *
+ * @param value New timeout countdown value.
+ */
 static void led_timeout_count_write_atomic(uint32_t value)
 {
 	ENTER_CRITICAL(leds_timeout_write);
@@ -54,6 +68,9 @@ static void led_timeout_count_write_atomic(uint32_t value)
 	EXIT_CRITICAL(leds_timeout_write);
 }
 
+/**
+ * Clear the shared text buffer and disable manual transmissions atomically.
+ */
 static void text_buff_reset_and_disable_manual_atomic(void)
 {
 	ENTER_CRITICAL(leds_text_buff_reset);
@@ -182,6 +199,9 @@ bool leds::active(void)
 	return (led_timeout_count_read_atomic() && (TCB1.INTCTRL & (1 << TCB_CAPT_bp)));
 }
 
+/**
+ * Disable timer-driven LED control and blank both LEDs.
+ */
 void leds::deactivate(void)
 {
 	ENTER_CRITICAL(leds_deactivate);
@@ -195,6 +215,11 @@ void leds::deactivate(void)
 	EXIT_CRITICAL(leds_deactivate);
 }
 
+/**
+ * Force the red LED on or off immediately.
+ *
+ * @param on Desired red-LED state.
+ */
 void leds::setRed(bool on)
 {
 	if(!led_timeout_count_read_atomic())
@@ -216,6 +241,11 @@ void leds::setRed(bool on)
 	EXIT_CRITICAL(leds_set_red);
 }
 
+/**
+ * Force the green LED on or off immediately.
+ *
+ * @param on Desired green-LED state.
+ */
 void leds::setGreen(bool on)
 {
 	if(!led_timeout_count_read_atomic())
@@ -237,6 +267,9 @@ void leds::setGreen(bool on)
 }
 
 /* Turns off LEDs, resets the text buffer, and disables LED character transmissions. Re-enables LED timer blink functionality. */
+/**
+ * Reset LED state, blink configuration, and timeout tracking.
+ */
 void leds::reset(void)
 {
 	ENTER_CRITICAL(leds_reset);
@@ -249,11 +282,19 @@ void leds::reset(void)
 }
 
 /* Disables LED timer while resetting settings for interrupt safety. */
+/**
+ * Initialize the LED subsystem with LEDs off.
+ */
 void leds::init(void)
 {
 	init(LEDS_OFF);
 }
 
+/**
+ * Initialize the LED subsystem with an optional starting blink pattern.
+ *
+ * @param setBlink Initial blink pattern to apply.
+ */
 void leds::init(Blink_t setBlink)
 {
 	if(force_wake_authorization_blink)
@@ -274,6 +315,11 @@ void leds::init(Blink_t setBlink)
 	EXIT_CRITICAL(leds_init);
 }
 
+/**
+ * Queue a short text string for LED-based manual transmission.
+ *
+ * @param str Null-terminated string to enqueue.
+ */
 void leds::sendCode(char *str)
 {
 	if(!led_timeout_count_read_atomic())
@@ -303,6 +349,11 @@ void leds::sendCode(char *str)
 	EXIT_CRITICAL(leds_send_code_text_buff);
 }
 
+/**
+ * Enable or disable the special wake-authorization blink override.
+ *
+ * @param active true to force the wake-authorization blink pattern.
+ */
 void leds::setWakeAuthorizationBlink(bool active)
 {
 	ENTER_CRITICAL(leds_wake_auth_blink);
@@ -336,6 +387,11 @@ void leds::setWakeAuthorizationBlink(bool active)
 }
 
 /* Public wrapper that leaves the LED timeout unchanged. */
+/**
+ * Apply a new blink pattern without resetting the inactivity timeout.
+ *
+ * @param blinkMode Blink pattern to apply.
+ */
 void leds::blink(Blink_t blinkMode)
 {
 	blink(blinkMode, false);
@@ -343,6 +399,12 @@ void leds::blink(Blink_t blinkMode)
 
 /* Core blink routine.  Selects the blink pattern and optionally resets
  * the automatic timeout that turns off the LEDs after inactivity.
+ */
+/**
+ * Apply a new blink pattern and optionally reset the inactivity timeout.
+ *
+ * @param blinkMode Blink pattern to apply.
+ * @param resetTimeout true to refresh the LED inactivity timeout.
  */
 void leds::blink(Blink_t blinkMode, bool resetTimeout)
 {

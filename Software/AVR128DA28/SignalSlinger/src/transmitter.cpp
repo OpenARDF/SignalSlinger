@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * RF transmitter control helpers.
+ *
+ * This module contains support functions for:
+ * - initializing and restarting the Si5351-backed transmit clock path
+ * - enabling or disabling RF-related power rails and support hardware
+ * - keying, unkeying, and retuning the transmitter
+ *
+ * Event scheduling and higher-level transmit policy belong elsewhere.
  */
 
 #include <string.h>
@@ -57,15 +68,29 @@ volatile bool g_enable_boost_regulator = false;
 volatile bool g_enable_external_battery_control = true;
 
 /**
+ * Initialize the transmitter using the currently stored frequency.
+ *
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
  */
 bool init_transmitter(bool leave_clock_off);
+
+/**
+ * Initialize the transmitter after first updating the stored working frequency.
+ *
+ * @param freq Frequency to remember and program.
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
+ */
 bool init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
 /**
+ * Shut down the transmitter and its associated clock generator communications.
  */
 void shutdown_transmitter(void);
 
 /**
+ * Power the transmitter back on and restart Si5351 communications.
  */
 void restart_transmitter(void);
 
@@ -101,8 +126,13 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 	return (err);
 }
 
-/* Globally enable or disable all RF output.  When disabled the
- * transmitter is powered down to conserve energy.
+/**
+ * Globally enable or disable all RF transmissions.
+ *
+ * When disabled, the RF path is powered down so callers cannot accidentally
+ * emit RF even if they later request keying or power.
+ *
+ * @param disabled true to block transmissions and power down the RF path.
  */
 void setDisableTransmissions(bool disabled)
 {
@@ -122,8 +152,15 @@ bool getDisableTransmissions(void)
 	return (g_disable_transmissions);
 }
 
-/* Apply or remove power from the RF chain and related control lines.
- * When enabling, the Si5351 and related peripherals are reinitialized.
+/**
+ * Apply or remove power from the RF chain and related control lines.
+ *
+ * When enabling, the shared support rails are brought up, the Si5351 path is
+ * reinitialized, and the working frequency is restored. When disabling, the
+ * clock generator and keyed-output state are torn down.
+ *
+ * @param state true to power the transmitter path, false to shut it down.
+ * @return true when the requested state is reached successfully.
  */
 bool powerToTransmitter(bool state)
 {
@@ -191,6 +228,15 @@ bool powerToTransmitter(bool state)
 	return (success);
 }
 
+/**
+ * Key or unkey the transmitter output stage.
+ *
+ * The function retries clock-enable operations and will restart the transmitter
+ * path if the Si5351 command does not succeed on the first attempt.
+ *
+ * @param on true to key the transmitter, false to unkey it.
+ * @return true when the transmitter ends in the keyed state.
+ */
 bool keyTransmitter(bool on)
 {
 	if(g_tx_initialized)
@@ -244,24 +290,46 @@ bool txIsInitialized(void)
 	return g_tx_initialized;
 }
 
+/**
+ * Shut down the transmitter and its associated clock generator communications.
+ */
 void shutdown_transmitter(void)
 {
 	si5351_shutdown_comms();
 	powerToTransmitter(OFF);
 }
 
+/**
+ * Power the transmitter back on and restart Si5351 communications.
+ */
 void restart_transmitter(void)
 {
 	powerToTransmitter(ON);
 	si5351_start_comms();
 }
 
+/**
+ * Initialize the transmitter after first updating the stored working frequency.
+ *
+ * @param freq Frequency to remember and program.
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
+ */
 bool init_transmitter(Frequency_Hz freq, bool leave_clock_off)
 {
 	g_80m_frequency = freq;
 	return init_transmitter(leave_clock_off);
 }
 
+/**
+ * Initialize the transmitter using the currently stored frequency.
+ *
+ * This programs the Si5351, configures its drive strength, and ensures the
+ * selected transmit frequency is pushed into the active output path.
+ *
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
+ */
 bool init_transmitter(bool leave_clock_off)
 {
 	int tries = TX_CONTROL_RETRY_COUNT;

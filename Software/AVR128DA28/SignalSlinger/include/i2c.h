@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,9 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * Low-level I2C/TWI host helpers.
  *
+ * This module contains support functions for:
+ * - initializing the primary TWI host peripheral
+ * - sending register-addressed writes and reads
+ * - ending or shutting down an I2C session cleanly
  *
- * i2c.h
+ * Device-specific register maps and higher-level retry policy belong elsewhere.
  */
 
 #include "defs.h"
@@ -37,11 +45,42 @@
 extern "C" {
 	#endif /* __cplusplus */
 
-	void    I2C_0_Init(void);
-	uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len); // returns how many bytes have been sent, -1 means NACK at address
-	uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len); // returns how many bytes have been received, -1 means NACK at address
-	void    I2C_0_EndSession(void);
-	void	I2C_0_Shutdown(void);
+	/**
+	 * Initialize the primary I2C/TWI host interface.
+	 */
+	void I2C_0_Init(void);
+
+	/**
+	 * Write one or more bytes to a register-addressed I2C peripheral.
+	 *
+	 * @param slaveAddr 7-bit slave address in write form.
+	 * @param regAddr Register address to send before the payload.
+	 * @param pData Pointer to the bytes to send.
+	 * @param len Number of payload bytes to send.
+	 * @return Number of payload bytes acknowledged, or `0xFF` if the slave address is NACKed.
+	 */
+	uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len);
+
+	/**
+	 * Read one or more bytes from a register-addressed I2C peripheral.
+	 *
+	 * @param slaveAddr 7-bit slave address in write form.
+	 * @param regAddr Register address to read from.
+	 * @param pData Destination buffer for received bytes.
+	 * @param len Number of bytes to receive.
+	 * @return Number of bytes received, or `0xFF` if the slave address is NACKed.
+	 */
+	uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len);
+
+	/**
+	 * Send a STOP condition to end the current I2C transaction.
+	 */
+	void I2C_0_EndSession(void);
+
+	/**
+	 * Disable the primary I2C/TWI host interface.
+	 */
+	void I2C_0_Shutdown(void);
 
 // 	void    I2C_1_Init(void);
 // 	uint8_t I2C_1_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len); // returns how many bytes have been sent, -1 means NACK at address

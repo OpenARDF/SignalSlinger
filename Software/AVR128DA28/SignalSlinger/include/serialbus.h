@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,14 @@
  *  SOFTWARE.
  */
 /*
- * serialbus.h - a simple serial inter-processor communication protocol.
+ * Simple serial inter-processor messaging helpers.
+ *
+ * This module contains support functions for:
+ * - managing UART-backed transmit and receive buffers for serial commands
+ * - queueing prompt, reply, and echo traffic
+ * - exposing parsed receive buffers to foreground code
+ *
+ * Command semantics and application-level message handling belong elsewhere.
  */
 
 #ifndef SERIALBUS_H_
@@ -133,6 +140,10 @@ extern "C"
 	 * Configure the serial bus with a baud rate and USART instance.
 	 */
 	void serialbus_init(uint32_t baud, USART_Number_t usart);
+
+	/**
+	 * Discard any unread bytes currently waiting in the active USART RX register path.
+	 */
 	void serialbus_flush_rx(void);
 
 	/**
@@ -183,6 +194,12 @@ extern "C"
 	 * Returns true while the UART is currently sending bytes.
 	 */
 	bool serialbusTxInProgress(void);
+
+	/**
+	 * Begin transmission of the next queued serial-bus message if the UART is idle.
+	 *
+	 * @return true when transmission was started, false if a transmission is already active.
+	 */
 	bool serialbus_start_tx(void);
 
 	/**
@@ -209,13 +226,37 @@ extern "C"
 	 * Echo a character back to the host terminal.
 	 */
 	void sb_echo_char(uint8_t c);
+
+	/**
+	 * Queue a single echo character from ISR context without blocking.
+	 *
+	 * @param c Character to echo.
+	 * @return true when the character was queued successfully.
+	 */
 	bool sb_echo_char_isr(uint8_t c);
+
+	/**
+	 * Pop one pending ISR-queued echo character.
+	 *
+	 * @param c Destination for the queued character.
+	 * @return true when a character was returned.
+	 */
 	bool serialbus_echo_try_get_isr(uint8_t *c);
 
 	/**
-	 * Queue a string for transmission.  Returns true if queued.
+	 * Queue a string for transmission using normal caller routing.
+	 *
+	 * @param str Null-terminated string to send.
+	 * @return true on error, false on success.
 	 */
 	bool sb_send_string(char *str);
+
+	/**
+	 * Queue a string for transmission without the non-master forwarding shortcut.
+	 *
+	 * @param str Null-terminated string to send.
+	 * @return true on error, false on success.
+	 */
 	bool sb_send_master_string(char *str);
 
 	/**

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,17 @@
  *  SOFTWARE.
  */
 
+/*
+ * Lightweight USART configuration helpers for the firmware's serial interfaces.
+ *
+ * This module contains support functions for:
+ * - initializing USART0 and USART1
+ * - enabling/disabling transmit paths
+ * - reading received bytes and testing receive readiness
+ *
+ * Higher-level protocol parsing and buffer management belong elsewhere.
+ */
+
 
 #include <compiler.h>
 #include <clock_config.h>
@@ -33,18 +44,17 @@ USART1
 ******************************************************************************************/
 
 /**
- * \brief Initialize USART interface
- * If module is configured to disabled state, the clock to the USART is disabled
- * if this is supported by the device's clock system.
+ * Initialize USART1 with the requested baud rate and optional autobaud mode.
  *
- * \return Initialization status.
- * \retval 0 the USART init was successful
- * \retval 1 the USART init was not successful
+ * @param baud Requested baud rate.
+ * @param autobaud true to enable generic autobaud receive mode.
+ * @return Initialization status code, with 0 indicating success.
  */
 int8_t USART1_init(uint32_t baud, bool autobaud)
 {
 	DISABLE_INTERRUPTS();
 	
+	/* Program the baud-rate divider before enabling the port state machine. */
 	USART1.BAUD = USART1_BAUD_RATE(baud); /* set baud rate register */
 
 	USART1.CTRLA = 0 << USART_ABEIE_bp /* Auto-baud Error Interrupt Enable: disabled */
@@ -120,11 +130,7 @@ int8_t USART1_init(uint32_t baud, bool autobaud)
 // }
 
 /**
- * \brief Enable TX in USART1
- * 1. If supported by the clock system, enables the clock to the USART
- * 2. Enables the USART module by setting the TX enable-bit in the USART control register
- *
- * \return Nothing
+ * Enable the USART1 transmitter and its data-register-empty interrupt.
  */
 void USART1_enable_tx()
 {
@@ -134,11 +140,7 @@ void USART1_enable_tx()
 }
 
 /**
- * \brief Disable USART1
- * 1. Disables the USART module by clearing the enable-bit(s) in the USART control register
- * 2. If supported by the clock system, disables the clock to the USART
- *
- * \return Nothing
+ * Disable both RX and TX on USART1.
  */
 void USART1_disable()
 {
@@ -147,9 +149,9 @@ void USART1_disable()
 }
 
 /**
- * \brief Get received data from USART1
+ * Read one received byte from USART1.
  *
- * \return Data register from USART1 module
+ * @return Byte read from the USART1 data register.
  */
 uint8_t USART1_get_data()
 {
@@ -169,11 +171,9 @@ uint8_t USART1_get_data()
 // }
 
 /**
- * \brief Check if the USART has received data
+ * Report whether USART1 has received at least one byte.
  *
- * \return The status of USART RX data ready check
- * \retval true The USART has received data
- * \retval false The USART has not received data
+ * @return true when USART1 has unread receive data available.
  */
 bool USART1_is_rx_ready()
 {
@@ -229,16 +229,15 @@ USART0
 ******************************************************************************************/
 
 /**
- * \brief Initialize USART interface
- * If module is configured to disabled state, the clock to the USART is disabled
- * if this is supported by the device's clock system.
+ * Initialize USART0 with the requested baud rate and optional autobaud mode.
  *
- * \return Initialization status.
- * \retval 0 the USART init was successful
- * \retval 1 the USART init was not successful
+ * @param baud Requested baud rate.
+ * @param autobaud true to enable generic autobaud receive mode.
+ * @return Initialization status code, with 0 indicating success.
  */
 int8_t USART0_init(uint32_t baud, bool autobaud)
 {
+	/* Program the baud-rate divider before enabling the port state machine. */
 	USART0.BAUD = (uint16_t)USART0_BAUD_RATE(baud); /* set baud rate register */
 
 	USART0.CTRLA = 0 << USART_ABEIE_bp /* Auto-baud Error Interrupt Enable: disabled */
@@ -309,11 +308,7 @@ int8_t USART0_init(uint32_t baud, bool autobaud)
 // }
 
 /**
- * \brief Enable TX in USART0
- * 1. If supported by the clock system, enables the clock to the USART
- * 2. Enables the USART module by setting the TX enable-bit in the USART control register
- *
- * \return Nothing
+ * Enable the USART0 transmitter and its data-register-empty interrupt.
  */
 void USART0_enable_tx()
 {
@@ -323,11 +318,7 @@ void USART0_enable_tx()
 }
 
 /**
- * \brief Disable USART0
- * 1. Disables the USART module by clearing the enable-bit(s) in the USART control register
- * 2. If supported by the clock system, disables the clock to the USART
- *
- * \return Nothing
+ * Disable both RX and TX on USART0.
  */
 void USART0_disable()
 {
@@ -336,9 +327,9 @@ void USART0_disable()
 }
 
 /**
- * \brief Get recieved data from USART0
+ * Read one received byte from USART0.
  *
- * \return Data register from USART0 module
+ * @return Byte read from the USART0 data register.
  */
 uint8_t USART0_get_data()
 {
@@ -358,11 +349,9 @@ uint8_t USART0_get_data()
 // }
 
 /**
- * \brief Check if the USART has received data
+ * Report whether USART0 has received at least one byte.
  *
- * \return The status of USART RX data ready check
- * \retval true The USART has received data
- * \retval false The USART has not received data
+ * @return true when USART0 has unread receive data available.
  */
 bool USART0_is_rx_ready()
 {

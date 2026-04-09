@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,15 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-/* serialbus.c
+/*
+ * Simple serial inter-processor messaging helpers.
  *
+ * This module contains support functions for:
+ * - managing UART-backed transmit and receive buffers for serial commands
+ * - queueing prompt, reply, and echo traffic
+ * - exposing parsed receive buffers to foreground code
+ *
+ * Command semantics and application-level message handling belong elsewhere.
  */
 
 #include "defs.h"
@@ -52,10 +59,26 @@ static volatile uint8_t g_isr_echo_tail = 0;
 static volatile char g_isr_echo_fifo[SERIALBUS_ISR_ECHO_FIFO_SIZE];
 
 /* Local function prototypes */
+/**
+ * Begin transmission of the next queued serial-bus message if the UART is idle.
+ *
+ * @return true when transmission was started, false if a transmission is already active.
+ */
 bool serialbus_start_tx(void);
+
+/**
+ * Queue a null-terminated text string into the transmit-buffer pool.
+ *
+ * @param text Null-terminated string to enqueue.
+ * @return true on error, false on success.
+ */
 bool serialbus_send_text(char *text);
 static void USART1_initialization(uint32_t baud);
 static void USART0_initialization(uint32_t baud);
+
+/**
+ * Reset the ISR-side echo FIFO.
+ */
 static inline void serialbus_echo_fifo_reset(void)
 {
 	g_isr_echo_head = 0;
@@ -69,6 +92,14 @@ static volatile SerialbusRxBuffer rx_buffer[SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS];
 
 typedef bool (*buffer_index_match_t)(uint8_t index);
 
+/**
+ * Scan a circular index until a matching buffer slot is found.
+ *
+ * @param bufferIndex Starting index, updated in place to the matching slot.
+ * @param bufferCount Number of buffers in the ring.
+ * @param matches Predicate that identifies an acceptable slot.
+ * @return true when a matching slot is found.
+ */
 static bool find_matching_buffer_index(uint8_t *bufferIndex, uint8_t bufferCount, buffer_index_match_t matches)
 {
 	uint8_t count = 0;
@@ -90,21 +121,33 @@ static bool find_matching_buffer_index(uint8_t *bufferIndex, uint8_t bufferCount
 	return true;
 }
 
+/**
+ * Test whether a transmit buffer currently holds queued data.
+ */
 static bool tx_buffer_is_full(uint8_t index)
 {
 	return tx_buffer[index][0] != '\0';
 }
 
+/**
+ * Test whether a transmit buffer slot is empty.
+ */
 static bool tx_buffer_is_empty(uint8_t index)
 {
 	return tx_buffer[index][0] == '\0';
 }
 
+/**
+ * Test whether a receive buffer currently holds a parsed message.
+ */
 static bool rx_buffer_is_full(uint8_t index)
 {
 	return rx_buffer[index].id != SB_MESSAGE_EMPTY;
 }
 
+/**
+ * Test whether a receive buffer slot is empty.
+ */
 static bool rx_buffer_is_empty(uint8_t index)
 {
 	return rx_buffer[index].id == SB_MESSAGE_EMPTY;
@@ -230,6 +273,11 @@ void serialbus_end_tx(void)
 }
 
 /* configure the pins and initialize the registers */
+/**
+ * Configure the USART1 pins and initialize the USART peripheral.
+ *
+ * @param baud Requested baud rate.
+ */
 void USART1_initialization(uint32_t baud)
 {
 	// Set Rx pin direction to input
@@ -244,6 +292,11 @@ void USART1_initialization(uint32_t baud)
 }
 
 /* configure the pins and initialize the registers */
+/**
+ * Configure the USART0 pins and initialize the USART peripheral.
+ *
+ * @param baud Requested baud rate.
+ */
 void USART0_initialization(uint32_t baud)
 {
 	// Set Rx pin direction to input
@@ -257,6 +310,12 @@ void USART0_initialization(uint32_t baud)
 	USART0_init(baud, false);
 }
 
+/**
+ * Configure the serial bus with a baud rate and USART instance.
+ *
+ * @param baud Requested baud rate.
+ * @param usart USART instance selection.
+ */
 void serialbus_init(uint32_t baud, USART_Number_t usart)
 {
 	memset((void *)rx_buffer, 0, sizeof(rx_buffer));
@@ -287,6 +346,9 @@ void serialbus_init(uint32_t baud, USART_Number_t usart)
 	serialbus_flush_rx();
 }
 
+/**
+ * Discard any unread bytes currently waiting in the active USART RX register path.
+ */
 void serialbus_flush_rx(void)
 {
 	if(g_serialbus_disabled)
@@ -306,6 +368,9 @@ void serialbus_flush_rx(void)
 	return;
 }
 
+/**
+ * Immediately disable the serial bus and clear queued RX/TX state.
+ */
 void serialbus_disable(void)
 {
 	uint8_t bufferIndex;
@@ -453,6 +518,12 @@ bool sb_echo_char_isr(uint8_t c)
 	return true;
 }
 
+/**
+ * Pop one pending ISR-queued echo character.
+ *
+ * @param c Destination for the queued character.
+ * @return true when a character was returned.
+ */
 bool serialbus_echo_try_get_isr(uint8_t *c)
 {
 	if(!c)
@@ -465,6 +536,12 @@ bool serialbus_echo_try_get_isr(uint8_t *c)
 	return true;
 }
 
+/**
+ * Queue a string for transmission using normal caller routing.
+ *
+ * @param str Null-terminated string to send.
+ * @return true on error, false on success.
+ */
 bool sb_send_string(char *str)
 {
 	if(g_isMaster)
@@ -473,6 +550,15 @@ bool sb_send_string(char *str)
 	return sb_send_master_string(str);
 }
 
+/**
+ * Queue a string for transmission without the non-master forwarding shortcut.
+ *
+ * The string is chunked into serial-bus-sized packets and each packet waits for
+ * transmit completion before the next chunk is queued.
+ *
+ * @param str Null-terminated string to send.
+ * @return true on error, false on success.
+ */
 bool sb_send_master_string(char *str)
 {
 	char buf[SERIALBUS_MAX_TX_MSG_LENGTH + 1];
@@ -525,6 +611,12 @@ bool sb_send_master_string(char *str)
 	return (err);
 }
 
+/**
+ * Send an ASCII label followed by a numeric value.
+ *
+ * @param value Numeric value to send.
+ * @param label ASCII label to prefix before the value.
+ */
 void sb_send_value(uint16_t value, char *label)
 {
 	bool err;
@@ -555,6 +647,11 @@ void sb_send_value(uint16_t value, char *label)
 	}
 }
 
+/**
+ * Report whether the serial bus has been initialized and enabled.
+ *
+ * @return true when the serial bus is enabled.
+ */
 bool sb_enabled(void)
 {
 	return (!g_serialbus_disabled);

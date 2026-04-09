@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * RF transmitter control helpers.
  *
+ * This module contains support functions for:
+ * - initializing and restarting the Si5351-backed transmit clock path
+ * - enabling or disabling RF-related power rails and support hardware
+ * - keying, unkeying, and retuning the transmitter
  *
- * transmitter.h
- *
+ * Event scheduling and higher-level transmit policy belong elsewhere.
  */
 
 
@@ -69,7 +76,11 @@ typedef int16_t Attenuation;
  bool txIsInitialized(void);
 
 /**
- * Set the VFO to a new frequency.  The clock can optionally remain disabled.
+ * Program a new transmit frequency into the active clock generator.
+ *
+ * @param freq Pointer to the desired transmit frequency in Hertz.
+ * @param leaveClockOff true to leave the programmed clock disabled after retuning.
+ * @return true on error, false on success.
  */
 bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
@@ -85,22 +96,31 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
 
 /**
  * Key or unkey the transmitter output stage.
+ *
+ * @param on true to key the transmitter, false to unkey it.
+ * @return true when the transmitter ends in the keyed state.
  */
 bool keyTransmitter(bool on);
 
 /**
  * Apply or remove power from the transmitter hardware.
- * Returns true when the requested state is reached.
+ *
+ * @param on true to power the transmitter path, false to shut it down.
+ * @return true when the requested state is reached successfully.
  */
 bool powerToTransmitter(bool on);
 
 /**
  * Globally enable or disable any RF transmissions.
+ *
+ * @param disabled true to block transmissions and power down the RF path.
  */
 void setDisableTransmissions(bool disabled);
 
 /**
  * Query whether transmissions are currently disabled.
+ *
+ * @return true when RF transmissions are globally disabled.
  */
 bool getDisableTransmissions(void);
 
