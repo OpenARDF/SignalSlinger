@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,17 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *
- * timeutil.h
- *
+ */
+
+/*
  * Time parsing and formatting helpers shared across the firmware.
  *
+ * This module contains support functions for:
+ * - converting between firmware timestamps, epoch values, and `tm` fields
+ * - normalizing partially specified date/time strings
+ * - formatting times for display and command handling
+ *
+ * RTC access and system-time ownership belong elsewhere.
  */
 
 #ifndef TIMEUTIL_H_
@@ -34,44 +41,57 @@
 #include <time.h>
 
 /**
- * Convert a time string of the form "yyyy-mm-ddThh:mm:ss" to seconds since 1900.
+ * Convert an ISO-like timestamp string to the module's epoch representation.
+ *
+ * The input is parsed using `mystrptime()`, which accepts
+ * "yyyy-mm-ddThh:mm:ss" and the same form with a trailing `Z`.
  *
  * @param s Pointer to a null-terminated string containing the timestamp.
- * @return Seconds elapsed since 1 January 1900.
+ * @return Parsed epoch value, or 0 if the string cannot be parsed.
  */
 uint32_t convertTimeStringToEpoch(char *s);
 
+/**
+ * Format an epoch value as "ddd dd-mon-yyyy hh:mm:ss".
+ *
+ * The helper preserves the historical epoch convention used by this firmware,
+ * including the adjustment applied to values stored relative to 1900.
+ *
+ * @param epoch Epoch value to format.
+ * @param buf Destination buffer for the formatted string.
+ * @param size Capacity of `buf` in bytes.
+ * @return Pointer to `buf`.
+ */
 char *convertEpochToTimeString(time_t epoch, char *buf, size_t size);
 
+/**
+ * Convert a compact "YYMMDDhhmmss" timestamp string to an epoch value.
+ *
+ * @param error Optional output flag set to true when conversion fails.
+ * @param datetime Timestamp string in compact firmware format.
+ * @return Parsed epoch value, or 0 on failure.
+ */
 time_t String2Epoch(bool *error, char *datetime);
 
 /**
- * @brief Completes or offsets a timestamp and returns a 12-character time string.
+ * Complete or offset a timestamp and return normalized "YYMMDDhhmmss" text.
  *
- * This function accepts either:
- *  - A partial timestamp string (up to 10 characters) representing YYMMDDhhmm,
- *    in which case missing leading fields are filled using the current local time.
+ * Depending on the input, the function can:
+ * - accept an already complete 12-digit compact timestamp
+ * - expand shorter digit-only partial timestamps using the current local date/time
+ * - apply signed time offsets such as "+0530", "+1:30", "+5h", or "-2d"
  *
- *  - An offset string beginning with '+', such as "+5h", "+0500", "+2d", "+7m",
- *    "+1M", or "+1y". These are interpreted as offsets from the current local
- *    time in hours, minutes, days, months, or years. Multi-digit "+HHMM" format
- *    (e.g., "+0530") is interpreted as +5 hours 30 minutes.
- *
- * The returned timestamp always consists of 12 characters in the form:
- *
- *        YYMMDDhhmmSS
- *
- * with seconds (SS) always set to "00". The caller must supply `buf`, which
- * must be large enough to hold at least 13 bytes (12 characters + null terminator).
- *
- * @param partialString  A partial YYMMDDhhmm string, or an offset string.
- *
- * @return A pointer to the completed 12-character timestamp stored in `buf`.
+ * @param partialString Partial compact timestamp or signed offset string.
+ * @param currentEpoch Optional current time override used as the reference clock.
+ * @return Pointer to a static normalized timestamp buffer, or `null` on error.
  */
 char *completeTimeString(const char *partialString, time_t *currentEpoch);
 
 /**
- * Parse a timestamp string formatted as "yyyy-mm-ddThh:mm:ssZ" into a tm structure.
+ * Parse an ISO-like timestamp string into a `tm` structure.
+ *
+ * The accepted form is "yyyy-mm-ddThh:mm:ss" with an optional trailing `Z`.
+ * A shortened "yyyy-mm-ddThh:mm" form is also accepted.
  *
  * @param s   Pointer to the input string (with optional trailing 'Z').
  * @param ltm Pointer to a tm structure to populate.

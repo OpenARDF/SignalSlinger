@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,17 @@
  *  SOFTWARE.
  */
 
+/*
+ * Time parsing and formatting helpers shared across the firmware.
+ *
+ * This module contains support functions for:
+ * - converting between firmware timestamps, epoch values, and `tm` fields
+ * - normalizing partially specified date/time strings
+ * - formatting times for display and command handling
+ *
+ * RTC access and system-time ownership belong elsewhere.
+ */
+
 #include "util.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -35,7 +46,15 @@ static uint8_t bcd2dec(uint8_t val);
 static time_t epoch_from_ltm(tm *ltm);
 
 /**
- * Returns parsed time structure from a string of format "yyyy-mm-ddThh:mm:ssZ"
+ * Parse an ISO-like timestamp string into a `tm` structure.
+ *
+ * The accepted form is "yyyy-mm-ddThh:mm:ss" with an optional trailing `Z`.
+ * A shortened "yyyy-mm-ddThh:mm" form is also accepted. The function fills the
+ * `tm` fields needed by the rest of this module, including `tm_yday`.
+ *
+ * @param s Pointer to the input string to parse.
+ * @param ltm Destination `tm` structure.
+ * @return true on parse or range error, false on success.
  */
 bool mystrptime(char *s, struct tm *ltm)
 {
@@ -48,6 +67,7 @@ bool mystrptime(char *s, struct tm *ltm)
 	char *ptr1;
 	bool noSeconds = false;
 
+	/* Work on a bounded local copy because the parser inserts temporary terminators. */
 	strncpy(str, s, 21); // "yyyy-mm-ddThh:mm:ssZ\0" <- maximum length null-terminated string
 
 	ptr1 = strchr(str, 'Z');
@@ -140,12 +160,17 @@ bool mystrptime(char *s, struct tm *ltm)
 	return false;
 }
 
-/*
- * Converts an epoch time (seconds since 1900) to a human-readable string with format "ddd dd-mon-yyyy hh:mm:ss zzz"
- * @param epoch - the epoch time to convert
- * @param buf - a buffer to store the resulting string
- * @param size - size of the buffer
- * @return pointer to the formatted time string
+/**
+ * Format an epoch value as "ddd dd-mon-yyyy hh:mm:ss".
+ *
+ * This module stores times using a historical 1900-based convention in some
+ * paths. Values at or above the 30-year offset are adjusted before calling the
+ * C library so the resulting text matches the firmware's expected calendar date.
+ *
+ * @param epoch Epoch value to format.
+ * @param buf Destination buffer for the formatted string.
+ * @param size Capacity of `buf` in bytes.
+ * @return Pointer to `buf`.
  */
 #define THIRTY_YEARS 946684800
 char *convertEpochToTimeString(time_t epoch, char *buf, size_t size)
@@ -158,15 +183,18 @@ char *convertEpochToTimeString(time_t epoch, char *buf, size_t size)
 		t = epoch - THIRTY_YEARS;
 	}
 
-	// Format time, "ddd dd-mon-yyyy hh:mm:ss zzz"
+	/* Format local time without a timezone suffix because command paths do not use one. */
 	ts = *localtime(&t);
 	strftime(buf, size, "%a %d-%b-%Y %H:%M:%S", &ts);
 	return buf;
 }
 
-// ==========================
-// Helper: month abbreviation
-// ==========================
+/**
+ * Convert a three-letter month abbreviation into a 1-based month number.
+ *
+ * @param mon Month abbreviation such as "Jan".
+ * @return Month number in the range 1..12, or 0 if the text is unrecognized.
+ */
 static int parseMonth(const char *mon)
 {
 	static const char *months[] =
@@ -181,9 +209,19 @@ static int parseMonth(const char *mon)
 	return 0;
 }
 
-// ======================================
-// Helper: parse convertEpochToTimeString
-// ======================================
+/**
+ * Extract compact numeric date/time fields from `convertEpochToTimeString()` output.
+ *
+ * The expected input format is "ddd dd-mon-yyyy hh:mm:ss".
+ *
+ * @param tbuf Formatted time string to decode.
+ * @param yy Destination for the two-digit year.
+ * @param mon Destination for the 1-based month.
+ * @param dd Destination for the day of month.
+ * @param hh Destination for hours.
+ * @param mm Destination for minutes.
+ * @param ss Destination for seconds.
+ */
 static void parseTimeFields(const char *tbuf,
                             int *yy, int *mon, int *dd,
                             int *hh, int *mm, int *ss)
@@ -208,9 +246,17 @@ static void parseTimeFields(const char *tbuf,
 	*ss = (tbuf[22] - '0') * 10 + (tbuf[23] - '0');
 }
 
-// ========================================
-// Helper: produce 12-char YYMMDDhhmmss
-// ========================================
+/**
+ * Write a compact timestamp in firmware "YYMMDDhhmmss" form.
+ *
+ * @param buf Destination buffer with room for 13 bytes.
+ * @param yy Two-digit year.
+ * @param mon 1-based month.
+ * @param dd Day of month.
+ * @param hh Hour.
+ * @param mm Minute.
+ * @param ss Second.
+ */
 static void formatTimestamp(char *buf,
                             int yy, int mon, int dd,
                             int hh, int mm, int ss)
@@ -219,9 +265,21 @@ static void formatTimestamp(char *buf,
 	         yy, mon, dd, hh, mm, ss);
 }
 
-// =====================================================
-// MAIN FUNCTION - Complete, Refactored, With New Rules
-// =====================================================
+/**
+ * Complete or offset a timestamp and return normalized "YYMMDDhhmmss" text.
+ *
+ * Depending on the input, the function can:
+ * - accept an already complete 12-digit compact timestamp
+ * - expand shorter digit-only partial timestamps using the current local date/time
+ * - apply signed time offsets such as "+0530", "+1:30", "+5h", or "-2d"
+ *
+ * The return value points to a static internal buffer, so each call overwrites
+ * the result of the previous one.
+ *
+ * @param partialString Partial compact timestamp or signed offset string.
+ * @param currentEpoch Optional current time override used as the reference clock.
+ * @return Pointer to a static normalized timestamp buffer, or `null` on error.
+ */
 char *completeTimeString(const char *partialString, time_t *currentEpoch)
 {
 	static char buf[13];
@@ -230,7 +288,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 	if(!partialString)
 		return null;
 
-	// --- validate clock ---
+	/* Use the supplied epoch when valid; otherwise fall back to the local runtime clock. */
 	time_t epoch = time(null); // Use clock time by default
 
 	if(currentEpoch)
@@ -244,7 +302,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 	if(epoch < MINIMUM_VALID_EPOCH)
 		return null;
 
-	// --- extract now fields ---
+	/* Start from the current local calendar components so partial strings can fill them in. */
 	char tbuf[40];
 	convertEpochToTimeString(epoch, tbuf, sizeof(tbuf));
 
@@ -253,14 +311,9 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 
 	size_t n = strlen(partialString);
 
-	// ============================
-	// OFFSET MODE
-	// ============================
 	if(currentEpoch)
 	{
-		// ============================
-		// OFFSET MODE: + / - (h, m, d)
-		// ============================
+		/* Signed offset inputs are only accepted when the caller provides a reference epoch. */
 		if(partialString[0] == '+' || partialString[0] == '-')
 		{
 			int sign = (partialString[0] == '+') ? 1 : -1;
@@ -269,7 +322,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			time_t newEpoch = epoch;
 			const char *colon = strchr(p, ':');
 
-			// ---- Case: +/-HHMM  (4 digits) ----
+			/* Support four-digit offsets like +0130 for one hour and thirty minutes. */
 			if(isdigit(p[0]) && isdigit(p[1]) &&
 			   isdigit(p[2]) && isdigit(p[3]) && p[4] == '\0')
 			{
@@ -323,8 +376,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 			}
 			else
 			{
-				// ---- Case: +/-N(unit) ----
-				// Where unit = h/H (hours), m/M (minutes), d/D (days)
+				/* Support compact unit-suffixed offsets such as +5h, -30m, and +2d. */
 				while(*p && isdigit(*p))
 					p++;
 
@@ -348,16 +400,16 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 						break;
 
 					default:
-						// Unknown unit ? do nothing
+						/* Unknown units intentionally leave the epoch unchanged. */
 						break;
 				}
 			}
 
-			// ---- Recompute resulting timestamp ----
+			/* Convert the adjusted epoch back to compact text using the same formatter path. */
 			convertEpochToTimeString(newEpoch, tbuf, sizeof(tbuf));
 			parseTimeFields(tbuf, &yy, &mon, &dd, &hh, &mm, &ss);
 
-			// Seconds always "00" for offsets
+			/* Offset-based commands normalize seconds to zero. */
 			formatTimestamp(buf, yy, mon, dd, hh, mm, 0);
 
 			return buf;
@@ -376,9 +428,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 	int IJ = (partialString[8] - '0') * 10 + (partialString[9] - '0');
 	int KL = (partialString[10] - '0') * 10 + (partialString[11] - '0');
 
-	// ============================
-	// 12 char ? copy as-is
-	// ============================
+	/* A fully specified compact timestamp can pass through after basic field validation. */
 	if(n == 12)
 	{
 		if(((AB >= 25) && (AB <= 99)) && ((CD >= 1) && (CD <= 12)) && ((EF >= 1) && (EF <= 31)) && (GH < 24) && (IJ < 60) && (KL < 60)) // A valid year (until 2100) and month
@@ -391,15 +441,13 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 		return null;
 	}
 
-	// =====================================================
-	// NEW RULE: 6-character (ABxxxx) DAY/HOUR priority
-	// =====================================================
+	/* Six-digit partial timestamps are disambiguated between hhmmss and ddhhmm. */
 	if(n == 6)
 	{
 		if(EF > 59)
 			return null;
 
-		// If hour is in the future, assume hhmmss
+		/* Favor hhmmss when the leading hour has not yet passed today. */
 		if(AB >= hh)
 		{
 			if((AB < 24) && (CD < 60))
@@ -421,10 +469,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 		return null; // Otherwise, it is an error
 	}
 
-	// =====================================================
-	// NEW RULE: 8-character partial (AB CD EF GH)
-	// day overrides month
-	// =====================================================
+	/* Eight-digit partial timestamps prefer ddhhmmss over mmddhhmm when both fit. */
 	if(n == 8)
 	{
 		if(GH > 59)
@@ -433,7 +478,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 		bool matchMonth = (AB != mon);
 		bool matchDay = (AB >= dd);
 
-		// If both ? day wins: assume ddhhmmss
+		/* If both interpretations fit, treat the first pair as day-of-month. */
 		if(matchDay)
 		{
 			if(((AB >= 1) && (AB <= 31)) && (CD < 24) && (EF < 60))
@@ -455,10 +500,7 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 		return null;
 	}
 
-	// =====================================================
-	// NEW RULE: 10-character partial
-	// month overrides year if both match prefix
-	// =====================================================
+	/* Ten-digit partial timestamps choose between yymmddhhmm and mmddhhmmss. */
 	if(n == 10)
 	{
 		if(IJ > 59) // If invalid minutes or seconds
@@ -495,11 +537,12 @@ char *completeTimeString(const char *partialString, time_t *currentEpoch)
 	return null;
 }
 
-/*
- * Converts a datetime string into an epoch value
- * @param error - pointer to an error flag, set to 1 if an error occurs
- * @param datetime - character string in the format "YYMMDDhhmmss"
- * @return epoch value representing the given date and time, or current RTC time if datetime is null
+/**
+ * Convert a compact "YYMMDDhhmmss" timestamp string to an epoch value.
+ *
+ * @param error Optional output flag set to true when conversion fails.
+ * @param datetime Timestamp string in compact firmware format.
+ * @return Parsed epoch value, or 0 on failure.
  */
 time_t String2Epoch(bool *error, char *datetime)
 {
@@ -516,6 +559,7 @@ time_t String2Epoch(bool *error, char *datetime)
 
 	if(datetime) /* String format "YYMMDDhhmmss" */
 	{
+		/* Convert each two-digit field through BCD because the RTC-facing utilities use that form. */
 		data[0] = char2bcd(&datetime[10]); /* seconds in BCD */
 		data[1] = char2bcd(&datetime[8]);  /* minutes in BCD */
 		data[2] = char2bcd(&datetime[6]);  /* hours in BCD */
@@ -564,26 +608,11 @@ time_t String2Epoch(bool *error, char *datetime)
 	return (epoch);
 }
 
-/*
- * Function: bcd2dec
- * -----------------
- * This function converts a Binary-Coded Decimal (BCD) value to a decimal value.
- * In BCD, each digit is represented by a 4-bit binary value. This function extracts
- * the tens and units portions of the BCD value and calculates the equivalent decimal value.
-
- * Parameters:
- *  - val: A uint8_t value representing a number in BCD format.
-
- * Return:
- *  - A uint8_t value representing the equivalent decimal value.
-
- * Example:
- *  If val = 0x25 (BCD for 25), the function will return 25 in decimal format.
+/**
+ * Convert a Binary-Coded Decimal byte to its decimal value.
  *
- * Conversion Steps:
- *  - The tens digit is extracted by shifting the upper 4 bits to the right (val >> 4).
- *  - The units digit is extracted by taking the lower 4 bits (val & 0x0F).
- *  - The final decimal result is calculated as: (10 * tens) + units.
+ * @param val Input BCD value.
+ * @return Decimal value represented by `val`.
  */
 static uint8_t bcd2dec(uint8_t val)
 {
@@ -591,10 +620,11 @@ static uint8_t bcd2dec(uint8_t val)
 	return (result);
 }
 
-/*
- * Converts a character array to BCD format
- * @param c - a character array representing a number
- * @return the value converted to BCD
+/**
+ * Convert two ASCII digits to a packed Binary-Coded Decimal byte.
+ *
+ * @param c Pointer to the first of two digit characters.
+ * @return Packed BCD value.
  */
 static uint8_t char2bcd(char c[])
 {
@@ -602,10 +632,11 @@ static uint8_t char2bcd(char c[])
 	return (result);
 }
 
-/*
- * Converts a tm struct to an epoch time (seconds since 1970)
- * @param ltm - a pointer to a tm struct with time information
- * @return epoch value representing the given local time
+/**
+ * Convert a populated `tm` structure to an epoch value.
+ *
+ * @param ltm Pointer to the `tm` structure to convert.
+ * @return Epoch value represented by `ltm`.
  */
 static time_t epoch_from_ltm(tm *ltm)
 {
@@ -617,7 +648,13 @@ static time_t epoch_from_ltm(tm *ltm)
 }
 
 /**
- * Converts a string of format "yyyy-mm-ddThh:mm:ss" to seconds since 1900
+ * Convert an ISO-like timestamp string to the module's epoch representation.
+ *
+ * The input is parsed using `mystrptime()`, which accepts
+ * "yyyy-mm-ddThh:mm:ss" and the same form with a trailing `Z`.
+ *
+ * @param s Pointer to a null-terminated string containing the timestamp.
+ * @return Parsed epoch value, or 0 if the string cannot be parsed.
  */
 uint32_t convertTimeStringToEpoch(char *s)
 {
