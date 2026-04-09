@@ -22,6 +22,12 @@ This document captures the standard release process for the AVR128DA28 firmware 
 powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
 ```
 
+Optional: for dual-target `.hex` verification with SHA256 reporting, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\verify-firmware-hashes.ps1 -Configuration Release
+```
+
 5. Run the release preparation script:
 
 ```powershell
@@ -54,6 +60,8 @@ $env:ALL_PROXY=''
 ## Notes
 
 - `build-firmware.ps1` is the standard local build entry point for patch verification and can also be reused by other scripts.
+- `verify-firmware-hashes.ps1` builds both hardware targets, reports SHA256 hashes for the copied `.hex` files, and restores the original active hardware target afterward.
+- Use `-OutputDir` or `-KeepArtifacts` with `verify-firmware-hashes.ps1` if you want to keep the copied comparison artifacts.
 - The release-prep flow should build `Release`, not `Debug`.
 - The expected asset naming pattern is `SignalSlinger-vX.Y-3.4.hex` and `SignalSlinger-vX.Y-3.5.hex`.
 - `prepare-release.ps1` should restore the default hardware target after the dual-build process completes.
