@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,16 @@
  *  SOFTWARE.
  */
 
+/*
+ * EEPROM persistence support for firmware configuration.
+ *
+ * This module defines the EEPROM layout and the helper that synchronizes
+ * runtime configuration values between EEPROM and the shared global state.
+ *
+ * Low-level EEPROM register access lives here; higher-level event logic and
+ * hardware behavior continue to live in their own feature modules.
+ */
+
 #ifndef __EEPROMMANAGER_H__
 #define __EEPROMMANAGER_H__
 
@@ -31,6 +41,14 @@
 #include <time.h>
 #include <avr/eeprom.h>
 
+/**
+ * Declare the on-device EEPROM layout used by the firmware.
+ *
+ * The field order defines the persistent storage offsets, so the struct serves
+ * as both documentation and the canonical layout for the matching enum below.
+ * Reserved padding fields intentionally preserve space for future expansion
+ * without shifting the offsets of existing persisted values.
+ */
 struct EE_prom
 {
 	uint16_t eeprom_initialization_flag;
@@ -108,6 +126,13 @@ struct EE_prom
 	uint8_t device_enabled;
 };
 
+/**
+ * Identify EEPROM variables by byte offset within EE_prom.
+ *
+ * Each enum value is derived from offsetof(EE_prom, field) so callers can use
+ * a symbolic name when reading or writing EEPROM without manually maintaining
+ * a separate list of numeric offsets.
+ */
 typedef enum
 {
 #define EEPROM_OFFSET(field) offsetof(EE_prom, field)
@@ -187,6 +212,12 @@ typedef enum
 #undef EEPROM_OFFSET
 } EE_var_t;
 
+/**
+ * Load, initialize, and save the firmware's persisted configuration values.
+ *
+ * The manager bridges between the EEPROM layout above and the runtime globals
+ * used by the rest of the firmware.
+ */
 class EepromManager
 {
 	/*variables */
@@ -197,11 +228,49 @@ class EepromManager
   public:
 	EepromManager() {}
 
+	/* Default EEPROM image used to define the stored layout and erased defaults. */
 	static const struct EE_prom ee_vars;
 
+	/**
+	 * Initialize EEPROM and globals with firmware defaults when storage is blank.
+	 *
+	 * The function checks the stored initialization flag and, when it is absent,
+	 * writes the current firmware defaults to EEPROM and mirrors them into the
+	 * runtime globals.
+	 *
+	 * @return true if EEPROM was freshly initialized, false if it was already valid.
+	 */
 	bool initializeEEPROMVars(void);
+
+	/**
+	 * Load persisted configuration values from EEPROM into runtime globals.
+	 *
+	 * The function validates the EEPROM initialization flag before loading values.
+	 * A false return indicates success; a true return means the EEPROM contents
+	 * should be treated as unavailable or uninitialized.
+	 *
+	 * @return true on failure or uninitialized EEPROM, false on success.
+	 */
 	bool readNonVols(void);
+
+	/**
+	 * Write one persisted value to EEPROM using the correct storage width.
+	 *
+	 * The caller supplies an EE_var_t offset along with a pointer to the source
+	 * value. The function dispatches to the matching byte, word, dword, float,
+	 * or string write helper based on the selected variable.
+	 *
+	 * @param v   EEPROM variable identifier to update.
+	 * @param val Pointer to the new value to store.
+	 */
 	void updateEEPROMVar(EE_var_t v, void *val);
+
+	/**
+	 * Save all persisted runtime globals back to EEPROM.
+	 *
+	 * Each field is written through updateEEPROMVar(), which allows the lower
+	 * helpers to skip EEPROM writes when the stored value is already current.
+	 */
 	void saveAllEEPROM();
 
   protected:

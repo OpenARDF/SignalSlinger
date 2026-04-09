@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,17 @@
  *  SOFTWARE.
  */
 
+/*
+ * EEPROM persistence support for firmware configuration.
+ *
+ * This module owns the concrete EEPROM image, the low-level typed read/write
+ * helpers, and the routines that load defaults from firmware constants or
+ * restore persisted values into runtime globals.
+ *
+ * It should contain storage and synchronization logic, not higher-level event
+ * scheduling or radio behavior.
+ */
+
 #include "defs.h"
 #include "eeprommanager.h"
 #include "serialbus.h"
@@ -32,14 +43,7 @@
 #include <avr/pgmspace.h>
 #include <string.h>
 
-/***********************************************************************
- * Global Variables & String Constants
- *
- * Identify each global with a "g_" prefix
- * Whenever possible limit globals' scope to this file using "static"
- * Use "volatile" for globals shared between ISRs and foreground loop
- ************************************************************************/
-
+/* Canonical EEPROM image used both for layout definition and default contents. */
 const struct EE_prom EEMEM EepromManager::ee_vars =
     {
         0x00,                                         // 	uint16_t eeprom_initialization_flag;
@@ -119,7 +123,15 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 
 typedef uint16_t eeprom_addr_t;
 
-// to write
+/**
+ * Write one byte to EEPROM through the AVR mapped EEPROM window.
+ *
+ * The helper waits for any prior EEPROM operation to finish, enables erase and
+ * write for the next access, performs the store, and then clears the command.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param in    Value to store.
+ */
 void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in)
 {
 	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
@@ -129,6 +141,12 @@ void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in)
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
+/**
+ * Write a 16-bit value to EEPROM through the AVR mapped EEPROM window.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param in    Value to store.
+ */
 void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in)
 {
 	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
@@ -138,6 +156,12 @@ void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in)
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
+/**
+ * Write a 32-bit value to EEPROM through the AVR mapped EEPROM window.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param in    Value to store.
+ */
 void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in)
 {
 	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
@@ -147,6 +171,12 @@ void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in)
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
+/**
+ * Write a float value to EEPROM through the AVR mapped EEPROM window.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param in    Value to store.
+ */
 void avr_eeprom_write_float(eeprom_addr_t index, float in)
 {
 	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
@@ -156,26 +186,58 @@ void avr_eeprom_write_float(eeprom_addr_t index, float in)
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
 }
 
+/**
+ * Read one byte from EEPROM at the supplied offset.
+ *
+ * @param index Byte offset into EEPROM.
+ * @return Stored byte value.
+ */
 static uint8_t avr_eeprom_read_byte_at(eeprom_addr_t index)
 {
 	return eeprom_read_byte((const uint8_t *)(eeprom_addr_t)index);
 }
 
+/**
+ * Read a 16-bit value from EEPROM at the supplied offset.
+ *
+ * @param index Byte offset into EEPROM.
+ * @return Stored 16-bit value.
+ */
 static uint16_t avr_eeprom_read_word_at(eeprom_addr_t index)
 {
 	return eeprom_read_word((const uint16_t *)(eeprom_addr_t)index);
 }
 
+/**
+ * Read a 32-bit value from EEPROM at the supplied offset.
+ *
+ * @param index Byte offset into EEPROM.
+ * @return Stored 32-bit value.
+ */
 static uint32_t avr_eeprom_read_dword_at(eeprom_addr_t index)
 {
 	return eeprom_read_dword((const uint32_t *)(eeprom_addr_t)index);
 }
 
+/**
+ * Read a float value from EEPROM at the supplied offset.
+ *
+ * @param index Byte offset into EEPROM.
+ * @return Stored floating-point value.
+ */
 static float avr_eeprom_read_float_at(eeprom_addr_t index)
 {
 	return eeprom_read_float((const float *)(eeprom_addr_t)index);
 }
 
+/**
+ * Write a byte only when the stored EEPROM value differs.
+ *
+ * Skipping unchanged writes reduces EEPROM wear during routine saves.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param value New byte value to store.
+ */
 static void avr_eeprom_write_byte_if_changed(eeprom_addr_t index, uint8_t value)
 {
 	if(value != avr_eeprom_read_byte_at(index))
@@ -184,6 +246,12 @@ static void avr_eeprom_write_byte_if_changed(eeprom_addr_t index, uint8_t value)
 	}
 }
 
+/**
+ * Write a 16-bit value only when the stored EEPROM value differs.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param value New 16-bit value to store.
+ */
 static void avr_eeprom_write_word_if_changed(eeprom_addr_t index, uint16_t value)
 {
 	if(value != avr_eeprom_read_word_at(index))
@@ -192,6 +260,12 @@ static void avr_eeprom_write_word_if_changed(eeprom_addr_t index, uint16_t value
 	}
 }
 
+/**
+ * Write a 32-bit value only when the stored EEPROM value differs.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param value New 32-bit value to store.
+ */
 static void avr_eeprom_write_dword_if_changed(eeprom_addr_t index, uint32_t value)
 {
 	if(value != avr_eeprom_read_dword_at(index))
@@ -200,6 +274,12 @@ static void avr_eeprom_write_dword_if_changed(eeprom_addr_t index, uint32_t valu
 	}
 }
 
+/**
+ * Write a float value only when the stored EEPROM value differs.
+ *
+ * @param index Byte offset into EEPROM.
+ * @param value New floating-point value to store.
+ */
 static void avr_eeprom_write_float_if_changed(eeprom_addr_t index, float value)
 {
 	if(value != avr_eeprom_read_float_at(index))
@@ -208,6 +288,17 @@ static void avr_eeprom_write_float_if_changed(eeprom_addr_t index, float value)
 	}
 }
 
+/**
+ * Write a bounded C string to EEPROM only where bytes differ.
+ *
+ * Characters are written until a null terminator or max_length is reached. The
+ * helper also ensures the stored string is explicitly null-terminated when the
+ * new value becomes shorter than the previous contents.
+ *
+ * @param index Byte offset of the first character in EEPROM.
+ * @param value Null-terminated string to store.
+ * @param max_length Maximum number of non-terminator characters to write.
+ */
 static void avr_eeprom_write_string_if_changed(eeprom_addr_t index, const char *value, uint8_t max_length)
 {
 	eeprom_addr_t current_index = index;
@@ -225,12 +316,24 @@ static void avr_eeprom_write_string_if_changed(eeprom_addr_t index, const char *
 		++current_index;
 	}
 
+	/* Trim any leftover stored suffix when the new string ends earlier. */
 	if(avr_eeprom_read_byte_at(current_index))
 	{
 		avr_eeprom_write_byte(current_index, 0);
 	}
 }
 
+/**
+ * Read a bounded EEPROM string into a RAM buffer.
+ *
+ * EEPROM bytes containing 0xFF are treated as erased and converted to a normal
+ * null terminator so callers do not inherit unterminated garbage text.
+ *
+ * @param dst Destination buffer in RAM.
+ * @param dst_size Size of the destination buffer in bytes.
+ * @param index Byte offset of the first stored character in EEPROM.
+ * @param max_length Maximum number of non-terminator characters to read.
+ */
 static void avr_eeprom_read_string(char *dst, size_t dst_size, eeprom_addr_t index, uint8_t max_length)
 {
 	if(!dst || !dst_size)
@@ -242,6 +345,7 @@ static void avr_eeprom_read_string(char *dst, size_t dst_size, eeprom_addr_t ind
 	for(size_t i = 0; i < limit; i++)
 	{
 		char c = (char)avr_eeprom_read_byte_at(index + (eeprom_addr_t)i);
+		/* Treat erased EEPROM bytes as end-of-string instead of exposing 0xFF. */
 		if((uint8_t)c == 0xFF)
 		{
 			c = '\0';
@@ -257,6 +361,16 @@ static void avr_eeprom_read_string(char *dst, size_t dst_size, eeprom_addr_t ind
 	dst[limit] = '\0';
 }
 
+/**
+ * Write an initial C string to EEPROM without first comparing existing bytes.
+ *
+ * This helper is used during first-time EEPROM initialization, when the module
+ * is intentionally populating blank storage with firmware defaults.
+ *
+ * @param index Byte offset of the first character in EEPROM.
+ * @param value Null-terminated string to store.
+ * @param max_length Maximum number of non-terminator characters to write.
+ */
 static void avr_eeprom_initialize_string(eeprom_addr_t index, const char *value, uint8_t max_length)
 {
 	uint8_t count = 0;
@@ -270,6 +384,12 @@ static void avr_eeprom_initialize_string(eeprom_addr_t index, const char *value,
 	avr_eeprom_write_byte(index + count, '\0');
 }
 
+/**
+ * Fill a contiguous EEPROM range with zero bytes.
+ *
+ * @param index Byte offset of the first byte to clear.
+ * @param length Number of bytes to clear.
+ */
 static void avr_eeprom_write_zero_bytes(eeprom_addr_t index, uint8_t length)
 {
 	for(uint8_t i = 0; i < length; i++)
@@ -278,11 +398,28 @@ static void avr_eeprom_write_zero_bytes(eeprom_addr_t index, uint8_t length)
 	}
 }
 
+/**
+ * Read a Fox_t value from EEPROM and clamp it to a valid event-specific range.
+ *
+ * @param index EEPROM offset containing the stored fox value.
+ * @param max_value Highest valid fox value for the current event mode.
+ * @return Clamped fox selection.
+ */
 static Fox_t avr_eeprom_read_clamped_fox(eeprom_addr_t index, Fox_t max_value)
 {
 	return (Fox_t)CLAMP(BEACON, avr_eeprom_read_byte_at(index), max_value);
 }
 
+/**
+ * Persist one named runtime value to EEPROM.
+ *
+ * The enum value identifies both the EEPROM offset and the storage width, so
+ * this dispatcher selects the matching typed helper without exposing raw
+ * offsets or NVM access details to callers.
+ *
+ * @param v EEPROM variable to update.
+ * @param val Pointer to the source value.
+ */
 void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 {
 	if(!val)
@@ -346,7 +483,10 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 }
 
 /**
- * Store any changed EEPROM variables
+ * Save all persisted runtime globals back to EEPROM.
+ *
+ * Each field is routed through updateEEPROMVar(), which in turn uses the
+ * write-if-changed helpers so routine saves avoid unnecessary EEPROM wear.
  */
 void EepromManager::saveAllEEPROM(void)
 {
@@ -384,6 +524,15 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Device_Enabled, (void *)&g_device_enabled);
 }
 
+/**
+ * Load persisted configuration values from EEPROM into the runtime globals.
+ *
+ * The function succeeds only when the EEPROM initialization flag matches the
+ * expected marker. Individual values are clamped or normalized as needed before
+ * being published into the shared global state.
+ *
+ * @return true when EEPROM is uninitialized or invalid, false on success.
+ */
 bool EepromManager::readNonVols(void)
 {
 	bool failure = true;
@@ -409,6 +558,7 @@ bool EepromManager::readNonVols(void)
 		g_event_finish_epoch = avr_eeprom_read_dword_at(Event_finish_epoch);
 		g_utc_offset = (int8_t)avr_eeprom_read_byte_at(Utc_offset);
 
+		/* Stage string reads in local buffers before publishing them atomically. */
 		char pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
 		char foxoring_pattern_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
 		char station_id_text_local[MAX_PATTERN_TEXT_LENGTH + 2] = {0};
@@ -449,8 +599,14 @@ bool EepromManager::readNonVols(void)
 	return (failure);
 }
 
-/*
- * Set volatile variables to their values stored in EEPROM
+/**
+ * Populate blank EEPROM with firmware defaults and mirror them into RAM.
+ *
+ * The function runs only when the EEPROM initialization flag is missing. After
+ * writing defaults, it stores the marker so later boots can load values through
+ * readNonVols() instead of reinitializing storage.
+ *
+ * @return true if initialization work was performed, false if EEPROM was already initialized.
  */
 bool EepromManager::initializeEEPROMVars(void)
 {
@@ -459,6 +615,7 @@ bool EepromManager::initializeEEPROMVars(void)
 
 	if(initialization_flag != EEPROM_INITIALIZED_FLAG)
 	{
+		/* First-time initialization writes defaults to both RAM globals and EEPROM. */
 		g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 		avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
 
@@ -563,8 +720,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		g_device_enabled = false;
 		avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);
 
-		/* Done */
-
+		/* Mark EEPROM as valid only after the default image has been fully written. */
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 
 		init = true;
