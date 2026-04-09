@@ -6296,44 +6296,45 @@ time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, 
  */
 time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, char *errMsg, const char *rawInput)
 {
-	time_t valid = 0;                          // Initialize return value to 0 (indicating invalid by default).
-	int len = strlen(str);                     // Get the length of the provided string.
-	time_t minimumEpoch = MINIMUM_VALID_EPOCH; // Set the initial minimum valid epoch.
-	uint8_t validationType = 0;                // Set the initial validation type to 0.
-	time_t now = time(NULL);                   // Get the current system time.
+	time_t valid = 0;
+	int len = strlen(str);
+	time_t minimumEpoch = MINIMUM_VALID_EPOCH;
+	uint8_t validationType = 0;
+	time_t now = time(NULL);
 
-	// Determine the minimum epoch and validation type based on the `epochVar`.
+	/* Choose validation rules based on whether the input is being used for the
+	 * current clock, an event start, or an event finish.
+	 */
 	if(epochVar == &g_event_start_epoch)
 	{
-		// For event start, ensure the minimum epoch is either now or the pre-set minimum valid epoch.
 		minimumEpoch = MAX(now, MINIMUM_VALID_EPOCH);
-		validationType = 1; // Indicates start time validation.
+		validationType = 1;
 	}
 	else if(epochVar == &g_event_finish_epoch)
 	{
-		// For event finish, ensure the minimum epoch is the event start time or the current time.
 		minimumEpoch = MAX(atomic_read_time(&g_event_start_epoch), now);
-		validationType = 2; // Indicates finish time validation.
+		validationType = 2;
 	}
 
-	// If the string length is 10, pad it to a length of 12 by adding "00" for seconds.
+	/* Accept YYMMDDhhmm input by normalizing the omitted seconds to `00`. */
 	if(len == 10)
 	{
 		str[10] = '0';
 		str[11] = '0';
 		str[12] = '\0';
-		len = 12; // Update the length to 12.
+		len = 12;
 	}
 
-	// If the string length is 12 and contains only digits, proceed to validation.
 	if((len == 12) && (only_digits(str)))
 	{
-		// Convert the time string to epoch value (`YYMMDDhhmmss` format).
 		time_t ep = String2Epoch(NULL, str);
 
 		if((validationType == 1) && (ep < minimumEpoch) && rawInput && rawInput[0] && only_digits((char *)rawInput))
 		{
-			// When an event is already running, partial start input may have been expanded against the old start date.
+			/* A partial start-time edit during an active event may have been
+			 * expanded against yesterday's date. Retry against the current day
+			 * before rejecting it as "in the past".
+			 */
 			const char *retry = completeTimeString(rawInput, &now);
 			if(retry)
 			{
@@ -6346,12 +6347,14 @@ time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, 
 			}
 		}
 
-		// Validate if the calculated epoch is greater than or equal to the minimum allowed.
 		if(ep >= minimumEpoch)
 		{
 			if(align5min)
 			{
-				time_t tt = ep % 300; // align to lesser 5-min boundary
+				/* Commands that schedule recurring event windows use the previous
+				 * 5-minute boundary rather than rounding upward.
+				 */
+				time_t tt = ep % 300;
 
 				if(tt)
 				{
@@ -6363,53 +6366,51 @@ time_t validateTimeString(char *str, volatile time_t *epochVar, bool align5min, 
 				}
 			}
 
-			valid = ep; // Set the valid time to the calculated epoch.
+			valid = ep;
 		}
 		else
 		{
-			// Report appropriate error messages based on the validation type.
-			if(validationType == 1) // Start time validation
+			if(validationType == 1)
 			{
 				if(errMsg)
 				{
-					sprintf(errMsg, TEXT_ERR_START_IN_PAST_TXT); // Start time is in the past.
+					sprintf(errMsg, TEXT_ERR_START_IN_PAST_TXT);
 				}
 			}
-			else if(validationType == 2) // Finish time validation
+			else if(validationType == 2)
 			{
 				if(ep < time(NULL))
 				{
 					if(errMsg)
 					{
-						sprintf(errMsg, TEXT_ERR_FINISH_IN_PAST_TXT); // Finish time is in the past.
+						sprintf(errMsg, TEXT_ERR_FINISH_IN_PAST_TXT);
 					}
 				}
 				else
 				{
 					if(errMsg)
 					{
-						sprintf(errMsg, TEXT_ERR_FINISH_BEFORE_START_TXT); // Finish time is before start time.
+						sprintf(errMsg, TEXT_ERR_FINISH_BEFORE_START_TXT);
 					}
 				}
 			}
-			else // Current time validation
+			else
 			{
 				if(errMsg)
 				{
-					sprintf(errMsg, TEXT_ERR_TIME_IN_PAST_TXT); // Time is in the past.
+					sprintf(errMsg, TEXT_ERR_TIME_IN_PAST_TXT);
 				}
 			}
 		}
 	}
-	else if(len) // If the length is non-zero and not 12, it's an invalid time string.
+	else if(len)
 	{
 		if(errMsg)
 		{
-			sprintf(errMsg, TEXT_ERR_INVALID_TIME_TXT); // Report invalid time string error.
+			sprintf(errMsg, TEXT_ERR_INVALID_TIME_TXT);
 		}
 	}
 
-	// Return the validated epoch value (or 0 if validation failed).
 	return (valid);
 }
 
@@ -6426,12 +6427,10 @@ bool reportTimeTill(time_t from, time_t until, const char *prefix, const char *f
 {
 	bool failure = false;
 
-	// Check if the `from` time is greater than or equal to the `until` time.
-	if(from >= until) // Negative time, failure condition
+	if(from >= until)
 	{
-		failure = true; // Mark as failure
+		failure = true;
 
-		// Print the failure message if provided.
 		if(failMsg)
 		{
 			sb_send_string((char *)failMsg);
@@ -6439,79 +6438,57 @@ bool reportTimeTill(time_t from, time_t until, const char *prefix, const char *f
 	}
 	else
 	{
-		// Print the prefix message if provided.
 		if(prefix)
 		{
 			sb_send_string((char *)prefix);
 		}
 
-		// Calculate the time difference.
 		time_t dif = until - from;
-
-		// Extract years from the time difference.
 		uint16_t years = dif / YEAR;
 		time_t hold = dif - (years * YEAR);
-
-		// Extract days from the remaining time.
 		uint16_t days = hold / DAY;
 		hold -= (days * DAY);
-
-		// Extract hours from the remaining time.
 		uint16_t hours = hold / HOUR;
 		hold -= (hours * HOUR);
-
-		// Extract minutes from the remaining time.
 		uint16_t minutes = hold / MINUTE;
-
-		// Extract seconds from the remaining time.
 		uint16_t seconds = hold - (minutes * MINUTE);
 
-		// Initialize the temporary string.
 		g_tempStr[0] = '\0';
 
-		// Report years if non-zero.
 		if(years)
 		{
 			sprintf(g_tempStr, "%d yrs ", years);
 			sb_send_string(g_tempStr);
 		}
 
-		// Report days if non-zero.
 		if(days)
 		{
 			sprintf(g_tempStr, "%d days ", days);
 			sb_send_string(g_tempStr);
 		}
 
-		// Report hours if non-zero.
 		if(hours)
 		{
 			sprintf(g_tempStr, "%d hrs ", hours);
 			sb_send_string(g_tempStr);
 		}
 
-		// Report minutes if non-zero.
 		if(minutes)
 		{
 			sprintf(g_tempStr, "%d min ", minutes);
 			sb_send_string(g_tempStr);
 		}
 
-		// Report seconds if non-zero.
 		if(seconds)
 		{
 			sprintf(g_tempStr, "%d sec", seconds);
 			sb_send_string(g_tempStr);
 		}
 
-		// Add a newline after reporting the time.
 		sb_send_NewLine();
-
-		// Clear the temporary string.
 		g_tempStr[0] = '\0';
 	}
 
-	// Return whether there was a failure.
 	return failure;
 }
 
@@ -6684,14 +6661,10 @@ void reportConfigErrors(Settings_t location)
  */
 void reportSettings(void)
 {
-	// If cloning is currently in progress, do not proceed with reporting settings.
 	if(g_cloningInProgress)
 		return;
 
-	// Buffer for storing temporary strings.
 	char buf[TEMP_STRING_SIZE];
-
-	// Get the current time.
 	time_t now = time(NULL);
 	time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
 	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
@@ -6703,6 +6676,9 @@ void reportSettings(void)
 	bool show_effective_window = false;
 	bool exhausted_multiday_schedule = false;
 
+	/* Multi-day events may have a currently effective window that differs from
+	 * the originally saved start/finish pair.
+	 */
 	if((g_days_to_run > 1) && (g_days_run > 0))
 	{
 		time_t effective_start_epoch = loaded_start_epoch;
@@ -6716,10 +6692,8 @@ void reportSettings(void)
 		}
 	}
 
-	// Send the product name.
 	sb_send_string((char *)PRODUCT_NAME_LONG);
 
-	// Report the software version.
 #ifdef HW_TARGET_3_5
 	sprintf(buf, "3.5");
 #else
@@ -6729,15 +6703,14 @@ void reportSettings(void)
 	sprintf(g_tempStr, "\n* SW Ver: %s HW Build: %s\n", SW_REVISION, buf);
 	sb_send_string(g_tempStr);
 
-	// Check for hardware errors and report them.
 	if(g_hardware_error & (int)HARDWARE_NO_RTC)
 	{
-		sb_send_string(TEXT_RTC_NOT_RESPONDING_TXT); // RTC not responding.
+		sb_send_string(TEXT_RTC_NOT_RESPONDING_TXT);
 	}
 
 	if(g_hardware_error & (int)HARDWARE_NO_SI5351)
 	{
-		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT); // Transmitter not responding.
+		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 	}
 
 	if(g_thermal_shutdown)
@@ -6781,7 +6754,6 @@ void reportSettings(void)
 		}
 	}
 
-	// Get and report the current functionality.
 	if(!function2Text(g_tempStr, g_function))
 	{
 		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
@@ -6789,14 +6761,10 @@ void reportSettings(void)
 		sb_send_string(g_tempStr);
 	}
 
-	// Print the current settings header.
 	sb_send_string(TEXT_CURRENT_SETTINGS_TXT);
-
-	// Report the current system time.
 	sprintf(g_tempStr, "*   Time: %s\n", convertEpochToTimeString(now, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
 
-	// Get and report the current event.
 	if(!event2Text(g_tempStr, g_event))
 	{
 		strncpy(buf, g_tempStr, TEMP_STRING_SIZE);
@@ -6808,7 +6776,6 @@ void reportSettings(void)
 	}
 	sb_send_string(g_tempStr);
 
-	// Get and report the current fox setting.
 	Fox_t f = getFoxSetting();
 	if(!fox2Text(g_tempStr, f))
 	{
@@ -6821,7 +6788,6 @@ void reportSettings(void)
 	}
 	sb_send_string(g_tempStr);
 
-	// Report the callsign if it is set, otherwise indicate it is not set.
 	if(g_messages_text[STATION_ID][0])
 	{
 		sprintf(g_tempStr, "*   Callsign: %s\n", g_messages_text[STATION_ID]);
@@ -6832,17 +6798,14 @@ void reportSettings(void)
 		sb_send_string((char *)"*   Callsign: None\n");
 	}
 
-	// Report the speed for the callsign in words per minute.
 	sprintf(g_tempStr, "*   Callsign WPM: %d\n", g_evteng_id_codespeed);
 	sb_send_string(g_tempStr);
 
-	// Report the transmit pattern and its speed.
 	sprintf(g_tempStr, "*   Xmit Pattern: %s\n", getCurrentPatternText());
 	sb_send_string(g_tempStr);
 	sprintf(g_tempStr, "*   Xmit Pattern WPM: %u\n", getFoxCodeSpeed());
 	sb_send_string(g_tempStr);
 
-	// Get and report the transmitter frequency.
 	Frequency_Hz transmitter_freq = getFrequencySetting();
 	if(transmitter_freq)
 	{
@@ -6861,12 +6824,6 @@ void reportSettings(void)
 		sb_send_string((char *)"*   Freq: None set\n");
 	}
 
-	// 	// Report the RTC calibration value.
-	// 	sprintf(g_tempStr, "*   Cal: %d\n", RTC_get_cal());
-	// 	sb_send_string(g_tempStr);
-
-	// If the event runs for more than 1 day, report both the configured run length and
-	// the remaining days at the current wall-clock time.
 	if(g_days_to_run > 1)
 	{
 		uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
@@ -6877,9 +6834,6 @@ void reportSettings(void)
 		exhausted_multiday_schedule = timeIsSet() && (days_remaining == 0);
 	}
 
-	// Report the start and finish times of the event.
-	// 	if(!g_evteng_loaded_start_epoch) g_evteng_loaded_start_epoch = g_event_start_epoch;
-	// 	if(!g_evteng_loaded_finish_epoch) g_evteng_loaded_finish_epoch = g_event_finish_epoch;
 	sprintf(g_tempStr, "*   Start:  %s\n", convertEpochToTimeString(event_start_epoch, buf, TEMP_STRING_SIZE));
 	sb_send_string(g_tempStr);
 	sprintf(g_tempStr, "*   Finish: %s\n", convertEpochToTimeString(event_finish_epoch, buf, TEMP_STRING_SIZE));
@@ -6902,7 +6856,6 @@ void reportSettings(void)
 		sb_send_string((char *)"*   No remaining scheduled day window at the current time\n");
 	}
 
-	// If an event is active, report event-specific frequency settings.
 	if(g_event != EVENT_NONE)
 	{
 		sb_send_string(TEXT_EVENT_SETTINGS_TXT);
@@ -6951,7 +6904,6 @@ void reportSettings(void)
 		}
 	}
 
-	// Check the clock configuration state and report necessary actions.
 	ConfigurationState_t cfg = WAITING_FOR_START;
 	if(!show_effective_window)
 	{
@@ -6988,14 +6940,15 @@ void reportSettings(void)
 		}
 	}
 
-	// If the device is disabled, say so and provide instructions to enable.
 	if(!g_device_enabled)
 	{
 		sb_send_string(TEXT_DEVICE_DISABLED_TXT);
 	}
 	else
 	{
-		// Warn if transmitter disabled by BAT X command
+		/* BAT X can leave the unit awake and configured but with RF output
+		 * intentionally disabled.
+		 */
 		if(getDisableTransmissions())
 		{
 			sprintf(g_tempStr, "\n* WARNING: TRANSMIT DISABLED");
