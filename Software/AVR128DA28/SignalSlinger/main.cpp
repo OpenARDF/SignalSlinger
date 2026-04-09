@@ -4318,6 +4318,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							cancelManualTransientState();
 						}
 
+						/* GO manipulates only the currently loaded event window; it does not
+						 * rewrite the saved EEPROM event definition.
+						 */
 						if(arg == '0') /* Stop an event in progress. Resume countdown to any future event */
 						{
 							suspendEvent(); // Stop any running event and initialize loaded event engine settings
@@ -4410,6 +4413,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					int len = 0;
 
+					/* The stored ID keeps a leading space so normal playback inserts a
+					 * clean word break before the station identifier.
+					 */
 					if((sb_buff->fields[SB_FIELD1][0] == '\"') && (sb_buff->fields[SB_FIELD1][1] == '\"')) /* "" */
 					{
 						messages_text_slot_clear_atomic(STATION_ID);
@@ -4476,6 +4482,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						uint8_t speed = atol(sb_buff->fields[SB_FIELD2]);
 
+						/* Different code-speed slots apply to different Morse sources:
+						 * station ID, normal event pattern, or foxoring pattern text.
+						 */
 						if(c == 'I')
 						{
 							g_evteng_id_codespeed = speed;
@@ -4562,6 +4571,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				if(!g_meshmode)
 				{
+					/* MASTER is used both for explicit master-mode control and for the
+					 * clone handshake between source and target units.
+					 */
 					if(sb_buff->fields[SB_FIELD1][0] == 'P') // Target receives clone command from source
 					{
 						/* Ignore repeated clone probes once a timed event has already been launched so an idle
@@ -4618,6 +4630,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(g_cloningInProgress)
 				{
+					/* During cloning, the incoming event selector is accepted verbatim
+					 * and acknowledged as part of the rolling checksum exchange.
+					 */
 					char c = sb_buff->fields[SB_FIELD1][0];
 					g_event = eventFromSerialArg(c);
 
@@ -4638,6 +4653,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 					if(validArg)
 					{
+						/* Changing the event outside clone mode rebuilds the loaded event
+						 * window and the active fox/pattern selection immediately.
+						 */
 						cancelManualTransientState();
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
 						if(!powerToTransmitter(g_device_enabled))
@@ -4774,6 +4792,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				atomic_write_u16(&g_report_settings_countdown, 0);
 				char f1 = sb_buff->fields[SB_FIELD1][0];
 
+				/* CLK T is the primary wall-clock set/query command. */
 				if(!f1 || f1 == 'T') /* Current time format "YYMMDDhhmmss" */
 				{
 					if((f1 == 'T') && sb_buff->fields[SB_FIELD2][0])
@@ -4814,6 +4833,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 							else
 							{
+								/* A local clock correction can move the active event window
+								 * backward or forward in time, so clear transient manual
+								 * activity and then rebuild the loaded schedule against the
+								 * corrected wall clock.
+								 */
 								bool pending_start_after_keydown = cancelManualTransientState();
 								bool had_active_or_pending_event = g_evteng_event_commenced || g_evteng_event_enabled || pending_start_after_keydown;
 								bool should_resume_loaded_event = resyncLoadedEventWindowAfterClockSet();
