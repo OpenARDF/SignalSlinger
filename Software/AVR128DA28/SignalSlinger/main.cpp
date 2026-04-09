@@ -3689,11 +3689,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 	{
 		bool suppressResponse = false;
 
+		/* Any live serial interaction should keep the unit awake and show that the
+		 * foreground is still actively servicing commands.
+		 */
 		atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
 		LEDS.blink(LEDS_NO_CHANGE, true);
 
 		SBMessageID msg_id = sb_buff->id;
 
+		/* Dispatch each protocol message type to the matching foreground handler. */
 		switch(msg_id)
 		{
 			case SB_MODE_MESH:
@@ -3752,6 +3756,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				if(c1)
 				{
+					/* Interpret the compact serial FOX selector in the context of the
+					 * currently selected event type.
+					 */
 					if(c1 == 'B')
 					{
 						c1 = BEACON;
@@ -3873,6 +3880,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(!g_cloningInProgress)
 							{
+								/* If an event is already active, apply the new fox selection
+								 * immediately instead of waiting for the next scheduled start.
+								 */
 								if(g_evteng_event_enabled) // try to update an event already in progress
 								{
 									if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
@@ -3947,6 +3957,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					Frequency_Hz f;
 					if(g_cloningInProgress)
 					{
+						/* Clone traffic names the destination frequency slot explicitly in
+						 * field 1 and sends the normalized frequency text in field 2.
+						 */
 						if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f))
 						{
 							if(freqTier == 'L')
@@ -3979,6 +3992,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f)) // set freq based on first argument
 					{
+						/* Local interactive commands can target an explicit slot such as
+						 * low/med/high/beacon.
+						 */
 						if((freqTier == '1') || (freqTier == 'L'))
 						{
 							persistFrequencyValue(Frequency_Low, f);
@@ -4007,6 +4023,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD1], &f)) // set freq based on current EVT and FOX
 					{
+						/* A single-argument FRE command applies to whichever stored
+						 * frequency is currently relevant to the active event/fox.
+						 */
 						if(getFoxSetting() == BEACON)
 						{
 							persistFrequencyValue(Frequency_Beacon, f);
@@ -4159,6 +4178,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				atomic_write_u16(&g_report_settings_countdown, 0);
 				if(g_cloningInProgress)
 				{
+					/* Clone-mode pattern payloads contribute to the running checksum and
+					 * are acknowledged immediately as part of the multi-message clone exchange.
+					 */
 					if(sb_buff->fields[SB_FIELD1][0] && sb_buff->fields[SB_FIELD2][0])
 					{
 						int len = MIN(MAX_PATTERN_TEXT_LENGTH, strlen(sb_buff->fields[SB_FIELD2]));
@@ -4174,6 +4196,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
+					/* Outside clone mode, PAT only edits or reports the foxoring pattern
+					 * text stored in EEPROM.
+					 */
 					if(!g_meshmode)
 						sb_send_NewLine();
 
@@ -4285,6 +4310,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 					if(arg)
 					{
+						/* GO commands that take immediate control should cancel any
+						 * temporary key/demo/manual state first.
+						 */
 						if((arg == '0') || (arg == '1') || (arg == '2'))
 						{
 							cancelManualTransientState();
