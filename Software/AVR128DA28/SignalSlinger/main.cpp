@@ -3360,6 +3360,14 @@ static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency)
 }
 
 /* Foreground periodic and wake helpers. `handle_1sec_tasks()` runs from the RTC ISR. */
+
+/**
+ * Perform the 1-second housekeeping work that advances the event engine.
+ *
+ * This helper is called from the RTC-second ISR context. It advances event
+ * countdowns, starts scheduled transmissions when their time arrives, and
+ * eventually requests sleep once the inactivity countdown expires.
+ */
 void handle_1sec_tasks(void)
 {
 	time_t temp_time = 0;
@@ -3493,11 +3501,21 @@ void handle_1sec_tasks(void)
 
 /* Wake-input helper functions. */
 
+/**
+ * Read the raw wake switch level without debounce filtering.
+ *
+ * @return true if the switch input currently reads as closed.
+ */
 static inline bool rawSwitchIsClosed(void)
 {
 	return (PORTD_get_pin_level(SWITCH) == LOW);
 }
 
+/**
+ * Sample the wake switch during startup until its initial state settles.
+ *
+ * @return true if the startup samples indicate a stable closed switch.
+ */
 static bool switchIsClosedAtStartup(void)
 {
 	uint8_t closed_samples = 0;
@@ -3523,16 +3541,31 @@ static bool switchIsClosedAtStartup(void)
 	return false;
 }
 
+/**
+ * Report whether the user switch is closed using the normal debounce path.
+ *
+ * @return true if the debounced switch state is closed.
+ */
 bool switchIsClosed(void)
 {
 	return debouncedSwitchIsClosed();
 }
 
+/**
+ * Configure the switch interrupt for the normal awake-state behavior.
+ */
 static inline void configureSwitchInterruptForAwake(void)
 {
 	PORTD_pin_set_isc(SWITCH, PORT_ISC_FALLING_gc);
 }
 
+/**
+ * Configure the switch interrupt for sleep/wake detection behavior.
+ *
+ * While waiting for the user to release the wake button, the interrupt is
+ * temporarily switched to rising-edge mode so the firmware does not wake again
+ * immediately on the held-low level.
+ */
 static inline void configureSwitchInterruptForSleepWake(void)
 {
 	if(g_ignore_sleep_button_wake_until_release)
@@ -3545,6 +3578,9 @@ static inline void configureSwitchInterruptForSleepWake(void)
 	}
 }
 
+/**
+ * Clear any stale wake-related interrupt flags captured before sleeping.
+ */
 static inline void clearPendingWakeInterruptFlags(void)
 {
 	/* Drop any stale edge flags captured while we were still awake so only a
@@ -3553,6 +3589,11 @@ static inline void clearPendingWakeInterruptFlags(void)
 	VPORTD.INTFLAGS = 0xFF;
 }
 
+/**
+ * Enable or disable the LED indicator used while previewing a long button hold.
+ *
+ * @param active true to enable the preview indicator, false to clear it.
+ */
 static inline void setButtonHoldPreviewIndicator(bool active)
 {
 	if(g_button_hold_preview_active == active)
@@ -5236,6 +5277,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 }
 
 /* Event activation, wake restoration, and LED-state helpers. */
+
+/**
+ * Decide whether the currently loaded event should be enabled right now.
+ *
+ * The helper inspects the loaded event window, current sleep plan, and any
+ * user-cancel latch to decide whether the event engine should stay active and
+ * what sleep state should be prepared next.
+ *
+ * @return true if the loaded event should remain enabled, false otherwise.
+ */
 bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 {
 	time_t loaded_start_epoch;
@@ -5304,6 +5355,12 @@ bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 	return (true);
 }
 
+/**
+ * Convert a Morse speed in WPM into the event engine's throttle timing value.
+ *
+ * @param speed Morse speed in words per minute.
+ * @return Throttle value used by the event engine timing loop.
+ */
 uint16_t throttleValue(uint8_t speed)
 {
 	float temp;
@@ -5312,6 +5369,11 @@ uint16_t throttleValue(uint8_t speed)
 	return ((uint16_t)temp);
 }
 
+/**
+ * Launch the currently loaded event window using its stored start/finish times.
+ *
+ * @return true if the event engine was launched successfully, false otherwise.
+ */
 bool __attribute__((optimize("O0"))) launchLoadedEvent(void)
 {
 	time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
@@ -5327,6 +5389,17 @@ bool __attribute__((optimize("O0"))) launchLoadedEvent(void)
 	return launched;
 }
 
+/**
+ * Activate the event engine using the supplied start and finish times.
+ *
+ * The helper validates the current timing, pattern, and frequency state, then
+ * synchronizes the transmitter and event-engine countdowns so execution begins
+ * either immediately or at the correct point within the current cycle.
+ *
+ * @param startTime Event start epoch.
+ * @param finishTime Event finish epoch.
+ * @return true if the event engine was configured successfully, false on invalid settings.
+ */
 bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime)
 {
 	time_t now = time(null);
@@ -5497,6 +5570,9 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 	return true;
 }
 
+/**
+ * Stop the current event immediately and leave the device in a non-running state.
+ */
 void suspendEvent()
 {
 	keyTransmitter(OFF);
@@ -5513,6 +5589,11 @@ void suspendEvent()
 	configRedLEDforEvent();
 }
 
+/**
+ * Start transmissions immediately without requiring the full timed-event schedule.
+ *
+ * @param configOverride true to bypass configuration-error blocking.
+ */
 void startTransmissionsNow(bool configOverride)
 {
 	ConfigurationState_t conf = clockConfigurationCheck(LOADED_SETTINGS);
@@ -5527,6 +5608,11 @@ void startTransmissionsNow(bool configOverride)
 	configRedLEDforEvent();
 }
 
+/**
+ * Start an event immediately and keep it running until canceled.
+ *
+ * @param configOverride true to bypass configuration-error blocking.
+ */
 void startEventNow(bool configOverride)
 {
 	ConfigurationState_t conf = clockConfigurationCheck(LOADED_SETTINGS);
@@ -5541,6 +5627,11 @@ void startEventNow(bool configOverride)
 	configRedLEDforEvent();
 }
 
+/**
+ * Start a synchronized timed event immediately.
+ *
+ * @param configOverride true to bypass configuration-error blocking.
+ */
 void startSyncdEventNow(bool configOverride)
 {
 	ConfigurationState_t conf = clockConfigurationCheck(LOADED_SETTINGS);
@@ -5555,6 +5646,11 @@ void startSyncdEventNow(bool configOverride)
 	configRedLEDforEvent();
 }
 
+/**
+ * Start or schedule the currently loaded event using the RTC-based event window.
+ *
+ * @return true on configuration error, false on success.
+ */
 bool startEventUsingRTC(void)
 {
 	bool err = false;
