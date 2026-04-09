@@ -25,6 +25,14 @@
  *
  */
 
+/*
+ * Declarations for protected low-level register writes.
+ *
+ * This header exposes the shared helper used to perform writes that require
+ * AVR Configuration Change Protection (CCP) timing or similar guarded update
+ * sequences.
+ */
+
 #ifndef PROTECTED_IO_H
 #define PROTECTED_IO_H
 
@@ -62,15 +70,14 @@ extern "C" {
 #endif
 
 /**
- * \brief Write to am 8-bit I/O register protected by CCP or a protection bit
+ * Write one byte to a protected AVR register using the supplied unlock value.
  *
- * \param addr Address of the I/O register
- * \param magic CCP magic value or Mask for protection bit
- * \param value Value to be written
+ * The implementation lives in the companion assembly source so the unlock and
+ * write sequence can meet the device's timing requirements exactly.
  *
- * \note Using IAR Embedded workbench, the choice of memory model has an impact
- *       on calling convention. The memory model is not visible to the
- *       preprocessor, so it must be defined in the Assembler preprocessor directives.
+ * @param addr Address of the protected register.
+ * @param magic CCP unlock value or other protection mask expected by the target register.
+ * @param value Byte value to write after unlocking.
  */
 extern void protected_write_io(void *addr, uint8_t magic, uint8_t value);
 
