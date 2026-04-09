@@ -25,6 +25,14 @@
  *
  */
 
+/*
+ * Assembly helper for protected AVR register writes.
+ *
+ * This module provides the low-level implementation behind
+ * `protected_write_io()`, where the CCP unlock and register write must occur
+ * with exact instruction ordering.
+ */
+
  
 /**
  * \defgroup doc_driver_system_protected_io Protected IO
@@ -39,11 +47,10 @@
 #include "assembler.h"
 
 /*
-	 * GNU and IAR use different calling conventions. Since this is
-	 * a very small and simple function to begin with, it's easier
-	 * to implement it twice than to deal with the differences
-	 * within a single implementation.
-	 */
+ * GNU and IAR use different calling conventions. The helper is intentionally
+ * implemented twice so each toolchain can keep the unlock/write sequence short
+ * and unambiguous.
+ */
 
 	PUBLIC_FUNCTION(protected_write_io)
 
