@@ -150,17 +150,27 @@ bool frequencyString(char *result, uint32_t freq)
 }
 
 /**
- * Convert a frequency string to a proper Hz value and string format based on assumptions
- * related to the size and decimal properties of the number contained in the string.
- * str = pointer to a string containing the frequency string
- * result = pointer to a Frequency_Hz variable to hold the frequency in Hz
- * Returns 1 if an error is detected
+ * Parse a numeric frequency string and normalize it to Hz and display text.
+ *
+ * The input is interpreted by magnitude rather than by explicit units:
+ * - values in the transmitter's MHz range are treated as MHz
+ * - values in the transmitter's kHz range are treated as kHz
+ * - values in the expected raw-Hz range are treated as Hz
+ *
+ * On success the function performs two outputs:
+ * - `result`, when non-null, receives the frequency rounded up to the next Hz
+ * - `str` is rewritten in normalized "####.# kHz" form for later display
+ *
+ * @param str Pointer to the mutable numeric string to parse and normalize.
+ * @param result Pointer to a Frequency_Hz destination, or NULL if only normalization is needed.
+ * @return true on parse/range failure, false on success.
  */
 bool frequencyVal(char *str, Frequency_Hz *result)
 {
 	bool failure = true;
 	float mhzMin, mhzMax, khzMin, khzMax, hzMin, hzMax;
 
+	/* Build comparison ranges once so the same transmitter limits drive all accepted formats. */
 	mhzMin = (float)TX_MINIMUM_FREQUENCY / 1000000.;
 	mhzMax = (float)TX_MAXIMUM_FREQUENCY / 1000000.;
 	khzMin = (float)TX_MINIMUM_FREQUENCY / 1000.;
@@ -175,6 +185,7 @@ bool frequencyVal(char *str, Frequency_Hz *result)
 
 	float f = atof(str);
 
+	/* Infer units from magnitude because command paths provide plain numeric text. */
 	if((f > mhzMin) && (f < mhzMax))
 	{
 		f *= 1000000.;
@@ -192,6 +203,7 @@ bool frequencyVal(char *str, Frequency_Hz *result)
 
 	if(!failure)
 	{
+		/* Store an integer-Hz value, then rewrite the original buffer in a consistent display form. */
 		Frequency_Hz temp = (Frequency_Hz)ceilf(f);
 		if(result)
 			*result = temp;

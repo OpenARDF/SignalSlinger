@@ -62,9 +62,13 @@ bool only_digits(char *s);
 bool frequencyString(char* result, uint32_t freq);
 
 /**
- * Parse a textual frequency representation into a Frequency_Hz value.
+ * Parse a numeric frequency string into a Frequency_Hz value and normalized text.
  *
- * @param str    String containing the frequency (may include units).
+ * The function infers whether the input is expressed in MHz, kHz, or Hz by
+ * comparing its magnitude against the transmitter's valid frequency range.
+ * On success it also rewrites `str` into normalized "####.# kHz" text.
+ *
+ * @param str    Mutable string containing the frequency to parse.
  * @param result Pointer to store the parsed frequency in Hz.
  * @return true on failure, false on success.
  */

@@ -1,2 +1,13 @@
 avr8-gnu-toolchain-win32_x86_64/
 tmp/studio-toolchain-upgrade.log
+
+# Visual Studio / Atmel Studio workspace state
+.vs/
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.atsuo
+*.wsuo
