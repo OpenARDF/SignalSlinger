@@ -1,3 +1,39 @@
+/*
+ *  MIT License
+ *
+ *  Copyright (c) 2026 DigitalConfections
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
+/*
+ * Cross-translation-unit firmware globals.
+ *
+ * This header is the single declaration point for state shared across modules.
+ * The declarations here must match their definitions exactly, including type
+ * qualifiers such as volatile.
+ *
+ * When a variable is shared with an ISR or a mutable shared object, use the
+ * synchronization rules documented here and in shared_state.h rather than
+ * reading or writing multi-byte values directly.
+ */
+
 #ifndef SIGNALSLINGER_GLOBALS_H_
 #define SIGNALSLINGER_GLOBALS_H_
 
@@ -7,11 +43,6 @@
 #include "leds.h"
 #include "CircularStringBuff.h"
 #include "eeprommanager.h"
-
-/*
- * Single source of truth for cross-translation-unit globals.
- * Declarations here must match the definitions exactly (type + qualifiers).
- */
 
 /* adc.cpp */
 extern ADC_Init_t g_adc_initialization;
@@ -42,6 +73,9 @@ extern volatile bool g_enable_external_battery_control;
  *  - ISR->FG: written in ISR, read in foreground (use shared_state atomic reads for multi-byte types)
  *  - FG->ISR: written in foreground, read in ISR (use shared_state atomic writes for multi-byte types)
  *  - Shared object: do not rely on volatile; use module/helper synchronization rules
+ *
+ * Variables without a tag are currently treated as foreground-owned configuration
+ * state and may be read directly unless a nearby comment says otherwise.
  */
 extern volatile bool g_device_enabled;
 
@@ -88,7 +122,7 @@ extern uint8_t g_frequency_to_test; /* FG->ISR + ISR->FG */
 extern volatile bool g_cloningInProgress;
 extern volatile Enunciation_t g_enunciator;
 extern leds LEDS; /* Shared object: methods synchronize internal mutable state */
-extern CircularStringBuff g_text_buff; /* Shared object: use shared_state text_buff helpers */
+extern CircularStringBuff g_text_buff; /* Shared object: use shared_state text-buffer helpers */
 extern EepromManager g_ee_mgr;
 
 extern volatile bool g_isMaster;
