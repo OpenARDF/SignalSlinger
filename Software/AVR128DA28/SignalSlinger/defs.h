@@ -1,6 +1,6 @@
 
 /**********************************************************************************************
- * Copyright (c) 2017 Digital Confections LLC
+ * Copyright (c) 2026 Digital Confections LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in the
@@ -20,6 +20,17 @@
  * DEALINGS IN THE SOFTWARE.
  *
  **********************************************************************************************/
+
+/*
+ * Core firmware-wide definitions and constants.
+ *
+ * This header collects the product identity strings, feature toggles, shared
+ * numeric limits, default persisted settings, and small enums that are used
+ * across many modules.
+ *
+ * Behavior-specific logic should stay in feature modules; this file is meant to
+ * provide the shared vocabulary those modules rely on.
+ */
 
 #ifndef DEFS_H
 #define DEFS_H
@@ -58,6 +69,7 @@
 #define INCLUDE_SI5351_SUPPORT true // Silicon Labs Programmable Clock
 #define DATE_STRING_SUPPORT_ENABLED
 
+/* Select the high-level sleep behavior the power-management code should enter. */
 typedef enum
 {
 	SLEEP_UNTIL_START_TIME,
@@ -67,6 +79,7 @@ typedef enum
 	SLEEP_POWER_OFF_OVERRIDE
 } SleepType;
 
+/* Select how the device should enunciate status or transmissions. */
 typedef enum
 {
 	DO_NOT_ENUNCIATE,
@@ -233,6 +246,7 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define FOREVER_EPOCH ((time_t)4294967295UL)       /* 7 Feb 2106 00:00:00 */
 #define SECONDS_24H ((time_t)86400UL)
 
+/* Describe the current high-level configuration validity or schedule state. */
 typedef enum
 {
 	NULL_CONFIG,
@@ -244,12 +258,14 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
+/* Distinguish whether settings are being saved to or loaded from persistence. */
 typedef enum
 {
 	SAVED_SETTINGS,
 	LOADED_SETTINGS
 } Settings_t;
 
+/* Select the top-level operating mode exposed by the firmware. */
 typedef enum
 {
 	Function_Undefined,
@@ -286,6 +302,7 @@ typedef uint32_t Frequency_Hz;
 #define MAX_UINT16 65535
 #define MAX_INT16 32767
 
+/* Describe how an increment-style UI operation should adjust a value. */
 typedef enum
 {
 	DOWN = -1,
@@ -294,6 +311,7 @@ typedef enum
 	SETTOVALUE
 } IncrType;
 
+/* Identify the currently selected fox/beacon role for a transmission pattern. */
 typedef enum
 {
 	BEACON = 0,
@@ -324,6 +342,7 @@ typedef enum
 #endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 } Fox_t;
 
+/* Identify the event family that determines timing and fox-selection rules. */
 typedef enum
 {
 	EVENT_NONE,
@@ -350,6 +369,7 @@ typedef enum
 #define SecondsFromHours(hours) ((hours) * 3600)
 #define SecondsFromMinutes(min) ((min) * 60)
 
+/* Identify the shared text slots used for station ID and pattern messages. */
 typedef enum
 {
 	PATTERN_TEXT,
@@ -360,6 +380,7 @@ typedef enum
 #define MAX_PATTERN_TEXT_LENGTH (uint8_t)20
 #define UNLOCK_CODE_SIZE (uint8_t)8
 
+/* Record what triggered a start/stop style event action. */
 typedef enum
 {
 	POWER_UP,
@@ -368,6 +389,7 @@ typedef enum
 	NO_ACTION
 } EventActionSource_t;
 
+/* Describe the requested high-level action when starting or scheduling an event. */
 typedef enum
 {
 	START_NOTHING,
@@ -377,6 +399,7 @@ typedef enum
 	START_EVENT_NOW_AND_RUN_AS_TIMED_EVENT
 } EventAction_t;
 
+/* Describe how the event engine should initialize its starting state. */
 typedef enum
 {
 	INIT_NOT_SPECIFIED,
