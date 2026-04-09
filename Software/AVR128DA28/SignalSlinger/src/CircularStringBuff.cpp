@@ -1,5 +1,5 @@
 /**********************************************************************************************
-    Copyright © 2019 Digital Confections LLC
+    Copyright © 2026 Digital Confections LLC
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in the
@@ -19,10 +19,27 @@
     DEALINGS IN THE SOFTWARE.
 
 **********************************************************************************************/
+
+/*
+ * Fixed-size circular character buffer with overwrite-on-full behavior.
+ *
+ * This module contains support functions for:
+ * - staging short text messages in FIFO order
+ * - normalizing stored characters to uppercase
+ * - dropping the oldest entry automatically when new data arrives and the buffer is full
+ *
+ * Message ownership, parsing, and higher-level text policy belong elsewhere.
+ */
+
 #include "CircularStringBuff.h"
 #include <stdlib.h>
 #include <ctype.h>
 
+/**
+ * Construct a circular buffer with the requested capacity.
+ *
+ * @param size Maximum number of characters the buffer can hold.
+ */
 CircularStringBuff::CircularStringBuff(size_t size)
 {
 	buf_ = (char *)malloc(size);
@@ -32,30 +49,51 @@ CircularStringBuff::CircularStringBuff(size_t size)
 	full_ = false;
 }
 
+/**
+ * Destroy the buffer and release its storage.
+ */
 CircularStringBuff::~CircularStringBuff()
 {
 	free(buf_);
 }
 
+/**
+ * Clear the buffer contents without releasing storage.
+ */
 void CircularStringBuff::reset()
 {
 	head_ = tail_;
 	full_ = false;
 }
 
+/**
+ * Report whether the buffer currently holds no characters.
+ *
+ * @return true when the buffer is empty.
+ */
 bool CircularStringBuff::empty() const
 {
-	/*if head and tail are equal, we are empty */
+	/* Equal indices indicate empty only when the "full" latch is clear. */
 	return (!full_ && (head_ == tail_));
 }
 
+/**
+ * Report whether the buffer has reached capacity.
+ *
+ * @return true when the buffer is full.
+ */
 bool CircularStringBuff::full() const
 {
 	return (full_);
 }
 
 /**
- * Place another item in the buffer
+ * Insert one character at the head of the FIFO.
+ *
+ * Characters are converted to uppercase before storage. If the buffer is
+ * already full, the oldest character is discarded to make room.
+ *
+ * @param item Character to store.
  */
 void CircularStringBuff::put(char item)
 {
@@ -63,6 +101,7 @@ void CircularStringBuff::put(char item)
 
 	if(full_)
 	{
+		/* Advancing the tail preserves a fixed capacity by dropping the oldest item. */
 		tail_ = (tail_ + 1) % max_size_;
 	}
 
@@ -72,7 +111,9 @@ void CircularStringBuff::put(char item)
 }
 
 /**
- * Return the FIFO entry and delete it from the buffer
+ * Remove and return the oldest queued character.
+ *
+ * @return The oldest buffered character, or '\0' when the buffer is empty.
  */
 char CircularStringBuff::get()
 {
@@ -81,7 +122,7 @@ char CircularStringBuff::get()
 		return ('\0');
 	}
 
-	/*Read data and advance the tail (we now have a free space) */
+	/* Advance the tail after reading so the slot becomes available for future writes. */
 	char val = buf_[tail_];
 	full_ = false;
 	tail_ = (tail_ + 1) % max_size_;
