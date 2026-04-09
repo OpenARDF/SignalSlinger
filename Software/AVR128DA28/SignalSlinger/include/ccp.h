@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,15 @@
  *  SOFTWARE.
  */
 
+/*
+ * Helpers for writing CCP-protected AVR registers.
+ *
+ * The AVR128 DA family guards certain control registers behind Configuration
+ * Change Protection (CCP). These wrappers provide the small, intention-revealing
+ * entry points used by the rest of the firmware to perform those protected
+ * writes through the shared assembly helper.
+ */
+
 
 
 #ifndef CPU_CCP_H
@@ -35,14 +44,10 @@ extern "C" {
 #endif
 
 /**
- * \brief Write to a CCP-protected 8-bit I/O register
+ * Write one byte to an I/O register protected by the standard CCP key.
  *
- * \param addr Address of the I/O register
- * \param value Value to be written
- *
- * \note Using IAR Embedded workbench, the choice of memory model has an impact
- *       on calling convention. The memory model is not visible to the
- *       preprocessor, so it must be defined in the Assembler preprocessor directives.
+ * @param addr Address of the protected I/O register.
+ * @param value Value to write after unlocking the register.
  */
 static inline void ccp_write_io(void *addr, uint8_t value)
 {
@@ -52,14 +57,10 @@ static inline void ccp_write_io(void *addr, uint8_t value)
 /** @} */
 
 /**
- * \brief Write to CCP-protected 8-bit SPM register
+ * Write one byte to an SPM-protected register using the CCP SPM key.
  *
- * \param addr Address of the SPM register
- * \param value Value to be written
- *
- * \note Using IAR Embedded workbench, the choice of memory model has an impact
- *       on calling convention. The memory model is not visible to the
- *       preprocessor, so it must be defined in the Assembler preprocessor directives.
+ * @param addr Address of the protected SPM register.
+ * @param value Value to write after unlocking the register.
  */
 static inline void ccp_write_spm(void *addr, uint8_t value)
 {
