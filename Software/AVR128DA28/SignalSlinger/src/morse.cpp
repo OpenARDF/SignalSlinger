@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,27 @@
  *  SOFTWARE.
  */
 
+/*
+ * Morse-code generation helpers shared across the firmware.
+ *
+ * This module contains support functions for:
+ * - incremental Morse timing and carrier gating
+ * - estimating message duration from code speed
+ * - tracking which subsystem currently owns the Morse generator
+ *
+ * RF keying, throttling, and transmission scheduling belong elsewhere.
+ */
+
 #include "morse.h"
 #include <stddef.h>
 
-/*
-   Structure to describe a Morse code character
-*/
+/**
+ * Describe the encoded timing for a single Morse symbol sequence.
+ *
+ * `pattern` stores dits and dahs from least-significant bit upward, while the
+ * length fields describe how many symbols are valid and how many Morse elements
+ * the full character consumes.
+ */
 typedef struct
 {
 	uint8_t pattern;
@@ -35,24 +50,42 @@ typedef struct
 	uint8_t lengthInElements;
 } MorseCharacter;
 
+/* Forward lookup for character-to-Morse metadata. */
 MorseCharacter getMorseChar(char c);
 
 static callerID_t g_lastCallerID = NO_CALLER;
 
+/* Sentinel values used to distinguish spacing and forced-key cases from normal symbol patterns. */
 #define SOLID_KEYDOWN 0xFF
 #define INTER_CHAR_SPACE 0xFE
 #define INTER_WORD_SPACE 0xFD
 
+/**
+ * Report which subsystem most recently claimed the Morse generator.
+ *
+ * @return The last caller identifier passed to `makeMorse()`.
+ */
 callerID_t lastMorseCaller(void)
 {
 	return g_lastCallerID;
 }
 
-/*
- *  Load a string to send by passing in a pointer via the first argument.
- *  Call this function with a NULL argument at intervals of 1 element of time to generate Morse code.
- *  Once loaded with a string each call to this function returns a bool indicating whether a CW carrier should be sent
- *  Pass in a pointer to a bool in the second and third arguments:
+/**
+ * Load or advance the incremental Morse encoder.
+ *
+ * Pass a non-null string to start encoding a new message. Thereafter, call the
+ * function once per Morse element interval with `s == NULL` to advance the
+ * internal state machine; each call returns whether the CW carrier should be on
+ * for that element.
+ *
+ * The encoder keeps its own static progress state so it can be ticked from a
+ * timer-driven foreground loop without rebuilding the message state on each call.
+ *
+ * @param s Message to load, or NULL to advance the current transmission.
+ * @param repeating Optional in/out flag controlling whether the message repeats.
+ * @param finished Optional output flag set when the current message has finished.
+ * @param caller Identifier for the subsystem using the Morse generator.
+ * @return true when the carrier should be keyed during the current element.
  */
 bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 {
@@ -68,6 +101,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 	static bool carrierOn = false;
 	static bool holdKeyDown = false;
 
+	/* Ignore ticks from a caller that does not own the current encoder state. */
 	if(!s && (caller != g_lastCallerID))
 	{
 		return false;
@@ -84,6 +118,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 
 		if(caller != g_lastCallerID)
 		{
+			/* A new caller takes ownership and forces any previous transmission to stop. */
 			g_lastCallerID = caller;
 			str = NULL;
 			completedString = true;
@@ -95,6 +130,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 
 		if(*s)
 		{
+			/* Prime the state machine with the first character of the new message. */
 			str = s;
 			c = str[0];
 			morseInProgress = getMorseChar(*str);
@@ -127,6 +163,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 
 		if(elementIndex)
 		{
+			/* Stay in the current on/off phase until the element countdown expires. */
 			elementIndex--;
 		}
 		else if(carrierOn && !holdKeyDown) /* carrier is on, so turn it off and wait appropriate amount of space */
@@ -144,6 +181,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 		{
 			if(symbolIndex >= morseInProgress.lengthInSymbols)
 			{
+				/* The current character is complete; advance to the next one in the string. */
 				c = (*(str + ++charIndex));
 
 				if(!c) /* wrap to beginning of text */
@@ -173,6 +211,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 
 			if(morseInProgress.pattern < INTER_WORD_SPACE)
 			{
+				/* Normal Morse symbols encode dits as 0 and dahs as 1 bits. */
 				bool isDah = morseInProgress.pattern & (1 << symbolIndex++);
 
 				if(isDah)
@@ -193,6 +232,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 			}
 			else
 			{
+				/* Spacing pseudo-characters consume time without keying the carrier. */
 				uint8_t sym = morseInProgress.lengthInSymbols;
 				symbolIndex = 255; /* ensure the next character gets read */
 				carrierOn = false;
@@ -207,7 +247,7 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 			}
 		}
 
-		/* Overrides for key on and key off special characters */
+		/* '<' keeps the key held continuously instead of following symbol timing. */
 		if(c == '<') /* constant tone */
 		{
 			holdKeyDown = true;
@@ -234,8 +274,14 @@ bool makeMorse(char *s, bool *repeating, bool *finished, callerID_t caller)
 }
 
 /**
- *  Returns the number of milliseconds required to send the string pointed to by the first argument at the WPM code speed
- *  passed in the second argument.
+ * Estimate how long a message will take to send at a given code speed.
+ *
+ * The calculation uses the per-character element counts from `getMorseChar()`
+ * and adds the standard inter-character spacing for keyed symbols.
+ *
+ * @param str Null-terminated text to evaluate.
+ * @param spd Code speed in words per minute.
+ * @return Estimated transmit time in milliseconds.
  */
 uint16_t timeRequiredToSendStrAtWPM(char *str, uint16_t spd)
 {
@@ -253,6 +299,7 @@ uint16_t timeRequiredToSendStrAtWPM(char *str, uint16_t spd)
 		m = getMorseChar(c);
 		if(m.pattern < INTER_WORD_SPACE)
 		{
+			/* Keyed characters need the trailing inter-character gap in addition to symbol timing. */
 			elements += 3;
 		}
 		elements += m.lengthInElements;
@@ -262,10 +309,17 @@ uint16_t timeRequiredToSendStrAtWPM(char *str, uint16_t spd)
 }
 
 /**
- *  Morse Code characters are defined as having three attributes:
- *  pattern = a sequence of up to 8 dit and dah symbols contained in an unsigned byte, sequentially read from LSB to MSB (first symbol is bit 0)
- *  lengthInSymbols = how many symbols (dits and dahs) the character contains; this is how many pattern bits are used to represent the character
- *  lengthInElements = how long (measured in "dit lengths") is the total character including all inter-symbol spaces.
+ * Look up the Morse timing metadata for a character.
+ *
+ * `pattern` stores symbols from least-significant bit to most-significant bit,
+ * where 0 represents a dit and 1 represents a dah. `lengthInElements` includes
+ * the symbol lengths and any intra-character spacing needed to send that entry.
+ *
+ * Special pseudo-characters such as space, `|`, and `<` are also recognized so
+ * the state machine can model word gaps and a sustained key-down condition.
+ *
+ * @param c Character to translate.
+ * @return Morse metadata for `c`, or an all-zero entry when unsupported.
  */
 MorseCharacter getMorseChar(char c)
 {
