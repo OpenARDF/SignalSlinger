@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * Utility helpers shared across the firmware.
+ *
+ * This module contains small, stateless support functions for:
+ * - time and numeric formatting/parsing
+ * - enum-to-text conversion
+ * - compact display-oriented value splitting
+ *
+ * Hardware control, ISR coordination, and event-engine logic belong elsewhere.
  */
 
 #include "util.h"
@@ -41,6 +52,20 @@
 #define INT16_MIN (-INT16_MAX - 1)
 #endif
 
+/**
+ * Copy a textual description from a lookup table when an enum value is valid.
+ *
+ * The helper centralizes the "index in range and entry is non-null" check used
+ * by the public enum-to-text wrappers below. A true return value means the
+ * caller supplied an unsupported enum value or the table intentionally leaves
+ * that slot unmapped.
+ *
+ * @param str Destination buffer for the selected text.
+ * @param index Table index derived from the enum value.
+ * @param count Number of entries available in the table.
+ * @param table Lookup table containing string pointers.
+ * @return true if the lookup cannot be satisfied, false on success.
+ */
 static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char *const *table)
 {
 	if((index >= count) || !table[index])
@@ -48,10 +73,15 @@ static bool lookupEnumText(char *str, uint8_t index, uint8_t count, const char *
 		return true;
 	}
 
+	/* The wrappers guarantee that the destination buffer is large enough for these literals. */
 	strcpy(str, table[index]);
 	return false;
 }
 
+/* Human-readable names for Function_t values.
+ * Index 0 is intentionally unmapped because the corresponding enum value is not
+ * presented as a selectable user-facing mode.
+ */
 static const char *const g_function_text[] =
     {
         NULL,
@@ -59,6 +89,7 @@ static const char *const g_function_text[] =
         "Radio Orienteering",
         "Signal Generator"};
 
+/* Human-readable names for Fox_t values in enum order. */
 static const char *const g_fox_text[USE_CURRENT_FOX] =
     {
         "Beacon \"MO\"",
@@ -83,6 +114,7 @@ static const char *const g_fox_text[USE_CURRENT_FOX] =
         "Foxoring \"High Freq\" Fox",
         "Frequency Test Beacon"};
 
+/* Human-readable names for Event_t values in enum order. */
 static const char *const g_event_text[EVENT_NUMBER_OF_EVENTS] =
     {
         "None Set",
@@ -92,12 +124,21 @@ static const char *const g_event_text[EVENT_NUMBER_OF_EVENTS] =
         "Blind ARDF"};
 
 /**
- * Returns a-b
- * It appears difftime might not be handling subtraction of unsigned arguments correctly with current compiler. This function avoids any problems.
+ * Return the signed difference between two time values without using `difftime()`.
+ *
+ * This firmware uses `time_t` in environments where the toolchain's `difftime()`
+ * behavior has been questionable for unsigned representations. This helper keeps
+ * the intent explicit by always computing `a - b` and returning a signed result.
+ *
+ * @param a Minuend time value.
+ * @param b Subtrahend time value.
+ * @return Signed difference in seconds, preserving the direction of the delta.
  */
 int32_t timeDif(time_t a, time_t b)
 {
-	int32_t dif; // = difftime(now, g_event_start_epoch); // returns arg1 - arg2
+	int32_t dif;
+
+	/* Split the cases so the subtraction stays well-defined even if time_t is unsigned. */
 	if(a > b)
 		dif = a - b;
 	else
@@ -107,12 +148,20 @@ int32_t timeDif(time_t a, time_t b)
 }
 
 /**
- * Checks a string to see if it contains only numerical characters
+ * Report whether every character in a string is an ASCII digit.
+ *
+ * The function walks the string until the terminating null byte and returns
+ * false as soon as a non-digit is encountered. An empty string returns true,
+ * because the loop never finds a character that violates the rule.
+ *
+ * @param s Pointer to the null-terminated string to inspect.
+ * @return true if all characters are digits or the string is empty, false otherwise.
  */
 bool only_digits(char *s)
 {
 	while(*s)
 	{
+		/* Stop on the first character that is outside '0'..'9'. */
 		if(isdigit(*s++) == 0)
 		{
 			return (false);
@@ -123,11 +172,16 @@ bool only_digits(char *s)
 }
 
 /**
- * Convert a frequency string to a proper Hz value and string format based on assumptions
- * related to the size and decimal properties of the number contained in the string.
- * result = pointer to a character sting to hold the frequency string
- * freq = the frequency value to be represented as a string
- * Returns 1 if an error is detected
+ * Format a validated frequency in Hz as normalized display text.
+ *
+ * This helper accepts only frequencies inside the transmitter's supported range
+ * and expresses them in "####.# kHz" form. The fractional digit is derived from
+ * the hundreds-of-Hz place, so the display stays consistent with the firmware's
+ * one-decimal-place UI conventions.
+ *
+ * @param result Buffer to receive the formatted text.
+ * @param freq Frequency in Hz to normalize for display.
+ * @return true on null-buffer or out-of-range input, false on success.
  */
 bool frequencyString(char *result, uint32_t freq)
 {
@@ -140,6 +194,7 @@ bool frequencyString(char *result, uint32_t freq)
 
 	if((freq >= TX_MINIMUM_FREQUENCY) && (freq <= TX_MAXIMUM_FREQUENCY)) // Accept only a Hz value to be expressed in kHz
 	{
+		/* Preserve one decimal place by reusing the hundreds-of-Hz digit. */
 		uint32_t frac = (freq % 1000) / 100;
 		sprintf(result, "%lu.%1lu kHz", freq / 1000, frac);
 
@@ -214,11 +269,11 @@ bool frequencyVal(char *str, Frequency_Hz *result)
 }
 
 /**
- * Translate a Function_t enum value into a descriptive string.
+ * Translate a Function_t enum value into the corresponding user-facing label.
  *
  * @param str Buffer to receive the textual description.
  * @param fun Enumerated function value to describe.
- * @return true if the function is unrecognized, false otherwise.
+ * @return true if the function value is not mapped to display text, false otherwise.
  */
 bool function2Text(char *str, Function_t fun)
 {
@@ -226,11 +281,11 @@ bool function2Text(char *str, Function_t fun)
 }
 
 /**
- * Translate a Fox_t enum value into a descriptive string.
+ * Translate a Fox_t enum value into the corresponding user-facing label.
  *
  * @param str Buffer to receive the textual description.
  * @param fox Enumerated fox value to describe.
- * @return true if the fox value is unrecognized, false otherwise.
+ * @return true if the fox value is not mapped to display text, false otherwise.
  */
 bool fox2Text(char *str, Fox_t fox)
 {
@@ -238,55 +293,57 @@ bool fox2Text(char *str, Fox_t fox)
 }
 
 /**
- * Translate an Event_t enum value into a descriptive string.
+ * Translate an Event_t enum value into the corresponding user-facing label.
  *
  * @param str Buffer to receive the textual description.
  * @param evt Enumerated event value to describe.
- * @return true if the event value is unrecognized, false otherwise.
+ * @return true if the event value is not mapped to display text, false otherwise.
  */
 bool event2Text(char *str, Event_t evt)
 {
 	return lookupEnumText(str, (uint8_t)evt, EVENT_NUMBER_OF_EVENTS, g_event_text);
 }
 
-/*-------------------------------------------------------------
- *  float_to_parts_signed
- *  ---------------------
- *  Split a float (positive or negative) into:
- *      - characteristic : signed integer part      (-32768 to 32767)
- *      - mantissa       : first decimal digit      (0 to 9)
+/**
+ * Split a floating-point value into a signed integer part and one decimal digit.
  *
- *  Returns:  false  ? success
- *            true   ? error   (bad args, NaN/Inf, out of range)
- *------------------------------------------------------------*/
+ * The integer portion keeps the original sign, while the fractional output is
+ * always returned as a non-negative single decimal digit suitable for compact
+ * display formatting. Values that are NaN, infinite, or outside the `int16_t`
+ * range are rejected.
+ *
+ * @param value Input value to split.
+ * @param integerPart Destination for the signed integer portion.
+ * @param fractionPart Destination for the first decimal digit, in the range 0..9.
+ * @return true on invalid pointers or unrepresentable input, false on success.
+ */
 bool float_to_parts_signed(float value,
-                           int16_t *integerPart,   /* signed  */
-                           uint16_t *fractionPart) /* unsigned */
+                           int16_t *integerPart,
+                           uint16_t *fractionPart)
 {
-	/* pointer validity */
+	/* Both output pointers are required because success always produces a full split result. */
 	if(integerPart == NULL || fractionPart == NULL)
 		return true;
 
-	/* reject NaN or +/-Inf */
+	/* Special floating-point values cannot be represented meaningfully in this format. */
 	if(isnanf(value) || isinff(value))
 		return true;
 
-	/* split into integer and fractional parts */
+	/* modff preserves the sign on both parts, which lets negative inputs round-trip cleanly. */
 	float int_part_f;
-	float frac_part_f = modff(value, &int_part_f); /* both carry the sign of value */
+	float frac_part_f = modff(value, &int_part_f);
 
-	/* range-check integer part for int16_t */
+	/* Reject values whose whole-number portion would overflow the signed destination type. */
 	if(int_part_f < (float)INT16_MIN || int_part_f > (float)INT16_MAX)
 		return true;
 
-	/* scale fractional part to 1 decimal place, keep it non-negative */
+	/* Convert the fractional portion to one decimal digit for compact text output. */
 	float scaled = roundf(fabsf(frac_part_f) * 10.0f);
 	if(scaled > 9.)
-		scaled = 9.; /* avoid potential "10" for the fractional part */
+		scaled = 9.; /* Clamp rare round-up cases so the fractional field stays one digit. */
 
-	/* commit results */
-	*integerPart = (int16_t)int_part_f; /* may be negative */
-	*fractionPart = (uint16_t)scaled;   /* always positive */
+	*integerPart = (int16_t)int_part_f;
+	*fractionPart = (uint16_t)scaled;
 
-	return false; /* success */
+	return false;
 }

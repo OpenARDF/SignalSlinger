@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,17 @@
  *
  */
 
+/*
+ * Utility helpers shared across the firmware.
+ *
+ * This module contains small, stateless support functions for:
+ * - time and numeric formatting/parsing
+ * - enum-to-text conversion
+ * - compact display-oriented value splitting
+ *
+ * Hardware control, ISR coordination, and event-engine logic belong elsewhere.
+ */
+
 
 #ifndef UTIL_H_
 #define UTIL_H_
@@ -38,14 +49,20 @@
 /**
  * Calculate the signed difference between two time values.
  *
+ * This helper exists in place of `difftime()` so callers can rely on explicit
+ * `a - b` semantics even when `time_t` is represented as an unsigned type.
+ *
  * @param a First time value in seconds.
  * @param b Second time value in seconds.
- * @return The result of a - b, accounting for unsigned types.
+ * @return The signed result of a - b in seconds.
  */
 int32_t timeDif(time_t a, time_t b);
 
 /**
  * Determine whether a string is composed solely of digit characters.
+ *
+ * An empty string is treated as true because the scan finds no violating
+ * character before the terminating null byte.
  *
  * @param s Pointer to a null-terminated string to inspect.
  * @return true if every character in the string is a numeric digit; otherwise false.
@@ -53,7 +70,10 @@ int32_t timeDif(time_t a, time_t b);
 bool only_digits(char *s);
 
 /**
- * Format a frequency value in Hz as a human-readable string.
+ * Format a validated frequency in Hz as normalized display text.
+ *
+ * The output uses the firmware's standard "####.# kHz" format and fails if the
+ * supplied frequency falls outside the transmitter's supported range.
  *
  * @param result Buffer to receive the formatted string.
  * @param freq   Frequency in Hz to format.
@@ -75,39 +95,43 @@ bool frequencyString(char* result, uint32_t freq);
 bool frequencyVal(char* str, Frequency_Hz* result);
 
 /**
- * Convert a fox identifier to descriptive text.
+ * Convert a fox identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param fox Enum value identifying the fox type.
- * @return true on failure, false on success.
+ * @return true if the fox value is not mapped to display text, false on success.
  */
 bool fox2Text(char* str, Fox_t fox);
 
 /**
- * Convert an event identifier to descriptive text.
+ * Convert an event identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param evt Enum value identifying the event type.
- * @return true on failure, false on success.
+ * @return true if the event value is not mapped to display text, false on success.
  */
 bool event2Text(char* str, Event_t evt);
 
 /**
- * Convert a functionality identifier to descriptive text.
+ * Convert a functionality identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param fun Enum value identifying the desired function.
- * @return true on failure, false on success.
+ * @return true if the function value is not mapped to display text, false on success.
  */
 bool function2Text(char* str, Function_t fun);
 
 /**
- * Split a floating-point value into integer and fractional components.
+ * Split a floating-point value into integer and fractional display components.
+ *
+ * The signed integer portion preserves the sign of the original value. The
+ * fractional output is returned as a non-negative single decimal digit in the
+ * range 0..9, suitable for compact formatted output.
  *
  * @param value        Input floating-point value to split.
  * @param integerPart  Output pointer for the signed integer portion.
  * @param fractionPart Output pointer for the first decimal digit (0-9).
- * @return true on error, false on success.
+ * @return true on invalid pointers or unrepresentable input, false on success.
  */
 bool float_to_parts_signed(float value,
                            int16_t  *integerPart,
