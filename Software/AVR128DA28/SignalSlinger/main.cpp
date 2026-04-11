@@ -360,6 +360,35 @@ static const char *const g_frequency_test_pattern_text[NUMBER_OF_TEST_FREQUENCIE
         "< EEE<",
         "< EEEE<"};
 
+/**
+ * Determine whether the selected fox role uses the fixed fast-code profile.
+ *
+ * Sprint fast foxes and the foxoring high-frequency fox share the same
+ * "fast" behavior from the operator's perspective, so the active code speed
+ * should resolve to the fast standard instead of the editable base pattern
+ * speed.
+ *
+ * @param event Current event family.
+ * @param fox Current fox selection.
+ * @return true when the role should use FAST_FOX_CODE_SPEED_WPM.
+ */
+static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
+{
+	uint8_t fox_index = (uint8_t)fox;
+
+	if((event != EVENT_SPRINT) && (event != EVENT_FOXORING))
+	{
+		return false;
+	}
+
+	if(fox_index >= USE_CURRENT_FOX)
+	{
+		return false;
+	}
+
+	return (g_fox_frequency_source[fox_index] == FREQ_SOURCE_HIGH);
+}
+
 /***********************************************************************
  * Private Function Prototypes
  *
@@ -5229,7 +5258,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				if(sb_buff->fields[SB_FIELD1][0] == 'T')
 				{
-					float v = atof(sb_buff->fields[SB_FIELD1]);
+					float v = atof(sb_buff->fields[SB_FIELD2]);
 
 					if((v >= INT_BAT_CHARGE_THRESH_LOW_MIN) && (v <= INT_BAT_CHARGE_THRESH_LOW_MAX))
 					{
@@ -7007,6 +7036,11 @@ int getFoxCodeSpeed(void)
 	Fox_t fox;
 	Event_t event_snapshot;
 	event_and_fox_current_atomic(&event_snapshot, &fox);
+	if(foxUsesFastCodeSpeed(event_snapshot, fox))
+	{
+		return FAST_FOX_CODE_SPEED_WPM;
+	}
+
 	if(fox == BEACON)
 	{
 		return (g_evteng_pattern_codespeed);

@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.2s"
+#define SW_REVISION "1.2t"
 #define HW_TARGET_3_4
 // #define HW_TARGET_3_5
 
@@ -199,6 +199,7 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define MIN_UNLOCK_CODE_LENGTH 4
 #define MIN_CODE_SPEED_WPM (uint8_t)5
 #define MAX_CODE_SPEED_WPM (uint8_t)20
+#define FAST_FOX_CODE_SPEED_WPM (uint8_t)14
 #define MAX_RF_POWER_MW (uint16_t)5000
 #define MIN_RF_POWER_MW (uint16_t)0
 #define EEPROM_START_EPOCH_DEFAULT 0
