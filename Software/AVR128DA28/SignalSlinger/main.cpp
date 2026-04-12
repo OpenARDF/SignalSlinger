@@ -7041,13 +7041,14 @@ int getFoxCodeSpeed(void)
 		return FAST_FOX_CODE_SPEED_WPM;
 	}
 
+	if(event_snapshot == EVENT_FOXORING)
+	{
+		return (g_foxoring_pattern_codespeed);
+	}
+
 	if(fox == BEACON)
 	{
 		return (g_evteng_pattern_codespeed);
-	}
-	else if(event_snapshot == EVENT_FOXORING)
-	{
-		return (g_foxoring_pattern_codespeed);
 	}
 
 	return (g_evteng_pattern_codespeed);
@@ -7421,9 +7422,11 @@ void handleSerialCloning(void)
 					if(sb_buff->fields[SB_FIELD1][0] == 'I')
 					{
 						extendMasterModeTimeout();
-						sprintf(g_tempStr, "SPD P %u\n", g_evteng_pattern_codespeed);
+						char speed_slot = (g_event == EVENT_FOXORING) ? 'F' : 'P';
+						uint8_t pattern_speed = (speed_slot == 'F') ? g_foxoring_pattern_codespeed : g_evteng_pattern_codespeed;
+						sprintf(g_tempStr, "SPD %c %u\n", speed_slot, pattern_speed);
 
-						g_event_checksum += g_evteng_pattern_codespeed;
+						g_event_checksum += pattern_speed;
 						sb_send_master_string(g_tempStr);
 						g_programming_state = SYNC_Waiting_for_Pattern_CodeSpeed_reply;
 						atomic_write_u16(&g_programming_msg_throttle, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
@@ -7441,7 +7444,8 @@ void handleSerialCloning(void)
 				msg_id = sb_buff->id;
 				if(msg_id == SB_MESSAGE_CODE_SETTINGS)
 				{
-					if(sb_buff->fields[SB_FIELD1][0] == 'P')
+					char expected_speed_slot = (g_event == EVENT_FOXORING) ? 'F' : 'P';
+					if(sb_buff->fields[SB_FIELD1][0] == expected_speed_slot)
 					{
 						extendMasterModeTimeout();
 						char c = '\0';
