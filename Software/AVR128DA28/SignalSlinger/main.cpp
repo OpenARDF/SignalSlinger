@@ -234,6 +234,7 @@ static volatile bool g_foreground_report_settings = false;
 static volatile uint16_t g_report_settings_countdown = 0;
 static bool g_event_launched_by_user_action = false;
 static bool g_start_event_after_keydown = false; /* Foreground-only: one-press keydown should launch a synced event afterward */
+
 /* Foreground-only interaction helpers:
  * - g_consume_current_press_for_led_wake prevents the first press after LED timeout
  *   from being interpreted as a command.
@@ -360,35 +361,6 @@ static const char *const g_frequency_test_pattern_text[NUMBER_OF_TEST_FREQUENCIE
         "< EEE<",
         "< EEEE<"};
 
-/**
- * Determine whether the selected fox role uses the fixed fast-code profile.
- *
- * Sprint fast foxes and the foxoring high-frequency fox share the same
- * "fast" behavior from the operator's perspective, so the active code speed
- * should resolve to the fast standard instead of the editable base pattern
- * speed.
- *
- * @param event Current event family.
- * @param fox Current fox selection.
- * @return true when the role should use FAST_FOX_CODE_SPEED_WPM.
- */
-static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
-{
-	uint8_t fox_index = (uint8_t)fox;
-
-	if((event != EVENT_SPRINT) && (event != EVENT_FOXORING))
-	{
-		return false;
-	}
-
-	if(fox_index >= USE_CURRENT_FOX)
-	{
-		return false;
-	}
-
-	return (g_fox_frequency_source[fox_index] == FREQ_SOURCE_HIGH);
-}
-
 /***********************************************************************
  * Private Function Prototypes
  *
@@ -430,6 +402,8 @@ static inline void configureSwitchInterruptForSleepWake(void);
 bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
+static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox);
+
 
 /*******************************/
 /* Hardcoded event support     */
@@ -7091,14 +7065,15 @@ int getFoxCodeSpeed(void)
 	Fox_t fox;
 	Event_t event_snapshot;
 	event_and_fox_current_atomic(&event_snapshot, &fox);
-	if(foxUsesFastCodeSpeed(event_snapshot, fox))
-	{
-		return FAST_FOX_CODE_SPEED_WPM;
-	}
-
+	
 	if(event_snapshot == EVENT_FOXORING)
 	{
 		return (g_foxoring_pattern_codespeed);
+	}
+
+	if(foxUsesFastCodeSpeed(event_snapshot, fox)) /* Does not return a valid value for foxoring */
+	{
+		return FAST_FOX_CODE_SPEED_WPM;
 	}
 
 	if(fox == BEACON)
@@ -7156,6 +7131,32 @@ char *getCurrentPatternText(void)
 	}
 
 	return g_messages_text[PATTERN_TEXT];
+}
+
+/**
+ * Determine whether the selected fox role uses the fixed fast-code profile.
+ *
+ * Only Sprint fast foxes use the fast pattern speed setting
+ *
+ * @param event Current event family.
+ * @param fox Current fox selection.
+ * @return true when the role should use FAST_FOX_CODE_SPEED_WPM.
+ */
+static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
+{
+	uint8_t fox_index = (uint8_t)fox;
+
+	if(event != EVENT_SPRINT)
+	{
+		return false;
+	}
+
+    if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
+	{
+		return true;
+	}
+
+	return false;
 }
 
 /**
