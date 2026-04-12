@@ -460,6 +460,7 @@ static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t
 static void acknowledgeClonedClockValue(const char *reply, time_t epoch);
 static void finalizeLocalClockUpdate(void);
 static Event_t eventFromSerialArg(char eventArg);
+static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
 static void persistFoxSettingForCurrentEvent(Fox_t fox);
 static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency);
 static bool cancelManualTransientState(void);
@@ -3300,15 +3301,57 @@ static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch
 
 	time_t target = baseEpoch + ((time_t)hours * HOUR) + ((time_t)minutes * MINUTE);
 	time_t boundary = hasMinutes ? minuteBoundary : hourBoundary;
+	time_t alignedTarget = alignEpochToNearestBoundary(target, boundary, baseEpoch);
 
 	if(resolvedEpoch)
 	{
-		*resolvedEpoch = alignEpochToNearestBoundary(target, boundary, baseEpoch);
+		*resolvedEpoch = alignedTarget;
 	}
 
 	if(errMsg)
 	{
-		errMsg[0] = '\0';
+		if(alignedTarget != target)
+		{
+			strcpy(errMsg, TEXT_ALERT_TIME_ADJUSTED_TXT);
+		}
+		else
+		{
+			errMsg[0] = '\0';
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Snap the saved Classic-event start time down to the previous 5-minute slot.
+ *
+ * @param notice Optional buffer that receives the user-facing adjustment notice.
+ * @param noticeSize Size of the notice buffer.
+ * @return true if the saved start time was changed, false otherwise.
+ */
+static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize)
+{
+	time_t savedStartEpoch = atomic_read_time(&g_event_start_epoch);
+	time_t remainder = savedStartEpoch % ((time_t)5 * MINUTE);
+
+	if(notice && noticeSize)
+	{
+		notice[0] = '\0';
+	}
+
+	if((savedStartEpoch <= MINIMUM_VALID_EPOCH) || !remainder)
+	{
+		return false;
+	}
+
+	savedStartEpoch -= remainder;
+	persistClockEpochValue(&g_evteng_loaded_start_epoch, &g_event_start_epoch, savedStartEpoch, Event_start_epoch, (void *)&g_event_start_epoch);
+
+	if(notice && noticeSize)
+	{
+		strncpy(notice, TEXT_ERR_ALIGNED_TO_5MIN_TXT, noticeSize - 1);
+		notice[noticeSize - 1] = '\0';
 	}
 
 	return true;
@@ -4657,6 +4700,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_EVENT:
 			{
 				atomic_write_u16(&g_report_settings_countdown, 0);
+				char eventNotice[TEMP_STRING_SIZE + 1];
+				eventNotice[0] = '\0';
 				if(g_cloningInProgress)
 				{
 					/* During cloning, the incoming event selector is accepted verbatim
@@ -4673,6 +4718,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				else
 				{
 					bool validArg = false;
+					Event_t previousEvent = g_event;
 
 					if(sb_buff->fields[SB_FIELD1][0])
 					{
@@ -4687,6 +4733,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						 */
 						cancelManualTransientState();
 						g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
+						if((previousEvent != EVENT_CLASSIC) && (g_event == EVENT_CLASSIC))
+						{
+							alignSavedClassicStartTimeIfNeeded(eventNotice, sizeof(eventNotice));
+						}
 						if(!powerToTransmitter(g_device_enabled))
 						{
 							sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
@@ -4702,6 +4752,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_meshmode)
 					{
 						sb_send_NewLine();
+					}
+
+					if(eventNotice[0])
+					{
+						sb_send_string(eventNotice);
 					}
 
 					if(!event2Text(g_tempStr, g_event))

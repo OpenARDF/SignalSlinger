@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.2t"
+#define SW_REVISION "1.2u"
 #define HW_TARGET_3_4
 // #define HW_TARGET_3_5
 
@@ -228,6 +228,7 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define TEXT_ERR_INVALID_TIME_TXT (char *)"* Err: Invalid time!\n"
 #define TEXT_ERR_TIME_IN_PAST_TXT (char *)"* Err: Time in past!\n"
 #define TEXT_ERR_ALIGNED_TO_5MIN_TXT (char *)"* Alert: Time adjusted to 5-min cycle\n"
+#define TEXT_ALERT_TIME_ADJUSTED_TXT (char *)"* Alert: Time adjusted to schedule boundary\n"
 #define TEXT_RTC_NOT_RESPONDING_TXT (char *)"* Error: No response from clock hardware\n"
 #define TEXT_TX_NOT_RESPONDING_TXT (char *)"* Error: No response from transmit hardware\n"
 #define TEXT_WIFI_NOT_DETECTED_TXT (char *)"* Warning: WiFi hardware not detected\n"
