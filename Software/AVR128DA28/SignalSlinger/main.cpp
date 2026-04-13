@@ -4547,13 +4547,18 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								sb_send_string((char *)"SPD I\n");
 							}
 						}
-						else if((c == 'F') || ((g_event == EVENT_FOXORING) && !g_cloningInProgress))
+						else if((c == 'F') && !g_cloningInProgress)
 						{
 							g_foxoring_pattern_codespeed = speed;
 							g_ee_mgr.updateEEPROMVar(Foxoring_Pattern_Code_Speed, (void *)&g_foxoring_pattern_codespeed);
 							if(g_evteng_event_commenced)
 								g_evteng_code_throttle = throttleValue(getPatternCodeSpeed());
-
+						}
+						else if(c == 'F')
+						{
+							/* Clone sessions may still exchange SPD F for checksum/accounting,
+							 * but they must not overwrite the target's locally stored foxoring speed.
+							 */
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
@@ -4626,12 +4631,23 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						 * master cannot suspend and overwrite a target that is already running. */
 						if(!atomic_read_u16(&g_send_clone_success_countdown) && !g_evteng_event_commenced)
 						{
-							g_cloningInProgress = true;
-							g_defer_cloned_event_start = false;
-							cancelManualTransientState();
-							suspendEvent();
+							if(!g_cloningInProgress)
+							{
+								g_cloningInProgress = true;
+								g_defer_cloned_event_start = false;
+								cancelManualTransientState();
+								suspendEvent();
+								g_event_checksum = 0;
+							}
+							else
+							{
+								/* A duplicate discovery probe can arrive while the source is still
+								 * waiting for our MAS S reply. Re-acknowledge without resetting the
+								 * in-progress checksum or clone session state.
+								 */
+							}
+
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-							g_event_checksum = 0;
 							sb_send_string((char *)"MAS S\n");
 						}
 					}
