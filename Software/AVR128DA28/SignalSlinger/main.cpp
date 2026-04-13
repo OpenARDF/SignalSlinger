@@ -4962,10 +4962,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						if(!f1)
 						{
 							char buf[TEMP_STRING_SIZE];
-							time_t saved_start_epoch = atomic_read_time(&g_event_start_epoch);
-							time_t saved_finish_epoch = atomic_read_time(&g_event_finish_epoch);
-							time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
-							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							time_t saved_start_epoch;
+							time_t saved_finish_epoch;
+							time_t loaded_start_epoch;
+							time_t loaded_finish_epoch;
+							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
+							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
 							uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
 							bool effective_window_scheduled = false;
 							bool show_effective_window = false;
@@ -5112,17 +5114,17 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_cloningInProgress)
 					{
 						char buf[TEMP_STRING_SIZE];
-						time_t loaded_start_epoch = atomic_read_time(&g_evteng_loaded_start_epoch);
+						time_t event_start_epoch = atomic_read_time(&g_event_start_epoch);
 						if(!g_meshmode)
 							sb_send_NewLine();
 
-						if(loaded_start_epoch < MINIMUM_VALID_EPOCH)
+						if(event_start_epoch < MINIMUM_VALID_EPOCH)
 						{
 							sprintf(g_tempStr, "* Start:not set\n");
 						}
 						else
 						{
-							sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(loaded_start_epoch, buf, TEMP_STRING_SIZE));
+							sprintf(g_tempStr, "* Start:%s\n", convertEpochToTimeString(event_start_epoch, buf, TEMP_STRING_SIZE));
 						}
 
 						sb_send_string(g_tempStr);

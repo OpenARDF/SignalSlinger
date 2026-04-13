@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "1.2u"
+#define SW_REVISION "1.2v"
 #define HW_TARGET_3_4
 // #define HW_TARGET_3_5
 
@@ -339,7 +339,7 @@ typedef enum
 	FREQUENCY_TEST_BEACON,
 	USE_CURRENT_FOX
 #if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-	,
+ 	,
 	REPORT_BATTERY
 #endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 } Fox_t;
