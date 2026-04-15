@@ -390,6 +390,7 @@ bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch);
 bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
+static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
 static inline void clearPendingWakeInterruptFlags(void);
 static inline void setButtonHoldPreviewIndicator(bool active);
 bool shouldPowerTransmitterAfterWake(void);
@@ -1356,7 +1357,14 @@ int main(void)
 				PORTA_set_pin_level(POWER_ENABLE, HIGH);
 
 				if(g_enable_external_battery_control)
-					setExtBatLoadSwitch(ON, INITIALIZE_LS); // Enable external power
+				{
+					/* Restore only the charging client here. Any transmitter-side
+					 * need is restored separately by the wake power-state logic so
+					 * the shared auxiliary switch cannot remain latched on by a
+					 * stale initialization request.
+					 */
+					setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
+				}
 
 				bool restoring_mid_event_button_wake =
 				    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
@@ -1699,10 +1707,12 @@ int main(void)
 					/* Re-run the normal startup helpers after standby wake so the
 					 * peripheral drivers and GPIO configuration are back in the
 					 * awake-state configuration expected by the foreground loop.
+					 * Keep the RTC running in-place so standby wake does not
+					 * re-phase the 1 Hz tick and introduce accumulated clock slip.
 					 */
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
-					atmel_start_init();
+					system_resume_from_standby();
 					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
 						serialbus_init(SB_BAUD, SERIALBUS_USART);
@@ -6058,12 +6068,35 @@ void restoreStateAfterButtonWakeAuthorization(void)
  */
 bool shouldPowerTransmitterAfterWake(void)
 {
+	if(g_awakenedBy == AWAKENED_BY_SERIAL_PORT)
+	{
+		/* A serial wake should only restore transmitter/external-device power when
+		 * the interrupted sleep state actually depended on it.
+		 */
+		return shouldRestoreTransmitterForSleepContext(g_sleepType);
+	}
+
 	if(g_awakenedBy != AWAKENED_BY_BUTTONPRESS)
 	{
 		return g_device_enabled;
 	}
 
-	switch((SleepType)g_button_wake_prior_sleep_type)
+	return shouldRestoreTransmitterForSleepContext((SleepType)g_button_wake_prior_sleep_type);
+}
+
+/**
+ * Decide whether a wake should restore transmitter/external-device power for the prior sleep context.
+ *
+ * This helper is used for button and serial wakes, where the user interrupted a
+ * preexisting sleep state and we only want to restore power when the prior sleep
+ * context actually depended on the transmitter-side power path.
+ *
+ * @param sleepType Sleep mode active before the wake occurred.
+ * @return true if the transmitter-side power path should be restored.
+ */
+static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType)
+{
+	switch(sleepType)
 	{
 		case SLEEP_UNTIL_NEXT_XMSN:
 		{

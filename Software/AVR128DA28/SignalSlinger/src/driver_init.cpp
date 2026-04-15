@@ -144,6 +144,30 @@ void system_charging_config()
 }
 
 /**
+ * Restore the awake-mode peripheral configuration after standby wake.
+ *
+ * This resume path intentionally skips RTC reinitialization so the 1 Hz
+ * timebase keeps its existing phase and does not slip on every serial wake.
+ */
+void system_resume_from_standby()
+{
+	mcu_init();
+
+	/* Rebuild the normal awake-time peripheral configuration, but preserve the
+	 * RTC state established before sleep.
+	 */
+	CLKCTRL_init();
+	TIMERB_init();
+	CPUINT_init();
+	BINIO_init();
+
+	SLPCTRL_init();
+	ADC0_SYSTEM_init(SINGLE_CONVERSION);
+
+	BOD_init();
+}
+
+/**
  * Reconfigure hardware into the low-power sleep arrangement expected by the firmware.
  */
 void system_sleep_config()

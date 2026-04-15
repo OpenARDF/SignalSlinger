@@ -65,6 +65,11 @@ void system_init(void);
 void system_charging_config();
 
 /**
+ * Reinitialize awake-mode peripherals after standby wake without disturbing RTC phase.
+ */
+void system_resume_from_standby(void);
+
+/**
  * Reconfigure hardware into the low-power sleep arrangement expected by the firmware.
  */
 void system_sleep_config(void);
