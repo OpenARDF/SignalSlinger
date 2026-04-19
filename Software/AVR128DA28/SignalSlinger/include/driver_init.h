@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,17 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
+ */
+
+/*
+ * High-level board bring-up and alternate hardware-configuration entry points.
+ *
+ * This module contains support functions for:
+ * - full system initialization during normal firmware startup
+ * - reduced pin/peripheral setup for charging-specific operation
+ * - low-power hardware preparation before sleep
+ *
+ * Application behavior after initialization belongs elsewhere.
  */
 
 #ifndef DRIVER_INIT_H_INCLUDED
@@ -43,8 +54,24 @@
 extern "C" {
 #endif
 
+/**
+ * Perform the normal firmware hardware bring-up sequence.
+ */
 void system_init(void);
+
+/**
+ * Configure the subset of hardware needed for charging-related operation.
+ */
 void system_charging_config();
+
+/**
+ * Reinitialize awake-mode peripherals after standby wake without disturbing RTC phase.
+ */
+void system_resume_from_standby(void);
+
+/**
+ * Reconfigure hardware into the low-power sleep arrangement expected by the firmware.
+ */
 void system_sleep_config(void);
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /**********************************************************************************************
-    Copyright © 2019 Digital Confections LLC
+    Copyright © 2026 Digital Confections LLC
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of
     this software and associated documentation files (the "Software"), to deal in the
@@ -19,74 +19,89 @@
     DEALINGS IN THE SOFTWARE.
 
 **********************************************************************************************/
+
+/*
+ * Fixed-size circular character buffer with overwrite-on-full behavior.
+ *
+ * This module contains support functions for:
+ * - staging short text messages in FIFO order
+ * - normalizing stored characters to uppercase
+ * - dropping the oldest entry automatically when new data arrives and the buffer is full
+ *
+ * Message ownership, parsing, and higher-level text policy belong elsewhere.
+ */
+
 #include "CircularStringBuff.h"
 #include <stdlib.h>
 #include <ctype.h>
 
+/**
+ * Construct a circular buffer with the requested capacity.
+ *
+ * @param size Maximum number of characters the buffer can hold.
+ */
 CircularStringBuff::CircularStringBuff(size_t size)
 {
-  buf_ = (char*)malloc(size);
-  max_size_ = size;
-  head_ = 0;
-  tail_ = 0;
-  full_ = false;
+	buf_ = (char *)malloc(size);
+	max_size_ = size;
+	head_ = 0;
+	tail_ = 0;
+	full_ = false;
 }
 
-CircularStringBuff::~CircularStringBuff() {
+/**
+ * Destroy the buffer and release its storage.
+ */
+CircularStringBuff::~CircularStringBuff()
+{
 	free(buf_);
 }
 
-
+/**
+ * Clear the buffer contents without releasing storage.
+ */
 void CircularStringBuff::reset()
 {
-  head_ = tail_;
-  full_ = false;
+	head_ = tail_;
+	full_ = false;
 }
 
+/**
+ * Report whether the buffer currently holds no characters.
+ *
+ * @return true when the buffer is empty.
+ */
 bool CircularStringBuff::empty() const
 {
-  /*if head and tail are equal, we are empty */
-  return (!full_ && (head_ == tail_));
+	/* Equal indices indicate empty only when the "full" latch is clear. */
+	return (!full_ && (head_ == tail_));
 }
 
+/**
+ * Report whether the buffer has reached capacity.
+ *
+ * @return true when the buffer is full.
+ */
 bool CircularStringBuff::full() const
 {
-  return (full_);
+	return (full_);
 }
 
-size_t CircularStringBuff::capacity() const
-{
-  return (max_size_);
-}
-
-size_t CircularStringBuff::size() const
-{
-  size_t size = max_size_;
-
-  if (!full_)
-  {
-    if (head_ >= tail_)
-    {
-      size = head_ - tail_;
-    }
-    else
-    {
-      size = max_size_ + head_ - tail_;
-    }
-  }
-
-  return (size);
-}
-
-/** 
- * Place another item in the buffer
+/**
+ * Insert one character at the head of the FIFO.
+ *
+ * Characters are converted to uppercase before storage. If the buffer is
+ * already full, the oldest character is discarded to make room.
+ *
+ * @param item Character to store.
  */
 void CircularStringBuff::put(char item)
 {
 	buf_[head_] = toupper(static_cast<unsigned char>(item));
-	
-	if (full_)
+
+	if(full_)
 	{
+		/* Advancing the tail preserves a fixed capacity by dropping the oldest item. */
 		tail_ = (tail_ + 1) % max_size_;
 	}
 
@@ -95,47 +110,22 @@ void CircularStringBuff::put(char item)
 	full_ = head_ == tail_;
 }
 
-/** 
- * Return the last put item and remove it from the buffer
- */
-char CircularStringBuff::pop()
-{
-  if(empty())
-  {
-	return ('\0');
-  }
-
-  /*Read data and decrement the head (we now have one more free space) */
-
-  if(head_ == 0) 
-  {
-    head_ = max_size_ - 1;
-  }
-  else
-  {
-    --head_;
-  }
-  
-  char val = buf_[head_];
-  full_ = false;
-
-  return (val);
-}
-
-/** 
- * Return the FIFO entry and delete it from the buffer
+/**
+ * Remove and return the oldest queued character.
+ *
+ * @return The oldest buffered character, or '\0' when the buffer is empty.
  */
 char CircularStringBuff::get()
 {
-  if (empty())
-  {
-    return ('\0');
-  }
+	if(empty())
+	{
+		return ('\0');
+	}
 
-  /*Read data and advance the tail (we now have a free space) */
-  char val = buf_[tail_];
-  full_ = false;
-  tail_ = (tail_ + 1) % max_size_;
+	/* Advance the tail after reading so the slot becomes available for future writes. */
+	char val = buf_[tail_];
+	full_ = false;
+	tail_ = (tail_ + 1) % max_size_;
 
-  return (val);
+	return (val);
 }

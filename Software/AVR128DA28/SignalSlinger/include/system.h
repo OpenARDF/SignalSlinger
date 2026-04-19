@@ -25,6 +25,14 @@
  *
  */
 
+/*
+ * Minimal MCU startup support.
+ *
+ * This header currently exposes the one-time initialization helper that places
+ * MCU pins into a lower-power default state before feature-specific drivers
+ * reconfigure the pins they actively use.
+ */
+
 /**
  * \defgroup doc_driver_utils_mcu_init MCU Init
  * \ingroup doc_driver_utils
@@ -45,13 +53,19 @@
 extern "C" {
 #endif
 
+/**
+ * Initialize MCU-wide low-power defaults before peripheral-specific setup.
+ *
+ * The current implementation enables pull-ups across the unused or idle ports
+ * the firmware cares about so pins do not float during early startup.
+ */
 void mcu_init(void)
 {
 	/* On AVR devices all peripherals are enabled from power on reset, this
 	 * disables all peripherals to save power. Driver shall enable
 	 * peripheral if used */
 
-	/* Set all pins to low power mode */
+	/* Bias unused pins so they start in a predictable low-power state. */
 
 	for (uint8_t i = 0; i < 8; i++) {
 		*((uint8_t *)&PORTA + 0x10 + i) |= 1 << PORT_PULLUPEN_bp;

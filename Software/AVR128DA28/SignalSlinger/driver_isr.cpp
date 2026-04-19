@@ -35,246 +35,386 @@
 
 #include <driver_init.h>
 #include <compiler.h>
+#include <atomic.h>
 #include <ctype.h> /* toupper() */
 #include <string.h>
 #include "serialbus.h"
 #include "usart_basic.h"
 #include "morse.h"
+#include "globals.h"
 
 void serial_Rx(uint8_t rx_char);
-void serial_Tx(uint8_t rx_char);
+static int serialbus_parse_msg_id(const char *text, uint8_t len);
 
-extern USART_Number_t g_serialbus_usart_number;
+#define SERIALBUS_MAX_ESC_SEQUENCE_LENGTH 16
+#define SERIALBUS_RX_IDLE_TIMEOUT_HUMAN_MS 8000U
+#define SERIALBUS_RX_IDLE_TIMEOUT_DELAYED_SUBMIT_MS 300000U
+#define SERIALBUS_RX_IDLE_TIMEOUT_NOISE_MS 500U
+
+static char g_serial_rx_textBuff[SERIALBUS_MAX_MSG_LENGTH];
+static SerialbusRxBuffer *g_serial_rx_buff = NULL;
+static uint8_t g_serial_rx_charIndex = 0;
+static uint8_t g_serial_rx_field_index = 0;
+static uint8_t g_serial_rx_field_len = 0;
+static int g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
+static uint8_t g_serial_rx_escapeCount = 0;
+static volatile uint32_t g_serial_rx_idle_ticks = 0;
+static bool g_serial_rx_receiving_msg = false;
+static bool g_serial_rx_ignoreAllInput = false;
+static bool g_serial_rx_inEscapeSequence = false;
+static volatile bool g_serial_rx_useMeshMode = false;
+static volatile bool g_serial_rx_accepting_input = false;
+static bool g_serial_rx_invalidCommand = false;
+
+static bool serialbus_rx_is_delayed_submit_command(void)
+{
+	if(g_serial_rx_useMeshMode || g_serial_rx_invalidCommand || !g_serial_rx_receiving_msg)
+	{
+		return false;
+	}
+
+	if((g_serial_rx_msg_ID == 'G') || (g_serial_rx_msg_ID == SB_MESSAGE_GO))
+	{
+		return true;
+	}
+
+	return (g_serial_rx_msg_ID == SB_MESSAGE_CLOCK) && (g_serial_rx_field_index > 0) &&
+	       g_serial_rx_buff && (g_serial_rx_buff->fields[SB_FIELD1][0] == 'T');
+}
+
+static void serial_rx_idle_ticks_write_atomic(uint32_t value)
+{
+	ENTER_CRITICAL(serial_rx_idle_ticks_write);
+	g_serial_rx_idle_ticks = value;
+	EXIT_CRITICAL(serial_rx_idle_ticks_write);
+}
+
+static uint32_t serialbus_rx_idle_reload_ticks(void)
+{
+	if(g_serial_rx_invalidCommand || g_serial_rx_inEscapeSequence || g_serial_rx_ignoreAllInput)
+	{
+		return SERIALBUS_RX_IDLE_TIMEOUT_NOISE_MS;
+	}
+
+	if(serialbus_rx_is_delayed_submit_command())
+	{
+		return SERIALBUS_RX_IDLE_TIMEOUT_DELAYED_SUBMIT_MS;
+	}
+
+	if(g_serial_rx_receiving_msg || g_serial_rx_charIndex)
+	{
+		return SERIALBUS_RX_IDLE_TIMEOUT_HUMAN_MS;
+	}
+
+	return 0;
+}
+
+static int serialbus_parse_msg_id(const char *text, uint8_t len)
+{
+	int msg_id = SB_MESSAGE_EMPTY;
+
+	for(uint8_t i = 0; i < len; i++)
+	{
+		msg_id = (i == 0) ? text[i] : (msg_id * 10 + text[i]);
+	}
+
+	return msg_id;
+}
+
+void serialbus_reset_rx_parser(void)
+{
+	memset(g_serial_rx_textBuff, 0, sizeof(g_serial_rx_textBuff));
+	g_serial_rx_buff = NULL;
+	g_serial_rx_charIndex = 0;
+	g_serial_rx_field_index = 0;
+	g_serial_rx_field_len = 0;
+	g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
+	g_serial_rx_escapeCount = 0;
+	serial_rx_idle_ticks_write_atomic(0);
+	g_serial_rx_receiving_msg = false;
+	g_serial_rx_ignoreAllInput = false;
+	g_serial_rx_inEscapeSequence = false;
+	g_serial_rx_invalidCommand = false;
+}
+
+void serialbus_set_rx_mesh_mode(bool enabled)
+{
+	g_serial_rx_useMeshMode = enabled;
+}
+
+void serialbus_set_rx_accepting_input(bool enabled)
+{
+	g_serial_rx_accepting_input = enabled;
+	serialbus_reset_rx_parser();
+}
+
+void serialbus_rx_idle_tick(void)
+{
+	if(g_serial_rx_idle_ticks)
+	{
+		g_serial_rx_idle_ticks--;
+		if(!g_serial_rx_idle_ticks)
+		{
+			if(g_serial_rx_buff && !g_serial_rx_useMeshMode)
+			{
+				g_serial_rx_buff->type = SERIALBUS_MSG_INVALID;
+				g_serial_rx_buff->id = SB_RX_IDLE_TIMEOUT;
+			}
+
+			serialbus_reset_rx_parser();
+		}
+	}
+}
 
 ISR(USART0_RXC_vect)
 {
 	uint8_t rx_char = USART0_get_data();
-	
+
 	if(g_serialbus_usart_number == USART_0)
 	{
 		serial_Rx(rx_char);
 	}
 }
 
-//void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
+// void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
 void serial_Rx(uint8_t rx_char)
 {
-	static char textBuff[SERIALBUS_MAX_MSG_LENGTH];
-	static SerialbusRxBuffer* buff = NULL;
-	static uint8_t charIndex = 0;
-	static uint8_t field_index = 0;
-	static uint8_t field_len = 0;
-	static int msg_ID = 0;
-	static bool receiving_msg = false;
-	static bool ignoreAllInput = false;
-	static bool useMeshMode = false;
+	uint8_t echo_char = rx_char;
 
-	if(!buff)
+	if(!g_serial_rx_accepting_input)
 	{
-		buff = nextEmptySBRxBuffer();
+		serialbus_reset_rx_parser();
+		return;
 	}
 
-	if(buff)
+	if(!g_serial_rx_buff)
 	{
-		static uint8_t ignoreCount = 0;
-		rx_char = toupper(rx_char);
-		if(rx_char == '\n') rx_char = '\r';
+		g_serial_rx_buff = nextEmptySBRxBuffer();
+	}
 
-		if(ignoreAllInput)
+	if(g_serial_rx_buff)
+	{
+		serial_rx_idle_ticks_write_atomic(serialbus_rx_idle_reload_ticks());
+
+		if(rx_char == 0x08)
 		{
-			if(rx_char == '\r')    /* Handle carriage return */
+			rx_char = 0x7F;
+		}
+		else
+		{
+			rx_char = toupper(rx_char);
+			echo_char = rx_char;
+		}
+		if(rx_char == '\n')
+			rx_char = '\r';
+
+		if(g_serial_rx_ignoreAllInput)
+		{
+			if(rx_char == '\r') /* Handle carriage return */
 			{
-				ignoreAllInput = false;
+				g_serial_rx_ignoreAllInput = false;
 			}
-			
+
 			rx_char = '\0';
 		}
-		else if(ignoreCount)
+		else if(g_serial_rx_inEscapeSequence)
 		{
-			rx_char = '\0';
-			ignoreCount--;
-		}
-		else if(rx_char == 0x1B)    /* Ignore ESC sequences */
-		{
+			g_serial_rx_escapeCount++;
 			rx_char = '\0';
 
-			if(charIndex < SERIALBUS_MAX_MSG_FIELD_LENGTH)
+			if(g_serial_rx_escapeCount == 1U)
 			{
-				rx_char = textBuff[charIndex];
+				if((echo_char != '[') && (echo_char != 'O'))
+				{
+					g_serial_rx_inEscapeSequence = false;
+				}
 			}
-
-			ignoreCount = 2;        /* throw out the next two characters */
+			else if((echo_char == '\r') ||
+			        ((echo_char >= 0x40U) && (echo_char <= 0x7EU)) ||
+			        (g_serial_rx_escapeCount >= SERIALBUS_MAX_ESC_SEQUENCE_LENGTH))
+			{
+				g_serial_rx_inEscapeSequence = false;
+			}
+		}
+		else if(rx_char == 0x1B) /* Ignore ESC sequences */
+		{
+			rx_char = '\0';
+			g_serial_rx_inEscapeSequence = true;
+			g_serial_rx_escapeCount = 0;
 		}
 		else if(rx_char == '*') /* Ignore all input until a carriage return is received */
 		{
-			ignoreAllInput = true;
+			g_serial_rx_ignoreAllInput = true;
 			rx_char = '\0';
 		}
-		else if(rx_char == '\r')    /* Handle carriage return */
+		else if(rx_char == '\r') /* Handle carriage return */
 		{
-			if(receiving_msg)
+			SBMessageID completed_id = SB_MESSAGE_EMPTY;
+			bool publish_msg = false;
+
+			if(g_serial_rx_receiving_msg)
 			{
-				if(charIndex > 0)
+				if(g_serial_rx_charIndex > 0)
 				{
-					buff->type = SERIALBUS_MSG_QUERY;
-					
-					if((charIndex == 1) && (textBuff[0] == '?'))
+					g_serial_rx_buff->type = SERIALBUS_MSG_QUERY;
+
+					if((g_serial_rx_charIndex == 1) && (g_serial_rx_textBuff[0] == '?'))
 					{
-						if(!useMeshMode) 
-						{
-							buff->id = SB_MESSAGE_HELP; /* print help message */
-						}
-						else
-						{
-							buff->id = SB_MESSAGE_EMPTY;
-						}
+						completed_id = g_serial_rx_useMeshMode ? SB_MESSAGE_EMPTY : SB_MESSAGE_HELP;
+						publish_msg = true;
+					}
+					else if(g_serial_rx_invalidCommand)
+					{
+						completed_id = g_serial_rx_useMeshMode ? SB_MESSAGE_EMPTY : SB_INVALID_MESSAGE;
+						publish_msg = true;
 					}
 					else
 					{
-						buff->id = (SBMessageID)msg_ID;
-
-						if(field_index > 0) /* terminate the last field */
+						if(g_serial_rx_field_index > 0) /* terminate the last field */
 						{
-							buff->fields[field_index - 1][field_len] = 0;
+							g_serial_rx_buff->fields[g_serial_rx_field_index - 1][g_serial_rx_field_len] = 0;
 						}
 
-						textBuff[charIndex] = '\0'; /* terminate last-message buffer */
+						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* terminate last-message buffer */
+						completed_id = (SBMessageID)g_serial_rx_msg_ID;
+						publish_msg = true;
 					}
 				}
 			}
 			else
 			{
-				buff->id = SB_CR_NO_DATA; /* handle blank line */
+				completed_id = SB_CR_NO_DATA; /* handle blank line */
+				publish_msg = true;
 			}
 
-			charIndex = 0;
-			field_len = 0;
-			msg_ID = SB_MESSAGE_EMPTY;
+			if(publish_msg)
+			{
+				/* Publish last so foreground sees a fully-populated message buffer. */
+				g_serial_rx_buff->id = completed_id;
+			}
 
-			field_index = 0;
-			buff = NULL;
-
-			receiving_msg = false;
+			serialbus_reset_rx_parser();
 		}
 		else if(rx_char)
 		{
-			textBuff[charIndex] = rx_char;  /* hold the characters for re-use */
+			g_serial_rx_textBuff[g_serial_rx_charIndex] = rx_char; /* hold the characters for re-use */
 
-			if(charIndex)
+			if(g_serial_rx_charIndex)
 			{
-				if(rx_char == 0x7F)         /* Handle backspace */
+				if(rx_char == 0x7F) /* Handle backspace */
 				{
-					if(charIndex) charIndex--;
-					if(field_index == 0)
+					g_serial_rx_charIndex--;
+
+					if(g_serial_rx_field_index == 0)
 					{
-						msg_ID -= textBuff[charIndex];
-						msg_ID /= 10;
+						if(g_serial_rx_field_len)
+						{
+							g_serial_rx_field_len--;
+						}
+
+						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* replace deleted char with null */
+						g_serial_rx_invalidCommand = (g_serial_rx_field_len > SERIALBUS_MAX_MSG_ID_LENGTH);
+						g_serial_rx_msg_ID = (!g_serial_rx_invalidCommand && g_serial_rx_field_len)
+						                         ? serialbus_parse_msg_id(g_serial_rx_textBuff, g_serial_rx_field_len)
+						                         : SB_MESSAGE_EMPTY;
 					}
-					else if(field_len)
+					else if(g_serial_rx_field_len)
 					{
-						field_len--;
-						buff->fields[field_index - 1][field_len] = '\0';
+						g_serial_rx_field_len--;
+						g_serial_rx_buff->fields[g_serial_rx_field_index - 1][g_serial_rx_field_len] = '\0';
+						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* replace deleted char with null */
 					}
-					else if(textBuff[charIndex] == ' ')
+					else if(g_serial_rx_textBuff[g_serial_rx_charIndex] == ' ')
 					{
-						field_index--;
-						field_len = strlen(buff->fields[field_index]);
+						g_serial_rx_field_index--;
+						g_serial_rx_field_len = strlen(g_serial_rx_buff->fields[g_serial_rx_field_index]);
+						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* replace deleted char with null */
 					}
 					else
 					{
-						buff->fields[field_index][0] = '\0';
-						field_index--;
+						g_serial_rx_buff->fields[g_serial_rx_field_index][0] = '\0';
+						g_serial_rx_field_index--;
+						g_serial_rx_textBuff[g_serial_rx_charIndex] = '\0'; /* replace deleted char with null */
 					}
 
-					textBuff[charIndex] = '\0'; /* replace deleted char with null */
-
-					if(charIndex == 0)
+					if(g_serial_rx_charIndex == 0)
 					{
-						receiving_msg = false;
+						g_serial_rx_receiving_msg = false;
 					}
 				}
 				else
 				{
 					if(rx_char == ' ')
 					{
-						if(textBuff[charIndex - 1] == ':') // Meshtastic flag ": " detected
-						{	
-							useMeshMode = true;
-							buff->id = SB_MODE_MESH;
-							buff->fields[0][0] = '1';
-							buff->fields[0][1] = '\0';
-							
-							msg_ID = SB_MESSAGE_EMPTY;
-							charIndex = 0;
-							field_len = 0;
-							field_index = 0;
-							buff = NULL;
-
-							receiving_msg = false;
+						if(g_serial_rx_textBuff[g_serial_rx_charIndex - 1] == ':') // Meshtastic flag ": " detected
+						{
+							g_serial_rx_useMeshMode = true;
+							g_serial_rx_invalidCommand = false;
+							g_serial_rx_buff->fields[0][0] = '1';
+							g_serial_rx_buff->fields[0][1] = '\0';
+							/* Publish last so foreground sees a fully-populated message buffer. */
+							g_serial_rx_buff->id = SB_MODE_MESH;
+							serialbus_reset_rx_parser();
 						}
-						else if((textBuff[charIndex - 1] == ' ') || ((field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
+						else if(g_serial_rx_invalidCommand && (g_serial_rx_field_index == 0))
+						{
+							/* Noise cannot become a valid command or Meshtastic prefix after a plain space. */
+							rx_char = '\0';
+							serialbus_reset_rx_parser();
+						}
+						else if((g_serial_rx_textBuff[g_serial_rx_charIndex - 1] == ' ') ||
+						        ((g_serial_rx_field_index + 1) >= SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS))
 						{
 							rx_char = '\0';
 						}
 						else
 						{
-							if(field_index > 0)
+							if(g_serial_rx_field_index > 0)
 							{
-								buff->fields[field_index - 1][field_len] = '\0';
+								g_serial_rx_buff->fields[g_serial_rx_field_index - 1][g_serial_rx_field_len] = '\0';
 							}
 
-							field_index++;
-							field_len = 0;
-							charIndex = MIN(charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
+							g_serial_rx_field_index++;
+							g_serial_rx_field_len = 0;
+							g_serial_rx_charIndex = MIN(g_serial_rx_charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 						}
 					}
-					else if(field_len < SERIALBUS_MAX_MSG_FIELD_LENGTH)
+					else if(g_serial_rx_field_index == 0) /* message ID received */
 					{
-						if(field_index == 0)    /* message ID received */
+						g_serial_rx_field_len++;
+
+						if(g_serial_rx_field_len <= SERIALBUS_MAX_MSG_ID_LENGTH)
 						{
-							field_len++;
-							
-							if(field_len <= SERIALBUS_MAX_MSG_ID_LENGTH) 
-							{
-								msg_ID = msg_ID * 10 + rx_char;
-							}
-							else // /* Invalid ID length = Keep checking in case it is a Meshtastic message */
-							{
-								msg_ID = SB_MESSAGE_EMPTY;
-								
-								if(field_len++ > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH) /* Invalid ID length = throw out everything */
-								{
-									rx_char = '\0';
-									
-									if(useMeshMode)
-									{
-										buff->id = SB_MESSAGE_EMPTY; /* ignore garbage */
-									}
-									else
-									{
-										buff->id = SB_INVALID_MESSAGE; /* print help message */
-									}
-
-									charIndex = 0;
-									field_len = 0;
-									field_index = 0;
-									buff = NULL;
-
-									receiving_msg = false;
-								}
-							}							
+							g_serial_rx_msg_ID = g_serial_rx_msg_ID * 10 + rx_char;
 						}
 						else
 						{
-							buff->fields[field_index - 1][field_len++] = rx_char;
-							buff->fields[field_index - 1][field_len] = '\0';
+							g_serial_rx_msg_ID = SB_MESSAGE_EMPTY;
+							g_serial_rx_invalidCommand = true;
+
+							if(g_serial_rx_field_len > SERIALBUS_MAX_MESHTASTIC_PREFIX_LENGTH)
+							{
+								/* Drop impossible noise quickly instead of waiting for a line terminator. */
+								rx_char = '\0';
+								serialbus_reset_rx_parser();
+							}
 						}
 
-						charIndex = MIN(charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
+						if(g_serial_rx_buff)
+						{
+							g_serial_rx_charIndex = MIN(g_serial_rx_charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
+						}
+					}
+					else if(g_serial_rx_field_len < (SERIALBUS_MAX_MSG_FIELD_LENGTH - 1))
+					{
+						g_serial_rx_buff->fields[g_serial_rx_field_index - 1][g_serial_rx_field_len++] = rx_char;
+						g_serial_rx_buff->fields[g_serial_rx_field_index - 1][g_serial_rx_field_len] = '\0';
+						g_serial_rx_charIndex = MIN(g_serial_rx_charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 					}
 					else
 					{
 						rx_char = '\0';
+						g_serial_rx_charIndex = MIN(g_serial_rx_charIndex + 1, (SERIALBUS_MAX_MSG_LENGTH - 1));
 					}
 				}
 			}
@@ -282,59 +422,56 @@ void serial_Rx(uint8_t rx_char)
 			{
 				if(rx_char == 0x7F) /* Handle Backspace */
 				{
-					if(msg_ID <= 0)
+					if(g_serial_rx_msg_ID <= 0)
 					{
 						rx_char = '\0';
 					}
 
-					msg_ID = 0;
+					g_serial_rx_msg_ID = 0;
 				}
 				else if(!isalnum(rx_char) && (rx_char != '?')) /* Handle Space and other non-alphanumeric characters */
 				{
-					if((rx_char == '@') && (charIndex == 0))
+					if((rx_char == '@') && (g_serial_rx_charIndex == 0))
 					{
-						useMeshMode = false;
-						buff->id = SB_MODE_MESH;
-						buff->fields[0][0] = '0';
-						buff->fields[0][1] = '\0';
-							
-						msg_ID = SB_MESSAGE_EMPTY;
-						charIndex = 0;
-						field_len = 0;
-						field_index = 0;
-						buff = NULL;
-
-						receiving_msg = false;
+						g_serial_rx_useMeshMode = false;
+						g_serial_rx_invalidCommand = false;
+						g_serial_rx_buff->fields[0][0] = '0';
+						g_serial_rx_buff->fields[0][1] = '\0';
+						/* Publish last so foreground sees a fully-populated message buffer. */
+						g_serial_rx_buff->id = SB_MODE_MESH;
+						serialbus_reset_rx_parser();
 					}
-					
+
 					rx_char = '\0';
 				}
-				else                    /* start of new message */
+				else /* start of new message */
 				{
 					uint8_t i;
-					field_index = 0;
-					msg_ID = rx_char;
+					g_serial_rx_field_index = 0;
+					g_serial_rx_msg_ID = rx_char;
+					g_serial_rx_invalidCommand = false;
 
 					/* Empty the field buffers */
 					for(i = 0; i < SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
 					{
-						buff->fields[i][0] = '\0';
+						g_serial_rx_buff->fields[i][0] = '\0';
 					}
 
-					receiving_msg = true;
-					charIndex++;
-					field_len = 1;
+					g_serial_rx_receiving_msg = true;
+					g_serial_rx_charIndex++;
+					g_serial_rx_field_len = 1;
 				}
 			}
 
-			if(rx_char)
+			if(rx_char && !g_serial_rx_useMeshMode)
 			{
-				if(!useMeshMode) sb_echo_char(rx_char);
+				(void)sb_echo_char_isr(echo_char); /* Non-blocking ISR-safe echo enqueue */
 			}
-		}
-	}	
-}
 
+			serial_rx_idle_ticks_write_atomic(serialbus_rx_idle_reload_ticks());
+		}
+	}
+}
 
 /**
 
@@ -343,7 +480,7 @@ ISR(USART1_DRE_vect)
 {
 	if(g_serialbus_usart_number == USART_1)
 	{
-		static SerialbusTxBuffer* buff = 0;
+		static SerialbusTxBuffer *buff = 0;
 		static uint8_t charIndex = 0;
 
 		if(!buff)
@@ -351,6 +488,19 @@ ISR(USART1_DRE_vect)
 			buff = nextFullSBTxBuffer();
 		}
 
+		{
+			uint8_t echo_char;
+			if(serialbus_echo_try_get_isr(&echo_char))
+			{
+				USART1.TXDATAL = echo_char;
+				return;
+			}
+		}
+		if(!buff)
+		{
+			serialbus_end_tx();
+			return;
+		}
 		if((*buff)[charIndex])
 		{
 			/* Put data into buffer, sends the data */
@@ -369,16 +519,15 @@ ISR(USART1_DRE_vect)
 	}
 }
 
-
 /**
 
 */
 ISR(USART1_RXC_vect)
 {
-	uint8_t rx_char = USART1_get_data();	
-	
+	uint8_t rx_char = USART1_get_data();
+
 	if(g_serialbus_usart_number == USART_1)
 	{
 		serial_Rx(rx_char);
-    }
+	}
 }

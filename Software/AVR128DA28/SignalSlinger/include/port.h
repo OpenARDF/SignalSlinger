@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,15 @@
  *  SOFTWARE.
  */
 
+/*
+ * Lightweight GPIO helper wrappers for the AVR port peripherals.
+ *
+ * This header provides small inline helpers for the port blocks used by the
+ * firmware. The helper families for PORTA, PORTC, PORTD, and PORTF all follow
+ * the same contract: configure pull mode, direction, input sense, and pin or
+ * port level with minimal call overhead.
+ */
+
 #ifndef PORT_INCLUDED
 #define PORT_INCLUDED
 
@@ -31,17 +40,20 @@ extern "C" {
 
 #include <compiler.h>
 
+/* Select whether an input pin should leave the pull-up disabled or enabled. */
 enum port_pull_mode {
 	PORT_PULL_OFF,
 	PORT_PULL_UP
 };
 
+/* Select whether a pin should act as an input, output, or parked low-power pin. */
 enum port_dir {
 	PORT_DIR_IN,
 	PORT_DIR_OUT,
 	PORT_DIR_OFF
 };
 
+/* PORTA helper family. The same API shape repeats for the other enabled ports below. */
 /**
  * \brief Set port pin pull mode
  *
@@ -125,8 +137,7 @@ static inline void PORTA_set_port_dir(const uint8_t mask, const enum port_dir di
 		VPORTA.DIR |= mask;
 		break;
 	case PORT_DIR_OFF:
-		/*/ should activate the pullup for power saving
-		  but a bit costly to do it here */
+		/* Park the selected pins with pull-ups enabled instead of actively driving them. */
 		{
 			for (uint8_t i = 0; i < 8; i++) {
 				if (mask & 1 << i) {
@@ -264,6 +275,7 @@ static inline void PORTA_write_port(const uint8_t value)
 	VPORTA.OUT = value;
 }
 
+/* PORTC helper family. Contracts mirror the PORTA helpers above. */
 /**
  * \brief Set port pin pull mode
  *
@@ -486,6 +498,7 @@ static inline void PORTA_write_port(const uint8_t value)
 // 	VPORTB.OUT = value;
 // }
 
+/* PORTD helper family. Contracts mirror the PORTA helpers above. */
 /**
  * \brief Set port pin pull mode
  *
@@ -708,6 +721,7 @@ static inline void PORTC_write_port(const uint8_t value)
 	VPORTC.OUT = value;
 }
 
+/* PORTF helper family. Contracts mirror the PORTA helpers above. */
 /**
  * \brief Set port pin pull mode
  *

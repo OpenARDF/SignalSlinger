@@ -1,6 +1,9 @@
 * text=auto
 
 # Keep source, docs, and CAD text data consistent across platforms.
+/.gitattributes text eol=lf
+/.gitignore text eol=lf
+/.editorconfig text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
 *.json text eol=lf
