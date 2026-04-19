@@ -1,0 +1,34 @@
+root = true
+
+[*.{md,txt,json,yml,yaml,xml,html,csv,pos,rpt,dox,rst,h,c,cpp,S,kicad_sch,kicad_pcb,kicad_pro,kicad_prl,kicad_sym,kicad_mod,gbr,gbrjob,drl,ipc}]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+[*.{ps1,sln,cppproj,componentinfo.xml}]
+end_of_line = crlf
+insert_final_newline = true
+charset = utf-8
+
+[*.{c,cpp,h,S}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+[Makefile]
+indent_style = tab
+tab_width = 4
+
+[*.{ps1,md,txt,json,yml,yaml,xml,html,dox,rst}]
+indent_style = space
+indent_size = 4
+
+[*.{csv,pos,rpt}]
+indent_style = space
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{txt,json,yml,yaml,xml,html,csv,pos,rpt,dox,rst,c,h,cpp,S,ps1}]
+trim_trailing_whitespace = true

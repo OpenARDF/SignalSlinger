@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -19,58 +19,18 @@
  *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
+ */
+
+/*
+ * Si5351 clock-generator control for firmware RF outputs.
  *
- * The Si5351 is an I2C configurable clock generator that is ideally suited for replacing crystals,
- * crystal oscillators, VCXOs, phase-locked loops (PLLs), and fanout buffers in cost-sensitive
- * applications. Based on a PLL/VCXO + high resolution MultiSynth fractional divider architecture,
- * the Si5351 can generate any frequency up to 200 MHz on each of its outputs with 0 ppm error.
- * http://www.silabs.com/documents/public/data-sheets/Si5351-B.pdf
+ * This module provides a compact AVR-oriented interface to the Si5351A. It
+ * owns the I2C register programming, PLL configuration, and multisynth helper
+ * math used to derive output clocks from the crystal reference.
  *
- * PURPOSE
- * This is a basic library for the Si5351 series of clock generator ICs from Silicon Labs for the avr-gcc development
- * environment. It supports controlling the Si5351 with an AVR microcontroller with a TWI peripheral module. It is
- * intentionally minimalistic in order to minimize program size and maximize execution speed. It is intended for use
- * in projects utilizing small processors with limited program memory, where the program author is responsible for
- * implementing any checks on the validity of parameters passed to the library functions.
- *
- * The following high-level description of the Si5351 frequency-setting algorithm is provided to help the user understand
- * the basic workings of the library, so that any needed modifications can be readily made.
- *
- * OVERVIEW
- * The algorithm used in this library starts with the desired output frequency, and works backwards through Synthesis
- * Stage 2 and Synthesis Stage 1, to determine the necessary Si5351 register settings.
- *
- * STEPS (Output CLK0)
- *
- * 1. Choose a desired CLK0 output frequency (Fout) in Hz.
- * 2. Find an even integer Multisynth Divider Ratio (a_msd) that multiplies Fout to obtain a value between 600 MHz and 900 MHz. Set b_msd = 0,
- *    and c_msd = 1. Note: a_msd has a valid range of all even integers between 4 and 900; we are choosing to exclude all odd and fractional solutions.
- * 3. Calculate the VCO frequency (Fvco) in Hz where Fvco = a_msd x Fout.
- * 4. Find values for the Feedback Multisynth Divider Equation (a_fmd, b_fmd, c_fmd) that will multiply the crystal oscillator frequency (Fxtal)
- *    to obtain Fvco = Fxtal x (a_fmd + (b_fmd/c_fmd)). Note: (a_fmd + (b_fmd/c_fmd)) has a valid range of 15 to 90 with resolution of 1/1048575.
- * 5. Apply settings derived in previous steps to program PLLA, and use PLLA to generate Fout on CLK0.
- *
- *
- * STEPS (Output CLK1)
- *
- * CLK1 steps are exactly the same as for CLK0, except for Step 5, where we will program PLLB, and use PLLB to generate Fout on CLK1.
- *
- *
- * STEPS (Output CLK2)
- *
- * 1. Choose a desired CLK2 output frequency (Fout) in Hz.
- * 2. Starting with the Fvco applied to PLLB to generate CLK1, derive a Multisynth Divider Ratio (a_msd, b_msd and c_msd) that multiplies
- *    Fvco to obtain Fout = Fvco x (a_msd + (b_msd/c_msd)). Note: (a_msd + (b_msd/c_msd)) has a valid range of 4, 6, and all values between
- *    8 and 900 with resolution of 1/1048575. The resulting Fout might not be exact.
- * 3. Apply settings derived in Step 2 to use PLLB to generate Fout on CLK2.
- *
- * NOTE:
- * The order of setting clocks CLK1 and CLK2 may be reversed. If that is done, then the Fvco for PLLB will be derived from the Fout chosen
- * for CLK2 (instead of CLK1 as shown in the steps above). Thus the order in which clocks CLK1 and CLK2 are set, can affect Fvco for PLLB,
- * and therefore the accuracy of the clock settings. However, if the PLLB VCO frequency is first set (using si5351_set_vcoB_freq())
- * then both CLK1 and CLK2 will use the specified VCO frequency to derive the signals on those outputs.
- *
+ * The library intentionally assumes that higher-level callers are responsible
+ * for selecting legal clock plans. This module focuses on translating those
+ * plans into Si5351 register updates with minimal code size.
  */
 
 #include "defs.h"
@@ -430,59 +390,129 @@ extern "C" {
 #ifdef INCLUDE_SI5351_SUPPORT
 
 /**
+ * Shut down the I2C peripheral used to communicate with the Si5351.
+ *
+ * This does not change any programmed Si5351 clock state; it only releases the
+ * local AVR-side communications interface.
  */
 void si5351_shutdown_comms(void);
 
 /**
+ * Initialize the I2C peripheral used to communicate with the Si5351.
  */
 void si5351_start_comms(void);
 
 /**
+ * Initialize the Si5351 and apply baseline device configuration.
+ *
+ * Initialization resets the cached library state, disables all outputs, powers
+ * down the device clocks, and programs the crystal load capacitance. When
+ * `ref_osc_freq` is zero, the default crystal frequency is used.
+ *
+ * @param xtal_load_c Crystal load capacitance setting.
+ * @param ref_osc_freq Reference crystal or clock input frequency in Hz, or 0 for default.
+ * @return true on I2C/configuration failure, false on success.
  */
 bool si5351_init(Si5351_Xtal_load_pF, Frequency_Hz);
 
 /**
+ * Program one Si5351 output clock.
+ *
+ * CLK0 is generated from PLLA. CLK1 and CLK2 share PLLB, so the first one
+ * configured establishes PLLB's VCO frequency unless the caller has already
+ * fixed it with si5351_set_vcoB_freq().
+ *
+ * @param freq_Fout Desired output frequency in Hz.
+ * @param clk Output clock to configure.
+ * @param clocksOff true to leave the enabled outputs disabled after programming.
+ * @return true on failure, false on success.
  */
 bool si5351_set_freq(Frequency_Hz, Si5351_clock, bool clocksOff);
 
 /**
+ * Report the last frequency value requested for a clock output.
+ *
+ * The returned value is the library's cached setting, not a readback from the
+ * Si5351 hardware registers.
+ *
+ * @param clock Output clock to query.
+ * @return Cached output frequency in Hz.
  */
 Frequency_Hz si5351_get_frequency(Si5351_clock clock);
 
 /**
+ * Enable or disable one output through the Si5351 output-enable register.
+ *
+ * @param clk Output clock to update.
+ * @param enable true to enable the clock output, false to disable it.
+ * @return true on success, false on I2C failure.
  */
-EC si5351_clock_enable(Si5351_clock, bool);
+bool si5351_clock_enable(Si5351_clock, bool);
 
 /**
+ * Set the configured output drive strength for one clock pin.
+ *
+ * @param clk Output clock to update.
+ * @param drive Requested output drive level.
+ * @return true on success, false on I2C failure.
  */
-EC si5351_drive_strength(Si5351_clock, Si5351_drive);
+bool si5351_drive_strength(Si5351_clock, Si5351_drive);
 
 /**
+ * Program the raw phase-offset register for one output clock.
+ *
+ * @param clk Output clock to update.
+ * @param phase Raw 7-bit phase offset value to write.
+ * @return true on success, false on I2C failure.
  */
-EC si5351_set_phase(Si5351_clock clk, uint8_t phase);
+bool si5351_set_phase(Si5351_clock clk, uint8_t phase);
 
 /**
+ * Read the raw phase-offset register for one output clock.
+ *
+ * @param clk Output clock to query.
+ * @param phase Output pointer for the returned 8-bit register value.
+ * @return true on success, false on I2C failure.
  */
-EC si5351_get_phase(Si5351_clock clk, uint8_t* phase);
+bool si5351_get_phase(Si5351_clock clk, uint8_t* phase);
 
 /**
+ * Store the crystal correction factor used by the PLL calculations.
+ *
+ * The value is a signed parts-per-billion style correction term used only by
+ * this library's internal math. Persisting it in EEPROM is the caller's job.
+ *
+ * @param correction Signed reference-frequency correction value.
  */
 void si5351_set_correction(int32_t);
 
 /**
+ * Return the currently configured crystal correction factor.
+ *
+ * @return Signed reference-frequency correction value.
  */
 int32_t si5351_get_correction(void);
 
 /**
+ * Force PLLB to a specific VCO frequency before configuring CLK1 or CLK2.
+ *
+ * This is useful when the caller wants a particular PLLB clock plan rather
+ * than letting the first configured PLLB-backed output choose the VCO.
+ *
+ * @param freq_VCO Desired PLLB VCO frequency in Hz.
  */
 void si5351_set_vcoB_freq(Frequency_Hz);
 
 /**
+ * Soft-reset one or both PLLs.
+ *
+ * @param target_pll PLL selection mask indicating PLLA, PLLB, or both.
  */
 void pll_reset(Si5351_pll);
 
 #ifdef SUPPORT_STATUS_READS
 /**
+ * Refresh the cached device and interrupt status structures from the Si5351.
  */
 void si5351_read_status(void);
 #endif  /* #ifdef SUPPORT_STATUS_READS */
@@ -490,10 +520,14 @@ void si5351_read_status(void);
 #ifdef DEBUGGING_ONLY
 
 /**
+ * Compare the library's expected register map against the live device state.
+ *
+ * Debug-only helper used while validating the tuning algorithm.
  */
 bool compare_with_register_map(void);
 
 /**
+ * Dump Si5351 register contents for debugging.
  */
 void dump_registers(void);
 

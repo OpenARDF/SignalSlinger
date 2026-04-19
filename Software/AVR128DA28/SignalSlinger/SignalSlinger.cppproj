@@ -80,6 +80,7 @@
     </custom>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainName>com.Atmel.AVRGCC8.CPP</ToolchainName>
     <ToolchainSettings>
       <AvrGccCpp>
         <avrgcc.common.Device>-mmcu=avr128da28 -B "%24(PackRepoDir)\atmel\AVR-Dx_DFP\1.10.114\gcc\dev\avr128da28"</avrgcc.common.Device>
@@ -147,6 +148,7 @@
     </ToolchainSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainName>com.Atmel.AVRGCC8.CPP</ToolchainName>
     <ToolchainSettings>
       <AvrGccCpp>
         <avrgcc.common.Device>-mmcu=avr128da28 -B "%24(PackRepoDir)\atmel\AVR-Dx_DFP\1.10.114\gcc\dev\avr128da28"</avrgcc.common.Device>
@@ -259,6 +261,9 @@
     <Compile Include="include\eeprommanager.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\globals.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\i2c.h">
       <SubType>compile</SubType>
     </Compile>
@@ -283,6 +288,9 @@
     <Compile Include="include\serialbus.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\shared_state.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\si5351.h">
       <SubType>compile</SubType>
     </Compile>
@@ -293,6 +301,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\tcb.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\timeutil.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\transmitter.h">
@@ -356,6 +367,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\tcb.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\timeutil.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\transmitter.cpp">

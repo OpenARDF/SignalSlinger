@@ -1,0 +1,335 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 6693 >>
+stream
+q
+1 1 1 rg 0 0 612 792 re f
+BT
+0.080 0.080 0.080 rg
+/F2 17.00 Tf
+1 0 0 1 44 760 Tm
+(SignalSlinger App Summary \(Repo-based\)) Tj
+ET
+BT
+0.350 0.350 0.350 rg
+/F1 8.60 Tf
+1 0 0 1 44 738 Tm
+(Evidence source: repository files only. Missing items are labeled "Not found in repo.") Tj
+ET
+0.85 0.85 0.85 RG 1 w
+44 728 m 568 728 l S
+BT
+0.120 0.120 0.120 rg
+/F2 11.00 Tf
+1 0 0 1 44 716 Tm
+(What it is) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 44 704 Tm
+(SignalSlinger is AVR firmware for an AVR128DA28-based 80 m radio orienteering transmitter. The repo shows) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 44 692 Tm
+(timed event transmission logic, Morse generation, RF clock/control, serial programming, and low-power) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 44 680 Tm
+(operation for a field device.) Tj
+ET
+BT
+0.120 0.120 0.120 rg
+/F2 11.00 Tf
+1 0 0 1 44 663 Tm
+(Who it's for) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 44 651 Tm
+(Primary persona: builders/operators of an 80 m radio orienteering \(ARDF/foxoring\) transmitter who configure) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 44 639 Tm
+(and run scheduled transmissions on dedicated hardware.) Tj
+ET
+BT
+0.120 0.120 0.120 rg
+/F2 11.00 Tf
+1 0 0 1 44 622 Tm
+(What it does) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 610 Tm
+(- Schedules and runs timed transmit events with start/finish times and on-air/off-air cycles \(event) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 598 Tm
+(  state + sleep timing in main loop / RTC ISR\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 585 Tm
+(- Generates Morse code patterns/IDs and supports configurable code speeds for station ID and) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 573 Tm
+(  patterns \(`morse.cpp`, EEPROM settings\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 560 Tm
+(- Controls RF transmission frequency and keying on 80 m, including Si5351-based clock generation and) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 548 Tm
+(  power gating \(`transmitter.cpp`, `si5351.cpp`\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 535 Tm
+(- Stores persistent settings in MCU EEPROM, including event timing, frequencies, fox modes, power,) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 523 Tm
+(  unlock code, and calibration \(`eeprommanager.cpp/.h`\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 510 Tm
+(- Provides a serial command interface \(USART0, `SB_BAUD` 9600\) with command parsing/help behavior) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 498 Tm
+(  and message buffering \(`driver_isr.cpp`, `serialbus.cpp`, `serialbus.h`\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 485 Tm
+(- Monitors battery voltages/temperature and manages charging/load-switch behavior and thermal-) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 473 Tm
+(  related controls \(`adc.cpp`, `binio.cpp`, thresholds in `defs.h`\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 460 Tm
+(- Uses low-power standby/sleep with wake-up by RTC, button press, or serial port activity) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 448 Tm
+(  \(`main.cpp`, `driver_init.cpp`\).) Tj
+ET
+BT
+0.120 0.120 0.120 rg
+/F2 11.00 Tf
+1 0 0 1 44 433 Tm
+(How it works \(compact architecture\)) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 421 Tm
+(- Application orchestrator: `main.cpp` initializes drivers \(`atmel_start_init\(\)`\), serial bus,) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 409 Tm
+(  EEPROM-backed config, RTC calibration, and transmitter checks, then runs the foreground state) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 397 Tm
+(  machine.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 384 Tm
+(- Interrupt/event layer: `RTC_CNT_vect` performs 1-second scheduling work; `USART0_RXC_vect` parses) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 372 Tm
+(  incoming serial bytes into command buffers; `PORTC_PORT_vect` can wake the unit on serial RX while) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 360 Tm
+(  sleeping.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 347 Tm
+(- Device services: `driver_init.cpp` configures normal/sleep/charging hardware states; `rtc.cpp`) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 335 Tm
+(  manages internal RTC and backup clock mode; `ds3231.cpp` provides DS3231 I2C RTC support.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 322 Tm
+(- RF path: foreground logic calls `transmitter.cpp`, which powers RF hardware via `binio.cpp` and) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 310 Tm
+(  programs the Si5351 over `i2c.cpp`/`si5351.cpp`; `morse.cpp` supplies keyed symbol timing/pattern) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 298 Tm
+(  encoding.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 285 Tm
+(- State/persistence flow: user commands/button events update globals and EEPROM; RTC time drives) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 273 Tm
+(  event scheduling; status is reflected via LEDs and serial output. Some internals use shared global) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 261 Tm
+(  state across ISRs/foreground.) Tj
+ET
+BT
+0.120 0.120 0.120 rg
+/F2 11.00 Tf
+1 0 0 1 44 246 Tm
+(How to run \(minimal getting started\)) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 234 Tm
+(1. Open `/Users/charlesscharlau/Documents/GitHub/SignalSlinger/Software/AVR128DA28/SignalSlinger.atsln`) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 222 Tm
+(   in Atmel Studio 7 \(solution file and `.cppproj` are present\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 209 Tm
+(2. Build `Debug|AVR` or `Release|AVR` for target `AVR128DA28`; generated makefiles and project settings) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 197 Tm
+(   indicate AVR GCC outputs `SignalSlinger.elf`/HEX artifacts.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 184 Tm
+(3. Program the target hardware via UPDI \(the project config includes Atmel-ICE UPDI settings\).) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 171 Tm
+(4. Connect to the serial interface at 9600 baud for configuration/status messages.) Tj
+ET
+BT
+0.150 0.150 0.150 rg
+/F1 9.40 Tf
+1 0 0 1 48 158 Tm
+(5. Exact board wiring, hardware bring-up, and step-by-step flashing procedure: Not found in repo.) Tj
+ET
+BT
+0.450 0.450 0.450 rg
+/F1 7.90 Tf
+1 0 0 1 44 145 Tm
+(Repo evidence used includes main.cpp, driver_init.cpp, driver_isr.cpp, defs.h, serialbus.*, transmitter.*,) Tj
+ET
+BT
+0.450 0.450 0.450 rg
+/F1 7.90 Tf
+1 0 0 1 44 135 Tm
+(rtc.cpp, ds3231.cpp, si5351.cpp, eeprommanager.*, SignalSlinger.cppproj, Release/Makefile.) Tj
+ET
+Q
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000000327 00000 n 
+0000000402 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+7147
+%%EOF

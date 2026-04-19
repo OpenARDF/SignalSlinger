@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,15 @@
  *  SOFTWARE.
  */
 
+/*
+ * Brownout-detector initialization helpers.
+ *
+ * This module contains support functions for:
+ * - configuring the device brownout monitor
+ * - enabling voltage-level monitoring interrupts used elsewhere in the firmware
+ *
+ * Brownout response policy and fault handling belong elsewhere.
+ */
 
 
 #ifndef BROWNOUT_DETECTOR_H_INCLUDED
@@ -33,6 +42,11 @@
 extern "C" {
 #endif
 
+/**
+ * Initialize the brownout detector and voltage-level monitor.
+ *
+ * @return Initialization status code, with 0 indicating success.
+ */
 int8_t BOD_init();
 
 #ifdef __cplusplus

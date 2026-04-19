@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,85 +27,53 @@
  *
  */
 
+/*
+ * Utility helpers shared across the firmware.
+ *
+ * This module contains small, stateless support functions for:
+ * - time and numeric formatting/parsing
+ * - enum-to-text conversion
+ * - compact display-oriented value splitting
+ *
+ * Hardware control, ISR coordination, and event-engine logic belong elsewhere.
+ */
+
 
 #ifndef UTIL_H_
 #define UTIL_H_
 
 #include "defs.h"
+#include "timeutil.h"
 #include <time.h>
 
 /**
  * Calculate the signed difference between two time values.
  *
+ * This helper exists in place of `difftime()` so callers can rely on explicit
+ * `a - b` semantics even when `time_t` is represented as an unsigned type.
+ *
  * @param a First time value in seconds.
  * @param b Second time value in seconds.
- * @return The result of a - b, accounting for unsigned types.
+ * @return The signed result of a - b in seconds.
  */
 int32_t timeDif(time_t a, time_t b);
 
 /**
  * Determine whether a string is composed solely of digit characters.
  *
+ * An empty string is treated as true because the scan finds no violating
+ * character before the terminating null byte.
+ *
  * @param s Pointer to a null-terminated string to inspect.
  * @return true if every character in the string is a numeric digit; otherwise false.
  */
 bool only_digits(char *s);
 
-/***********************************************************************************************
- *  Print Formatting Utility Functions
- ************************************************************************************************/
-
 /**
- * Convert a time string of the form "yyyy-mm-ddThh:mm:ss" to seconds since 1900.
+ * Format a validated frequency in Hz as normalized display text.
  *
- * @param s Pointer to a null-terminated string containing the timestamp.
- * @return Seconds elapsed since 1 January 1900.
- */
-uint32_t convertTimeStringToEpoch(char * s);
-
-
-char* convertEpochToTimeString(time_t epoch, char* buf, size_t size);
-
-time_t String2Epoch(bool *error, char *datetime);
-
-
-/**
- * @brief Completes or offsets a timestamp and returns a 12-character time string.
- *
- * This function accepts either:
- *  - A partial timestamp string (up to 10 characters) representing YYMMDDhhmm,
- *    in which case missing leading fields are filled using the current local time.
- *
- *  - An offset string beginning with '+', such as "+5h", "+0500", "+2d", "+7m",
- *    "+1M", or "+1y". These are interpreted as offsets from the current local
- *    time in hours, minutes, days, months, or years. Multi-digit "+HHMM" format
- *    (e.g., "+0530") is interpreted as +5 hours 30 minutes.
- *
- * The returned timestamp always consists of 12 characters in the form:
- *
- *        YYMMDDhhmmSS
- *
- * with seconds (SS) always set to "00". The caller must supply `buf`, which
- * must be large enough to hold at least 13 bytes (12 characters + null terminator).
- *
- * @param partialString  A partial YYMMDDhhmm string, or an offset string.
- *
- * @return A pointer to the completed 12-character timestamp stored in `buf`.
- */
-char* completeTimeString(const char* partialString, time_t* currentEpoch);
-
-
-/**
- * Parse a timestamp string formatted as "yyyy-mm-ddThh:mm:ssZ" into a tm structure.
- *
- * @param s   Pointer to the input string (with optional trailing 'Z').
- * @param ltm Pointer to a tm structure to populate.
- * @return true on error, false on success.
- */
-bool mystrptime(char* s, struct tm* ltm);
-
-/**
- * Format a frequency value in Hz as a human-readable string.
+ * The output uses the firmware's standard "####.# kHz" format and fails if the
+ * supplied frequency falls outside the transmitter's supported range.
  *
  * @param result Buffer to receive the formatted string.
  * @param freq   Frequency in Hz to format.
@@ -114,48 +82,56 @@ bool mystrptime(char* s, struct tm* ltm);
 bool frequencyString(char* result, uint32_t freq);
 
 /**
- * Parse a textual frequency representation into a Frequency_Hz value.
+ * Parse a numeric frequency string into a Frequency_Hz value and normalized text.
  *
- * @param str    String containing the frequency (may include units).
+ * The function infers whether the input is expressed in MHz, kHz, or Hz by
+ * comparing its magnitude against the transmitter's valid frequency range.
+ * On success it also rewrites `str` into normalized "####.# kHz" text.
+ *
+ * @param str    Mutable string containing the frequency to parse.
  * @param result Pointer to store the parsed frequency in Hz.
  * @return true on failure, false on success.
  */
 bool frequencyVal(char* str, Frequency_Hz* result);
 
 /**
- * Convert a fox identifier to descriptive text.
+ * Convert a fox identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param fox Enum value identifying the fox type.
- * @return true on failure, false on success.
+ * @return true if the fox value is not mapped to display text, false on success.
  */
 bool fox2Text(char* str, Fox_t fox);
 
 /**
- * Convert an event identifier to descriptive text.
+ * Convert an event identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param evt Enum value identifying the event type.
- * @return true on failure, false on success.
+ * @return true if the event value is not mapped to display text, false on success.
  */
 bool event2Text(char* str, Event_t evt);
 
 /**
- * Convert a functionality identifier to descriptive text.
+ * Convert a functionality identifier to the corresponding user-facing label.
  *
  * @param str Buffer to receive the description.
  * @param fun Enum value identifying the desired function.
- * @return true on failure, false on success.
+ * @return true if the function value is not mapped to display text, false on success.
  */
 bool function2Text(char* str, Function_t fun);
 
 /**
- * Split a floating-point value into integer and fractional components.
+ * Split a floating-point value into integer and fractional display components.
+ *
+ * The signed integer portion preserves the sign of the original value. The
+ * fractional output is returned as a non-negative single decimal digit in the
+ * range 0..9, suitable for compact formatted output.
  *
  * @param value        Input floating-point value to split.
  * @param integerPart  Output pointer for the signed integer portion.
  * @param fractionPart Output pointer for the first decimal digit (0-9).
- * @return true on error, false on success.
+ * @return true on invalid pointers or unrepresentable input, false on success.
  */
 bool float_to_parts_signed(float value,
                            int16_t  *integerPart,

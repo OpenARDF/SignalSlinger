@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,16 @@
  *  SOFTWARE.
  */
 
+/*
+ * Sleep-controller configuration helpers.
+ *
+ * This module contains support functions for:
+ * - initializing the MCU sleep controller
+ * - switching between supported hardware sleep modes
+ *
+ * Sleep policy and wakeup sequencing belong elsewhere.
+ */
+
 #ifndef SLPCTRL_INCLUDED
 #define SLPCTRL_INCLUDED
 
@@ -31,8 +41,18 @@
 extern "C" {
 #endif
 
+/**
+ * Initialize the MCU sleep controller with sleep disabled.
+ *
+ * @return Initialization status code, with 0 indicating success.
+ */
 int8_t SLPCTRL_init();
 
+/**
+ * Select the hardware sleep mode used when sleep is later enabled.
+ *
+ * @param setmode Sleep-mode value to apply to the controller register.
+ */
 void SLPCTRL_set_sleep_mode(SLPCTRL_SMODE_t setmode);
 
 #ifdef __cplusplus

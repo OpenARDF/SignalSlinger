@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,15 @@
  *  SOFTWARE.
  */
 
+/*
+ * Clock-controller initialization helpers.
+ *
+ * This module contains support functions for:
+ * - configuring the external 32 kHz clock source
+ * - setting up the high-frequency oscillator used as the system clock
+ *
+ * Runtime clock-policy changes and peripheral timing decisions belong elsewhere.
+ */
 
 
 #ifndef CLKCTRL_H_INCLUDED
@@ -33,6 +42,11 @@
 extern "C" {
 #endif
 
+/**
+ * Initialize the device clock controller for the firmware's expected clock sources.
+ *
+ * @return Initialization status code, with 0 indicating success.
+ */
 int8_t CLKCTRL_init(void);
 
 #ifdef __cplusplus

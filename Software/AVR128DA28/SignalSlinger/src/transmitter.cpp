@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2022 DigitalConfections
+ *  Copyright (c) 2026 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,16 @@
  *  SOFTWARE.
  */
 
+/*
+ * RF transmitter control helpers.
+ *
+ * This module contains support functions for:
+ * - initializing and restarting the Si5351-backed transmit clock path
+ * - enabling or disabling RF-related power rails and support hardware
+ * - keying, unkeying, and retuning the transmitter
+ *
+ * Event scheduling and higher-level transmit policy belong elsewhere.
+ */
 
 #include <string.h>
 #include <stdlib.h>
@@ -30,6 +40,11 @@
 #include "port.h"
 #include "binio.h"
 #include "tcb.h"
+#include "globals.h"
+
+static const uint8_t TX_POWER_ON_INIT_RETRY_COUNT = 10;
+static const uint8_t TX_CONTROL_RETRY_COUNT = 5;
+static const uint16_t TX_POWER_SETTLE_DELAY_MS = 100;
 
 static volatile bool g_tx_initialized = false;
 volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -40,25 +55,44 @@ static volatile bool g_drain_voltage_enabled = false;
 static volatile bool g_transmitter_keyed = false;
 static volatile bool g_disable_transmissions = false;
 
-uint16_t g_80m_power_table[16] = DEFAULT_80M_POWER_TABLE;
-extern volatile bool g_device_enabled;
 volatile bool g_enable_boost_regulator = false;
 
-volatile bool g_enable_external_battery_control = true; // true = set the LS to control an external power source; It must be controlled to support transmissions and internal battery charging
+/*
+ * Runtime role select for the shared auxiliary switch:
+ * - HW_TARGET_3_5 defined: battery control and fan control are separate outputs,
+ *   so this flag affects only the external-battery/charging path.
+ * - HW_TARGET_3_5 not defined: the board has one shared auxiliary switched output;
+ *   true routes that output to external-battery/charging support, false repurposes
+ *   the same output for temperature-controlled fan drive.
+ */
+volatile bool g_enable_external_battery_control = true;
 
 /**
+ * Initialize the transmitter using the currently stored frequency.
+ *
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
  */
-EC init_transmitter(bool leave_clock_off);
-EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
+bool init_transmitter(bool leave_clock_off);
 
 /**
+ * Initialize the transmitter after first updating the stored working frequency.
+ *
+ * @param freq Frequency to remember and program.
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
  */
- void shutdown_transmitter(void);
-	
-/**
- */
- void restart_transmitter(void);
+bool init_transmitter(Frequency_Hz freq, bool leave_clock_off);
 
+/**
+ * Shut down the transmitter and its associated clock generator communications.
+ */
+void shutdown_transmitter(void);
+
+/**
+ * Power the transmitter back on and restart Si5351 communications.
+ */
+void restart_transmitter(void);
 
 /*
  * This function sets the VFO frequency (CLK0 of the Si5351) based on the intended frequency passed in by the parameter (freq),
@@ -67,336 +101,280 @@ EC init_transmitter(Frequency_Hz freq, bool leave_clock_off);
  * Update the oscillator with a new transmit frequency.  The caller
  * may request that the clock remain disabled after programming.
  */
-	bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
-	{
-		bool err = true;
+bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
+{
+	bool err = true;
 
-		if(!freq) return(err);
-		
-		if(g_tx_initialized)
+	if(!freq)
+		return (err);
+
+	if(!g_tx_initialized)
+	{
+		g_80m_frequency = *freq;
+		return false;
+	}
+
+	if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY)) /* 80m */
+	{
+		if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
 		{
-			if((*freq < TX_MAXIMUM_FREQUENCY) && (*freq > TX_MINIMUM_FREQUENCY))    /* 80m */
-			{
-				if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
-				{
-					err = false;
-				}
-			}
+			g_80m_frequency = *freq;
+			err = false;
+		}
+	}
+
+	return (err);
+}
+
+/**
+ * Globally enable or disable all RF transmissions.
+ *
+ * When disabled, the RF path is powered down so callers cannot accidentally
+ * emit RF even if they later request keying or power.
+ *
+ * @param disabled true to block transmissions and power down the RF path.
+ */
+void setDisableTransmissions(bool disabled)
+{
+	if(disabled)
+	{
+		g_disable_transmissions = true;
+		powerToTransmitter(OFF);
+	}
+	else
+	{
+		g_disable_transmissions = false;
+	}
+}
+
+bool getDisableTransmissions(void)
+{
+	return (g_disable_transmissions);
+}
+
+/**
+ * Apply or remove power from the RF chain and related control lines.
+ *
+ * When enabling, the shared support rails are brought up, the Si5351 path is
+ * reinitialized, and the working frequency is restored. When disabling, the
+ * clock generator and keyed-output state are torn down.
+ *
+ * @param state true to power the transmitter path, false to shut it down.
+ * @return true when the requested state is reached successfully.
+ */
+bool powerToTransmitter(bool state)
+{
+	bool success = true;
+
+	/* BAT X 2 disables the internal RF chain but still uses the external-control
+	 * switch to power any attached external device with the same event timing. */
+	if(g_enable_external_battery_control)
+		setExtBatLoadSwitch(state, TRANSMITTER);
+
+	if(g_disable_transmissions)
+	{
+		si5351_shutdown_comms();
+#ifdef HW_TARGET_3_5
+#else
+		setBoostEnable(OFF);
+#endif
+		setFETDriverLoadSwitch(OFF, TRANSMITTER);
+		setSignalGeneratorEnable(OFF, TRANSMITTER);
+		g_tx_initialized = false;
+		g_transmitter_keyed = false;
+	}
+	else
+	{
+		if(!state)
+		{
+			si5351_shutdown_comms();
 		}
 
-		g_80m_frequency = *freq;
-		
-// 		si5351_set_freq(*freq, TX_CLOCK_VHF, leaveClockOff); /* Test for quadrature */
+		setSignalGeneratorEnable(state, TRANSMITTER);
 
-		return(err);
-	}
-	
-/* Globally enable or disable all RF output.  When disabled the
- * transmitter is powered down to conserve energy.
- */
-	void setDisableTransmissions(bool disabled)
-	{
-		if(disabled)
+#ifdef HW_TARGET_3_5
+#else
+		if(g_enable_boost_regulator)
+			setBoostEnable(state);
+#endif
+		setFETDriverLoadSwitch(state, TRANSMITTER);
+
+		if(state)
 		{
-			g_disable_transmissions = true;
-			powerToTransmitter(OFF);
+			int tries = TX_POWER_ON_INIT_RETRY_COUNT;
+
+			util_delay_ms(0);
+			while(util_delay_ms(TX_POWER_SETTLE_DELAY_MS))
+				;
+			while(tries && !init_transmitter(g_80m_frequency, true))
+			{
+				--tries;
+			}
+
+			if(!tries)
+			{
+				success = false;
+			}
+
+			si5351_start_comms();
 		}
 		else
 		{
-			g_disable_transmissions = false;
-		}
-	}
-	
-	bool getDisableTransmissions(void)
-	{
-		return(g_disable_transmissions);
-	}
-
-/* Apply or remove power from the RF chain and related control lines.
- * When enabling, the Si5351 and related peripherals are reinitialized.
- */
-	EC powerToTransmitter(bool state)
-	{
-		EC result = ERROR_CODE_NO_ERROR;
-		
-		if(g_disable_transmissions)
-		{
-			si5351_shutdown_comms();
-#ifdef HW_TARGET_3_5
-#else
-			setBoostEnable(OFF);
-#endif
-			setFETDriverLoadSwitch(OFF, TRANSMITTER);
-			setSignalGeneratorEnable(OFF, TRANSMITTER);
 			g_tx_initialized = false;
 			g_transmitter_keyed = false;
 		}
-		else
-		{
-			if(!state)
-			{
-				si5351_shutdown_comms();
-			}
-			
-			if(g_enable_external_battery_control) setExtBatLoadSwitch(state, TRANSMITTER);
-			setSignalGeneratorEnable(state, TRANSMITTER);
-			
-#ifdef HW_TARGET_3_5
-#else
-			if(g_enable_boost_regulator) setBoostEnable(state);
-#endif
-			setFETDriverLoadSwitch(state, TRANSMITTER);
-						
-			if(state)
-			{
-				int tries = 10;
-				
-				util_delay_ms(0);
-				while(util_delay_ms(100));
-				while(tries && (init_transmitter(g_80m_frequency, true) != ERROR_CODE_NO_ERROR))
-				{
-					--tries;
-				}
-				
-				if(!tries)
-				{
-					result = ERROR_CODE_RF_OSCILLATOR_ERROR;
-				}
-				
-				si5351_start_comms();
-			}
-			else
-			{
-				g_tx_initialized = false;
-				g_transmitter_keyed = false;
-			}
-		}
-
-		return(result);
 	}
-// 	
-// 	void txKeyDown(bool key)
-// 	{
-// 		if(g_tx_initialized)
-// 		{
-// 			int tries = 10;
-// 			while(--tries && (key != keyTransmitter(key)));
-// 		}
-// 	}
-	
-// 	bool txConfirmRFisOff(void)
-// 	{
-// 		if(g_tx_initialized)
-// 		{
-// 			int tries = 5;
-// 		
-// 			while(--tries && (si5351_get_phase(SI5351_CLK0, null) != ERROR_CODE_NO_ERROR)); /* confirm oscillator comms are working */
-// 		
-// 			if(tries > 0) // oscillator appears to be working
-// 			{
-// 				tries = 5;
-// 				while(--tries && g_transmitter_keyed) // if the transmitter is keyed, key it off
-// 				{
-// 					keyTransmitter(OFF);
-// 				}
-// 			}
-// 			else // failed to communicate with SI5351
-// 			{
-// 				tries = 5;
-// 				while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
-// 				{
-// 					shutdown_transmitter();
-// 					restart_transmitter();
-// 				}
-// 			
-// 				if(tries <= 0) // failed to disable the RF generator
-// 				{
-// 					tries = 5;
-// 				
-// 					g_tx_initialized = false;
-// 					while(--tries && !g_tx_initialized)
-// 					{
-// 						init_transmitter(true);
-// 						keyTransmitter(OFF);
-// 					}
-// 				
-// 					if(tries < 1)
-// 					{
-// 						return(true); // assume transmitter might be stuck in key down state
-// 					}
-// 				}
-// 			}
-// 		}
-// 		
-// 		return(g_transmitter_keyed);
-// 	}
 
-	
-	bool keyTransmitter(bool on)
+	return (success);
+}
+
+/**
+ * Key or unkey the transmitter output stage.
+ *
+ * The function retries clock-enable operations and will restart the transmitter
+ * path if the Si5351 command does not succeed on the first attempt.
+ *
+ * @param on true to key the transmitter, false to unkey it.
+ * @return true when the transmitter ends in the keyed state.
+ */
+bool keyTransmitter(bool on)
+{
+	if(g_tx_initialized)
 	{
-		if(g_tx_initialized)
-		{			
-			int tries = 5;
-			
-			if(on)
+		int tries = TX_CONTROL_RETRY_COUNT;
+
+		if(on)
+		{
+			if(!g_transmitter_keyed)
 			{
-				if(!g_transmitter_keyed)
+				fet_driver(ON);
+				while(--tries && !si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_ENABLED))
 				{
-					fet_driver(ON);
-					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_ENABLED) != ERROR_CODE_NO_ERROR))
-					{
-						shutdown_transmitter();
-						restart_transmitter();
-					}
-					
-					if(tries)
-					{
-						g_transmitter_keyed = true;
-					}
+					shutdown_transmitter();
+					restart_transmitter();
 				}
-			}
-			else
-			{
-				if(g_transmitter_keyed)
+
+				if(tries)
 				{
-					while(--tries && (si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED) != ERROR_CODE_NO_ERROR))
-					{
-						shutdown_transmitter();
-						restart_transmitter();
-					}
-					
-					if(tries)
-					{
-						g_transmitter_keyed = false;
-					}
+					g_transmitter_keyed = true;
 				}
 			}
 		}
 		else
 		{
-			g_transmitter_keyed = false;
-		}
-		
-		return(g_transmitter_keyed);
-	}
+			if(g_transmitter_keyed)
+			{
+				while(--tries && !si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED))
+				{
+					shutdown_transmitter();
+					restart_transmitter();
+				}
 
-// 	uint16_t txGetPowerMw(void)
-// 	{
-// 		return( g_80m_power_level_mW);
-// 	}
-	
-	bool txIsInitialized(void)
+				if(tries)
+				{
+					g_transmitter_keyed = false;
+				}
+			}
+		}
+	}
+	else
 	{
-		return g_tx_initialized;
+		g_transmitter_keyed = false;
 	}
 
-	void shutdown_transmitter(void)
+	return (g_transmitter_keyed);
+}
+
+bool txIsInitialized(void)
+{
+	return g_tx_initialized;
+}
+
+/**
+ * Shut down the transmitter and its associated clock generator communications.
+ */
+void shutdown_transmitter(void)
+{
+	si5351_shutdown_comms();
+	powerToTransmitter(OFF);
+}
+
+/**
+ * Power the transmitter back on and restart Si5351 communications.
+ */
+void restart_transmitter(void)
+{
+	powerToTransmitter(ON);
+	si5351_start_comms();
+}
+
+/**
+ * Initialize the transmitter after first updating the stored working frequency.
+ *
+ * @param freq Frequency to remember and program.
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
+ */
+bool init_transmitter(Frequency_Hz freq, bool leave_clock_off)
+{
+	g_80m_frequency = freq;
+	return init_transmitter(leave_clock_off);
+}
+
+/**
+ * Initialize the transmitter using the currently stored frequency.
+ *
+ * This programs the Si5351, configures its drive strength, and ensures the
+ * selected transmit frequency is pushed into the active output path.
+ *
+ * @param leave_clock_off true to leave the output clock disabled after setup.
+ * @return true on success, false on failure.
+ */
+bool init_transmitter(bool leave_clock_off)
+{
+	int tries = TX_CONTROL_RETRY_COUNT;
+
+	while(--tries && si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 initialization failed
 	{
-		si5351_shutdown_comms();	
-		powerToTransmitter(OFF);
+		return false;
 	}
-	
-	void restart_transmitter(void)
+
+	tries = TX_CONTROL_RETRY_COUNT;
+
+	while(--tries && !si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
 	{
-		powerToTransmitter(ON);
-		si5351_start_comms();
+		return false;
 	}
-	
-	EC init_transmitter(Frequency_Hz freq, bool leave_clock_off)
+
+	tries = TX_CONTROL_RETRY_COUNT;
+
+	while(--tries && !si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
 	{
-		EC code;
-		g_80m_frequency = freq;
-		code = init_transmitter(leave_clock_off);
-		
-		return code;
+		return false;
 	}
-	
-	EC init_transmitter(bool leave_clock_off)
+	else
 	{
-		EC code = ERROR_CODE_NO_ERROR;
-
-		int tries = 5;
-
-		while(--tries && (si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 initialization failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		if((err = si5351_init(SI5351_CRYSTAL_LOAD_6PF, 0)))
-// 		{
-// 			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-// 		}
-
-		tries = 5;
-
-		while(--tries && ((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		if((code = si5351_drive_strength(TX_CLOCK_HF_0, SI5351_DRIVE_2MA)))
-// 		{
-// 			return( code);
-// 		}
-		
-
-		tries = 5;
-
-		while(--tries && ((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)) != ERROR_CODE_NO_ERROR)); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-		else
-		{
-			g_tx_initialized = true;
-		}
-
-// 		if((code = si5351_clock_enable(TX_CLOCK_HF_0, SI5351_CLK_DISABLED)))
-// 		{
-// 			return( code);
-// 		}
-		
-// 		if((code = si5351_set_phase(TX_CLOCK_HF_0, 50)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_drive_strength(TX_CLOCK_VHF, SI5351_DRIVE_2MA)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_clock_enable(TX_CLOCK_VHF, SI5351_CLK_DISABLED)))
-// 		{
-// 			return( code);
-// 		}
-// 
-// 		if((code = si5351_set_phase(TX_CLOCK_VHF, 0)))
-// 		{
-// 			return( code);
-// 		}
-// 
-
-		tries = 5;
-
-		while(--tries && (txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off))); /* Initialize SI5351 */
-
-		if(!tries) // SI5351 drive strength failed
-		{
-			return(ERROR_CODE_RF_OSCILLATOR_ERROR);
-		}
-
-// 		err = txSetFrequency((Frequency_Hz*)&g_80m_frequency, leave_clock_off);
-// 		if(!err)
-// 		{
-// 			g_tx_initialized = true;
-// 		}
-
-		return( code);
+		g_tx_initialized = true;
 	}
+
+	tries = TX_CONTROL_RETRY_COUNT;
+
+	while(--tries && (txSetFrequency((Frequency_Hz *)&g_80m_frequency, leave_clock_off)))
+		; /* Initialize SI5351 */
+
+	if(!tries) // SI5351 drive strength failed
+	{
+		return false;
+	}
+
+	return true;
+}
