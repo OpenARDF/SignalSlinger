@@ -11,7 +11,7 @@
 *.yaml text eol=lf
 *.xml text eol=lf
 *.html text eol=lf
-*.csv text eol=lf
+*.csv -text
 *.pos text eol=lf
 *.rpt text eol=lf
 *.dox text eol=lf
