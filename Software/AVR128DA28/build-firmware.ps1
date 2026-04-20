@@ -10,6 +10,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = $PSScriptRoot
 $projectRoot = Join-Path $repoRoot 'SignalSlinger'
 $buildDir = Join-Path $projectRoot $Configuration
+$buildSrcDir = Join-Path $buildDir 'src'
 $makefilePath = Join-Path $buildDir 'Makefile'
 $elfPath = Join-Path $buildDir 'SignalSlinger.elf'
 $makePath = 'C:\Program Files (x86)\Atmel\Studio\7.0\shellutils\make.exe'
@@ -36,6 +37,11 @@ Assert-PathExists -Path $projectRoot -Description 'Project root'
 Assert-PathExists -Path $buildDir -Description 'Build directory'
 Assert-PathExists -Path $makefilePath -Description "$Configuration Makefile"
 Assert-PathExists -Path $makePath -Description 'Atmel Studio make.exe'
+
+if(-not (Test-Path -LiteralPath $buildSrcDir))
+{
+    New-Item -ItemType Directory -Path $buildSrcDir | Out-Null
+}
 
 $temporaryMakefilePath = $null
 
