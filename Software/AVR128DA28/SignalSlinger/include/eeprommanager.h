@@ -115,8 +115,9 @@ struct EE_prom
 	uint32_t reserved_31;
 	uint8_t days_to_run;
 	uint32_t reserved_32;
-	uint16_t reserved_i2c_failure_count;
-	uint32_t reserved_33;
+	int8_t thermal_shutdown_threshold;
+	uint8_t reserved_thermal_shutdown_threshold_padding;
+	float hottest_ever_temperature;
 	uint8_t function;
 	uint32_t reserved_34;
 	uint8_t enable_boost_regulator;
@@ -200,8 +201,8 @@ typedef enum
 	Reserved_31 = EEPROM_OFFSET(reserved_31),
 	Days_to_run = EEPROM_OFFSET(days_to_run),
 	Reserved_32 = EEPROM_OFFSET(reserved_32),
-	Reserved_I2C_Failure_Count = EEPROM_OFFSET(reserved_i2c_failure_count),
-	Reserved_33 = EEPROM_OFFSET(reserved_33),
+	Thermal_Shutdown_Threshold = EEPROM_OFFSET(thermal_shutdown_threshold),
+	Hottest_Ever_Temperature = EEPROM_OFFSET(hottest_ever_temperature),
 	Function = EEPROM_OFFSET(function),
 	Reserved_34 = EEPROM_OFFSET(reserved_34),
 	Enable_Boost_Regulator = EEPROM_OFFSET(enable_boost_regulator),
