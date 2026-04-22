@@ -42,4 +42,4 @@ For the current development workflow, start here:
 
 * [SignalStreamer](https://github.com/OpenARDF/SignalStreamer), a matching antenna
 * [SignalSnagger](https://github.com/OpenARDF/SignalSnagger), a companion receiver project
-* [SerialStreamer](https://github.com/OpenARDF/SerialStreamer), a serial terminal and logging companion for SignalSlinger configuration and monitoring
+* [SerialSlinger](https://github.com/OpenARDF/SerialSlinger), a serial terminal and logging companion for SignalSlinger configuration and monitoring
