@@ -84,13 +84,13 @@ function Set-HardwareTargetContent {
     {
         '3.4' {
             $updated = $DefsText `
-                -replace '(?m)^// #define HW_TARGET_3_4$','#define HW_TARGET_3_4' `
-                -replace '(?m)^#define HW_TARGET_3_5$','// #define HW_TARGET_3_5'
+                -replace '(?m)^\s*(?://\s*)?#define HW_TARGET_3_4\s*$','#define HW_TARGET_3_4' `
+                -replace '(?m)^\s*(?://\s*)?#define HW_TARGET_3_5\s*$','// #define HW_TARGET_3_5'
         }
         '3.5' {
             $updated = $DefsText `
-                -replace '(?m)^#define HW_TARGET_3_4$','// #define HW_TARGET_3_4' `
-                -replace '(?m)^// #define HW_TARGET_3_5$','#define HW_TARGET_3_5'
+                -replace '(?m)^\s*(?://\s*)?#define HW_TARGET_3_4\s*$','// #define HW_TARGET_3_4' `
+                -replace '(?m)^\s*(?://\s*)?#define HW_TARGET_3_5\s*$','#define HW_TARGET_3_5'
         }
     }
 
