@@ -213,6 +213,16 @@ extern "C"
 	SerialbusRxBuffer *nextFullSBRxBuffer(void);
 
 	/**
+	 * Atomically read the published message id from a receive buffer.
+	 */
+	SBMessageID serialbus_rx_buffer_id(SerialbusRxBuffer *buff);
+
+	/**
+	 * Release a processed receive buffer back to the ISR-owned empty pool.
+	 */
+	void serialbus_release_rx_buffer(SerialbusRxBuffer *buff);
+
+	/**
 	 * Queue a new command prompt on the serial interface.
 	 */
 	void sb_send_NewPrompt(void);

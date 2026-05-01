@@ -3861,7 +3861,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 		atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
 		LEDS.blink(LEDS_NO_CHANGE, true);
 
-		SBMessageID msg_id = sb_buff->id;
+		SBMessageID msg_id = serialbus_rx_buffer_id(sb_buff);
 
 		/* Dispatch each protocol message type to the matching foreground handler. */
 		switch(msg_id)
@@ -5659,7 +5659,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			break;
 		}
 
-		sb_buff->id = SB_MESSAGE_EMPTY;
+		serialbus_release_rx_buffer(sb_buff);
 		/* Emit a fresh prompt after ordinary command handling once any deferred
 		 * settings report has finished.
 		 */
@@ -7477,7 +7477,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if((msg_id == SB_MESSAGE_MASTER) && (sb_buff->fields[SB_FIELD1][0] == 'S'))
 				{
 					extendMasterModeTimeout();
@@ -7508,7 +7508,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_FUNCTION)
 				{
 					extendMasterModeTimeout();
@@ -7544,7 +7544,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CLOCK)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'T')
@@ -7567,7 +7567,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CLOCK)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'S')
@@ -7590,7 +7590,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CLOCK)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'F')
@@ -7612,7 +7612,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CLOCK)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'D')
@@ -7666,7 +7666,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_SET_STATION_ID)
 				{
 					extendMasterModeTimeout();
@@ -7685,7 +7685,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CODE_SETTINGS)
 				{
 					if(sb_buff->fields[SB_FIELD1][0] == 'I')
@@ -7710,7 +7710,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_CODE_SETTINGS)
 				{
 					char expected_speed_slot = (g_event == EVENT_FOXORING) ? 'F' : 'P';
@@ -7755,7 +7755,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_EVENT)
 				{
 					extendMasterModeTimeout();
@@ -7774,7 +7774,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
@@ -7793,7 +7793,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
@@ -7812,7 +7812,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
@@ -7831,7 +7831,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
@@ -7850,7 +7850,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_TX_FREQ)
 				{
 					extendMasterModeTimeout();
@@ -7868,7 +7868,7 @@ void handleSerialCloning(void)
 		{
 			if(sb_buff)
 			{
-				msg_id = sb_buff->id;
+				msg_id = serialbus_rx_buffer_id(sb_buff);
 				if(msg_id == SB_MESSAGE_MASTER)
 				{
 					extendMasterModeTimeout();
@@ -7892,7 +7892,7 @@ void handleSerialCloning(void)
 	}
 
 	if(sb_buff)
-		sb_buff->id = SB_MESSAGE_EMPTY;
+		serialbus_release_rx_buffer(sb_buff);
 }
 
 /* Event-state queries and user-triggered start helpers. */
