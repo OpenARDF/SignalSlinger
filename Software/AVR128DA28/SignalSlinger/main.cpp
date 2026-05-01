@@ -420,7 +420,6 @@ ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
 static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox);
 
-
 /*******************************/
 /* Hardcoded event support     */
 /*******************************/
@@ -3840,14 +3839,14 @@ static bool evaluateThermalShutdownState(float processor_temperature, bool inter
 
 	if(internal_bat_detected)
 	{
-		return (processor_temperature >= threshold) ? true
-		                                            : (processor_temperature <= clear_threshold_with_internal_battery) ? false
-		                                                                                                                : current_state;
+		return (processor_temperature >= threshold)                               ? true
+		       : (processor_temperature <= clear_threshold_with_internal_battery) ? false
+		                                                                          : current_state;
 	}
 
 	return (processor_temperature >= trip_threshold_without_internal_battery) ? true
-	                                                                         : (processor_temperature <= threshold) ? false
-	                                                                                                                  : current_state;
+	       : (processor_temperature <= threshold)                             ? false
+	                                                                          : current_state;
 }
 
 /**
