@@ -132,6 +132,8 @@ typedef struct
 } CloneTimingSnapshot_t;
 
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
+#define CLONE_REPLY_TX_RETRY_COUNT 3
+#define CLONE_REPLY_TX_RETRY_DELAY_MS 20
 #define WAKE_AUTH_HOLD_TICKS 600
 #define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
 #define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
@@ -438,7 +440,8 @@ static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours
 static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch);
 static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg);
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue);
-static void acknowledgeClonedClockValue(const char *reply, time_t epoch);
+static bool sendCloneReply(const char *reply);
+static bool acknowledgeClonedClockValue(const char *reply, time_t epoch);
 static void finalizeLocalClockUpdate(void);
 static Event_t eventFromSerialArg(char eventArg);
 static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
@@ -3356,16 +3359,46 @@ static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t
 }
 
 /**
+ * Send a clone-mode acknowledgement with bounded transmit retries.
+ *
+ * Clone source units retry the whole session when an acknowledgement is missing,
+ * so target-side retries must be limited to the serial transmit handoff itself.
+ *
+ * @param reply Null-terminated acknowledgement text.
+ * @return true when the reply was transmitted successfully.
+ */
+static bool sendCloneReply(const char *reply)
+{
+	for(uint8_t attempt = 0; attempt < CLONE_REPLY_TX_RETRY_COUNT; attempt++)
+	{
+		if(!sb_send_string((char *)reply))
+		{
+			return true;
+		}
+
+		serialbus_end_tx();
+		util_delay_ms(0);
+		while(util_delay_ms(CLONE_REPLY_TX_RETRY_DELAY_MS))
+		{
+			;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Acknowledge a cloned clock update and fold it into the clone-session checksum.
  *
  * @param reply Reply string to send over the serial bus.
  * @param epoch Epoch value that should contribute to the checksum.
+ * @return true when the reply was transmitted successfully.
  */
-static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
+static bool acknowledgeClonedClockValue(const char *reply, time_t epoch)
 {
-	sb_send_string((char *)reply);
 	atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 	g_event_checksum += epoch;
+	return sendCloneReply(reply);
 }
 
 /**
@@ -4204,8 +4237,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_event_checksum += f;
 							refreshCurrentFrequencySetting(previousFrequency, true);
 
-							sb_send_string((char *)"FRE\n");
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+							sendCloneReply("FRE\n");
 						}
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f)) // set freq based on first argument
@@ -4408,8 +4441,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							g_event_checksum += sb_buff->fields[SB_FIELD2][i];
 						}
 
-						sb_send_string((char *)"PAT\n");
 						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						sendCloneReply("PAT\n");
 					}
 				}
 				else
@@ -4671,8 +4704,8 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				if(g_cloningInProgress)
 				{
-					sb_send_string((char *)"ID\n");
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+					sendCloneReply("ID\n");
 				}
 				else
 				{
@@ -4716,7 +4749,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char *)"SPD I\n");
+								sendCloneReply("SPD I\n");
 							}
 						}
 						else if((c == 'F') && !g_cloningInProgress)
@@ -4734,7 +4767,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char *)"SPD F\n");
+								sendCloneReply("SPD F\n");
 							}
 						}
 						else if(c == 'P')
@@ -4750,7 +4783,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sb_send_string((char *)"SPD P\n");
+								sendCloneReply("SPD P\n");
 							}
 						}
 						else
@@ -4820,28 +4853,42 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-							sb_send_string((char *)"MAS S\n");
+							sendCloneReply("MAS S\n");
 						}
 					}
 					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
 					{
+						bool clone_reply_sent;
 						uint32_t sum = atol(sb_buff->fields[SB_FIELD2]);
 						if(sum == atomic_read_u32(&g_event_checksum))
 						{
 							/* Acknowledge the clone before restarting the event so the target
 							 * stays in clone-safe parsing mode until the transfer fully completes. */
-							sb_send_string((char *)"MAS ACK\n");
-							atomic_write_u16(&g_send_clone_success_countdown, 18000);
-							resumeLoadedEventAfterCloneExit(true);
+							clone_reply_sent = sendCloneReply("MAS ACK\n");
+							if(clone_reply_sent)
+							{
+								atomic_write_u16(&g_send_clone_success_countdown, 18000);
+								resumeLoadedEventAfterCloneExit(true);
+							}
 						}
 						else
 						{
-							resumeLoadedEventAfterCloneExit(false);
-							sb_send_string((char *)"MAS NAK\n");
+							clone_reply_sent = sendCloneReply("MAS NAK\n");
+							if(clone_reply_sent)
+							{
+								resumeLoadedEventAfterCloneExit(false);
+							}
 						}
 
-						g_cloningInProgress = false;
-						atomic_write_u16(&g_programming_countdown, 0);
+						if(clone_reply_sent)
+						{
+							g_cloningInProgress = false;
+							atomic_write_u16(&g_programming_countdown, 0);
+						}
+						else
+						{
+							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						}
 					}
 					else
 					{
@@ -4875,7 +4922,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += c;
-					sb_send_string((char *)"EVT\n");
+					sendCloneReply("EVT\n");
 				}
 				else
 				{
@@ -5023,7 +5070,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += 'A';
 					sprintf(g_tempStr, "FUN A\n");
-					sb_send_string(g_tempStr);
+					sendCloneReply(g_tempStr);
 				}
 				else
 				{
@@ -5075,7 +5122,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += t;
 								sprintf(g_tempStr, "CLK T %lu\n", t);
-								sb_send_string(g_tempStr);
+								sendCloneReply(g_tempStr);
 							}
 							else
 							{
@@ -5415,9 +5462,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 						if(g_cloningInProgress)
 						{
-							sb_send_string((char *)"CLK D\n");
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum += g_days_to_run;
+							sendCloneReply("CLK D\n");
 						}
 						else
 						{
