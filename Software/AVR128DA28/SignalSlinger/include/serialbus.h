@@ -86,27 +86,28 @@ extern "C"
 		SB_MESSAGE_EMPTY = 0,
 
 		/*	ARDUCON MESSAGE FAMILY (SERIAL MESSAGING) */
-		SB_MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',       /* Set the fox role to be used to define timing and signals */
-		SB_MESSAGE_BATTERY = 'B' * 100 + 'A' * 10 + 'T',       /* Battery voltage and threshold setting */
-		SB_MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',            /* Sets amateur radio callsign text */
-		SB_MESSAGE_GO = 'G' * 10 + 'O',                        /* Start/stop transmissions */
-		SB_MESSAGE_CODE_SETTINGS = 'S' * 100 + 'P' * 10 + 'D', /* Set Morse code speeds */
-		SB_MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',         /* Set or read the RTC */
-		SB_MESSAGE_MASTER = 'M' * 100 + 'A' * 10 + 'S',        /* Set master role command */
-		SB_MESSAGE_EVENT = 'E' * 100 + 'V' * 10 + 'T',         /* Set event */
-		SB_MESSAGE_TX_FREQ = 'F' * 100 + 'R' * 10 + 'E',       /* Transmit frequency */
-		SB_MESSAGE_PATTERN = 'P' * 100 + 'A' * 10 + 'T',       /* Set the transmit pattern */
-		SB_MESSAGE_KEY = 'K' * 100 + 'E' * 10 + 'Y',           /* Key on/off */
-		SB_MESSAGE_SLP = 'S' * 100 + 'L' * 10 + 'P',           /* Sleep */
-		SB_MESSAGE_VER = 'V' * 100 + 'E' * 10 + 'R',           /* Version */
-		SB_MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',         /* Software Reset */
-		SB_MESSAGE_HELP = '?',                                 /* Help */
-		SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',   /* Temperature information */
-		SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',      /* Functionality setting */
-		SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',             /* Meshtastic mode setting */
-		SB_RX_IDLE_TIMEOUT = MAX_UINT16 - 2,                   /* Parser dropped a stale partial RX line */
-		SB_INVALID_MESSAGE = MAX_UINT16,                       /* This value must never overlap a valid message ID */
-		SB_CR_NO_DATA = MAX_UINT16 - 1                         /* This value must never overlap a valid message ID */
+		SB_MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Set the fox role to be used to define timing and signals */
+		SB_MESSAGE_BATTERY = 'B' * 100 + 'A' * 10 + 'T',           /* Battery voltage and threshold setting */
+		SB_MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
+		SB_MESSAGE_GO = 'G' * 10 + 'O',                            /* Start/stop transmissions */
+		SB_MESSAGE_CODE_SETTINGS = 'S' * 100 + 'P' * 10 + 'D',     /* Set Morse code speeds */
+		SB_MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
+		SB_MESSAGE_MASTER = 'M' * 100 + 'A' * 10 + 'S',            /* Set master role command */
+		SB_MESSAGE_EVENT = 'E' * 100 + 'V' * 10 + 'T',             /* Set event */
+		SB_MESSAGE_TX_FREQ = 'F' * 100 + 'R' * 10 + 'E',           /* Transmit frequency */
+		SB_MESSAGE_PATTERN = 'P' * 100 + 'A' * 10 + 'T',           /* Set the transmit pattern */
+		SB_MESSAGE_KEY = 'K' * 100 + 'E' * 10 + 'Y',               /* Key on/off */
+		SB_MESSAGE_SLP = 'S' * 100 + 'L' * 10 + 'P',               /* Sleep */
+		SB_MESSAGE_VER = 'V' * 100 + 'E' * 10 + 'R',               /* Version */
+		SB_MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',             /* Software Reset */
+		SB_MESSAGE_HELP = '?',                                     /* Help */
+		SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',       /* Temperature information */
+		SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',          /* Functionality setting */
+		SB_MESSAGE_CLONE_DIAGNOSTICS = 'C' * 100 + 'L' * 10 + 'N', /* Clone diagnostics */
+		SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',                 /* Meshtastic mode setting */
+		SB_RX_IDLE_TIMEOUT = MAX_UINT16 - 2,                       /* Parser dropped a stale partial RX line */
+		SB_INVALID_MESSAGE = MAX_UINT16,                           /* This value must never overlap a valid message ID */
+		SB_CR_NO_DATA = MAX_UINT16 - 1                             /* This value must never overlap a valid message ID */
 	} SBMessageID;
 
 	typedef enum

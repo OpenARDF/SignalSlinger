@@ -134,6 +134,7 @@ typedef struct
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
 #define CLONE_REPLY_TX_RETRY_COUNT 3
 #define CLONE_REPLY_TX_RETRY_DELAY_MS 20
+#define CLONE_DIAGNOSTIC_TEXT_SIZE 12
 #define WAKE_AUTH_HOLD_TICKS 600
 #define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
 #define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
@@ -274,6 +275,12 @@ static volatile uint16_t g_programming_msg_throttle = 0;
 static volatile uint16_t g_send_clone_success_countdown = 0;
 static SyncState_t g_programming_state = SYNC_Searching_for_slave;
 static CloneTimingSnapshot_t g_clone_timing_snapshot = {0, 0, 1};
+
+static char g_clone_last_reply_command[CLONE_DIAGNOSTIC_TEXT_SIZE] = "";
+static char g_clone_last_reply_text[CLONE_DIAGNOSTIC_TEXT_SIZE] = "";
+static volatile uint8_t g_clone_last_reply_attempts = 0;
+static volatile uint16_t g_clone_reply_success_count = 0;
+static volatile uint16_t g_clone_reply_failure_count = 0;
 volatile bool g_cloningInProgress = false;
 
 volatile Enunciation_t g_enunciator = LED_ONLY;
@@ -440,8 +447,10 @@ static bool parseClockHourMinuteOffset(const char *offsetString, uint16_t *hours
 static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t minimumEpoch);
 static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg);
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue);
-static bool sendCloneReply(const char *reply);
-static bool acknowledgeClonedClockValue(const char *reply, time_t epoch);
+static bool sendCloneReply(const char *command, const char *reply);
+static bool acknowledgeClonedClockValue(const char *command, const char *reply, time_t epoch);
+static void copyCloneDiagnosticText(char *destination, const char *source);
+static void reportCloneDiagnostics(void);
 static void finalizeLocalClockUpdate(void);
 static Event_t eventFromSerialArg(char eventArg);
 static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
@@ -3364,15 +3373,32 @@ static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t
  * Clone source units retry the whole session when an acknowledgement is missing,
  * so target-side retries must be limited to the serial transmit handoff itself.
  *
+ * @param command Clone command associated with the acknowledgement.
  * @param reply Null-terminated acknowledgement text.
  * @return true when the reply was transmitted successfully.
  */
-static bool sendCloneReply(const char *reply)
+static void copyCloneDiagnosticText(char *destination, const char *source)
 {
+	uint8_t index = 0;
+	while(source && source[index] && source[index] != '\r' && source[index] != '\n' && index < (CLONE_DIAGNOSTIC_TEXT_SIZE - 1))
+	{
+		destination[index] = source[index];
+		index++;
+	}
+	destination[index] = '\0';
+}
+
+static bool sendCloneReply(const char *command, const char *reply)
+{
+	copyCloneDiagnosticText(g_clone_last_reply_command, command);
+	copyCloneDiagnosticText(g_clone_last_reply_text, reply);
+
 	for(uint8_t attempt = 0; attempt < CLONE_REPLY_TX_RETRY_COUNT; attempt++)
 	{
+		g_clone_last_reply_attempts = attempt + 1;
 		if(!sb_send_string((char *)reply))
 		{
+			g_clone_reply_success_count++;
 			return true;
 		}
 
@@ -3384,21 +3410,37 @@ static bool sendCloneReply(const char *reply)
 		}
 	}
 
+	g_clone_reply_failure_count++;
 	return false;
 }
 
 /**
  * Acknowledge a cloned clock update and fold it into the clone-session checksum.
  *
+ * @param command Clone command associated with the acknowledgement.
  * @param reply Reply string to send over the serial bus.
  * @param epoch Epoch value that should contribute to the checksum.
  * @return true when the reply was transmitted successfully.
  */
-static bool acknowledgeClonedClockValue(const char *reply, time_t epoch)
+static bool acknowledgeClonedClockValue(const char *command, const char *reply, time_t epoch)
 {
 	atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 	g_event_checksum += epoch;
-	return sendCloneReply(reply);
+	return sendCloneReply(command, reply);
+}
+
+/**
+ * Report clone reply state without changing the in-progress clone checksum.
+ */
+static void reportCloneDiagnostics(void)
+{
+	sprintf(g_tempStr, "CLN last=%s reply=%s tries=%u ok=%u fail=%u\n",
+	        g_clone_last_reply_command[0] ? g_clone_last_reply_command : "none",
+	        g_clone_last_reply_text[0] ? g_clone_last_reply_text : "none",
+	        g_clone_last_reply_attempts,
+	        atomic_read_u16(&g_clone_reply_success_count),
+	        atomic_read_u16(&g_clone_reply_failure_count));
+	sb_send_master_string(g_tempStr);
 }
 
 /**
@@ -3922,6 +3964,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
+			case SB_MESSAGE_CLONE_DIAGNOSTICS:
+			{
+				reportCloneDiagnostics();
+			}
+			break;
+
 			case SB_MESSAGE_TEMPERATURE:
 			{
 				if(sb_buff->fields[SB_FIELD1][0] == 'H')
@@ -4238,7 +4286,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							refreshCurrentFrequencySetting(previousFrequency, true);
 
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-							sendCloneReply("FRE\n");
+							sendCloneReply("FRE", "FRE\n");
 						}
 					}
 					else if(!frequencyVal(sb_buff->fields[SB_FIELD2], &f)) // set freq based on first argument
@@ -4442,7 +4490,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 
 						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-						sendCloneReply("PAT\n");
+						sendCloneReply("PAT", "PAT\n");
 					}
 				}
 				else
@@ -4705,7 +4753,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				if(g_cloningInProgress)
 				{
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-					sendCloneReply("ID\n");
+					sendCloneReply("ID", "ID\n");
 				}
 				else
 				{
@@ -4749,7 +4797,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sendCloneReply("SPD I\n");
+								sendCloneReply("SPD I", "SPD I\n");
 							}
 						}
 						else if((c == 'F') && !g_cloningInProgress)
@@ -4767,7 +4815,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sendCloneReply("SPD F\n");
+								sendCloneReply("SPD F", "SPD F\n");
 							}
 						}
 						else if(c == 'P')
@@ -4783,7 +4831,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							if(g_cloningInProgress)
 							{
 								g_event_checksum += speed;
-								sendCloneReply("SPD P\n");
+								sendCloneReply("SPD P", "SPD P\n");
 							}
 						}
 						else
@@ -4853,7 +4901,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-							sendCloneReply("MAS S\n");
+							sendCloneReply("MAS P", "MAS S\n");
 						}
 					}
 					else if((sb_buff->fields[SB_FIELD1][0] == 'Q') && g_cloningInProgress)
@@ -4864,7 +4912,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							/* Acknowledge the clone before restarting the event so the target
 							 * stays in clone-safe parsing mode until the transfer fully completes. */
-							clone_reply_sent = sendCloneReply("MAS ACK\n");
+							clone_reply_sent = sendCloneReply("MAS Q", "MAS ACK\n");
 							if(clone_reply_sent)
 							{
 								atomic_write_u16(&g_send_clone_success_countdown, 18000);
@@ -4873,7 +4921,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						else
 						{
-							clone_reply_sent = sendCloneReply("MAS NAK\n");
+							clone_reply_sent = sendCloneReply("MAS Q", "MAS NAK\n");
 							if(clone_reply_sent)
 							{
 								resumeLoadedEventAfterCloneExit(false);
@@ -4922,7 +4970,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += c;
-					sendCloneReply("EVT\n");
+					sendCloneReply("EVT", "EVT\n");
 				}
 				else
 				{
@@ -5070,7 +5118,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 					g_event_checksum += 'A';
 					sprintf(g_tempStr, "FUN A\n");
-					sendCloneReply(g_tempStr);
+					sendCloneReply("FUN A", g_tempStr);
 				}
 				else
 				{
@@ -5122,7 +5170,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 								atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 								g_event_checksum += t;
 								sprintf(g_tempStr, "CLK T %lu\n", t);
-								sendCloneReply(g_tempStr);
+								sendCloneReply("CLK T", g_tempStr);
 							}
 							else
 							{
@@ -5308,7 +5356,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_cloningInProgress)
 							{
-								acknowledgeClonedClockValue("CLK S\n", s);
+								acknowledgeClonedClockValue("CLK S", "CLK S\n", s);
 							}
 							else
 							{
@@ -5400,7 +5448,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 							if(g_cloningInProgress)
 							{
-								acknowledgeClonedClockValue("CLK F\n", f);
+								acknowledgeClonedClockValue("CLK F", "CLK F\n", f);
 							}
 							else
 							{
@@ -5464,7 +5512,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						{
 							atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
 							g_event_checksum += g_days_to_run;
-							sendCloneReply("CLK D\n");
+							sendCloneReply("CLK D", "CLK D\n");
 						}
 						else
 						{
@@ -7325,7 +7373,7 @@ int getFoxCodeSpeed(void)
 	Fox_t fox;
 	Event_t event_snapshot;
 	event_and_fox_current_atomic(&event_snapshot, &fox);
-	
+
 	if(event_snapshot == EVENT_FOXORING)
 	{
 		return (g_foxoring_pattern_codespeed);
@@ -7411,7 +7459,7 @@ static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
 		return false;
 	}
 
-    if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
+	if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
 	{
 		return true;
 	}
