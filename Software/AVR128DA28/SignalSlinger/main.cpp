@@ -7010,11 +7010,11 @@ void reportConfigErrors(Settings_t location)
 		}
 		else if(eventIsScheduledToRun(&start_epoch, &finish_epoch) && (!g_evteng_event_enabled && !g_foreground_start_event))
 		{
-			sb_send_string((char *)"Start with > GO 1 or > GO 2\n");
+			sb_send_string((char *)"* Start with > GO 1 or > GO 2\n");
 		}
 		else
 		{
-			sb_send_string((char *)"None: Event running.\n");
+			sb_send_string((char *)"* None: Event running.\n");
 		}
 	}
 	else if(start_epoch == finish_epoch)
