@@ -3387,7 +3387,7 @@ static void clearCloneUiLatch(void)
  */
 static void reportUiDiagnostics(void)
 {
-	sprintf(g_tempStr, "UI cs=%u cl=%u df=%u pc=%u pt=%u\n",
+	sprintf(g_tempStr, "* UI cs=%u cl=%u df=%u pc=%u pt=%u\n",
 	        atomic_read_u16(&g_send_clone_success_countdown),
 	        g_cloningInProgress ? 1 : 0,
 	        g_defer_cloned_event_start ? 1 : 0,
@@ -3395,7 +3395,7 @@ static void reportUiDiagnostics(void)
 	        atomic_read_u16(&g_programming_msg_throttle));
 	sb_send_master_string(g_tempStr);
 
-	sprintf(g_tempStr, "UI ms=%u mc=%u ee=%u ec=%u ru=%u fs=%u\n",
+	sprintf(g_tempStr, "* UI ms=%u mc=%u ee=%u ec=%u ru=%u fs=%u\n",
 	        g_isMaster ? 1 : 0,
 	        atomic_read_u16(&isMasterCountdownSeconds),
 	        g_evteng_event_enabled ? 1 : 0,
@@ -3957,13 +3957,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				else if(command == 'C')
 				{
 					clearCloneUiLatch();
-					sb_send_master_string((char *)"UI C\n");
+					sb_send_master_string((char *)"* UI C\n");
 				}
 				else if(command == 'P')
 				{
 					if(injectUiButtonPresses(sb_buff->fields[SB_FIELD2]))
 					{
-						sb_send_master_string((char *)"UI P\n");
+						sb_send_master_string((char *)"* UI P\n");
 					}
 					else
 					{
