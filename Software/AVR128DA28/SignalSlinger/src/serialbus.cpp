@@ -192,23 +192,17 @@ SerialbusTxBuffer *nextEmptySBTxBuffer(void)
 SerialbusRxBuffer *nextEmptySBRxBuffer(void)
 {
 	static uint8_t bufferIndex = 0;
-	bool found;
 
-	ENTER_CRITICAL(serialbus_rx_empty_scan);
-	found = find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_empty);
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_empty))
 	{
 		for(int i = 0; i < SERIALBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
 		{
 			rx_buffer[bufferIndex].fields[i][0] = '\0';
 		}
 
-		EXIT_CRITICAL(serialbus_rx_empty_scan);
 		return ((SerialbusRxBuffer *)&rx_buffer[bufferIndex]);
 	}
 
-	EXIT_CRITICAL(serialbus_rx_empty_scan);
 	return (null);
 }
 
@@ -219,43 +213,13 @@ SerialbusRxBuffer *nextEmptySBRxBuffer(void)
 SerialbusRxBuffer *nextFullSBRxBuffer(void)
 {
 	static uint8_t bufferIndex = 0;
-	bool found;
 
-	ENTER_CRITICAL(serialbus_rx_full_scan);
-	found = find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_full);
-
-	if(found)
+	if(find_matching_buffer_index(&bufferIndex, SERIALBUS_NUMBER_OF_RX_MSG_BUFFERS, rx_buffer_is_full))
 	{
-		EXIT_CRITICAL(serialbus_rx_full_scan);
 		return ((SerialbusRxBuffer *)&rx_buffer[bufferIndex]);
 	}
 
-	EXIT_CRITICAL(serialbus_rx_full_scan);
 	return (null);
-}
-
-SBMessageID serialbus_rx_buffer_id(SerialbusRxBuffer *buff)
-{
-	SBMessageID id = SB_MESSAGE_EMPTY;
-
-	if(buff)
-	{
-		ENTER_CRITICAL(serialbus_rx_id_read);
-		id = buff->id;
-		EXIT_CRITICAL(serialbus_rx_id_read);
-	}
-
-	return id;
-}
-
-void serialbus_release_rx_buffer(SerialbusRxBuffer *buff)
-{
-	if(buff)
-	{
-		ENTER_CRITICAL(serialbus_rx_release);
-		buff->id = SB_MESSAGE_EMPTY;
-		EXIT_CRITICAL(serialbus_rx_release);
-	}
 }
 
 /***********************************************************************
