@@ -411,7 +411,6 @@ ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
 static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox);
 
-
 /*******************************/
 /* Hardcoded event support     */
 /*******************************/
@@ -3824,14 +3823,14 @@ static bool evaluateThermalShutdownState(float processor_temperature, bool inter
 
 	if(internal_bat_detected)
 	{
-		return (processor_temperature >= threshold) ? true
-		                                            : (processor_temperature <= clear_threshold_with_internal_battery) ? false
-		                                                                                                                : current_state;
+		return (processor_temperature >= threshold)                               ? true
+		       : (processor_temperature <= clear_threshold_with_internal_battery) ? false
+		                                                                          : current_state;
 	}
 
 	return (processor_temperature >= trip_threshold_without_internal_battery) ? true
-	                                                                         : (processor_temperature <= threshold) ? false
-	                                                                                                                  : current_state;
+	       : (processor_temperature <= threshold)                             ? false
+	                                                                          : current_state;
 }
 
 /**
@@ -7367,7 +7366,7 @@ int getFoxCodeSpeed(void)
 	Fox_t fox;
 	Event_t event_snapshot;
 	event_and_fox_current_atomic(&event_snapshot, &fox);
-	
+
 	if(event_snapshot == EVENT_FOXORING)
 	{
 		return (g_foxoring_pattern_codespeed);
@@ -7453,7 +7452,7 @@ static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
 		return false;
 	}
 
-    if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
+	if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
 	{
 		return true;
 	}
