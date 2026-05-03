@@ -3864,7 +3864,8 @@ static void updateTemperatureState(float temperature)
 
 	g_thermal_shutdown = evaluateThermalShutdownState(g_processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
 
-	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false : g_turn_on_fan;
+	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
+	                                                                                                                    : g_turn_on_fan;
 }
 
 /**
