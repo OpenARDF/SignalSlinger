@@ -107,6 +107,13 @@ bool isValidTemp(float temperatureC);
 float readVoltage(ADC_Active_Channel_t chan);
 
 /**
+ * Perform a single conversion on the temperature sensor channel and convert it to C.
+ *
+ * @return Measured temperature in degrees Celsius, or an invalid reading when the conversion times out.
+ */
+float readTemperature(void);
+
+/**
  * Initialize the ADC subsystem and its supporting port/reference configuration.
  *
  * @param freerun true to enable free-running conversions; false for single-shot operation.

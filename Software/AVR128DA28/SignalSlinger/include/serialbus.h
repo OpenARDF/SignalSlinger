@@ -103,6 +103,7 @@ extern "C"
 		SB_MESSAGE_HELP = '?',                                 /* Help */
 		SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',   /* Temperature information */
 		SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',      /* Functionality setting */
+		SB_MESSAGE_UI_DIAGNOSTICS = 'U' * 10 + 'I',            /* UI diagnostics and button injection */
 		SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',             /* Meshtastic mode setting */
 		SB_RX_IDLE_TIMEOUT = MAX_UINT16 - 2,                   /* Parser dropped a stale partial RX line */
 		SB_INVALID_MESSAGE = MAX_UINT16,                       /* This value must never overlap a valid message ID */

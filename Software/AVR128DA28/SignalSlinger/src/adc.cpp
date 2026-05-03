@@ -181,6 +181,32 @@ float readVoltage(ADC_Active_Channel_t chan)
 }
 
 /**
+ * Perform a single conversion on the temperature sensor channel and convert it to C.
+ *
+ * @return Measured temperature in degrees Celsius, or an invalid reading when the conversion times out.
+ */
+float readTemperature(void)
+{
+	uint16_t adc_reading = ADC0.RES;
+	uint32_t wait = 10000;
+	float temperature = MINIMUM_VALID_TEMP - 1.;
+
+	ADC0_setADCChannel(ADCTemperature);
+	ADC0_startConversion();
+
+	while((!ADC0_conversionDone()) && wait--)
+		;
+
+	if(wait)
+	{
+		adc_reading = ADC0.RES;
+		temperature = temperatureCfromADC(adc_reading);
+	}
+
+	return (temperature);
+}
+
+/**
  * Check whether a temperature reading falls inside the firmware's valid range.
  *
  * @param temperatureC Temperature in degrees Celsius.
@@ -201,15 +227,10 @@ float temperatureCfromADC(uint16_t adc_reading)
 {
 	uint16_t sigrow_offset = SIGROW.TEMPSENSE1; // Read unsigned value from signature row
 	uint16_t sigrow_slope = SIGROW.TEMPSENSE0;  // Read unsigned value from signature row
-	float temperature_in_C = -273.15;
+	int32_t sensor_delta = (int32_t)sigrow_offset - (int32_t)adc_reading;
+	float temperature_in_K = ((float)sensor_delta * (float)sigrow_slope) / 4096.0f;
 
-	uint32_t temp = sigrow_offset - adc_reading;
-	temp *= sigrow_slope; // Result will overflow 16-bit variable
-	temp += 0x0800;       // Add 4096/2 to get correct rounding on division below
-	temp >>= 12;          // Round off to nearest degree in Kelvin, by dividing with 2^12 (4096)
-	temperature_in_C += (float)temp;
-
-	return (temperature_in_C);
+	return (temperature_in_K - 273.15f);
 }
 
 /**

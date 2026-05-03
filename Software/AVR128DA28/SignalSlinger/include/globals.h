@@ -97,10 +97,12 @@ extern volatile bool g_evteng_initialize_event;
 extern volatile float g_internal_voltage_low_threshold; /* FG->ISR + ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_internal_bat_voltage;          /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile bool g_internal_bat_detected;
+extern volatile int8_t g_thermal_shutdown_threshold;   /* FG->ISR + ISR->FG, byte-sized setting is read directly */
 extern volatile float g_external_voltage;              /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_processor_temperature;         /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_processor_min_temperature;     /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_processor_max_temperature;     /* ISR->FG, use shared_state float helpers for snapshots */
+extern volatile float g_processor_max_ever_temperature; /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile bool g_restart_conversions;
 extern volatile bool g_seconds_transition;
 extern volatile bool g_muteAfterID;
