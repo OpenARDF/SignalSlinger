@@ -94,6 +94,9 @@ typedef enum
 } HardwareError_t;
 
 static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state);
+static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
+static void updateTemperatureState(float temperature);
+static float sampleTemperatureNow(void);
 
 /* Track the current step in the serial cloning/synchronization exchange. */
 typedef enum
@@ -254,7 +257,6 @@ static volatile bool g_button_hold_preview_active = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
-static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = {TIMER2_0_5HZ, TIMER2_0_5HZ, TIMER2_0_5HZ};
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = {2000, 2000, 4000};
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = {0, 0, 0};
 static volatile bool g_thermal_shutdown = false;
@@ -1017,7 +1019,7 @@ ISR(TCB0_INT_vect)
 
 			if(indexConversionInProcess >= 0)
 			{
-				g_adcCountdownCount[indexConversionInProcess] = g_adcChannelConversionPeriod_ticks[indexConversionInProcess]; /* reset the tick countdown */
+				g_adcCountdownCount[indexConversionInProcess] = adcConversionPeriodTicks(indexConversionInProcess); /* reset the tick countdown */
 				ADC0_setADCChannel(g_adcChannelOrder[indexConversionInProcess]);
 				ADC0_startConversion();
 				conversionInProcess = true;
@@ -1057,20 +1059,7 @@ ISR(TCB0_INT_vect)
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature)
 				{
 					float temp = temperatureCfromADC(hold);
-
-					if(isValidTemp(temp))
-					{
-						g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temp) / 2. : temp;
-						if(g_processor_temperature > g_processor_max_temperature)
-							g_processor_max_temperature = g_processor_temperature;
-						if(g_processor_temperature < g_processor_min_temperature)
-							g_processor_min_temperature = g_processor_temperature;
-
-						g_thermal_shutdown = evaluateThermalShutdownState(g_processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
-
-						g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
-						                                                                                                                    : g_turn_on_fan;
-					}
+					updateTemperatureState(temp);
 				}
 			}
 
@@ -3834,6 +3823,71 @@ static bool evaluateThermalShutdownState(float processor_temperature, bool inter
 }
 
 /**
+ * Choose the polling interval for a periodic ADC channel.
+ *
+ * Temperature is sampled more aggressively as it approaches the configured
+ * shutdown threshold so the thermal shutdown path has less chance to overshoot
+ * between readings.
+ */
+static uint16_t adcConversionPeriodTicks(uint8_t channel_index)
+{
+	if(g_adcChannelOrder[channel_index] != ADCTemperature)
+	{
+		return TIMER2_0_5HZ;
+	}
+
+	float processor_temperature = g_processor_temperature;
+	if(isValidTemp(processor_temperature) &&
+	   (processor_temperature >= ((float)g_thermal_shutdown_threshold - (float)THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C)))
+	{
+		return TIMER2_5_8HZ;
+	}
+
+	return TIMER2_0_5HZ;
+}
+
+/**
+ * Apply a temperature reading to runtime state and thermal-protection outputs.
+ */
+static void updateTemperatureState(float temperature)
+{
+	if(!isValidTemp(temperature))
+	{
+		return;
+	}
+
+	g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temperature) / 2. : temperature;
+	if(g_processor_temperature > g_processor_max_temperature)
+		g_processor_max_temperature = g_processor_temperature;
+	if(g_processor_temperature < g_processor_min_temperature)
+		g_processor_min_temperature = g_processor_temperature;
+
+	g_thermal_shutdown = evaluateThermalShutdownState(g_processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
+
+	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false : g_turn_on_fan;
+}
+
+/**
+ * Take and store a fresh temperature sample for foreground requests.
+ *
+ * @return The updated processor temperature after filtering, or the prior value
+ * when the immediate ADC read is invalid.
+ */
+static float sampleTemperatureNow(void)
+{
+	float immediate_temperature = readTemperature();
+	updateTemperatureState(immediate_temperature);
+	float processor_temperature = atomic_read_float(&g_processor_temperature);
+	float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
+	if(isValidTemp(processor_temperature) && (!isValidTemp(processor_max_ever_temperature) || processor_temperature > processor_max_ever_temperature))
+	{
+		atomic_write_float(&g_processor_max_ever_temperature, processor_temperature);
+		g_ee_mgr.updateEEPROMVar(Hottest_Ever_Temperature, (void *)&processor_temperature);
+	}
+	return processor_temperature;
+}
+
+/**
  * Parse a user-supplied thermal shutdown threshold from serial command text.
  *
  * @param text Null-terminated decimal string to parse.
@@ -4017,31 +4071,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else
 				{
+					sampleTemperatureNow();
 					float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
 					float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
 					float processor_temperature = atomic_read_float(&g_processor_temperature);
 					float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
-
-					if(!isValidTemp(processor_temperature))
-					{
-						float immediate_temperature = readTemperature();
-						if(isValidTemp(immediate_temperature))
-						{
-							atomic_write_float(&g_processor_temperature, immediate_temperature);
-							atomic_write_float(&g_processor_max_temperature, immediate_temperature);
-							atomic_write_float(&g_processor_min_temperature, immediate_temperature);
-							if(immediate_temperature > processor_max_ever_temperature)
-							{
-								atomic_write_float(&g_processor_max_ever_temperature, immediate_temperature);
-								g_ee_mgr.updateEEPROMVar(Hottest_Ever_Temperature, (void *)&immediate_temperature);
-								processor_max_ever_temperature = immediate_temperature;
-							}
-
-							processor_temperature = immediate_temperature;
-							processor_max_temperature = immediate_temperature;
-							processor_min_temperature = immediate_temperature;
-						}
-					}
 
 					if(!g_meshmode)
 						sb_send_NewLine();
