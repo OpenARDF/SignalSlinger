@@ -1449,12 +1449,16 @@ int main(void)
 				}
 			}
 
-#ifdef HW_TARGET_3_5
-			/* Newer hardware has a dedicated fan-control output that is independent of
-			 * the auxiliary external-battery switch. */
 			if(g_thermal_shutdown) // Extremely high temperature detected
 			{
+#ifdef HW_TARGET_3_5
 				setCoolingFanLSEnable(ON); // should already be on
+#else
+				if(!g_enable_external_battery_control && !getExtBatLSEnable())
+				{
+					setExtBatLoadSwitch(ON, INITIALIZE_LS);
+				}
+#endif
 				suspendEvent();
 				sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
 				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
@@ -1462,6 +1466,9 @@ int main(void)
 			}
 			else
 			{
+#ifdef HW_TARGET_3_5
+				/* Newer hardware has a dedicated fan-control output that is independent of
+				 * the auxiliary external-battery switch. */
 				if(g_turn_on_fan)
 				{
 					setCoolingFanLSEnable(ON);
@@ -1470,28 +1477,25 @@ int main(void)
 				{
 					setCoolingFanLSEnable(OFF);
 				}
-			}
 #else
-			/* Legacy hardware reuses the shared auxiliary switch as fan drive whenever
-			 * external-battery control is disabled at runtime. */
-			else
-			{
-				if(g_turn_on_fan)
+				/* Legacy hardware reuses the shared auxiliary switch as fan drive whenever
+				 * external-battery control is disabled at runtime. */
+				if(!g_enable_external_battery_control && g_turn_on_fan)
 				{
 					if(!getExtBatLSEnable())
 					{
 						setExtBatLoadSwitch(ON, INITIALIZE_LS);
 					}
 				}
-				else
+				else if(!g_enable_external_battery_control)
 				{
 					if(getExtBatLSEnable())
 					{
 						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
 					}
 				}
-			}
 #endif
+			}
 
 			/* Handle transitions into and out of standby sleep. */
 			if(g_go_to_sleep_now && !g_cloningInProgress)
