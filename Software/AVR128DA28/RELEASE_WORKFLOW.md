@@ -7,7 +7,7 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 ## Branch Roles
 
 - `main` is the stable release branch.
-- `Development2` is the development prerelease branch.
+- `Development2` is the active development release branch and may host either prereleases or normal releases when explicitly requested.
 - Before making any software changes, explicitly state the current git branch to the user.
 - On `Development2`, do not automatically commit changes unless the user explicitly authorizes that commit.
 
@@ -23,7 +23,7 @@ git status --short
 3. Confirm the intended firmware version in `SignalSlinger/defs.h` and make sure the repo-root `README.md` references the same asset names for the chosen branch.
 4. Decide the release channel:
    - `main` for a stable release.
-   - `Development2` for a prerelease.
+   - `Development2` for a development-branch release, using either a prerelease or a normal release as explicitly requested.
 5. For routine patch verification before handoff, run:
 
 ```powershell
@@ -56,14 +56,17 @@ $env:HTTPS_PROXY=''
 $env:ALL_PROXY=''
 ```
 
-11. Create the GitHub release:
-   - Use a prerelease on `Development2`.
-   - Use a normal release on `main`.
-12. Upload both hardware assets to the release.
-13. Verify remotely:
+11. Generate GitHub release notes that cover the changes since the previous release.
+12. Create the GitHub release:
+   - Use a prerelease or a normal release on `Development2` according to the requested release channel.
+   - Use a normal release on `main` unless a prerelease is explicitly requested.
+   - Prefer GitHub-generated notes so the release body captures the changes since the prior release automatically.
+13. Upload both hardware assets to the release.
+14. Verify remotely:
    - the release page includes both `.hex` files
+   - the release notes summarize the changes since the previous release
    - `main` README points to stable downloads
-   - `Development2` README points to prerelease downloads
+   - `Development2` README points to the intended development-branch downloads
 
 ## Notes
 

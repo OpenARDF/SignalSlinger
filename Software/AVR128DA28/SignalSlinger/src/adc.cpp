@@ -181,6 +181,32 @@ float readVoltage(ADC_Active_Channel_t chan)
 }
 
 /**
+ * Perform a single conversion on the temperature sensor channel and convert it to C.
+ *
+ * @return Measured temperature in degrees Celsius, or an invalid reading when the conversion times out.
+ */
+float readTemperature(void)
+{
+	uint16_t adc_reading = ADC0.RES;
+	uint32_t wait = 10000;
+	float temperature = MINIMUM_VALID_TEMP - 1.;
+
+	ADC0_setADCChannel(ADCTemperature);
+	ADC0_startConversion();
+
+	while((!ADC0_conversionDone()) && wait--)
+		;
+
+	if(wait)
+	{
+		adc_reading = ADC0.RES;
+		temperature = temperatureCfromADC(adc_reading);
+	}
+
+	return (temperature);
+}
+
+/**
  * Check whether a temperature reading falls inside the firmware's valid range.
  *
  * @param temperatureC Temperature in degrees Celsius.

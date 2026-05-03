@@ -110,8 +110,9 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t days_to_run
         0x00000000,                                   //  reserved
-        0x0000,                                       // uint16_t reserved_i2c_failure_count;
-        0x00000000,                                   //  reserved
+        0x00,                                         // int8_t thermal_shutdown_threshold;
+        0x00,                                         // uint8_t reserved_thermal_shutdown_threshold_padding;
+        0x00000000,                                   //  float hottest_ever_temperature
         0x00,                                         //  uint8_t function
         0x00000000,                                   //  reserved
         0x00,                                         //  uint8_t enable_boost_regulator
@@ -411,6 +412,39 @@ static Fox_t avr_eeprom_read_clamped_fox(eeprom_addr_t index, Fox_t max_value)
 }
 
 /**
+ * Upgrade known older EEPROM layouts in place to the current version.
+ *
+ * Version 0x0131 predates both new thermal fields, so migration seeds the
+ * thermal shutdown threshold and hottest-ever temperature with defaults.
+ * Version 0x0132 already contains the threshold field, so it only needs the
+ * hottest-ever value initialized. In both cases the version marker is written
+ * last so a partial migration can be retried safely on the next boot.
+ *
+ * @param initialization_flag Stored EEPROM layout version.
+ * @return true when a known prior layout was migrated, false otherwise.
+ */
+static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
+{
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0131)
+	{
+		avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT);
+		avr_eeprom_write_byte(Thermal_Shutdown_Threshold + 1, 0);
+		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
+		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
+		return true;
+	}
+
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0132)
+	{
+		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
+		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * Persist one named runtime value to EEPROM.
  *
  * The enum value identifies both the EEPROM offset and the storage width, so
@@ -446,6 +480,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Event_setting:
 		case Utc_offset:
 		case Days_to_run:
+		case Thermal_Shutdown_Threshold:
 		case Function:
 		case Enable_Boost_Regulator:
 		case Enable_External_Battery_Control:
@@ -474,6 +509,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 			break;
 
 		case Voltage_threshold:
+		case Hottest_Ever_Temperature:
 			avr_eeprom_write_float_if_changed((eeprom_addr_t)v, *(const float *)val);
 			break;
 
@@ -518,6 +554,8 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Voltage_threshold, (void *)&g_internal_voltage_low_threshold);
 	updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
+	updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
+	updateEEPROMVar(Hottest_Ever_Temperature, (void *)&g_processor_max_ever_temperature);
 	updateEEPROMVar(Function, (void *)&g_function);
 	updateEEPROMVar(Enable_Boost_Regulator, (void *)&g_enable_boost_regulator);
 	updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
@@ -587,6 +625,17 @@ bool EepromManager::readNonVols(void)
 
 		g_days_to_run = avr_eeprom_read_byte_at(Days_to_run);
 
+		g_thermal_shutdown_threshold =
+		    CLAMP(THERMAL_SHUTDOWN_THRESHOLD_MIN_C,
+		          (int8_t)avr_eeprom_read_byte_at(Thermal_Shutdown_Threshold),
+		          THERMAL_SHUTDOWN_THRESHOLD_MAX_C);
+
+		float hottest_ever_temperature = avr_eeprom_read_float_at(Hottest_Ever_Temperature);
+		g_processor_max_ever_temperature =
+		    (isValidTemp(hottest_ever_temperature) && (hottest_ever_temperature >= EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT))
+		        ? hottest_ever_temperature
+		        : EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
+
 		g_function = (Function_t)avr_eeprom_read_byte_at(Function);
 
 		g_enable_external_battery_control = (bool)avr_eeprom_read_byte_at(Enable_External_Battery_Control);
@@ -613,7 +662,16 @@ bool EepromManager::initializeEEPROMVars(void)
 	bool init = false;
 	uint16_t initialization_flag = avr_eeprom_read_word_at(Eeprom_initialization_flag);
 
-	if(initialization_flag != EEPROM_INITIALIZED_FLAG)
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG)
+	{
+		return init;
+	}
+
+	if(migrateEEPROMLayoutIfNeeded(initialization_flag))
+	{
+		return init;
+	}
+
 	{
 		/* First-time initialization writes defaults to both RAM globals and EEPROM. */
 		g_evteng_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
@@ -706,7 +764,11 @@ bool EepromManager::initializeEEPROMVars(void)
 		g_days_to_run = 1;
 		avr_eeprom_write_byte(Days_to_run, g_days_to_run);
 
-		avr_eeprom_write_word(Reserved_I2C_Failure_Count, 0);
+		g_thermal_shutdown_threshold = EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
+		avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)g_thermal_shutdown_threshold);
+
+		g_processor_max_ever_temperature = EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
+		avr_eeprom_write_float(Hottest_Ever_Temperature, g_processor_max_ever_temperature);
 
 		g_function = EEPROM_FUNCTION_DEFAULT;
 		avr_eeprom_write_byte(Function, (uint8_t)g_function);

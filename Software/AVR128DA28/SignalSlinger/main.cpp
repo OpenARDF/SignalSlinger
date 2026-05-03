@@ -28,6 +28,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <avr/sleep.h>
 #include <atomic.h>
@@ -91,6 +92,11 @@ typedef enum
 	HARDWARE_NO_RTC = 0x01,
 	HARDWARE_NO_SI5351 = 0x02
 } HardwareError_t;
+
+static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state);
+static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
+static void updateTemperatureState(float temperature);
+static float sampleTemperatureNow(void);
 
 /* Track the current step in the serial cloning/synchronization exchange. */
 typedef enum
@@ -200,10 +206,12 @@ globals. */
 volatile float g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHOLD_V;
 volatile float g_internal_bat_voltage = 0.;
 volatile bool g_internal_bat_detected = false;
+volatile int8_t g_thermal_shutdown_threshold = EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
 volatile float g_external_voltage = 0.;
 volatile float g_processor_temperature = MINIMUM_VALID_TEMP - 1.;
 volatile float g_processor_min_temperature = MAXIMUM_VALID_TEMP + 1.;
 volatile float g_processor_max_temperature = MINIMUM_VALID_TEMP - 1.;
+volatile float g_processor_max_ever_temperature = EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
 volatile bool g_restart_conversions = false;
 volatile bool g_seconds_transition = false;
 volatile bool g_muteAfterID = false; /* Inhibit any transmissions after the ID has been sent */
@@ -249,7 +257,6 @@ static volatile bool g_button_hold_preview_active = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
-static const uint16_t g_adcChannelConversionPeriod_ticks[NUMBER_OF_POLLED_ADC_CHANNELS] = {TIMER2_0_5HZ, TIMER2_0_5HZ, TIMER2_0_5HZ};
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = {2000, 2000, 4000};
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = {0, 0, 0};
 static volatile bool g_thermal_shutdown = false;
@@ -393,6 +400,7 @@ void restoreStateAfterButtonWakeAuthorization(void);
 static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
 static inline void clearPendingWakeInterruptFlags(void);
 static inline void setButtonHoldPreviewIndicator(bool active);
+static void refreshProcessorMaxEverTemperature(void);
 bool shouldPowerTransmitterAfterWake(void);
 void configRedLEDforEvent(void);
 bool switchIsClosed(void);
@@ -404,7 +412,6 @@ bool allClocksSet(Settings_t location);
 ConfigurationState_t clockConfigurationCheck(Settings_t location);
 bool startEvent(void);
 static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox);
-
 
 /*******************************/
 /* Hardcoded event support     */
@@ -433,6 +440,9 @@ static time_t alignEpochToNearestBoundary(time_t epoch, time_t boundary, time_t 
 static bool resolveClockOffsetToEpoch(const char *offsetString, time_t baseEpoch, const char *baseEpochError, bool suppressBaseEpochError, time_t hourBoundary, time_t minuteBoundary, time_t *resolvedEpoch, char *errMsg);
 static void persistClockEpochValue(volatile time_t *loadedEpoch, volatile time_t *savedEpoch, time_t epoch, EE_var_t eeVar, void *eeValue);
 static void acknowledgeClonedClockValue(const char *reply, time_t epoch);
+static void clearCloneUiLatch(void);
+static void reportUiDiagnostics(void);
+static bool injectUiButtonPresses(const char *text);
 static void finalizeLocalClockUpdate(void);
 static Event_t eventFromSerialArg(char eventArg);
 static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
@@ -1009,7 +1019,7 @@ ISR(TCB0_INT_vect)
 
 			if(indexConversionInProcess >= 0)
 			{
-				g_adcCountdownCount[indexConversionInProcess] = g_adcChannelConversionPeriod_ticks[indexConversionInProcess]; /* reset the tick countdown */
+				g_adcCountdownCount[indexConversionInProcess] = adcConversionPeriodTicks(indexConversionInProcess); /* reset the tick countdown */
 				ADC0_setADCChannel(g_adcChannelOrder[indexConversionInProcess]);
 				ADC0_startConversion();
 				conversionInProcess = true;
@@ -1049,29 +1059,7 @@ ISR(TCB0_INT_vect)
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature)
 				{
 					float temp = temperatureCfromADC(hold);
-
-					if(isValidTemp(temp))
-					{
-						g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temp) / 2. : temp;
-						if(g_processor_temperature > g_processor_max_temperature)
-							g_processor_max_temperature = g_processor_temperature;
-						if(g_processor_temperature < g_processor_min_temperature)
-							g_processor_min_temperature = g_processor_temperature;
-
-						if(g_internal_bat_detected)
-						{
-							g_thermal_shutdown = (g_processor_temperature > 60.) ? true : (g_processor_temperature < 50.) ? false
-							                                                                                              : g_thermal_shutdown;
-						}
-						else
-						{
-							g_thermal_shutdown = (g_processor_temperature > 80.) ? true : (g_processor_temperature < 70.) ? false
-							                                                                                              : g_thermal_shutdown;
-						}
-
-						g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
-						                                                                                                                    : g_turn_on_fan;
-					}
+					updateTemperatureState(temp);
 				}
 			}
 
@@ -1318,6 +1306,8 @@ int main(void)
 
 	while(1)
 	{
+		refreshProcessorMaxEverTemperature();
+
 		if(g_foreground_enable_serialbus)
 		{
 			g_foreground_enable_serialbus = false;
@@ -3370,6 +3360,62 @@ static void acknowledgeClonedClockValue(const char *reply, time_t epoch)
 }
 
 /**
+ * Clear clone/programming UI latches without rebooting or changing settings.
+ */
+static void clearCloneUiLatch(void)
+{
+	atomic_write_u16(&g_send_clone_success_countdown, 0);
+	atomic_write_u16(&g_programming_countdown, 0);
+	atomic_write_u16(&g_programming_msg_throttle, 0);
+	g_cloningInProgress = false;
+	g_defer_cloned_event_start = false;
+}
+
+/**
+ * Report compact UI and clone state for automated tests.
+ */
+static void reportUiDiagnostics(void)
+{
+	sprintf(g_tempStr, "* UI cs=%u cl=%u df=%u pc=%u pt=%u\n",
+	        atomic_read_u16(&g_send_clone_success_countdown),
+	        g_cloningInProgress ? 1 : 0,
+	        g_defer_cloned_event_start ? 1 : 0,
+	        atomic_read_u16(&g_programming_countdown),
+	        atomic_read_u16(&g_programming_msg_throttle));
+	sb_send_master_string(g_tempStr);
+
+	sprintf(g_tempStr, "* UI ms=%u mc=%u ee=%u ec=%u ru=%u fs=%u\n",
+	        g_isMaster ? 1 : 0,
+	        atomic_read_u16(&isMasterCountdownSeconds),
+	        g_evteng_event_enabled ? 1 : 0,
+	        g_evteng_event_commenced ? 1 : 0,
+	        g_evteng_run_event_until_canceled ? 1 : 0,
+	        g_foreground_start_event ? 1 : 0);
+	sb_send_master_string(g_tempStr);
+}
+
+/**
+ * Queue counted button presses for the normal foreground button dispatcher.
+ */
+static bool injectUiButtonPresses(const char *text)
+{
+	if(!text || !text[0])
+	{
+		return false;
+	}
+
+	char *end = NULL;
+	long presses = strtol(text, &end, 10);
+	if((end == text) || (end && *end) || (presses < 1) || (presses > 9))
+	{
+		return false;
+	}
+
+	atomic_write_u16(&g_foreground_handle_counted_presses, (uint16_t)presses);
+	return true;
+}
+
+/**
  * Reset day tracking and restart event scheduling after a local clock update.
  */
 static void finalizeLocalClockUpdate(void)
@@ -3730,6 +3776,183 @@ static inline void setButtonHoldPreviewIndicator(bool active)
 }
 
 /**
+ * Persist a new hottest-ever processor temperature when the current session's
+ * maximum exceeds the stored all-time maximum.
+ */
+static void refreshProcessorMaxEverTemperature(void)
+{
+	float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
+	float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
+
+	if(isValidTemp(processor_max_temperature) && (processor_max_temperature > processor_max_ever_temperature))
+	{
+		atomic_write_float(&g_processor_max_ever_temperature, processor_max_temperature);
+		g_ee_mgr.updateEEPROMVar(Hottest_Ever_Temperature, (void *)&processor_max_temperature);
+	}
+}
+
+/**
+ * Apply the configured thermal-shutdown hysteresis for the current battery mode.
+ *
+ * The EEPROM-backed threshold is the internal-battery trip temperature and the
+ * no-internal-battery clear temperature. Internal-battery clear uses a 5 C
+ * hysteresis band below that threshold, while no-internal-battery trip uses a
+ * 5 C band above it.
+ *
+ * @param processor_temperature Current measured processor temperature in C.
+ * @param internal_bat_detected true when an internal battery is present.
+ * @param current_state Existing latched thermal shutdown state.
+ * @return Updated latched thermal shutdown state.
+ */
+static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state)
+{
+	int8_t threshold = g_thermal_shutdown_threshold;
+	int8_t clear_threshold_with_internal_battery = threshold - THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C;
+	int8_t trip_threshold_without_internal_battery = threshold + THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C;
+
+	if(internal_bat_detected)
+	{
+		return (processor_temperature >= threshold)                               ? true
+		       : (processor_temperature <= clear_threshold_with_internal_battery) ? false
+		                                                                          : current_state;
+	}
+
+	return (processor_temperature >= trip_threshold_without_internal_battery) ? true
+	       : (processor_temperature <= threshold)                             ? false
+	                                                                          : current_state;
+}
+
+/**
+ * Choose the polling interval for a periodic ADC channel.
+ *
+ * Temperature is sampled more aggressively as it approaches the configured
+ * shutdown threshold so the thermal shutdown path has less chance to overshoot
+ * between readings.
+ */
+static uint16_t adcConversionPeriodTicks(uint8_t channel_index)
+{
+	if(g_adcChannelOrder[channel_index] != ADCTemperature)
+	{
+		return TIMER2_0_5HZ;
+	}
+
+	float processor_temperature = g_processor_temperature;
+	if(isValidTemp(processor_temperature) &&
+	   (processor_temperature >= ((float)g_thermal_shutdown_threshold - (float)THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C)))
+	{
+		return TIMER2_5_8HZ;
+	}
+
+	return TIMER2_0_5HZ;
+}
+
+/**
+ * Apply a temperature reading to runtime state and thermal-protection outputs.
+ */
+static void updateTemperatureState(float temperature)
+{
+	if(!isValidTemp(temperature))
+	{
+		return;
+	}
+
+	g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temperature) / 2. : temperature;
+	if(g_processor_temperature > g_processor_max_temperature)
+		g_processor_max_temperature = g_processor_temperature;
+	if(g_processor_temperature < g_processor_min_temperature)
+		g_processor_min_temperature = g_processor_temperature;
+
+	g_thermal_shutdown = evaluateThermalShutdownState(g_processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
+
+	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
+	                                                                                                                    : g_turn_on_fan;
+}
+
+/**
+ * Take and store a fresh temperature sample for foreground requests.
+ *
+ * @return The updated processor temperature after filtering, or the prior value
+ * when the immediate ADC read is invalid.
+ */
+static float sampleTemperatureNow(void)
+{
+	float immediate_temperature = readTemperature();
+	updateTemperatureState(immediate_temperature);
+	float processor_temperature = atomic_read_float(&g_processor_temperature);
+	float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
+	if(isValidTemp(processor_temperature) && (!isValidTemp(processor_max_ever_temperature) || processor_temperature > processor_max_ever_temperature))
+	{
+		atomic_write_float(&g_processor_max_ever_temperature, processor_temperature);
+		g_ee_mgr.updateEEPROMVar(Hottest_Ever_Temperature, (void *)&processor_temperature);
+	}
+	return processor_temperature;
+}
+
+/**
+ * Parse a user-supplied thermal shutdown threshold from serial command text.
+ *
+ * @param text Null-terminated decimal string to parse.
+ * @param threshold_out Receives the validated threshold on success.
+ * @return true when parsing succeeded and the value is in range.
+ */
+static bool tryParseThermalShutdownThreshold(const char *text, int8_t *threshold_out)
+{
+	if(!text || !threshold_out || !text[0])
+	{
+		return false;
+	}
+
+	char *end = NULL;
+	long parsed = strtol(text, &end, 10);
+	if((end == text) || (end && *end))
+	{
+		return false;
+	}
+
+	if((parsed < THERMAL_SHUTDOWN_THRESHOLD_MIN_C) || (parsed > THERMAL_SHUTDOWN_THRESHOLD_MAX_C))
+	{
+		return false;
+	}
+
+	*threshold_out = (int8_t)parsed;
+	return true;
+}
+
+/**
+ * Send one labeled temperature line over the serial interface.
+ *
+ * @param label Label prefix to print before the temperature value.
+ * @param temperature Temperature in C to report.
+ */
+static void sendTemperatureReportLine(const char *label, float temperature)
+{
+	if(isValidTemp(temperature))
+	{
+		int16_t integer;
+		uint16_t fractional;
+
+		if(!float_to_parts_signed(temperature, &integer, &fractional))
+		{
+			sprintf(g_tempStr, "* %s: %d.%uC\n", label, integer, fractional);
+			sb_send_string(g_tempStr);
+			return;
+		}
+	}
+
+	sprintf(g_tempStr, "* %s: not available\n", label);
+	sb_send_string(g_tempStr);
+}
+
+/**
+ * Report the configured EEPROM-backed thermal shutdown threshold.
+ */
+static void sendThermalShutdownThresholdLine(void)
+{
+	sprintf(g_tempStr, "* Thermal shutdown threshold: %dC\n", g_thermal_shutdown_threshold);
+	sb_send_string(g_tempStr);
+}
+
+/**
  * Consume and handle all pending serialbus commands.
  *
  * This foreground dispatcher parses each queued command message, updates
@@ -3779,27 +4002,89 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
-			case SB_MESSAGE_TEMPERATURE:
+			case SB_MESSAGE_UI_DIAGNOSTICS:
 			{
-				float processor_temperature = atomic_read_float(&g_processor_temperature);
-				if(isValidTemp(processor_temperature))
+				char command = sb_buff->fields[SB_FIELD1][0];
+				if(command == 'S')
 				{
-					int16_t integer;
-					uint16_t fractional;
-
-					if(!float_to_parts_signed(processor_temperature, &integer, &fractional))
+					reportUiDiagnostics();
+				}
+				else if(command == 'C')
+				{
+					clearCloneUiLatch();
+					sb_send_master_string((char *)"* UI C\n");
+				}
+				else if(command == 'P')
+				{
+					if(injectUiButtonPresses(sb_buff->fields[SB_FIELD2]))
 					{
-						if(!g_meshmode)
-							sb_send_NewLine();
-						sprintf(g_tempStr, "* Temp: %d.%dC\n", integer, fractional);
-						sb_send_string(g_tempStr);
+						sb_send_master_string((char *)"* UI P\n");
+					}
+					else
+					{
+						sb_send_master_string((char *)"* Err: UI [S|C|P n]\n");
 					}
 				}
 				else
 				{
+					sb_send_master_string((char *)"* Err: UI [S|C|P n]\n");
+				}
+			}
+			break;
+
+			case SB_MESSAGE_TEMPERATURE:
+			{
+				if(sb_buff->fields[SB_FIELD1][0] == 'H')
+				{
+					if(sb_buff->fields[SB_FIELD2][0] != '\0')
+					{
+						int8_t new_threshold = 0;
+						if(tryParseThermalShutdownThreshold(sb_buff->fields[SB_FIELD2], &new_threshold))
+						{
+							g_thermal_shutdown_threshold = new_threshold;
+							g_ee_mgr.updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
+
+							float processor_temperature = atomic_read_float(&g_processor_temperature);
+							g_thermal_shutdown =
+							    evaluateThermalShutdownState(processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
+						}
+						else
+						{
+							if(!g_meshmode)
+								sb_send_NewLine();
+							sprintf(g_tempStr, "* Err: %dC <= TMP H <= %dC\n",
+							        THERMAL_SHUTDOWN_THRESHOLD_MIN_C,
+							        THERMAL_SHUTDOWN_THRESHOLD_MAX_C);
+							sb_send_string(g_tempStr);
+							break;
+						}
+					}
+
 					if(!g_meshmode)
 						sb_send_NewLine();
-					sb_send_string((char *)"* Temp not available\n");
+					sendThermalShutdownThresholdLine();
+				}
+				else if(sb_buff->fields[SB_FIELD1][0] != '\0')
+				{
+					if(!g_meshmode)
+						sb_send_NewLine();
+					sb_send_string((char *)"* Err: TMP [H [n]]\n");
+				}
+				else
+				{
+					sampleTemperatureNow();
+					float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
+					float processor_max_temperature = atomic_read_float(&g_processor_max_temperature);
+					float processor_temperature = atomic_read_float(&g_processor_temperature);
+					float processor_min_temperature = atomic_read_float(&g_processor_min_temperature);
+
+					if(!g_meshmode)
+						sb_send_NewLine();
+					sendTemperatureReportLine("Max Ever", processor_max_ever_temperature);
+					sendTemperatureReportLine("Max Temp", processor_max_temperature);
+					sendTemperatureReportLine("Temp", processor_temperature);
+					sendTemperatureReportLine("Min Temp", processor_min_temperature);
+					sendThermalShutdownThresholdLine();
 				}
 			}
 			break;
@@ -6760,11 +7045,11 @@ void reportConfigErrors(Settings_t location)
 		}
 		else if(eventIsScheduledToRun(&start_epoch, &finish_epoch) && (!g_evteng_event_enabled && !g_foreground_start_event))
 		{
-			sb_send_string((char *)"Start with > GO 1 or > GO 2\n");
+			sb_send_string((char *)"* Start with > GO 1 or > GO 2\n");
 		}
 		else
 		{
-			sb_send_string((char *)"None: Event running.\n");
+			sb_send_string((char *)"* None: Event running.\n");
 		}
 	}
 	else if(start_epoch == finish_epoch)
@@ -7116,7 +7401,7 @@ int getFoxCodeSpeed(void)
 	Fox_t fox;
 	Event_t event_snapshot;
 	event_and_fox_current_atomic(&event_snapshot, &fox);
-	
+
 	if(event_snapshot == EVENT_FOXORING)
 	{
 		return (g_foxoring_pattern_codespeed);
@@ -7202,7 +7487,7 @@ static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox)
 		return false;
 	}
 
-    if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
+	if((fox_index >= SPRINT_F1) && (fox_index <= SPRINT_F5))
 	{
 		return true;
 	}
