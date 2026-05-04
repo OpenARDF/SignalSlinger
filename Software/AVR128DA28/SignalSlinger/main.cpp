@@ -7054,7 +7054,7 @@ void reportConfigErrors(Settings_t location)
 	}
 	else if(start_epoch == finish_epoch)
 	{
-		sb_send_string(TEXT_SET_START_TXT);
+		sb_send_string((char *)"* Event start disabled (Start = Finish)\n");
 	}
 }
 
