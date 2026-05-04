@@ -444,6 +444,7 @@ static void clearCloneUiLatch(void);
 static void reportUiDiagnostics(void);
 static bool injectUiButtonPresses(const char *text);
 static void finalizeLocalClockUpdate(void);
+static void finalizeDisabledEventStartUpdate(void);
 static Event_t eventFromSerialArg(char eventArg);
 static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
 static void persistFoxSettingForCurrentEvent(Fox_t fox);
@@ -3430,6 +3431,22 @@ static void finalizeLocalClockUpdate(void)
 	startEventUsingRTC();
 }
 
+/**
+ * Stop scheduling after the user intentionally makes Start equal Finish.
+ */
+static void finalizeDisabledEventStartUpdate(void)
+{
+	cancelManualTransientState();
+	g_days_to_run = 1;
+	g_days_run = 0;
+	suspendEvent();
+
+	if(!g_meshmode)
+		sb_send_NewLine();
+
+	sb_send_string((char *)"* Event start disabled (Start = Finish)\n");
+}
+
 /* Serial-argument parsing and settings persistence helpers. */
 
 /**
@@ -5329,12 +5346,13 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else if(f1 == 'S') /* Event start time */
 				{
+					bool explicitMirrorToFinish = false;
+
 					if(sb_buff->fields[SB_FIELD2][0])
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						time_t s;
 						bool setSequalF = false;
-						bool explicitMirrorToFinish = false;
 						bool offsetFromCurrentTime = false;
 
 						if(g_cloningInProgress)
@@ -5405,12 +5423,19 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 									persistClockEpochValue(&g_evteng_loaded_finish_epoch, &g_event_finish_epoch, new_finish_epoch, Event_finish_epoch, (void *)&g_event_finish_epoch);
 								}
 
-								finalizeLocalClockUpdate();
+								if(explicitMirrorToFinish)
+								{
+									finalizeDisabledEventStartUpdate();
+								}
+								else
+								{
+									finalizeLocalClockUpdate();
+								}
 							}
 						}
 					}
 
-					if(!g_cloningInProgress)
+					if(!g_cloningInProgress && !explicitMirrorToFinish)
 					{
 						char buf[TEMP_STRING_SIZE];
 						time_t event_start_epoch = atomic_read_time(&g_event_start_epoch);
@@ -5431,11 +5456,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				}
 				else if(f1 == 'F') /* Event finish time */
 				{
+					bool explicitMirrorToStart = false;
+
 					if(sb_buff->fields[SB_FIELD2][0])
 					{
 						strncpy(g_tempStr, sb_buff->fields[SB_FIELD2], 12);
 						time_t f;
-						bool explicitMirrorToStart = false;
 
 						if(g_cloningInProgress)
 						{
@@ -5484,12 +5510,19 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 							else
 							{
-								finalizeLocalClockUpdate();
+								if(explicitMirrorToStart)
+								{
+									finalizeDisabledEventStartUpdate();
+								}
+								else
+								{
+									finalizeLocalClockUpdate();
+								}
 							}
 						}
 					}
 
-					if(!g_cloningInProgress)
+					if(!g_cloningInProgress && !explicitMirrorToStart)
 					{
 						char buf[TEMP_STRING_SIZE];
 						time_t event_finish_epoch = atomic_read_time(&g_event_finish_epoch);

@@ -103,6 +103,18 @@ function Invoke-ReleaseMake {
         [string[]]$Targets
     )
 
+    $releaseSrcDir = Join-Path $releaseDir 'src'
+    if(-not (Test-Path -LiteralPath $releaseSrcDir))
+    {
+        New-Item -ItemType Directory -Path $releaseSrcDir | Out-Null
+    }
+
+    $makeDepPath = Join-Path $releaseDir 'makedep.mk'
+    if(-not (Test-Path -LiteralPath $makeDepPath))
+    {
+        [System.IO.File]::WriteAllText($makeDepPath, '')
+    }
+
     & $makePath -C $releaseDir @Targets
     if($LASTEXITCODE -ne 0)
     {

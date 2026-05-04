@@ -43,6 +43,12 @@ if(-not (Test-Path -LiteralPath $buildSrcDir))
     New-Item -ItemType Directory -Path $buildSrcDir | Out-Null
 }
 
+$makeDepPath = Join-Path $buildDir 'makedep.mk'
+if(-not (Test-Path -LiteralPath $makeDepPath))
+{
+    [System.IO.File]::WriteAllText($makeDepPath, '')
+}
+
 $temporaryMakefilePath = $null
 
 try
