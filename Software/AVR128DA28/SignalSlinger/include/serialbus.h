@@ -100,6 +100,7 @@ extern "C"
 		SB_MESSAGE_SLP = 'S' * 100 + 'L' * 10 + 'P',           /* Sleep */
 		SB_MESSAGE_VER = 'V' * 100 + 'E' * 10 + 'R',           /* Version */
 		SB_MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',         /* Software Reset */
+		SB_MESSAGE_UPDATE = 'U' * 100 + 'P' * 10 + 'D',        /* Enter bootloader update mode */
 		SB_MESSAGE_HELP = '?',                                 /* Help */
 		SB_MESSAGE_TEMPERATURE = 'T' * 100 + 'M' * 10 + 'P',   /* Temperature information */
 		SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',      /* Functionality setting */
@@ -135,7 +136,7 @@ extern "C"
 	} SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > UI [S|C|P n] - UI diagnostics\n\0"
+#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > UI [S|C|P n] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
 
 	/**
 	 * Configure the serial bus with a baud rate and USART instance.

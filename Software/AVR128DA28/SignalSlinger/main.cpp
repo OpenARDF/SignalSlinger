@@ -4002,6 +4002,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
+			case SB_MESSAGE_UPDATE:
+			{
+				sb_send_string((char *)"* Bootloader update mode\n");
+				while(util_delay_ms(750) && serialbusTxInProgress())
+				{
+				}
+				RSTCTRL_reset();
+			}
+			break;
+
 			case SB_MESSAGE_UI_DIAGNOSTICS:
 			{
 				char command = sb_buff->fields[SB_FIELD1][0];
