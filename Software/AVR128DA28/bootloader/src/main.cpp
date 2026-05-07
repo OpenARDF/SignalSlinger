@@ -14,6 +14,9 @@
 
 #define USART1_BAUD_VALUE(baud) ((uint16_t)((F_CPU * 64UL / (16UL * (baud))) + 0.5))
 
+static uint8_t page_buffer[SIGNALSLINGER_FLASH_PAGE_BYTES];
+static uint8_t last_nvm_error;
+
 static void clock_init(void)
 {
 	ccp_write_io((void *)&CLKCTRL.OSCHFCTRLA,
@@ -64,6 +67,21 @@ static char usart_read(void)
 	return USART1.RXDATAL;
 }
 
+static bool usart_read_timeout(uint8_t *value, uint16_t timeout_ms)
+{
+	while(timeout_ms--)
+	{
+		if(usart_rx_ready())
+		{
+			*value = USART1.RXDATAL;
+			return true;
+		}
+		_delay_ms(1);
+	}
+
+	return false;
+}
+
 static void usart_write(char value)
 {
 	while((USART1.STATUS & USART_DREIF_bm) == 0)
@@ -80,6 +98,289 @@ static void usart_write_text(const char *text)
 	}
 }
 
+static void usart_write_hex_nibble(uint8_t value)
+{
+	value &= 0x0FU;
+	usart_write((char)(value < 10U ? ('0' + value) : ('A' + value - 10U)));
+}
+
+static void usart_write_hex8(uint8_t value)
+{
+	usart_write_hex_nibble(value >> 4);
+	usart_write_hex_nibble(value);
+}
+
+static void send_ok(const char *detail)
+{
+	usart_write_text("OK ");
+	usart_write_text(detail);
+	usart_write_text("\r\n");
+}
+
+static void send_error(const char *detail)
+{
+	usart_write_text("ERR ");
+	usart_write_text(detail);
+	usart_write_text("\r\n");
+}
+
+static uint16_t crc16_update(uint16_t crc, uint8_t value)
+{
+	crc ^= (uint16_t)value << 8;
+	for(uint8_t bit = 0; bit < 8; bit++)
+	{
+		if(crc & 0x8000U)
+		{
+			crc = (uint16_t)((crc << 1) ^ 0x1021U);
+		}
+		else
+		{
+			crc <<= 1;
+		}
+	}
+
+	return crc;
+}
+
+static bool read_crc_byte(uint8_t *value, uint16_t *crc)
+{
+	if(!usart_read_timeout(value, SIGNALSLINGER_BOOT_FRAME_BYTE_TIMEOUT_MS))
+	{
+		return false;
+	}
+
+	*crc = crc16_update(*crc, *value);
+	return true;
+}
+
+static bool read_u32_le(uint32_t *value, uint16_t *crc)
+{
+	*value = 0;
+	for(uint8_t shift = 0; shift < 32; shift += 8)
+	{
+		uint8_t byte;
+		if(!read_crc_byte(&byte, crc))
+		{
+			return false;
+		}
+		*value |= (uint32_t)byte << shift;
+	}
+
+	return true;
+}
+
+static bool read_expected_crc(uint16_t *value)
+{
+	uint8_t low;
+	uint8_t high;
+	if(!usart_read_timeout(&low, SIGNALSLINGER_BOOT_FRAME_BYTE_TIMEOUT_MS) ||
+	   !usart_read_timeout(&high, SIGNALSLINGER_BOOT_FRAME_BYTE_TIMEOUT_MS))
+	{
+		return false;
+	}
+
+	*value = (uint16_t)low | ((uint16_t)high << 8);
+	return true;
+}
+
+static bool read_page_payload(uint16_t *crc)
+{
+	for(uint16_t index = 0; index < SIGNALSLINGER_FLASH_PAGE_BYTES; index++)
+	{
+		if(!read_crc_byte(&page_buffer[index], crc))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool app_page_address_is_writable(uint32_t address)
+{
+	if((address % SIGNALSLINGER_FLASH_PAGE_BYTES) != 0U)
+	{
+		return false;
+	}
+	if(address < SIGNALSLINGER_APP_START_BYTES)
+	{
+		return false;
+	}
+	if(address > (SIGNALSLINGER_FLASH_BYTES - SIGNALSLINGER_FLASH_PAGE_BYTES))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static void nvm_wait_flash(void)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_FBUSY_bm)
+	{
+	}
+}
+
+static void nvm_command(NVMCTRL_CMD_t command)
+{
+	ccp_write_spm((void *)&NVMCTRL.CTRLA, command);
+}
+
+static uint8_t nvm_error_bits(void)
+{
+	return NVMCTRL.STATUS & NVMCTRL_ERROR_gm;
+}
+
+static void send_nvm_error(void)
+{
+	usart_write_text("ERR nvm ");
+	usart_write_hex8(last_nvm_error);
+	usart_write_text("\r\n");
+}
+
+static void pgm_word_write(uint32_t byte_address, uint16_t value)
+{
+	asm volatile(
+	    "movw r30, %A0\n\t"
+	    "sts %1, %C0\n\t"
+	    "movw r0, %2\n\t"
+	    "spm\n\t"
+	    "clr r1\n\t"
+	    :
+	    : "r"(byte_address),
+	      "i"(_SFR_MEM_ADDR(RAMPZ)),
+	      "r"(value)
+	    : "r0", "r30", "r31", "memory");
+}
+
+static bool erase_app_page(uint32_t address)
+{
+	if(!app_page_address_is_writable(address))
+	{
+		return false;
+	}
+
+	nvm_wait_flash();
+	nvm_command(NVMCTRL_CMD_NONE_gc);
+	nvm_command(NVMCTRL_CMD_FLPER_gc);
+	pgm_word_write(address, 0x0000U);
+	nvm_wait_flash();
+	last_nvm_error = nvm_error_bits();
+	nvm_command(NVMCTRL_CMD_NONE_gc);
+
+	return last_nvm_error == NVMCTRL_ERROR_NOERROR_gc;
+}
+
+static bool write_app_page(uint32_t address)
+{
+	if(!app_page_address_is_writable(address))
+	{
+		return false;
+	}
+
+	nvm_wait_flash();
+	nvm_command(NVMCTRL_CMD_NONE_gc);
+	nvm_command(NVMCTRL_CMD_FLWR_gc);
+
+	for(uint16_t index = 0; index < SIGNALSLINGER_FLASH_PAGE_BYTES; index += 2)
+	{
+		uint16_t word = (uint16_t)page_buffer[index] | ((uint16_t)page_buffer[index + 1] << 8);
+		pgm_word_write(address + index, word);
+	}
+
+	nvm_wait_flash();
+	last_nvm_error = nvm_error_bits();
+	nvm_command(NVMCTRL_CMD_NONE_gc);
+
+	return last_nvm_error == NVMCTRL_ERROR_NOERROR_gc;
+}
+
+static bool receive_page_address_frame(char command, uint32_t *address)
+{
+	uint16_t crc = crc16_update(0xFFFFU, (uint8_t)command);
+	uint16_t expected_crc;
+
+	if(!read_u32_le(address, &crc) || !read_expected_crc(&expected_crc))
+	{
+		send_error("timeout");
+		return false;
+	}
+	if(crc != expected_crc)
+	{
+		send_error("crc");
+		return false;
+	}
+	if(!app_page_address_is_writable(*address))
+	{
+		send_error("address");
+		return false;
+	}
+
+	return true;
+}
+
+static bool receive_page_write_frame(char command, uint32_t *address)
+{
+	uint16_t crc = crc16_update(0xFFFFU, (uint8_t)command);
+	uint16_t expected_crc;
+
+	if(!read_u32_le(address, &crc) ||
+	   !read_page_payload(&crc) ||
+	   !read_expected_crc(&expected_crc))
+	{
+		send_error("timeout");
+		return false;
+	}
+	if(crc != expected_crc)
+	{
+		send_error("crc");
+		return false;
+	}
+	if(!app_page_address_is_writable(*address))
+	{
+		send_error("address");
+		return false;
+	}
+
+	return true;
+}
+
+static void handle_erase_frame(char command)
+{
+	uint32_t address;
+	if(!receive_page_address_frame(command, &address))
+	{
+		return;
+	}
+
+	if(erase_app_page(address))
+	{
+		send_ok("erase");
+	}
+	else
+	{
+		send_nvm_error();
+	}
+}
+
+static void handle_write_frame(char command)
+{
+	uint32_t address;
+	if(!receive_page_write_frame(command, &address))
+	{
+		return;
+	}
+
+	if(write_app_page(address))
+	{
+		send_ok("write");
+	}
+	else
+	{
+		send_nvm_error();
+	}
+}
+
 static bool app_vector_looks_programmed(void)
 {
 	uint16_t reset_word = pgm_read_word_far(SIGNALSLINGER_APP_START_BYTES);
@@ -91,11 +392,7 @@ static void jump_to_application(void)
 	cli();
 	usart_disable();
 
-	/*
-	 * AVR program-counter addresses are word addresses. The initial
-	 * bootloader allocation puts the application at byte 0x4000, word 0x2000.
-	 */
-	asm volatile("jmp 0x2000");
+	asm volatile("jmp 0x4000");
 }
 
 static void send_banner(void)
@@ -162,9 +459,17 @@ int main(void)
 			{
 				jump_to_application();
 			}
+			else if(command == SIGNALSLINGER_ERASE_PAGE_CHAR)
+			{
+				handle_erase_frame(command);
+			}
+			else if(command == SIGNALSLINGER_WRITE_PAGE_CHAR)
+			{
+				handle_write_frame(command);
+			}
 			else
 			{
-				usart_write_text("ERR unsupported\r\n");
+				send_error("unsupported");
 			}
 		}
 	}
