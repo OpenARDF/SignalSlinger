@@ -78,6 +78,12 @@ powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6
 
 The updater parses the relocated Intel HEX file, rejects records outside APPCODE, erases the reset-vector page first, writes all other pages, then writes the reset-vector page last.
 
+If an update is interrupted after the reset-vector page is erased, the application will not start. That is intentional: on the next reset, the missing app vector keeps the bootloader resident so the unit can be restored with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6 -SkipBuild -NoReset -VerifyWithUpdi
+```
+
 ## Bench Protocol Tests
 
 With Atmel-ICE and the USB serial adapter attached, run the bootloader protocol hardening test from the app `UPD` path:
@@ -94,14 +100,48 @@ powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6
 
 The test uses page `0x1FE00` as scratch, validates good erase/write behavior, rejects bad CRCs, rejects unaligned, boot-section, and past-flash addresses, verifies truncated-frame timeout handling, confirms the bootloader remains responsive afterward, and erases the scratch page before returning to the app.
 
+For repeatability testing, run multiple full updates from the app `UPD` path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\test-bootloader-repeatability.ps1 -Port COM6 -Count 3
+```
+
+By default each repeatability run verifies the programmed application over UPDI and reports programming and wall-clock time.
+
 ## Provisioning Notes
 
 Do not program bootloader fuses casually. The safe provisioning flow should remain:
 
 1. build the bootloader
 2. program the bootloader over UPDI
-3. set `BOOTSIZE = 32` and `CODESIZE = 0`
-4. build and program a relocated application
-5. verify serial entry, timeout jump, and switch-held entry
+3. verify fuse backups exist
+4. set `BOOTSIZE = 32` and `CODESIZE = 0`
+5. verify `BOOTSIZE = 0x20` and `CODESIZE = 0x00`
+6. build and program a relocated application
+7. run `test-bootloader-serial.ps1` through both app `UPD` and UPDI reset entry
+8. run one full serial update with `-VerifyWithUpdi`
+9. confirm the application responds at the normal app baud
+
+The normal production firmware makefile should remain unmodified while the relocated build path is still being proven.
+
+## Recovery Checklist
+
+If a unit does not start the app after an attempted update:
+
+1. connect the USB serial adapter at `115200` baud
+2. send `?` and confirm the `SignalSlinger BL...` banner
+3. if there is no response, reset with UPDI while sending `U`
+4. run the serial updater with `-NoReset -VerifyWithUpdi`
+5. confirm the app responds at `9600` baud
+
+If serial recovery does not respond, use UPDI to reprogram the bootloader and relocated app, then re-check `BOOTSIZE` and `CODESIZE`. Do not change fuses unless UPDI communication is known-good.
+
+Reference validation sequence before broader use:
+
+1. `powershell -ExecutionPolicy Bypass -File .\build-bootloader.ps1 -Configuration Release`
+2. `powershell -ExecutionPolicy Bypass -File .\build-relocated-firmware.ps1 -Configuration Release`
+3. `powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6 -RequestBootloaderFromApp`
+4. `powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6`
+5. `powershell -ExecutionPolicy Bypass -File .\test-bootloader-repeatability.ps1 -Port COM6 -Count 3`
 
 UPDI must remain available as the recovery path throughout bootloader development.
