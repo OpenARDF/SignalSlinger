@@ -382,6 +382,74 @@ function Request-AppBootloaderReset {
     }
 }
 
+function Invoke-TargetResetAndCatchBootloader {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.Ports.SerialPort]$SerialPort
+    )
+
+    $stdoutPath = [System.IO.Path]::GetTempFileName()
+    $stderrPath = [System.IO.Path]::GetTempFileName()
+    $entryText = ''
+
+    try
+    {
+        $arguments = @(
+            '-t', $Tool,
+            '-s', $ToolSerial,
+            '-i', $Interface,
+            '-d', $Device,
+            '-cl', $Clock,
+            'reset'
+        )
+        $process = Start-Process -FilePath $AtprogramPath -ArgumentList $arguments -NoNewWindow -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+        $afterResetDeadline = $null
+
+        while($entryText -notmatch 'SignalSlinger BL')
+        {
+            if($process.HasExited)
+            {
+                if($null -eq $afterResetDeadline)
+                {
+                    $afterResetDeadline = [DateTime]::UtcNow.AddMilliseconds($BootEntryPulseMs)
+                }
+                elseif([DateTime]::UtcNow -ge $afterResetDeadline)
+                {
+                    break
+                }
+            }
+
+            $SerialPort.Write('U')
+            Start-Sleep -Milliseconds 50
+            $entryText += $SerialPort.ReadExisting()
+        }
+
+        $process.WaitForExit()
+        $process.Refresh()
+        $stdout = Get-Content -LiteralPath $stdoutPath -Raw
+        $stderr = Get-Content -LiteralPath $stderrPath -Raw
+        if(-not [string]::IsNullOrWhiteSpace($stdout))
+        {
+            Write-Host $stdout.TrimEnd()
+        }
+        if(-not [string]::IsNullOrWhiteSpace($stderr))
+        {
+            Write-Host $stderr.TrimEnd()
+        }
+        $exitCode = $process.ExitCode
+        if($null -ne $exitCode -and $exitCode -ne 0)
+        {
+            throw "Target reset failed with exit code $exitCode."
+        }
+    }
+    finally
+    {
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -ErrorAction SilentlyContinue
+    }
+
+    return $entryText
+}
+
 function Enter-Bootloader {
     param(
         [Parameter(Mandatory = $true)]
@@ -409,27 +477,7 @@ function Enter-Bootloader {
     }
     elseif(-not $AlreadyInBootloader)
     {
-        & $AtprogramPath `
-            -t $Tool `
-            -s $ToolSerial `
-            -i $Interface `
-            -d $Device `
-            -cl $Clock `
-            reset | Out-Host
-
-        if($LASTEXITCODE -ne 0)
-        {
-            throw "Target reset failed with exit code $LASTEXITCODE."
-        }
-
-        $deadline = [DateTime]::UtcNow.AddMilliseconds($BootEntryPulseMs)
-        $entryText = ''
-        while([DateTime]::UtcNow -lt $deadline -and $entryText -notmatch 'SignalSlinger BL')
-        {
-            $SerialPort.Write('U')
-            Start-Sleep -Milliseconds 50
-            $entryText += $SerialPort.ReadExisting()
-        }
+        $entryText = Invoke-TargetResetAndCatchBootloader -SerialPort $SerialPort
     }
 
     $entryText += Read-SerialText -SerialPort $SerialPort -Milliseconds $BootSettleMs

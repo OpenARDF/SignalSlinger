@@ -46,6 +46,7 @@ That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x4
 All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized to `0xFFFF` and covers the command byte plus the frame body, but not the transmitted CRC bytes.
 
 - `?`: print bootloader information
+- `U`: enter or confirm bootloader update mode
 - `R`: jump to the app when the app reset vector is programmed
 - `E <addr:u32> <crc:u16>`: erase one 512-byte page
 - `W <addr:u32> <payload:512 bytes> <crc:u16>`: write one erased 512-byte page
@@ -76,6 +77,22 @@ powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6
 ```
 
 The updater parses the relocated Intel HEX file, rejects records outside APPCODE, erases the reset-vector page first, writes all other pages, then writes the reset-vector page last.
+
+## Bench Protocol Tests
+
+With Atmel-ICE and the USB serial adapter attached, run the bootloader protocol hardening test from the app `UPD` path:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6 -RequestBootloaderFromApp
+```
+
+Run the same test through UPDI reset plus serial `U` entry:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6
+```
+
+The test uses page `0x1FE00` as scratch, validates good erase/write behavior, rejects bad CRCs, rejects unaligned, boot-section, and past-flash addresses, verifies truncated-frame timeout handling, confirms the bootloader remains responsive afterward, and erases the scratch page before returning to the app.
 
 ## Provisioning Notes
 

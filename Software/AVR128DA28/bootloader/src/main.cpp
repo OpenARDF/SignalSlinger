@@ -505,6 +505,10 @@ int main(void)
 			{
 				send_banner();
 			}
+			else if(command == SIGNALSLINGER_UPDATE_REQUEST_CHAR)
+			{
+				usart_write_text("BOOT\r\n");
+			}
 			else if(command == SIGNALSLINGER_RUN_APP_CHAR && app_vector_looks_programmed())
 			{
 				jump_to_application();
