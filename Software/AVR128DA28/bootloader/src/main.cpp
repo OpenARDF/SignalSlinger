@@ -16,6 +16,9 @@
 
 static uint8_t page_buffer[SIGNALSLINGER_FLASH_PAGE_BYTES];
 static uint8_t last_nvm_error;
+static uint8_t last_usart_error;
+
+#define SIGNALSLINGER_USART_RX_ERROR_MASK (USART_PERR_bm | USART_FERR_bm | USART_BUFOVF_bm)
 
 static void clock_init(void)
 {
@@ -62,24 +65,38 @@ static bool usart_rx_ready(void)
 	return (USART1.STATUS & USART_RXCIF_bm) != 0;
 }
 
-static char usart_read(void)
+static bool usart_read_byte(uint8_t *value)
 {
-	return USART1.RXDATAL;
+	uint8_t status = USART1.RXDATAH;
+	*value = USART1.RXDATAL;
+	last_usart_error = status & SIGNALSLINGER_USART_RX_ERROR_MASK;
+	return last_usart_error == 0U;
 }
 
 static bool usart_read_timeout(uint8_t *value, uint16_t timeout_ms)
 {
-	while(timeout_ms--)
+	uint32_t timeout_ticks = (uint32_t)timeout_ms * 100U;
+	last_usart_error = 0;
+	while(timeout_ticks--)
 	{
 		if(usart_rx_ready())
 		{
-			*value = USART1.RXDATAL;
-			return true;
+			return usart_read_byte(value);
 		}
-		_delay_ms(1);
+		_delay_us(10);
 	}
 
 	return false;
+}
+
+static void usart_flush_rx(void)
+{
+	uint8_t discarded;
+	while(usart_rx_ready())
+	{
+		(void)usart_read_byte(&discarded);
+	}
+	last_usart_error = 0;
 }
 
 static void usart_write(char value)
@@ -121,6 +138,13 @@ static void send_error(const char *detail)
 {
 	usart_write_text("ERR ");
 	usart_write_text(detail);
+	usart_write_text("\r\n");
+}
+
+static void send_usart_error(void)
+{
+	usart_write_text("ERR serial ");
+	usart_write_hex8(last_usart_error);
 	usart_write_text("\r\n");
 }
 
@@ -302,7 +326,14 @@ static bool receive_page_address_frame(char command, uint32_t *address)
 
 	if(!read_u32_le(address, &crc) || !read_expected_crc(&expected_crc))
 	{
-		send_error("timeout");
+		if(last_usart_error != 0U)
+		{
+			send_usart_error();
+		}
+		else
+		{
+			send_error("timeout");
+		}
 		return false;
 	}
 	if(crc != expected_crc)
@@ -328,7 +359,14 @@ static bool receive_page_write_frame(char command, uint32_t *address)
 	   !read_page_payload(&crc) ||
 	   !read_expected_crc(&expected_crc))
 	{
-		send_error("timeout");
+		if(last_usart_error != 0U)
+		{
+			send_usart_error();
+		}
+		else
+		{
+			send_error("timeout");
+		}
 		return false;
 	}
 	if(crc != expected_crc)
@@ -408,7 +446,12 @@ static bool serial_entry_requested(void)
 	{
 		if(usart_rx_ready())
 		{
-			char command = usart_read();
+			uint8_t command_byte;
+			if(!usart_read_byte(&command_byte))
+			{
+				continue;
+			}
+			char command = (char)command_byte;
 			if(command == SIGNALSLINGER_UPDATE_REQUEST_CHAR)
 			{
 				usart_write_text("BOOT\r\n");
@@ -443,6 +486,7 @@ int main(void)
 		jump_to_application();
 	}
 
+	usart_flush_rx();
 	send_banner();
 	usart_write_text("Waiting for updater\r\n");
 
@@ -450,7 +494,13 @@ int main(void)
 	{
 		if(usart_rx_ready())
 		{
-			char command = usart_read();
+			uint8_t command_byte;
+			if(!usart_read_byte(&command_byte))
+			{
+				send_usart_error();
+				continue;
+			}
+			char command = (char)command_byte;
 			if(command == SIGNALSLINGER_INFO_CHAR)
 			{
 				send_banner();

@@ -12,6 +12,8 @@ Current scope:
 
 The bootloader now accepts a deliberately small page programming protocol. It only erases or writes full, page-aligned APPCODE pages and rejects any frame whose address would touch the boot section.
 
+The running application still accepts the `UPD` command at the normal SignalSlinger serial rate. After the app resets, the bootloader runs the programming protocol at `115200` baud. On the current SignalSlinger firmware image this programs the app in about 40-45 seconds, which is a useful improvement without pushing the serial link hard.
+
 ## Address Map
 
 The AVR128DA28 has 131072 bytes of program flash and 512-byte flash pages. `BOOTSIZE` and `CODESIZE` fuses are expressed in 512-byte pages.
@@ -48,7 +50,7 @@ All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized t
 - `E <addr:u32> <crc:u16>`: erase one 512-byte page
 - `W <addr:u32> <payload:512 bytes> <crc:u16>`: write one erased 512-byte page
 
-`addr` must be page-aligned and the complete page must be inside `0x04000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, or `ERR ...`.
+`addr` must be page-aligned and the complete page must be inside `0x04000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, or `ERR ...`. USART framing, parity, or overflow faults are reported as `ERR serial XX`.
 
 ## Serial Firmware Update
 
@@ -64,6 +66,8 @@ For a normal field update from the running application, let the script send `UPD
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6 -RequestBootloaderFromApp
 ```
+
+The updater defaults to `-AppBaud 9600` for the `UPD` command and `-BootBaud 115200` for the bootloader frames. The legacy `-Baud` parameter is still accepted as an alias for `-BootBaud`.
 
 For bench validation with Atmel-ICE attached, add `-VerifyWithUpdi` to verify the programmed app flash after the serial update:
 

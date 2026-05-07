@@ -2,7 +2,11 @@
 param(
     [string]$Port = 'COM6',
 
-    [int]$Baud = 9600,
+    [int]$BootBaud = 115200,
+
+    [int]$AppBaud = 9600,
+
+    [int]$Baud = 0,
 
     [string]$HexPath = '',
 
@@ -41,6 +45,11 @@ $AppSerialIdleMs = 750
 $AppSerialIdleDeadlineMs = 6000
 $AppUpdateAckDeadlineMs = 3000
 $AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe'
+
+if($Baud -ne 0)
+{
+    $BootBaud = $Baud
+}
 
 if([string]::IsNullOrWhiteSpace($HexPath))
 {
@@ -299,26 +308,56 @@ function Wait-SerialIdle {
     return $text
 }
 
-function Enter-Bootloader {
+function Open-SignalSlingerSerialPort {
     param(
         [Parameter(Mandatory = $true)]
-        [System.IO.Ports.SerialPort]$SerialPort,
+        [string]$PortName,
 
-        [switch]$RequestFromApp,
-
-        [switch]$AlreadyInBootloader
+        [Parameter(Mandatory = $true)]
+        [int]$BaudRate
     )
 
-    $SerialPort.DiscardInBuffer()
+    $serialPort = [System.IO.Ports.SerialPort]::new($PortName, $BaudRate, [System.IO.Ports.Parity]::None, 8, [System.IO.Ports.StopBits]::One)
+    $serialPort.ReadTimeout = 100
+    $serialPort.WriteTimeout = 2000
+    $serialPort.DtrEnable = $false
+    $serialPort.RtsEnable = $false
+    $serialPort.Open()
 
-    if($RequestFromApp)
+    return $serialPort
+}
+
+function Close-SignalSlingerSerialPort {
+    param(
+        [System.IO.Ports.SerialPort]$SerialPort
+    )
+
+    if($null -ne $SerialPort)
     {
-        $entryText = Wait-SerialIdle -SerialPort $SerialPort -IdleMilliseconds $AppSerialIdleMs -DeadlineMilliseconds $AppSerialIdleDeadlineMs
-        $SerialPort.Write("`r")
-        Start-Sleep -Milliseconds 200
-        $entryText += $SerialPort.ReadExisting()
+        if($SerialPort.IsOpen)
+        {
+            $SerialPort.Close()
+        }
+        $SerialPort.Dispose()
+    }
+}
 
-        $SerialPort.Write("UPD`r")
+function Request-AppBootloaderReset {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PortName
+    )
+
+    $serialPort = Open-SignalSlingerSerialPort -PortName $PortName -BaudRate $AppBaud
+    try
+    {
+        $serialPort.DiscardInBuffer()
+        $entryText = Wait-SerialIdle -SerialPort $serialPort -IdleMilliseconds $AppSerialIdleMs -DeadlineMilliseconds $AppSerialIdleDeadlineMs
+        $serialPort.Write("`r")
+        Start-Sleep -Milliseconds 200
+        $entryText += $serialPort.ReadExisting()
+
+        $serialPort.Write("UPD`r")
         Start-Sleep -Milliseconds $AppUpdateCommandSettleMs
 
         $ackDeadline = [DateTime]::UtcNow.AddMilliseconds($AppUpdateAckDeadlineMs)
@@ -326,19 +365,46 @@ function Enter-Bootloader {
               $entryText -notmatch 'Bootloader update' -and
               $entryText -notmatch 'SignalSlinger BL')
         {
-            $entryText += $SerialPort.ReadExisting()
+            $entryText += $serialPort.ReadExisting()
             Start-Sleep -Milliseconds 25
         }
 
-        if($entryText -notmatch 'SignalSlinger BL')
+        if($entryText -notmatch 'Bootloader update' -and $entryText -notmatch 'SignalSlinger BL')
         {
-            $deadline = [DateTime]::UtcNow.AddMilliseconds($BootEntryPulseMs + $BootSettleMs)
-            while([DateTime]::UtcNow -lt $deadline -and $entryText -notmatch 'SignalSlinger BL')
-            {
-                $SerialPort.Write('U')
-                Start-Sleep -Milliseconds 50
-                $entryText += $SerialPort.ReadExisting()
-            }
+            throw "Application did not acknowledge UPD on $PortName at $AppBaud baud. Received: $entryText"
+        }
+
+        return $entryText
+    }
+    finally
+    {
+        Close-SignalSlingerSerialPort -SerialPort $serialPort
+    }
+}
+
+function Enter-Bootloader {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.Ports.SerialPort]$SerialPort,
+
+        [string]$InitialText = '',
+
+        [switch]$AppResetAlreadyRequested,
+
+        [switch]$AlreadyInBootloader
+    )
+
+    $SerialPort.DiscardInBuffer()
+    $entryText = $InitialText
+
+    if($AppResetAlreadyRequested)
+    {
+        $deadline = [DateTime]::UtcNow.AddMilliseconds($BootEntryPulseMs + $BootSettleMs)
+        while([DateTime]::UtcNow -lt $deadline -and $entryText -notmatch 'SignalSlinger BL')
+        {
+            $SerialPort.Write('U')
+            Start-Sleep -Milliseconds 50
+            $entryText += $SerialPort.ReadExisting()
         }
     }
     elseif(-not $AlreadyInBootloader)
@@ -364,10 +430,6 @@ function Enter-Bootloader {
             Start-Sleep -Milliseconds 50
             $entryText += $SerialPort.ReadExisting()
         }
-    }
-    else
-    {
-        $entryText = ''
     }
 
     $entryText += Read-SerialText -SerialPort $SerialPort -Milliseconds $BootSettleMs
@@ -461,6 +523,7 @@ $firstAddress = [int]($bytesByAddress.Keys | Sort-Object { [int]$_ } | Select-Ob
 $lastAddress = [int]($bytesByAddress.Keys | Sort-Object { [int]$_ } | Select-Object -Last 1)
 Write-Host ("Relocated HEX: {0} bytes across {1} pages, 0x{2:X}..0x{3:X}" -f $bytesByAddress.Count, $pageAddresses.Count, $firstAddress, $lastAddress)
 Write-Host ("Reset-vector page 0x{0:X} will be erased first and written last." -f $resetVectorPageAddress)
+Write-Host ("Serial settings: app {0} baud, bootloader {1} baud." -f $AppBaud, $BootBaud)
 
 if($DryRun)
 {
@@ -468,18 +531,20 @@ if($DryRun)
     exit 0
 }
 
-$serialPort = [System.IO.Ports.SerialPort]::new($Port, $Baud, [System.IO.Ports.Parity]::None, 8, [System.IO.Ports.StopBits]::One)
-$serialPort.ReadTimeout = 100
-$serialPort.WriteTimeout = 2000
-$serialPort.DtrEnable = $false
-$serialPort.RtsEnable = $false
-$serialPort.Open()
+$entryText = ''
+if($RequestBootloaderFromApp)
+{
+    $entryText = Request-AppBootloaderReset -PortName $Port
+}
+
+$serialPort = Open-SignalSlingerSerialPort -PortName $Port -BaudRate $BootBaud
 
 try
 {
-    $entryText = Enter-Bootloader -SerialPort $serialPort -RequestFromApp:$RequestBootloaderFromApp -AlreadyInBootloader:$NoReset
+    $entryText = Enter-Bootloader -SerialPort $serialPort -InitialText $entryText -AppResetAlreadyRequested:$RequestBootloaderFromApp -AlreadyInBootloader:$NoReset
     Write-Host $entryText.Trim()
 
+    $programmingTimer = [System.Diagnostics.Stopwatch]::StartNew()
     $eraseResetFrame = New-BootloaderFrame -Command ([byte][char]'E') -Address $resetVectorPageAddress
     Invoke-BootloaderFrame -SerialPort $serialPort -Frame $eraseResetFrame -ExpectedResponse 'OK erase' -Description ("Erase reset-vector page 0x{0:X}" -f $resetVectorPageAddress) | Out-Null
     Write-Host ("Erased reset-vector page 0x{0:X}." -f $resetVectorPageAddress)
@@ -506,18 +571,15 @@ try
     }
 
     Write-Progress -Activity 'Updating SignalSlinger firmware over bootloader' -Completed
-    Write-Host ("Serial update complete: wrote {0} pages from {1}" -f $totalPages, $HexPath)
+    $programmingTimer.Stop()
+    Write-Host ("Serial update complete: wrote {0} pages from {1} in {2:N1} s" -f $totalPages, $HexPath, $programmingTimer.Elapsed.TotalSeconds)
 
     $serialPort.Write('R')
     Write-Host 'Sent run-app command.'
 }
 finally
 {
-    if($serialPort.IsOpen)
-    {
-        $serialPort.Close()
-    }
-    $serialPort.Dispose()
+    Close-SignalSlingerSerialPort -SerialPort $serialPort
 }
 
 if($VerifyWithUpdi)
