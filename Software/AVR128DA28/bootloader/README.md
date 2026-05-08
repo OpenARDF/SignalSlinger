@@ -43,7 +43,7 @@ Build the matching relocated application with:
 powershell -ExecutionPolicy Bypass -File .\build-relocated-firmware.ps1 -Configuration Release
 ```
 
-That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x4000`; it does not alter the normal `SignalSlinger/Release/Makefile`.
+That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x4000`; it does not alter the normal `SignalSlinger/Release/Makefile`. It removes the previous final firmware outputs before linking and then verifies the generated map so stale non-relocated output cannot be mistaken for a bootloader-ready app image.
 
 ## Provisioning Script
 
@@ -157,7 +157,9 @@ For repeatability testing, run multiple full updates from the app `UPD` path:
 powershell -ExecutionPolicy Bypass -File .\test-bootloader-repeatability.ps1 -Port COM6 -Count 3
 ```
 
-By default each repeatability run verifies the programmed application over UPDI and reports programming and wall-clock time.
+By default each repeatability run verifies every page over serial CRC, verifies the programmed application over UPDI, and reports programming and wall-clock time. The script writes timestamped run artifacts under `tmp\bootloader-repeatability\...`: one log per update plus `summary.csv` and `summary.json` with the git commit, HEX path, HEX SHA-256, baud rates, verification settings, and per-run timings.
+
+Use `-OutputDir <path>` to choose a durable evidence folder. Use `-SkipSerialVerify` only when measuring raw programming time; use `-NoVerify` only when Atmel-ICE is not attached.
 
 ## Provisioning Notes
 
