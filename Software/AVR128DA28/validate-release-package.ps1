@@ -315,6 +315,9 @@ $updateBaud = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'updateB
 $appInfoCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'appInfoCommand'
 $appUpdateCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'appUpdateCommand'
 $bootloaderEntryCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'bootloaderEntryCommand'
+$bootSectionPages = Get-RequiredUInt -Object $releaseInfo.workshopSetup -Name 'bootSectionPages'
+$fuseBootSize = ConvertFrom-HexAddress (Get-RequiredString -Object $releaseInfo.workshopSetup -Name 'fuseBootSize')
+$fuseCodeSize = ConvertFrom-HexAddress (Get-RequiredString -Object $releaseInfo.workshopSetup -Name 'fuseCodeSize')
 
 if($pageBytes -ne 512)
 {
@@ -343,6 +346,18 @@ if($appUpdateCommand -ne 'UPD')
 if($bootloaderEntryCommand -ne 'U')
 {
     throw "Unexpected bootloader entry command: $bootloaderEntryCommand"
+}
+if($appStart -ne ($bootSectionPages * $pageBytes))
+{
+    throw ("App start 0x{0:X} does not match boot section pages {1} and page size {2}." -f $appStart, $bootSectionPages, $pageBytes)
+}
+if($fuseBootSize -ne $bootSectionPages)
+{
+    throw ("Fuse BOOTSIZE 0x{0:X2} does not match boot section pages {1}." -f $fuseBootSize, $bootSectionPages)
+}
+if($fuseCodeSize -ne 0)
+{
+    throw ("Unexpected fuse CODESIZE: 0x{0:X2}." -f $fuseCodeSize)
 }
 
 $checksums = Read-ChecksumFile -Path $checksumsPath

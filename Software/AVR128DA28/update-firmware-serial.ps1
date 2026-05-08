@@ -42,7 +42,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$ApplicationStart = 0x4000
+$ApplicationStart = 0x2000
 $FlashEndExclusive = 0x20000
 $FlashPageBytes = 512
 $FrameByteTimeoutMs = 1000

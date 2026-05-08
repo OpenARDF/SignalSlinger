@@ -4,7 +4,7 @@ param(
     [string]$Configuration = 'Release',
 
     [ValidatePattern('^0x[0-9A-Fa-f]+$')]
-    [string]$ApplicationStart = '0x4000'
+    [string]$ApplicationStart = '0x2000'
 )
 
 Set-StrictMode -Version Latest

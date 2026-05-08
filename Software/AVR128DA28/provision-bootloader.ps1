@@ -48,7 +48,7 @@ $ErrorActionPreference = 'Stop'
 
 $BootSizeFuseOffset = 8
 $CodeSizeFuseOffset = 7
-$DesiredBootSize = 0x20
+$DesiredBootSize = 0x10
 $DesiredCodeSize = 0x00
 $FuseReadBytes = 16
 

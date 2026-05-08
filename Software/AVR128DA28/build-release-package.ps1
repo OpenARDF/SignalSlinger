@@ -514,7 +514,7 @@ $releaseInfo = [pscustomobject]@{
     workshopSetup = [pscustomobject]@{
         setupHelperFileName = $bootloaderFile
         bootSectionPages = $bootPages
-        fuseBootSize = '0x20'
+        fuseBootSize = ('0x{0:X2}' -f $bootPages)
         fuseCodeSize = '0x00'
     }
     files = $files

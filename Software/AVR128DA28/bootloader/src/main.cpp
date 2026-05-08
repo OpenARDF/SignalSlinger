@@ -566,7 +566,7 @@ static void jump_to_application(void)
 	cli();
 	usart_disable();
 
-	asm volatile("jmp 0x4000");
+	asm volatile("jmp 0x2000");
 }
 
 static void set_app_handoff_power_button_state(bool button_held)
@@ -578,7 +578,7 @@ static void send_banner(void)
 {
 	usart_write_text("\r\nSignalSlinger ");
 	usart_write_text(SIGNALSLINGER_BOOTLOADER_VERSION);
-	usart_write_text(" proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C\r\n");
+	usart_write_text(" proto=1 minproto=1 maxproto=1 app=0x2000 page=512 flash=131072 baud=115200 boot=16 write=0x2000-0x1FFFF features=appmark,pagecrc,resetlast cmds=U,R,?,E,W,C\r\n");
 }
 
 static bool serial_entry_requested(void)

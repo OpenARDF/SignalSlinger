@@ -4,8 +4,8 @@ This directory contains the first-stage SignalSlinger AVR128DA28 bootloader work
 
 Current scope:
 
-- reserve a 16 KiB boot section
-- keep the application start fixed at byte address `0x4000`
+- reserve an 8 KiB boot section
+- keep the application start fixed at byte address `0x2000`
 - use `USART1` on the existing SignalSlinger serial pins, `PC0` TX and `PC1` RX
 - latch SignalSlinger power on with `POWER_ENABLE`/`PA3` before waiting for serial input
 - turn both front-panel LEDs on during the bootloader startup window for immediate power-on feedback, blink them at the wake-authorization cadence when the power button is held, then pass the held-button state to the app at handoff
@@ -24,9 +24,9 @@ The AVR128DA28 has 131072 bytes of program flash and 512-byte flash pages. `BOOT
 
 Initial bootloader allocation:
 
-- `BOOTSIZE = 32` pages
-- boot section: `0x00000` through `0x03FFF`
-- relocated application start: `0x04000`
+- `BOOTSIZE = 16` pages
+- boot section: `0x00000` through `0x01FFF`
+- relocated application start: `0x02000`
 - `CODESIZE = 0`, leaving the remainder as application code space
 
 ## Build
@@ -43,7 +43,7 @@ Build the matching relocated application with:
 powershell -ExecutionPolicy Bypass -File .\build-relocated-firmware.ps1 -Configuration Release
 ```
 
-That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x4000`; it does not alter the normal `SignalSlinger/Release/Makefile`. It removes the previous final firmware outputs before linking and then verifies the generated map so stale non-relocated output cannot be mistaken for a bootloader-ready app image.
+That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x2000`; it does not alter the normal `SignalSlinger/Release/Makefile`. It removes the previous final firmware outputs before linking and then verifies the generated map so stale non-relocated output cannot be mistaken for a bootloader-ready app image.
 
 ## Provisioning Script
 
@@ -59,7 +59,7 @@ Check programming PC prerequisites without touching target hardware:
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -CheckPrereqs -SkipBuild -SkipSerialValidation
 ```
 
-The script creates `tmp\SignalSlinger-bootloader-combined.hex` from the bootloader HEX and relocated app HEX, chip-erases the target, programs and verifies the combined flash image, reads fuses, verifies `CODESIZE = 0x00` and `BOOTSIZE = 0x20`, then runs the bootloader serial protocol test.
+The script creates `tmp\SignalSlinger-bootloader-combined.hex` from the bootloader HEX and relocated app HEX, chip-erases the target, programs and verifies the combined flash image, reads fuses, verifies `CODESIZE = 0x00` and `BOOTSIZE = 0x10`, then runs the bootloader serial protocol test.
 
 Fuse writes are deliberately opt-in:
 
@@ -121,7 +121,7 @@ SerialSlinger should use the firmware already running on the device as the first
 
 ```text
 * INF product=SignalSlinger update=UPD
-* INF sw=2.0.0 hw=3.5 app=0x4000 baud=115200
+* INF sw=2.0.0 hw=3.5 app=0x2000 baud=115200
 ```
 
 The `hw` field should match the release package `board` field and the `HW-3.4` or `HW-3.5` text in the file name before SerialSlinger enters update mode. If `INF` is not supported, SerialSlinger can fall back to parsing the older human `VER` response, for example `SW Ver: 1.2.2 HW Build: 3.5`. Firmware versions below `2.0.0` should be treated as legacy: use `RST` plus the bootloader-catch path instead of relying on `UPD`.
@@ -141,13 +141,15 @@ All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized t
 - `W <addr:u32> <payload:512 bytes> <crc:u16>`: write one erased 512-byte page
 - `C <addr:u32> <crc:u16>`: report CRC-16/CCITT-FALSE of one 512-byte page as `OK crc 0xAAAAAAAA CCCC`
 
-`addr` must be page-aligned and the complete page must be inside `0x04000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, `OK crc ...`, or `ERR ...`. USART framing, parity, or overflow faults are reported as `ERR serial XX`.
+`addr` must be page-aligned and the complete page must be inside `0x02000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, `OK crc ...`, or `ERR ...`. USART framing, parity, or overflow faults are reported as `ERR serial XX`.
 
-The `?` response is intentionally machine-readable for host programmers:
+The `?` response is intentionally machine-readable for host programmers. New fields are added append-only so host tools can keep parsing the tokens they understand:
 
 ```text
-SignalSlinger BL0.11 proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C
+SignalSlinger BL0.12 proto=1 minproto=1 maxproto=1 app=0x2000 page=512 flash=131072 baud=115200 boot=16 write=0x2000-0x1FFFF features=appmark,pagecrc,resetlast cmds=U,R,?,E,W,C
 ```
+
+The `write` field names the only flash range the bootloader will erase or program. The `features` field advertises the app reset marker (`appmark`), per-page CRC command (`pagecrc`), and reset-vector page written last for interrupted-update recovery (`resetlast`).
 
 During a firmware update, the bootloader toggles red as erase/write flash operations are accepted and completed, and toggles green as write payload bytes are received. Rejected frames and NVM/serial errors leave red on and green off until later update activity changes the indication.
 
@@ -217,8 +219,8 @@ Do not program bootloader fuses casually. The safe provisioning flow should rema
 1. build the bootloader
 2. program the bootloader over UPDI
 3. verify fuse backups exist
-4. set `BOOTSIZE = 32` and `CODESIZE = 0`
-5. verify `BOOTSIZE = 0x20` and `CODESIZE = 0x00`
+4. set `BOOTSIZE = 16` and `CODESIZE = 0`
+5. verify `BOOTSIZE = 0x10` and `CODESIZE = 0x00`
 6. build and program a relocated application
 7. run `test-bootloader-serial.ps1` through both app `UPD` and UPDI reset entry
 8. run one full serial update with `-VerifyWithUpdi`

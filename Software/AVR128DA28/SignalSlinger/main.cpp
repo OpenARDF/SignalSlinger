@@ -3862,7 +3862,7 @@ static void sendFirmwareInfo(void)
 	}
 
 	sb_send_string((char *)"* INF product=SignalSlinger update=UPD\n");
-	snprintf(g_tempStr, sizeof(g_tempStr), "* INF sw=%s hw=%s app=0x4000 baud=115200\n", SW_REVISION, hardwareBuildString());
+	snprintf(g_tempStr, sizeof(g_tempStr), "* INF sw=%s hw=%s app=0x2000 baud=115200\n", SW_REVISION, hardwareBuildString());
 	sb_send_string(g_tempStr);
 }
 
