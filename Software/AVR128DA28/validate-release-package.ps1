@@ -190,6 +190,25 @@ function ConvertFrom-HexAddress {
     return [uint32][Convert]::ToUInt32($Text.Substring(2), 16)
 }
 
+function Assert-BootloaderCapableVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Version
+    )
+
+    $match = [regex]::Match($Version, '^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$')
+    if(-not $match.Success)
+    {
+        throw "Release version must be a semantic version. Got '$Version'."
+    }
+
+    $major = [int]$match.Groups[1].Value
+    if($major -lt 2)
+    {
+        throw "Release packages for bootloader-capable firmware require version 2.0.0 or newer. Got '$Version'."
+    }
+}
+
 function Assert-Hash {
     param(
         [Parameter(Mandatory = $true)]
@@ -265,6 +284,13 @@ if($checksumsPath.Count -ne 1)
 }
 $checksumsPath = $checksumsPath[0].FullName
 
+$releaseZipPath = @(Get-ChildItem -LiteralPath $resolvedPackageDir -Filter 'SignalSlinger-*-Release-Files.zip' -File)
+if($releaseZipPath.Count -ne 1)
+{
+    throw "Expected exactly one SignalSlinger release zip file, found $($releaseZipPath.Count)."
+}
+$releaseZipPath = $releaseZipPath[0].FullName
+
 $releaseInfo = Get-Content -LiteralPath $releaseInfoPath -Raw | ConvertFrom-Json
 $format = Get-RequiredString -Object $releaseInfo -Name 'format'
 if($format -ne 'signalslinger-release-info-v1')
@@ -279,6 +305,7 @@ if($product -ne 'SignalSlinger')
 }
 
 $version = Get-RequiredString -Object $releaseInfo -Name 'version'
+Assert-BootloaderCapableVersion -Version $version
 $board = Get-RequiredString -Object $releaseInfo -Name 'board'
 $appStart = ConvertFrom-HexAddress (Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'appStartAddress')
 $pageBytes = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'pageBytes'
@@ -332,6 +359,43 @@ foreach($entry in $fileEntries)
     }
     Write-Host "OK release info file: $fileName"
 }
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zipArchive = [System.IO.Compression.ZipFile]::OpenRead($releaseZipPath)
+try
+{
+    $zipEntryNames = @($zipArchive.Entries | ForEach-Object { $_.Name })
+    foreach($entry in $fileEntries)
+    {
+        $fileName = Get-RequiredString -Object $entry -Name 'fileName'
+        if($zipEntryNames -notcontains $fileName)
+        {
+            throw "Release zip does not contain $fileName."
+        }
+    }
+    foreach($requiredFile in $checksums.Keys)
+    {
+        if($zipEntryNames -notcontains $requiredFile)
+        {
+            throw "Release zip does not contain $requiredFile."
+        }
+    }
+    foreach($requiredFile in @((Split-Path -Leaf $releaseInfoPath), (Split-Path -Leaf $checksumsPath)))
+    {
+        if($zipEntryNames -notcontains $requiredFile)
+        {
+            throw "Release zip does not contain $requiredFile."
+        }
+    }
+}
+finally
+{
+    if($null -ne $zipArchive)
+    {
+        $zipArchive.Dispose()
+    }
+}
+Write-Host ("OK release zip: {0}" -f (Split-Path -Leaf $releaseZipPath))
 
 $updateFile = Get-RequiredString -Object $releaseInfo.update -Name 'fileName'
 $firstInstallFile = Get-RequiredString -Object $releaseInfo.firstInstall -Name 'fileName'

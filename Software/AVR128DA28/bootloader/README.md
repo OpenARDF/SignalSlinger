@@ -85,6 +85,8 @@ Required programming PC software:
 
 ## Release Package
 
+Firmware with software-update support starts at version `2.0.0`. Firmware versions below `2.0.0` are legacy builds and should not be packaged as bootloader-capable release assets.
+
 Build the files that should be attached to a GitHub release:
 
 ```powershell
@@ -92,7 +94,13 @@ powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1
 powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 ```
 
-The package is written under `release-packages\...` by default and uses names meant to be understandable outside the firmware bench:
+To build packages for both supported hardware versions:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-all-release-packages.ps1
+```
+
+The packages are written under `release-packages\...` by default and use names meant to be understandable outside the firmware bench. Files that depend on the SignalSlinger hardware version include `HW-3.4` or `HW-3.5` in their name:
 
 - `SignalSlinger-Update-...hex`: the file SerialSlinger should use for normal software updates
 - `SignalSlinger-First-Install-...hex`: the file workshop setup tools should use for a new board with a programmer
@@ -104,6 +112,8 @@ The package is written under `release-packages\...` by default and uses names me
 The release-info JSON keeps the unavoidable details for software: board version, update speed, page size, app start address, bootloader version, protocol version, and SHA-256 hashes. Normal users should not need those details; SerialSlinger can read them and choose the right update file in the background.
 
 Run `validate-release-package.ps1` before uploading assets. It checks that the files named by the release info are present, hashes match, the normal update starts at the app address, the first-install image includes both bootloader and app, and the bootloader helper does not overlap app space.
+
+For GitHub releases, upload the unzipped `SignalSlinger-Update-...hex` for each supported hardware version for the common SerialSlinger update path, plus the matching versioned `SignalSlinger-...-Release-Files.zip` containing the complete set of files for that hardware version.
 
 ## Serial Update Frames
 

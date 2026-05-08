@@ -91,14 +91,33 @@ function Get-ActiveHardwareName {
 
     if($DefsText -match '(?m)^\s*#define\s+HW_TARGET_3_5\s*$')
     {
-        return 'Board-3.5'
+        return 'HW-3.5'
     }
     if($DefsText -match '(?m)^\s*#define\s+HW_TARGET_3_4\s*$')
     {
-        return 'Board-3.4'
+        return 'HW-3.4'
     }
 
     throw 'Could not determine the active SignalSlinger board version.'
+}
+
+function Assert-BootloaderCapableVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Version
+    )
+
+    $match = [regex]::Match($Version, '^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$')
+    if(-not $match.Success)
+    {
+        throw "SW_REVISION must be a semantic version for bootloader-capable release packages. Got '$Version'."
+    }
+
+    $major = [int]$match.Groups[1].Value
+    if($major -lt 2)
+    {
+        throw "Bootloader-capable release packages require SW_REVISION 2.0.0 or newer. Got '$Version'."
+    }
 }
 
 function ConvertFrom-HexByte {
@@ -395,6 +414,7 @@ $defsText = Get-Content -LiteralPath $defsPath -Raw
 $bootConfigText = Get-Content -LiteralPath $bootConfigPath -Raw
 
 $softwareVersion = Get-DefineString -Text $defsText -Name 'SW_REVISION'
+Assert-BootloaderCapableVersion -Version $softwareVersion
 $productName = Get-DefineString -Text $defsText -Name 'PRODUCT_NAME_SHORT'
 $boardName = Get-ActiveHardwareName -DefsText $defsText
 $bootloaderVersion = Get-DefineString -Text $bootConfigText -Name 'SIGNALSLINGER_BOOTLOADER_VERSION'
@@ -420,7 +440,8 @@ $generatedPackagePatterns = @(
     'SignalSlinger-*.hex',
     'SignalSlinger-Release-Info-*.json',
     'SignalSlinger-Checksums-*.txt',
-    'README-SignalSlinger-*.txt'
+    'README-SignalSlinger-*.txt',
+    'SignalSlinger-*-Release-Files.zip'
 )
 foreach($pattern in $generatedPackagePatterns)
 {
@@ -431,10 +452,11 @@ foreach($pattern in $generatedPackagePatterns)
 $friendlyVersion = "v$softwareVersion"
 $updateFile = "SignalSlinger-Update-$friendlyVersion-$boardName.hex"
 $firstInstallFile = "SignalSlinger-First-Install-$friendlyVersion-$boardName.hex"
-$bootloaderFile = "SignalSlinger-Setup-Helper-$bootloaderVersion.hex"
+$bootloaderFile = "SignalSlinger-Setup-Helper-$friendlyVersion-$boardName-$bootloaderVersion.hex"
 $releaseInfoFile = "SignalSlinger-Release-Info-$friendlyVersion-$boardName.json"
 $checksumsFile = "SignalSlinger-Checksums-$friendlyVersion-$boardName.txt"
-$readmeFile = "README-SignalSlinger-$friendlyVersion.txt"
+$readmeFile = "README-SignalSlinger-$friendlyVersion-$boardName.txt"
+$releaseZipFile = "SignalSlinger-$friendlyVersion-$boardName-Release-Files.zip"
 
 $updatePath = Join-Path $OutputDir $updateFile
 $firstInstallPath = Join-Path $OutputDir $firstInstallFile
@@ -442,6 +464,7 @@ $bootloaderPath = Join-Path $OutputDir $bootloaderFile
 $releaseInfoPath = Join-Path $OutputDir $releaseInfoFile
 $checksumsPath = Join-Path $OutputDir $checksumsFile
 $readmePath = Join-Path $OutputDir $readmeFile
+$releaseZipPath = Join-Path $OutputDir $releaseZipFile
 
 $mergeSummary = Merge-HexFiles -BootloaderPath $bootloaderHexPath -ApplicationPath $applicationHexPath -OutputPath $firstInstallPath
 
@@ -519,6 +542,12 @@ Files:
 - $checksumsFile
   Optional file-integrity checks.
 
+GitHub release assets:
+
+- Upload $updateFile by itself for normal users and for SerialSlinger.
+- Upload $releaseZipFile for the complete set of release files.
+- The zip file contains the same update file plus setup files, release information, checksums, and this README.
+
 Board: $boardName
 Update speed: $bootBaud baud
 Update verification: page-by-page checks built into the SignalSlinger update process
@@ -535,8 +564,19 @@ foreach($file in $files)
 }
 $checksumLines | Set-Content -LiteralPath $checksumsPath -Encoding ASCII
 
+$zipSourcePaths = @(
+    $updatePath,
+    $firstInstallPath,
+    $bootloaderPath,
+    $releaseInfoPath,
+    $checksumsPath,
+    $readmePath
+)
+Compress-Archive -LiteralPath $zipSourcePaths -DestinationPath $releaseZipPath -Force
+
 Write-Host "Release package created: $OutputDir"
 Write-Host ("Update file: {0}" -f $updateFile)
+Write-Host ("Complete release zip: {0}" -f $releaseZipFile)
 Write-Host ("First-install file: {0}" -f $firstInstallFile)
 Write-Host ("Release info: {0}" -f $releaseInfoFile)
 Write-Host ("App .text start verified: 0x{0:X}, size 0x{1:X}" -f $appText.Start, $appText.Size)
