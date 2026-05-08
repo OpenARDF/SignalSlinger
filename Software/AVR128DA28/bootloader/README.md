@@ -126,6 +126,8 @@ SerialSlinger should use the firmware already running on the device as the first
 
 The `hw` field should match the release package `board` field and the `HW-3.4` or `HW-3.5` text in the file name before SerialSlinger enters update mode. If `INF` is not supported, SerialSlinger can fall back to parsing the older human `VER` response, for example `SW Ver: 1.2.2 HW Build: 3.5`. Firmware versions below `2.0.0` should be treated as legacy: use `RST` plus the bootloader-catch path instead of relying on `UPD`.
 
+The `hw` field reports the hardware target used to build the currently installed application. It is the best default for normal updates, but it is not an independent hardware probe. If a board is known or suspected to have the wrong hardware build installed, SerialSlinger should offer a deliberate recovery/override path that lets the user choose the physical hardware version, then confirms the new app reports the chosen `hw` after the update.
+
 The bootloader `?` response identifies the bootloader protocol and flash geometry, but the bootloader binary is hardware-neutral. Hardware-version selection therefore belongs to the running app response and release metadata, before the app hands control to the bootloader.
 
 ## Serial Update Frames
@@ -173,6 +175,8 @@ powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6
 ```
 
 The updater parses the relocated Intel HEX file, rejects records outside APPCODE, erases the reset-vector page first, writes all other pages, then writes the reset-vector page last. By default it asks the bootloader for a CRC of each programmed page and compares it with the image data, giving serial-only verification without Atmel-ICE. Use `-SkipSerialVerify` only for bench timing or protocol debugging.
+
+After sending the bootloader `R` command, the updater reopens the serial port at the app baud rate, drains startup text, sends `INF`, and confirms the updated app is running with the expected product, version, hardware version, app start address, and update baud. Use `-SkipAppConfirm` only when deliberately testing a recovery case where the app is not expected to start.
 
 If an update is interrupted after the reset-vector page is erased, the application will not start. That is intentional: on the next reset, the missing app vector keeps the bootloader resident so the unit can be restored with:
 

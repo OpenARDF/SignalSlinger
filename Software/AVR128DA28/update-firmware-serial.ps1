@@ -22,6 +22,12 @@ param(
 
     [switch]$VerifyWithUpdi,
 
+    [switch]$SkipAppConfirm,
+
+    [string]$ExpectedVersion = '',
+
+    [string]$ExpectedHardware = '',
+
     [string]$Tool = 'atmelice',
 
     [string]$ToolSerial = 'J41800053674',
@@ -46,6 +52,9 @@ $AppUpdateCommandSettleMs = 250
 $AppSerialIdleMs = 750
 $AppSerialIdleDeadlineMs = 6000
 $AppUpdateAckDeadlineMs = 3000
+$AppConfirmAttempts = 3
+$AppConfirmAfterRunDelayMs = 1200
+$AppConfirmReadMs = 1200
 $AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe'
 
 if($Baud -ne 0)
@@ -359,6 +368,102 @@ function Close-SignalSlingerSerialPort {
     }
 }
 
+function Get-ExpectedFirmwareIdentity {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $identity = [ordered]@{
+        Version = $ExpectedVersion
+        Hardware = $ExpectedHardware
+    }
+
+    $fileName = [System.IO.Path]::GetFileName($Path)
+    $match = [regex]::Match($fileName, 'SignalSlinger-Update-v(?<version>[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9._-]+)?)-HW-(?<hardware>3\.[45])\.hex$', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if($match.Success)
+    {
+        if([string]::IsNullOrWhiteSpace($identity.Version))
+        {
+            $identity.Version = $match.Groups['version'].Value
+        }
+        if([string]::IsNullOrWhiteSpace($identity.Hardware))
+        {
+            $identity.Hardware = $match.Groups['hardware'].Value
+        }
+    }
+
+    return $identity
+}
+
+function Confirm-UpdatedApplication {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PortName,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$ExpectedIdentity
+    )
+
+    $lastResponse = ''
+
+    for($attempt = 1; $attempt -le $AppConfirmAttempts; $attempt++)
+    {
+        $serialPort = Open-SignalSlingerSerialPort -PortName $PortName -BaudRate $AppBaud
+        try
+        {
+            $serialPort.DiscardInBuffer()
+            $drained = Wait-SerialIdle -SerialPort $serialPort -IdleMilliseconds $AppSerialIdleMs -DeadlineMilliseconds $AppSerialIdleDeadlineMs
+            $serialPort.Write("INF`r")
+            $response = $drained + (Read-SerialText -SerialPort $serialPort -Milliseconds $AppConfirmReadMs)
+            $lastResponse = $response
+
+            if($response -match 'SignalSlinger BL')
+            {
+                throw "Post-update app confirmation found the bootloader still running on $PortName. Received: $response"
+            }
+
+            $productOk = $response -match '\* INF product=SignalSlinger(?:\s|$)'
+            $infoMatch = [regex]::Match($response, '\* INF sw=(?<sw>\S+) hw=(?<hw>\S+) app=(?<app>0x[0-9A-Fa-f]+) baud=(?<baud>\d+)')
+            if($productOk -and $infoMatch.Success)
+            {
+                $sw = $infoMatch.Groups['sw'].Value
+                $hw = $infoMatch.Groups['hw'].Value
+                $app = $infoMatch.Groups['app'].Value
+                $baud = [int]$infoMatch.Groups['baud'].Value
+
+                if(-not [string]::IsNullOrWhiteSpace($ExpectedIdentity.Version) -and $sw -ne $ExpectedIdentity.Version)
+                {
+                    throw "Post-update app confirmation reported firmware $sw, expected $($ExpectedIdentity.Version)."
+                }
+                if(-not [string]::IsNullOrWhiteSpace($ExpectedIdentity.Hardware) -and $hw -ne $ExpectedIdentity.Hardware)
+                {
+                    throw "Post-update app confirmation reported hardware $hw, expected $($ExpectedIdentity.Hardware)."
+                }
+                if([Convert]::ToUInt32($app.Substring(2), 16) -ne $ApplicationStart)
+                {
+                    throw "Post-update app confirmation reported app start $app, expected 0x$($ApplicationStart.ToString('X'))."
+                }
+                if($baud -ne $BootBaud)
+                {
+                    throw "Post-update app confirmation reported update baud $baud, expected $BootBaud."
+                }
+
+                Write-Host ("Post-update app confirmation OK: sw={0}, hw={1}, app={2}, baud={3}" -f $sw, $hw, $app, $baud)
+                return
+            }
+        }
+        finally
+        {
+            Close-SignalSlingerSerialPort -SerialPort $serialPort
+        }
+
+        Start-Sleep -Milliseconds 500
+    }
+
+    throw "Post-update app confirmation failed after $AppConfirmAttempts attempts. Last response: $lastResponse"
+}
+
 function Request-AppBootloaderReset {
     param(
         [Parameter(Mandatory = $true)]
@@ -631,10 +736,12 @@ $orderedWrites += $resetVectorPageAddress
 
 $firstAddress = [int]($bytesByAddress.Keys | Sort-Object { [int]$_ } | Select-Object -First 1)
 $lastAddress = [int]($bytesByAddress.Keys | Sort-Object { [int]$_ } | Select-Object -Last 1)
+$expectedIdentity = Get-ExpectedFirmwareIdentity -Path $HexPath
 Write-Host ("Relocated HEX: {0} bytes across {1} pages, 0x{2:X}..0x{3:X}" -f $bytesByAddress.Count, $pageAddresses.Count, $firstAddress, $lastAddress)
 Write-Host ("Reset-vector page 0x{0:X} will be erased first and written last." -f $resetVectorPageAddress)
 Write-Host ("Serial settings: app {0} baud, bootloader {1} baud." -f $AppBaud, $BootBaud)
 Write-Host ("Serial page CRC verification: {0}." -f ($(if($SkipSerialVerify) { 'disabled' } else { 'enabled' })))
+Write-Host ("Post-update app confirmation: {0}." -f ($(if($SkipAppConfirm) { 'disabled' } else { 'enabled' })))
 
 if($DryRun)
 {
@@ -695,6 +802,12 @@ try
 finally
 {
     Close-SignalSlingerSerialPort -SerialPort $serialPort
+}
+
+if(-not $SkipAppConfirm)
+{
+    Start-Sleep -Milliseconds $AppConfirmAfterRunDelayMs
+    Confirm-UpdatedApplication -PortName $Port -ExpectedIdentity $expectedIdentity
 }
 
 if($VerifyWithUpdi)
