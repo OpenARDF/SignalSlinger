@@ -5,7 +5,9 @@ param(
 
     [string]$OutputDir = '',
 
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+
+    [switch]$SkipValidate
 )
 
 Set-StrictMode -Version Latest
@@ -527,3 +529,12 @@ Write-Host ("First-install file: {0}" -f $firstInstallFile)
 Write-Host ("Release info: {0}" -f $releaseInfoFile)
 Write-Host ("App .text start verified: 0x{0:X}, size 0x{1:X}" -f $appText.Start, $appText.Size)
 Write-Host ("Bootloader .text start verified: 0x{0:X}, size 0x{1:X}" -f $bootText.Start, $bootText.Size)
+
+if(-not $SkipValidate)
+{
+    & powershell -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'validate-release-package.ps1') -PackageDir $OutputDir
+    if($LASTEXITCODE -ne 0)
+    {
+        throw "Release package validation failed with exit code $LASTEXITCODE."
+    }
+}

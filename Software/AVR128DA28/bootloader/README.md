@@ -89,6 +89,7 @@ Build the files that should be attached to a GitHub release:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1
+powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 ```
 
 The package is written under `release-packages\...` by default and uses names meant to be understandable outside the firmware bench:
@@ -101,6 +102,8 @@ The package is written under `release-packages\...` by default and uses names me
 - `README-SignalSlinger-...txt`: short plain-language notes for the release folder
 
 The release-info JSON keeps the unavoidable details for software: board version, update speed, page size, app start address, bootloader version, protocol version, and SHA-256 hashes. Normal users should not need those details; SerialSlinger can read them and choose the right update file in the background.
+
+Run `validate-release-package.ps1` before uploading assets. It checks that the files named by the release info are present, hashes match, the normal update starts at the app address, the first-install image includes both bootloader and app, and the bootloader helper does not overlap app space.
 
 ## Serial Update Frames
 
