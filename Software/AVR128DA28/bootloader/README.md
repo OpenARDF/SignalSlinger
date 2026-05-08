@@ -83,6 +83,25 @@ Required programming PC software:
 - Windows or macOS provision-only path: PowerShell 7, Python, `pymcuprog`, Atmel-ICE USB access, and prebuilt bootloader/application HEX files. `pymcuprog` is installed with `python -m pip install pymcuprog`; use a Python version with available `hidapi` wheels for the host architecture.
 - Bench validation path: Atmel-ICE on UPDI plus a USB serial adapter connected to SignalSlinger USART1.
 
+## Release Package
+
+Build the files that should be attached to a GitHub release:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1
+```
+
+The package is written under `release-packages\...` by default and uses names meant to be understandable outside the firmware bench:
+
+- `SignalSlinger-Update-...hex`: the file SerialSlinger should use for normal software updates
+- `SignalSlinger-First-Install-...hex`: the file workshop setup tools should use for a new board with a programmer
+- `SignalSlinger-Bootloader-...hex`: the helper file used by workshop setup tools
+- `SignalSlinger-Release-Info-...json`: the information SerialSlinger reads automatically
+- `SignalSlinger-Checksums-...txt`: optional file-integrity checks
+- `README-SignalSlinger-...txt`: short plain-language notes for the release folder
+
+The release-info JSON keeps the unavoidable details for software: board version, update speed, page size, app start address, bootloader version, protocol version, and SHA-256 hashes. Normal users should not need those details; SerialSlinger can read them and choose the right update file in the background.
+
 ## Serial Update Frames
 
 All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized to `0xFFFF` and covers the command byte plus the frame body, but not the transmitted CRC bytes.
