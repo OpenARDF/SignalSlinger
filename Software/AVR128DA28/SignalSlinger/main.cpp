@@ -142,6 +142,7 @@ typedef struct
 #define STARTUP_SWITCH_SETTLE_SAMPLE_COUNT 12
 #define STARTUP_SWITCH_SETTLE_DELAY_MS 5
 #define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
+#define SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST 0xA5U
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -4165,6 +4166,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				while(util_delay_ms(750) && serialbusTxInProgress())
 				{
 				}
+				GPR.GPR1 = SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST;
 				RSTCTRL_reset();
 			}
 			break;

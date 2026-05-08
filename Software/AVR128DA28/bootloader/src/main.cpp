@@ -24,6 +24,7 @@ static uint8_t last_usart_error;
 #define SIGNALSLINGER_STARTUP_LED_PINS (SIGNALSLINGER_RED_LED_PIN | SIGNALSLINGER_GREEN_LED_PIN)
 #define SIGNALSLINGER_STARTUP_LED_BLINK_HALF_PERIOD_MS 50U
 #define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
+#define SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST 0xA5U
 #define SIGNALSLINGER_USART_RX_ERROR_MASK (USART_PERR_bm | USART_FERR_bm | USART_BUFOVF_bm)
 #define SIGNALSLINGER_RESET_FLAGS_MASK \
 	(RSTCTRL_UPDIRF_bm | RSTCTRL_SWRF_bm | RSTCTRL_WDRF_bm | RSTCTRL_EXTRF_bm | RSTCTRL_BORF_bm | RSTCTRL_PORF_bm)
@@ -38,6 +39,14 @@ static uint8_t read_and_clear_reset_flags(void)
 static bool reset_was_power_start(uint8_t reset_flags)
 {
 	return (reset_flags & (RSTCTRL_PORF_bm | RSTCTRL_BORF_bm)) != 0U;
+}
+
+static bool app_requested_bootloader(uint8_t reset_flags)
+{
+	bool requested = ((reset_flags & RSTCTRL_SWRF_bm) != 0U) &&
+	                 (GPR.GPR1 == SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST);
+	GPR.GPR1 = 0U;
+	return requested;
 }
 
 static void clock_init(void)
@@ -609,13 +618,15 @@ int main(void)
 {
 	cli();
 	uint8_t reset_flags = read_and_clear_reset_flags();
+	bool app_update_requested = app_requested_bootloader(reset_flags);
 	latch_power_on();
 	clock_init();
 	pins_init();
 	usart_init();
 
 	bool switch_entry_allowed = !reset_was_power_start(reset_flags);
-	bool stay_in_bootloader = (switch_entry_allowed && switch_is_held()) ||
+	bool stay_in_bootloader = app_update_requested ||
+	                          (switch_entry_allowed && switch_is_held()) ||
 	                          !app_vector_looks_programmed() ||
 	                          serial_entry_requested();
 

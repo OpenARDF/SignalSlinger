@@ -414,6 +414,9 @@ function Confirm-UpdatedApplication {
         {
             $serialPort.DiscardInBuffer()
             $drained = Wait-SerialIdle -SerialPort $serialPort -IdleMilliseconds $AppSerialIdleMs -DeadlineMilliseconds $AppSerialIdleDeadlineMs
+            $serialPort.Write("`r")
+            Start-Sleep -Milliseconds 200
+            $drained += $serialPort.ReadExisting()
             $serialPort.Write("INF`r")
             $response = $drained + (Read-SerialText -SerialPort $serialPort -Milliseconds $AppConfirmReadMs)
             $lastResponse = $response

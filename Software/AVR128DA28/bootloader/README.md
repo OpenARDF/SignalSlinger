@@ -14,9 +14,9 @@ Current scope:
 
 The bootloader now accepts a deliberately small page programming protocol. It only erases or writes full, page-aligned APPCODE pages and rejects any frame whose address would touch the boot section.
 
-The running application still accepts the `UPD` command at the normal SignalSlinger serial rate. After the app resets, the bootloader runs the programming protocol at `115200` baud. On the current SignalSlinger firmware image this writes the app in about 40-45 seconds, or about a minute with default serial page-CRC verification, which is a useful improvement without pushing the serial link hard.
+The running application still accepts the `UPD` command at the normal SignalSlinger serial rate. Before issuing the software reset, the app writes a short update-request marker into `GPR1`; the bootloader consumes that marker on the next software reset and stays in update mode without relying on a narrow serial timing window. After the app resets, the bootloader runs the programming protocol at `115200` baud. On the current SignalSlinger firmware image this writes the app in about 40-45 seconds, or about a minute with default serial page-CRC verification, which is a useful improvement without pushing the serial link hard.
 
-On SignalSlinger hardware, the front-panel switch is also the momentary power-on source. A normal cold power-on therefore starts with that switch held. The bootloader treats POR/BOR resets specially: it latches `PA3` high immediately so the board stays powered, turns both LEDs on for immediate feedback, blinks both LEDs at the wake-authorization cadence while the button remains held, ignores switch-held bootloader entry for that cold-start case, and then jumps to the app unless serial `U` arrives or the app reset vector is missing. At app handoff, it records whether the power button is still held in `GPR0`; the app consumes that marker after its GPIO initialization so it can preserve startup LED feedback only for real held-button power-on. This lets the application take over the normal power latch/off behavior and LED policy without showing a long solid-LED hold when external power appears without a button press.
+On SignalSlinger hardware, the front-panel switch is also the momentary power-on source. A normal cold power-on therefore starts with that switch held. The bootloader treats POR/BOR resets specially: it latches `PA3` high immediately so the board stays powered, turns both LEDs on for immediate feedback, blinks both LEDs at the wake-authorization cadence while the button remains held, ignores switch-held bootloader entry for that cold-start case, and then jumps to the app unless serial `U` arrives, the app reset vector is missing, or the app has requested update mode through `GPR1` before software reset. At app handoff, it records whether the power button is still held in `GPR0`; the app consumes that marker after its GPIO initialization so it can preserve startup LED feedback only for real held-button power-on. This lets the application take over the normal power latch/off behavior and LED policy without showing a long solid-LED hold when external power appears without a button press.
 
 ## Address Map
 
@@ -146,7 +146,7 @@ All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized t
 The `?` response is intentionally machine-readable for host programmers:
 
 ```text
-SignalSlinger BL0.10 proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C
+SignalSlinger BL0.11 proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C
 ```
 
 During a firmware update, the bootloader toggles red as erase/write flash operations are accepted and completed, and toggles green as write payload bytes are received. Rejected frames and NVM/serial errors leave red on and green off until later update activity changes the indication.
