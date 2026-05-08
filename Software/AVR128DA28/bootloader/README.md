@@ -115,6 +115,19 @@ Run `validate-release-package.ps1` before uploading assets. It checks that the f
 
 For GitHub releases, upload the unzipped `SignalSlinger-Update-...hex` for each supported hardware version for the common SerialSlinger update path, plus the matching versioned `SignalSlinger-...-Release-Files.zip` containing the complete set of files for that hardware version.
 
+## Hardware Version Selection
+
+SerialSlinger should use the firmware already running on the device as the first guide for choosing the update file. Firmware `2.0.0` and newer supports the `INF` app command at 9600 baud. It replies with compact machine-readable lines such as:
+
+```text
+* INF product=SignalSlinger update=UPD
+* INF sw=2.0.0 hw=3.5 app=0x4000 baud=115200
+```
+
+The `hw` field should match the release package `board` field and the `HW-3.4` or `HW-3.5` text in the file name before SerialSlinger enters update mode. If `INF` is not supported, SerialSlinger can fall back to parsing the older human `VER` response, for example `SW Ver: 1.2.2 HW Build: 3.5`. Firmware versions below `2.0.0` should be treated as legacy: use `RST` plus the bootloader-catch path instead of relying on `UPD`.
+
+The bootloader `?` response identifies the bootloader protocol and flash geometry, but the bootloader binary is hardware-neutral. Hardware-version selection therefore belongs to the running app response and release metadata, before the app hands control to the bootloader.
+
 ## Serial Update Frames
 
 All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized to `0xFFFF` and covers the command byte plus the frame body, but not the transmitted CRC bytes.

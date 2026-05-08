@@ -400,6 +400,8 @@ bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
 static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
+static const char *hardwareBuildString(void);
+static void sendFirmwareInfo(void);
 static inline void captureButtonWakeFromSleep(void);
 static inline void clearPendingWakeInterruptFlags(void);
 static inline void setWakeAuthorizationLedPinsOn(void);
@@ -3842,6 +3844,27 @@ static inline bool bootloaderHandoffReportedPowerButtonHeld(void)
 	return button_held;
 }
 
+static const char *hardwareBuildString(void)
+{
+#ifdef HW_TARGET_3_5
+	return "3.5";
+#else
+	return "3.4";
+#endif
+}
+
+static void sendFirmwareInfo(void)
+{
+	if(g_cloningInProgress || g_meshmode)
+	{
+		return;
+	}
+
+	sb_send_string((char *)"* INF product=SignalSlinger update=UPD\n");
+	snprintf(g_tempStr, sizeof(g_tempStr), "* INF sw=%s hw=%s app=0x4000 baud=115200\n", SW_REVISION, hardwareBuildString());
+	sb_send_string(g_tempStr);
+}
+
 /**
  * Report whether cold-start LED feedback should be preserved.
  *
@@ -4143,6 +4166,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 				}
 				RSTCTRL_reset();
+			}
+			break;
+
+			case SB_MESSAGE_INFO:
+			{
+				sendFirmwareInfo();
 			}
 			break;
 
@@ -5868,15 +5897,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_NewLine();
 					}
 
-					/* Temporary buffer for the formatted hardware revision string. */
-					char buf[10];
-
-#ifdef HW_TARGET_3_5
-					sprintf(buf, "3.5");
-#else
-					sprintf(buf, "3.4");
-#endif
-					sprintf(g_tempStr, "* SW Ver: %s HW Build: %s\n", SW_REVISION, buf);
+					sprintf(g_tempStr, "* SW Ver: %s HW Build: %s\n", SW_REVISION, hardwareBuildString());
 
 					sb_send_string(g_tempStr);
 				}
@@ -7244,13 +7265,7 @@ void reportSettings(void)
 
 	sb_send_string((char *)PRODUCT_NAME_LONG);
 
-#ifdef HW_TARGET_3_5
-	sprintf(buf, "3.5");
-#else
-	sprintf(buf, "3.4");
-#endif
-
-	sprintf(g_tempStr, "\n* SW Ver: %s HW Build: %s\n", SW_REVISION, buf);
+	sprintf(g_tempStr, "\n* SW Ver: %s HW Build: %s\n", SW_REVISION, hardwareBuildString());
 	sb_send_string(g_tempStr);
 
 	if(g_hardware_error & (int)HARDWARE_NO_RTC)

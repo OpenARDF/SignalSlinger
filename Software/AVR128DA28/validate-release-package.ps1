@@ -312,6 +312,9 @@ $pageBytes = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'pageByte
 $flashBytes = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'flashBytes'
 $protocolVersion = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'protocolVersion'
 $updateBaud = Get-RequiredUInt -Object $releaseInfo.serialSlinger -Name 'updateBaud'
+$appInfoCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'appInfoCommand'
+$appUpdateCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'appUpdateCommand'
+$bootloaderEntryCommand = Get-RequiredString -Object $releaseInfo.serialSlinger -Name 'bootloaderEntryCommand'
 
 if($pageBytes -ne 512)
 {
@@ -328,6 +331,18 @@ if($protocolVersion -lt 1)
 if($updateBaud -ne 115200)
 {
     throw "Unexpected update speed: $updateBaud"
+}
+if($appInfoCommand -ne 'INF')
+{
+    throw "Unexpected app info command: $appInfoCommand"
+}
+if($appUpdateCommand -ne 'UPD')
+{
+    throw "Unexpected app update command: $appUpdateCommand"
+}
+if($bootloaderEntryCommand -ne 'U')
+{
+    throw "Unexpected bootloader entry command: $bootloaderEntryCommand"
 }
 
 $checksums = Read-ChecksumFile -Path $checksumsPath

@@ -501,6 +501,9 @@ $releaseInfo = [pscustomobject]@{
     }
     serialSlinger = [pscustomobject]@{
         appBaud = $appBaud
+        appInfoCommand = 'INF'
+        appUpdateCommand = 'UPD'
+        bootloaderEntryCommand = 'U'
         updateBaud = $bootBaud
         pageBytes = $pageBytes
         protocolVersion = $protocolVersion
