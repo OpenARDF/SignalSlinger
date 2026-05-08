@@ -416,10 +416,22 @@ if([string]::IsNullOrWhiteSpace($OutputDir))
 }
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
+$generatedPackagePatterns = @(
+    'SignalSlinger-*.hex',
+    'SignalSlinger-Release-Info-*.json',
+    'SignalSlinger-Checksums-*.txt',
+    'README-SignalSlinger-*.txt'
+)
+foreach($pattern in $generatedPackagePatterns)
+{
+    Get-ChildItem -LiteralPath $OutputDir -File -Filter $pattern -ErrorAction SilentlyContinue |
+        Remove-Item -Force
+}
+
 $friendlyVersion = "v$softwareVersion"
 $updateFile = "SignalSlinger-Update-$friendlyVersion-$boardName.hex"
 $firstInstallFile = "SignalSlinger-First-Install-$friendlyVersion-$boardName.hex"
-$bootloaderFile = "SignalSlinger-Bootloader-$bootloaderVersion.hex"
+$bootloaderFile = "SignalSlinger-Setup-Helper-$bootloaderVersion.hex"
 $releaseInfoFile = "SignalSlinger-Release-Info-$friendlyVersion-$boardName.json"
 $checksumsFile = "SignalSlinger-Checksums-$friendlyVersion-$boardName.txt"
 $readmeFile = "README-SignalSlinger-$friendlyVersion.txt"
@@ -436,7 +448,7 @@ $mergeSummary = Merge-HexFiles -BootloaderPath $bootloaderHexPath -ApplicationPa
 $files = @()
 $files += Copy-PackageFile -SourcePath $applicationHexPath -DestinationPath $updatePath -Kind 'update' -Purpose 'For SerialSlinger to update a SignalSlinger that already supports software updates.'
 $files += Copy-PackageFile -SourcePath $firstInstallPath -DestinationPath $firstInstallPath -Kind 'first-install' -Purpose 'For workshop setup of a new board using a programmer.'
-$files += Copy-PackageFile -SourcePath $bootloaderHexPath -DestinationPath $bootloaderPath -Kind 'boot-helper' -Purpose 'Used by workshop setup tools when installing update support.'
+$files += Copy-PackageFile -SourcePath $bootloaderHexPath -DestinationPath $bootloaderPath -Kind 'setup-helper' -Purpose 'Used by workshop setup tools when installing update support.'
 
 $gitCommit = ''
 try
@@ -474,7 +486,7 @@ $releaseInfo = [pscustomobject]@{
         flashBytes = $flashBytes
     }
     workshopSetup = [pscustomobject]@{
-        bootloaderFileName = $bootloaderFile
+        setupHelperFileName = $bootloaderFile
         bootSectionPages = $bootPages
         fuseBootSize = '0x20'
         fuseCodeSize = '0x00'

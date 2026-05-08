@@ -335,7 +335,14 @@ foreach($entry in $fileEntries)
 
 $updateFile = Get-RequiredString -Object $releaseInfo.update -Name 'fileName'
 $firstInstallFile = Get-RequiredString -Object $releaseInfo.firstInstall -Name 'fileName'
-$bootloaderFile = Get-RequiredString -Object $releaseInfo.workshopSetup -Name 'bootloaderFileName'
+if($releaseInfo.workshopSetup.PSObject.Properties.Name -contains 'setupHelperFileName')
+{
+    $bootloaderFile = Get-RequiredString -Object $releaseInfo.workshopSetup -Name 'setupHelperFileName'
+}
+else
+{
+    $bootloaderFile = Get-RequiredString -Object $releaseInfo.workshopSetup -Name 'bootloaderFileName'
+}
 
 $updatePath = Join-Path $resolvedPackageDir $updateFile
 $firstInstallPath = Join-Path $resolvedPackageDir $firstInstallFile

@@ -96,7 +96,7 @@ The package is written under `release-packages\...` by default and uses names me
 
 - `SignalSlinger-Update-...hex`: the file SerialSlinger should use for normal software updates
 - `SignalSlinger-First-Install-...hex`: the file workshop setup tools should use for a new board with a programmer
-- `SignalSlinger-Bootloader-...hex`: the helper file used by workshop setup tools
+- `SignalSlinger-Setup-Helper-...hex`: the helper file used by workshop setup tools
 - `SignalSlinger-Release-Info-...json`: the information SerialSlinger reads automatically
 - `SignalSlinger-Checksums-...txt`: optional file-integrity checks
 - `README-SignalSlinger-...txt`: short plain-language notes for the release folder
