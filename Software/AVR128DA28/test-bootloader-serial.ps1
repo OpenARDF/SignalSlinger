@@ -201,6 +201,21 @@ function New-BootloaderFrame {
     return $body.ToArray()
 }
 
+function Get-Crc16ForBytes {
+    param(
+        [Parameter(Mandatory = $true)]
+        [byte[]]$Bytes
+    )
+
+    [UInt16]$crc = 0xFFFF
+    foreach($byte in $Bytes)
+    {
+        $crc = Update-Crc16 -Crc $crc -Value $byte
+    }
+
+    return $crc
+}
+
 function Invoke-RawSerial {
     param(
         [Parameter(Mandatory = $true)]
@@ -452,6 +467,10 @@ try
     $writeScratch = New-BootloaderFrame -Command ([byte][char]'W') -Address $ScratchAddress -Payload $pattern
     Invoke-BootloaderFrame -SerialPort $serialPort -Frame $writeScratch -ExpectedPattern 'OK write' -Description 'write scratch page'
 
+    $expectedScratchCrc = Get-Crc16ForBytes -Bytes $pattern
+    $crcScratch = New-BootloaderFrame -Command ([byte][char]'C') -Address $ScratchAddress
+    Invoke-BootloaderFrame -SerialPort $serialPort -Frame $crcScratch -ExpectedPattern ("OK crc 0x{0:X8} {1:X4}" -f $ScratchAddress, $expectedScratchCrc) -Description 'verify scratch page CRC'
+
     $badCrc = New-BootloaderFrame -Command ([byte][char]'E') -Address $ScratchAddress
     $badCrc[$badCrc.Length - 1] = $badCrc[$badCrc.Length - 1] -bxor 0x01
     Invoke-BootloaderFrame -SerialPort $serialPort -Frame $badCrc -ExpectedPattern 'ERR crc' -Description 'reject bad CRC'
@@ -461,6 +480,9 @@ try
 
     $bootAddress = New-BootloaderFrame -Command ([byte][char]'E') -Address 0x0000
     Invoke-BootloaderFrame -SerialPort $serialPort -Frame $bootAddress -ExpectedPattern 'ERR address' -Description 'reject boot-section address'
+
+    $bootCrcAddress = New-BootloaderFrame -Command ([byte][char]'C') -Address 0x0000
+    Invoke-BootloaderFrame -SerialPort $serialPort -Frame $bootCrcAddress -ExpectedPattern 'ERR address' -Description 'reject boot-section CRC read'
 
     $pastFlash = New-BootloaderFrame -Command ([byte][char]'E') -Address $FlashEndExclusive
     Invoke-BootloaderFrame -SerialPort $serialPort -Frame $pastFlash -ExpectedPattern 'ERR address' -Description 'reject past-flash address'

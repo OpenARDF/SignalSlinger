@@ -7,12 +7,16 @@ Current scope:
 - reserve a 16 KiB boot section
 - keep the application start fixed at byte address `0x4000`
 - use `USART1` on the existing SignalSlinger serial pins, `PC0` TX and `PC1` RX
-- stay in the bootloader when the front-panel switch is held at reset, when no valid app reset vector is present, or when the serial updater sends `U` during the startup window
+- latch SignalSlinger power on with `POWER_ENABLE`/`PA3` before waiting for serial input
+- turn both front-panel LEDs on during the bootloader startup window for immediate power-on feedback, blink them at the wake-authorization cadence when the power button is held, then pass the held-button state to the app at handoff
+- stay in the bootloader when no valid app reset vector is present, when the serial updater sends `U` during the startup window, or when the front-panel switch is held during a non-power reset
 - otherwise jump to the relocated application
 
 The bootloader now accepts a deliberately small page programming protocol. It only erases or writes full, page-aligned APPCODE pages and rejects any frame whose address would touch the boot section.
 
-The running application still accepts the `UPD` command at the normal SignalSlinger serial rate. After the app resets, the bootloader runs the programming protocol at `115200` baud. On the current SignalSlinger firmware image this programs the app in about 40-45 seconds, which is a useful improvement without pushing the serial link hard.
+The running application still accepts the `UPD` command at the normal SignalSlinger serial rate. After the app resets, the bootloader runs the programming protocol at `115200` baud. On the current SignalSlinger firmware image this writes the app in about 40-45 seconds, or about a minute with default serial page-CRC verification, which is a useful improvement without pushing the serial link hard.
+
+On SignalSlinger hardware, the front-panel switch is also the momentary power-on source. A normal cold power-on therefore starts with that switch held. The bootloader treats POR/BOR resets specially: it latches `PA3` high immediately so the board stays powered, turns both LEDs on for immediate feedback, blinks both LEDs at the wake-authorization cadence while the button remains held, ignores switch-held bootloader entry for that cold-start case, and then jumps to the app unless serial `U` arrives or the app reset vector is missing. At app handoff, it records whether the power button is still held in `GPR0`; the app consumes that marker after its GPIO initialization so it can preserve startup LED feedback only for real held-button power-on. This lets the application take over the normal power latch/off behavior and LED policy without showing a long solid-LED hold when external power appears without a button press.
 
 ## Address Map
 
@@ -41,6 +45,44 @@ powershell -ExecutionPolicy Bypass -File .\build-relocated-firmware.ps1 -Configu
 
 That helper uses a temporary makefile and injects `-Wl,--section-start=.text=0x4000`; it does not alter the normal `SignalSlinger/Release/Makefile`.
 
+## Provisioning Script
+
+Use the guarded provisioner to build, merge, program, verify, and validate a bootloader-enabled unit:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Port COM6
+```
+
+Check programming PC prerequisites without touching target hardware:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -CheckPrereqs -SkipBuild -SkipSerialValidation
+```
+
+The script creates `tmp\SignalSlinger-bootloader-combined.hex` from the bootloader HEX and relocated app HEX, chip-erases the target, programs and verifies the combined flash image, reads fuses, verifies `CODESIZE = 0x00` and `BOOTSIZE = 0x20`, then runs the bootloader serial protocol test.
+
+Fuse writes are deliberately opt-in:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Port COM6 -ProgramFuses -ConfirmFuseWrite
+```
+
+Without those two switches, the script reads and checks fuses but does not change them.
+
+On Windows, the provisioner uses Microchip Studio `atprogram` by default. On macOS or Windows, it can use `pymcuprog`:
+
+```powershell
+pwsh ./provision-bootloader.ps1 -Backend Pymcuprog -SkipBuild -BootloaderHexPath ./bootloader/Release/SignalSlingerBootloader.hex -ApplicationHexPath ./SignalSlinger/Release/SignalSlinger.hex
+```
+
+The current build helpers are Windows/Microchip Studio centered. On macOS, use prebuilt bootloader and relocated application HEX files with `-SkipBuild`, unless the AVR GCC build tooling has been ported locally.
+
+Required programming PC software:
+
+- Windows build/provision path: PowerShell, Microchip Studio 7 with the AVR-Dx device pack and AVR GCC toolchain, Atmel-ICE drivers, and a USB serial driver for the SignalSlinger serial adapter.
+- Windows or macOS provision-only path: PowerShell 7, Python, `pymcuprog`, Atmel-ICE USB access, and prebuilt bootloader/application HEX files. `pymcuprog` is installed with `python -m pip install pymcuprog`; use a Python version with available `hidapi` wheels for the host architecture.
+- Bench validation path: Atmel-ICE on UPDI plus a USB serial adapter connected to SignalSlinger USART1.
+
 ## Serial Update Frames
 
 All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized to `0xFFFF` and covers the command byte plus the frame body, but not the transmitted CRC bytes.
@@ -50,8 +92,17 @@ All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized t
 - `R`: jump to the app when the app reset vector is programmed
 - `E <addr:u32> <crc:u16>`: erase one 512-byte page
 - `W <addr:u32> <payload:512 bytes> <crc:u16>`: write one erased 512-byte page
+- `C <addr:u32> <crc:u16>`: report CRC-16/CCITT-FALSE of one 512-byte page as `OK crc 0xAAAAAAAA CCCC`
 
-`addr` must be page-aligned and the complete page must be inside `0x04000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, or `ERR ...`. USART framing, parity, or overflow faults are reported as `ERR serial XX`.
+`addr` must be page-aligned and the complete page must be inside `0x04000` through `0x1FFFF`. The bootloader responds with `OK erase`, `OK write`, `OK crc ...`, or `ERR ...`. USART framing, parity, or overflow faults are reported as `ERR serial XX`.
+
+The `?` response is intentionally machine-readable for host programmers:
+
+```text
+SignalSlinger BL0.10 proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C
+```
+
+During a firmware update, the bootloader toggles red as erase/write flash operations are accepted and completed, and toggles green as write payload bytes are received. Rejected frames and NVM/serial errors leave red on and green off until later update activity changes the indication.
 
 ## Serial Firmware Update
 
@@ -76,7 +127,7 @@ For bench validation with Atmel-ICE attached, add `-VerifyWithUpdi` to verify th
 powershell -ExecutionPolicy Bypass -File .\update-firmware-serial.ps1 -Port COM6 -RequestBootloaderFromApp -VerifyWithUpdi
 ```
 
-The updater parses the relocated Intel HEX file, rejects records outside APPCODE, erases the reset-vector page first, writes all other pages, then writes the reset-vector page last.
+The updater parses the relocated Intel HEX file, rejects records outside APPCODE, erases the reset-vector page first, writes all other pages, then writes the reset-vector page last. By default it asks the bootloader for a CRC of each programmed page and compares it with the image data, giving serial-only verification without Atmel-ICE. Use `-SkipSerialVerify` only for bench timing or protocol debugging.
 
 If an update is interrupted after the reset-vector page is erased, the application will not start. That is intentional: on the next reset, the missing app vector keeps the bootloader resident so the unit can be restored with:
 
@@ -98,7 +149,7 @@ Run the same test through UPDI reset plus serial `U` entry:
 powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM6
 ```
 
-The test uses page `0x1FE00` as scratch, validates good erase/write behavior, rejects bad CRCs, rejects unaligned, boot-section, and past-flash addresses, verifies truncated-frame timeout handling, confirms the bootloader remains responsive afterward, and erases the scratch page before returning to the app.
+The test uses page `0x1FE00` as scratch, validates good erase/write/CRC behavior, rejects bad CRCs, rejects unaligned, boot-section, and past-flash addresses, verifies truncated-frame timeout handling, confirms the bootloader remains responsive afterward, and erases the scratch page before returning to the app.
 
 For repeatability testing, run multiple full updates from the app `UPD` path:
 

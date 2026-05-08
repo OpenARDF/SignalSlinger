@@ -18,6 +18,8 @@ param(
 
     [switch]$RequestBootloaderFromApp,
 
+    [switch]$SkipSerialVerify,
+
     [switch]$VerifyWithUpdi,
 
     [string]$Tool = 'atmelice',
@@ -251,6 +253,21 @@ function New-BootloaderFrame {
     $body.Add([byte](($crc -shr 8) -band 0xFF))
 
     return $body.ToArray()
+}
+
+function Get-Crc16ForBytes {
+    param(
+        [Parameter(Mandatory = $true)]
+        [byte[]]$Bytes
+    )
+
+    [UInt16]$crc = 0xFFFF
+    foreach($byte in $Bytes)
+    {
+        $crc = Update-Crc16 -Crc $crc -Value $byte
+    }
+
+    return $crc
 }
 
 function Read-SerialText {
@@ -529,6 +546,51 @@ function Invoke-BootloaderFrame {
     return $response
 }
 
+function Assert-BootloaderPageCrc {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.Ports.SerialPort]$SerialPort,
+
+        [Parameter(Mandatory = $true)]
+        [UInt32]$Address,
+
+        [Parameter(Mandatory = $true)]
+        [byte[]]$ExpectedPage
+    )
+
+    $expectedCrc = Get-Crc16ForBytes -Bytes $ExpectedPage
+    $crcFrame = New-BootloaderFrame -Command ([byte][char]'C') -Address $Address
+    $SerialPort.DiscardInBuffer()
+    $SerialPort.Write($crcFrame, 0, $crcFrame.Length)
+
+    $response = ''
+    $deadline = [DateTime]::UtcNow.AddMilliseconds(($FrameByteTimeoutMs * 2) + 750)
+    while([DateTime]::UtcNow -lt $deadline -and
+          $response -notmatch 'OK crc 0x[0-9A-Fa-f]{8} [0-9A-Fa-f]{4}' -and
+          $response -notmatch 'ERR ')
+    {
+        $response += $SerialPort.ReadExisting()
+        Start-Sleep -Milliseconds 10
+    }
+
+    if($response -notmatch 'OK crc 0x([0-9A-Fa-f]{8}) ([0-9A-Fa-f]{4})')
+    {
+        throw ("Verify page CRC 0x{0:X} returned an unrecognized response: {1}" -f $Address, $response)
+    }
+
+    $reportedAddress = [Convert]::ToUInt32($Matches[1], 16)
+    $reportedCrc = [Convert]::ToUInt16($Matches[2], 16)
+
+    if($reportedAddress -ne $Address)
+    {
+        throw ("Verify page CRC expected address 0x{0:X}, bootloader reported 0x{1:X}." -f $Address, $reportedAddress)
+    }
+    if($reportedCrc -ne $expectedCrc)
+    {
+        throw ("Verify page CRC mismatch at 0x{0:X}: expected 0x{1:X4}, bootloader reported 0x{2:X4}." -f $Address, $expectedCrc, $reportedCrc)
+    }
+}
+
 if($RequestBootloaderFromApp -and $NoReset)
 {
     throw '-RequestBootloaderFromApp and -NoReset cannot be used together.'
@@ -572,6 +634,7 @@ $lastAddress = [int]($bytesByAddress.Keys | Sort-Object { [int]$_ } | Select-Obj
 Write-Host ("Relocated HEX: {0} bytes across {1} pages, 0x{2:X}..0x{3:X}" -f $bytesByAddress.Count, $pageAddresses.Count, $firstAddress, $lastAddress)
 Write-Host ("Reset-vector page 0x{0:X} will be erased first and written last." -f $resetVectorPageAddress)
 Write-Host ("Serial settings: app {0} baud, bootloader {1} baud." -f $AppBaud, $BootBaud)
+Write-Host ("Serial page CRC verification: {0}." -f ($(if($SkipSerialVerify) { 'disabled' } else { 'enabled' })))
 
 if($DryRun)
 {
@@ -610,10 +673,14 @@ try
 
         $writeFrame = New-BootloaderFrame -Command ([byte][char]'W') -Address ([UInt32]$pageAddress) -Payload $pages[$pageAddress]
         Invoke-BootloaderFrame -SerialPort $serialPort -Frame $writeFrame -ExpectedResponse 'OK write' -Description ("Write page 0x{0:X}" -f $pageAddress) | Out-Null
+        if(-not $SkipSerialVerify)
+        {
+            Assert-BootloaderPageCrc -SerialPort $serialPort -Address ([UInt32]$pageAddress) -ExpectedPage $pages[$pageAddress]
+        }
 
         if(($pageNumber % 16) -eq 0 -or $pageNumber -eq $totalPages)
         {
-            Write-Host ("Wrote page {0}/{1}: 0x{2:X}" -f $pageNumber, $totalPages, $pageAddress)
+            Write-Host ("Wrote{0} page {1}/{2}: 0x{3:X}" -f ($(if($SkipSerialVerify) { '' } else { ' and verified' })), $pageNumber, $totalPages, $pageAddress)
         }
         Write-Progress -Activity 'Updating SignalSlinger firmware over bootloader' -Status ("Page {0}/{1}: 0x{2:X}" -f $pageNumber, $totalPages, $pageAddress) -PercentComplete (($pageNumber / $totalPages) * 100)
     }

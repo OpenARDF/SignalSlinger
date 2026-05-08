@@ -18,7 +18,27 @@ static uint8_t page_buffer[SIGNALSLINGER_FLASH_PAGE_BYTES];
 static uint8_t last_nvm_error;
 static uint8_t last_usart_error;
 
+#define SIGNALSLINGER_POWER_ENABLE_PIN PIN3_bm
+#define SIGNALSLINGER_RED_LED_PIN PIN2_bm
+#define SIGNALSLINGER_GREEN_LED_PIN PIN4_bm
+#define SIGNALSLINGER_STARTUP_LED_PINS (SIGNALSLINGER_RED_LED_PIN | SIGNALSLINGER_GREEN_LED_PIN)
+#define SIGNALSLINGER_STARTUP_LED_BLINK_HALF_PERIOD_MS 50U
+#define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
 #define SIGNALSLINGER_USART_RX_ERROR_MASK (USART_PERR_bm | USART_FERR_bm | USART_BUFOVF_bm)
+#define SIGNALSLINGER_RESET_FLAGS_MASK \
+	(RSTCTRL_UPDIRF_bm | RSTCTRL_SWRF_bm | RSTCTRL_WDRF_bm | RSTCTRL_EXTRF_bm | RSTCTRL_BORF_bm | RSTCTRL_PORF_bm)
+
+static uint8_t read_and_clear_reset_flags(void)
+{
+	uint8_t reset_flags = RSTCTRL.RSTFR;
+	RSTCTRL.RSTFR = SIGNALSLINGER_RESET_FLAGS_MASK;
+	return reset_flags;
+}
+
+static bool reset_was_power_start(uint8_t reset_flags)
+{
+	return (reset_flags & (RSTCTRL_PORF_bm | RSTCTRL_BORF_bm)) != 0U;
+}
 
 static void clock_init(void)
 {
@@ -28,8 +48,18 @@ static void clock_init(void)
 	                 (0 << CLKCTRL_RUNSTDBY_bp));
 }
 
+static void latch_power_on(void)
+{
+	PORTA.OUTSET = SIGNALSLINGER_POWER_ENABLE_PIN;
+	PORTA.DIRSET = SIGNALSLINGER_POWER_ENABLE_PIN;
+}
+
 static void pins_init(void)
 {
+	/* Immediate user feedback during the bootloader startup window. */
+	PORTD.OUTSET = SIGNALSLINGER_STARTUP_LED_PINS;
+	PORTD.DIRSET = SIGNALSLINGER_STARTUP_LED_PINS;
+
 	/* Front-panel switch on PD3, active low. */
 	PORTD.DIRCLR = PIN3_bm;
 	PORTD.PIN3CTRL = PORT_PULLUPEN_bm;
@@ -41,9 +71,54 @@ static void pins_init(void)
 	PORTC.PIN1CTRL = 0;
 }
 
+static void startup_leds_off(void)
+{
+	PORTD.OUTCLR = SIGNALSLINGER_STARTUP_LED_PINS;
+}
+
+static void startup_leds_on(void)
+{
+	PORTD.OUTSET = SIGNALSLINGER_STARTUP_LED_PINS;
+}
+
+static void startup_leds_toggle(void)
+{
+	PORTD.OUTTGL = SIGNALSLINGER_STARTUP_LED_PINS;
+}
+
+static void update_flash_activity_led(void)
+{
+	PORTD.OUTTGL = SIGNALSLINGER_RED_LED_PIN;
+}
+
+static void update_payload_activity_led(void)
+{
+	PORTD.OUTTGL = SIGNALSLINGER_GREEN_LED_PIN;
+}
+
+static void update_error_leds(void)
+{
+	PORTD.OUTSET = SIGNALSLINGER_RED_LED_PIN;
+	PORTD.OUTCLR = SIGNALSLINGER_GREEN_LED_PIN;
+}
+
 static bool switch_is_held(void)
 {
 	return (PORTD.IN & PIN3_bm) == 0;
+}
+
+static void service_startup_led_feedback(uint16_t elapsed_ms)
+{
+	if(!switch_is_held())
+	{
+		startup_leds_on();
+		return;
+	}
+
+	if((elapsed_ms > 0U) && ((elapsed_ms % SIGNALSLINGER_STARTUP_LED_BLINK_HALF_PERIOD_MS) == 0U))
+	{
+		startup_leds_toggle();
+	}
 }
 
 static void usart_init(void)
@@ -127,6 +202,18 @@ static void usart_write_hex8(uint8_t value)
 	usart_write_hex_nibble(value);
 }
 
+static void usart_write_hex16(uint16_t value)
+{
+	usart_write_hex8((uint8_t)(value >> 8));
+	usart_write_hex8((uint8_t)value);
+}
+
+static void usart_write_hex32(uint32_t value)
+{
+	usart_write_hex16((uint16_t)(value >> 16));
+	usart_write_hex16((uint16_t)value);
+}
+
 static void send_ok(const char *detail)
 {
 	usart_write_text("OK ");
@@ -139,6 +226,7 @@ static void send_error(const char *detail)
 	usart_write_text("ERR ");
 	usart_write_text(detail);
 	usart_write_text("\r\n");
+	update_error_leds();
 }
 
 static void send_usart_error(void)
@@ -146,6 +234,7 @@ static void send_usart_error(void)
 	usart_write_text("ERR serial ");
 	usart_write_hex8(last_usart_error);
 	usart_write_text("\r\n");
+	update_error_leds();
 }
 
 static uint16_t crc16_update(uint16_t crc, uint8_t value)
@@ -211,6 +300,10 @@ static bool read_page_payload(uint16_t *crc)
 {
 	for(uint16_t index = 0; index < SIGNALSLINGER_FLASH_PAGE_BYTES; index++)
 	{
+		if((index % 64U) == 0U)
+		{
+			update_payload_activity_led();
+		}
 		if(!read_crc_byte(&page_buffer[index], crc))
 		{
 			return false;
@@ -260,6 +353,7 @@ static void send_nvm_error(void)
 	usart_write_text("ERR nvm ");
 	usart_write_hex8(last_nvm_error);
 	usart_write_text("\r\n");
+	update_error_leds();
 }
 
 static void pgm_word_write(uint32_t byte_address, uint16_t value)
@@ -317,6 +411,19 @@ static bool write_app_page(uint32_t address)
 	nvm_command(NVMCTRL_CMD_NONE_gc);
 
 	return last_nvm_error == NVMCTRL_ERROR_NOERROR_gc;
+}
+
+static uint16_t crc_app_page(uint32_t address)
+{
+	uint16_t crc = 0xFFFFU;
+
+	nvm_wait_flash();
+	for(uint16_t index = 0; index < SIGNALSLINGER_FLASH_PAGE_BYTES; index++)
+	{
+		crc = crc16_update(crc, pgm_read_byte_far(address + index));
+	}
+
+	return crc;
 }
 
 static bool receive_page_address_frame(char command, uint32_t *address)
@@ -385,6 +492,7 @@ static bool receive_page_write_frame(char command, uint32_t *address)
 
 static void handle_erase_frame(char command)
 {
+	update_flash_activity_led();
 	uint32_t address;
 	if(!receive_page_address_frame(command, &address))
 	{
@@ -393,6 +501,7 @@ static void handle_erase_frame(char command)
 
 	if(erase_app_page(address))
 	{
+		update_flash_activity_led();
 		send_ok("erase");
 	}
 	else
@@ -403,6 +512,7 @@ static void handle_erase_frame(char command)
 
 static void handle_write_frame(char command)
 {
+	update_flash_activity_led();
 	uint32_t address;
 	if(!receive_page_write_frame(command, &address))
 	{
@@ -411,12 +521,29 @@ static void handle_write_frame(char command)
 
 	if(write_app_page(address))
 	{
+		update_flash_activity_led();
 		send_ok("write");
 	}
 	else
 	{
 		send_nvm_error();
 	}
+}
+
+static void handle_crc_frame(char command)
+{
+	uint32_t address;
+	if(!receive_page_address_frame(command, &address))
+	{
+		return;
+	}
+
+	uint16_t page_crc = crc_app_page(address);
+	usart_write_text("OK crc 0x");
+	usart_write_hex32(address);
+	usart_write(' ');
+	usart_write_hex16(page_crc);
+	usart_write_text("\r\n");
 }
 
 static bool app_vector_looks_programmed(void)
@@ -433,11 +560,16 @@ static void jump_to_application(void)
 	asm volatile("jmp 0x4000");
 }
 
+static void set_app_handoff_power_button_state(bool button_held)
+{
+	GPR.GPR0 = button_held ? SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD : 0U;
+}
+
 static void send_banner(void)
 {
 	usart_write_text("\r\nSignalSlinger ");
 	usart_write_text(SIGNALSLINGER_BOOTLOADER_VERSION);
-	usart_write_text(" app=0x4000 page=512\r\n");
+	usart_write_text(" proto=1 app=0x4000 page=512 flash=131072 baud=115200 boot=32 cmds=U,R,?,E,W,C\r\n");
 }
 
 static bool serial_entry_requested(void)
@@ -466,6 +598,7 @@ static bool serial_entry_requested(void)
 				return false;
 			}
 		}
+		service_startup_led_feedback(elapsed_ms);
 		_delay_ms(1);
 	}
 
@@ -475,14 +608,29 @@ static bool serial_entry_requested(void)
 int main(void)
 {
 	cli();
+	uint8_t reset_flags = read_and_clear_reset_flags();
+	latch_power_on();
 	clock_init();
 	pins_init();
 	usart_init();
 
-	bool stay_in_bootloader = switch_is_held() || !app_vector_looks_programmed() || serial_entry_requested();
+	bool switch_entry_allowed = !reset_was_power_start(reset_flags);
+	bool stay_in_bootloader = (switch_entry_allowed && switch_is_held()) ||
+	                          !app_vector_looks_programmed() ||
+	                          serial_entry_requested();
 
 	if(!stay_in_bootloader)
 	{
+		bool handoff_power_button_held = reset_was_power_start(reset_flags) && switch_is_held();
+		set_app_handoff_power_button_state(handoff_power_button_held);
+		if(handoff_power_button_held)
+		{
+			startup_leds_on();
+		}
+		else
+		{
+			startup_leds_off();
+		}
 		jump_to_application();
 	}
 
@@ -511,6 +659,7 @@ int main(void)
 			}
 			else if(command == SIGNALSLINGER_RUN_APP_CHAR && app_vector_looks_programmed())
 			{
+				set_app_handoff_power_button_state(false);
 				jump_to_application();
 			}
 			else if(command == SIGNALSLINGER_ERASE_PAGE_CHAR)
@@ -520,6 +669,10 @@ int main(void)
 			else if(command == SIGNALSLINGER_WRITE_PAGE_CHAR)
 			{
 				handle_write_frame(command);
+			}
+			else if(command == SIGNALSLINGER_CRC_PAGE_CHAR)
+			{
+				handle_crc_frame(command);
 			}
 			else
 			{

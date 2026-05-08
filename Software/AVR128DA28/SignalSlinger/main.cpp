@@ -136,10 +136,12 @@ typedef struct
 
 #define PROGRAMMING_MESSAGE_TIMEOUT_PERIOD 3000
 #define WAKE_AUTH_HOLD_TICKS 600
+#define BOOTLOADER_WAKE_AUTH_CREDIT_TICKS 420
 #define BUTTON_HOLD_PREVIEW_SAMPLE_TICKS 50
 #define BUTTON_LONG_PRESS_SAMPLE_TICKS 200
 #define STARTUP_SWITCH_SETTLE_SAMPLE_COUNT 12
 #define STARTUP_SWITCH_SETTLE_DELAY_MS 5
+#define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -398,7 +400,13 @@ bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
 static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
+static inline void captureButtonWakeFromSleep(void);
 static inline void clearPendingWakeInterruptFlags(void);
+static inline void setWakeAuthorizationLedPinsOn(void);
+static inline bool bootloaderHandoffReportedPowerButtonHeld(void);
+static inline bool coldStartLedFeedbackShouldStayOn(bool bootloader_power_button_held);
+static inline uint16_t initialWakeAuthorizationTicks(bool bootloader_power_button_held);
+static void serviceColdStartButtonDuringStartup(bool *button_held_closed);
 static inline void setButtonHoldPreviewIndicator(bool active);
 static void refreshProcessorMaxEverTemperature(void);
 bool shouldPowerTransmitterAfterWake(void);
@@ -1092,17 +1100,15 @@ ISR(PORTD_PORT_vect)
 					g_ignore_sleep_button_wake_until_release = false;
 					configureSwitchInterruptForSleepWake();
 				}
+				else
+				{
+					g_ignore_sleep_button_wake_until_release = false;
+					captureButtonWakeFromSleep();
+				}
 			}
 			else if(rawSwitchIsClosed())
 			{
-				PORTD_pin_set_isc(SWITCH, PORT_ISC_INTDISABLE_gc);
-				g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
-				g_button_wake_prior_event_enabled = g_evteng_event_enabled;
-				g_button_wake_prior_event_commenced = g_evteng_event_commenced;
-				g_go_to_sleep_now = false;
-				g_sleeping = false;
-				g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
-				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+				captureButtonWakeFromSleep();
 			}
 		}
 		else if(!sb_enabled())
@@ -1159,12 +1165,18 @@ int main(void)
 	bool internal_bat_error = false;
 	bool external_pwr_error = false;
 	bool startup_should_behave_as_poweroff = false;
+	bool bootloader_power_button_held = false;
 
 	atmel_start_init();
+	bootloader_power_button_held = bootloaderHandoffReportedPowerButtonHeld();
 	configureSwitchInterruptForAwake();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
 	LEDS.blink(LEDS_OFF, true);
-	buttonHeldClosed = switchIsClosedAtStartup();
+	if(coldStartLedFeedbackShouldStayOn(bootloader_power_button_held))
+	{
+		setWakeAuthorizationLedPinsOn();
+	}
+	buttonHeldClosed = bootloader_power_button_held || switchIsClosedAtStartup();
 	g_foreground_check_for_long_wakeup_press = buttonHeldClosed;
 
 	/* Register the EEPROM-backed variables before reading persisted values. */
@@ -1190,11 +1202,13 @@ int main(void)
 	{
 		LEDS.init();
 		LEDS.setWakeAuthorizationBlink(true);
-		atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+		atomic_write_u16(&g_button_hold_countdown, initialWakeAuthorizationTicks(bootloader_power_button_held));
 	}
 
 	while(util_delay_ms(2500))
-		; /* Avoid possible race conditions with peripheral devices powering up */
+	{
+		serviceColdStartButtonDuringStartup(&buttonHeldClosed);
+	} /* Avoid possible race conditions with peripheral devices powering up */
 
 	reportSettings();
 
@@ -1202,20 +1216,28 @@ int main(void)
 	atomic_set_system_time(YEAR_2000_EPOCH, false);
 	time_t now = time(null);
 	while((util_delay_ms(4500)) && (now == time(null)))
-		;
+	{
+		serviceColdStartButtonDuringStartup(&buttonHeldClosed);
+	}
 
 	if(now == time(null))
 	{
 		/* Keep the wake-authorization blink active through cold-start bring-up so
 		 * its end still lines up with the eventual "* Awake" transition.
 		 */
-		if((g_awakenedBy != POWER_UP_START) || !g_foreground_check_for_long_wakeup_press)
+		if(coldStartLedFeedbackShouldStayOn(bootloader_power_button_held))
+		{
+			setWakeAuthorizationLedPinsOn();
+		}
+		else if((g_awakenedBy != POWER_UP_START) || !g_foreground_check_for_long_wakeup_press)
 		{
 			LEDS.blink(LEDS_GREEN_OFF); // Signal that the first attempt failed
 			LEDS.blink(LEDS_RED_OFF);
 		}
 		while((util_delay_ms(3000)) && (now == time(null)))
-			;
+		{
+			serviceColdStartButtonDuringStartup(&buttonHeldClosed);
+		}
 	}
 
 	sb_send_string(TEXT_RESET_OCCURRED_TXT);
@@ -1230,11 +1252,6 @@ int main(void)
 		g_hardware_error |= (int)HARDWARE_NO_RTC;
 		RTC_init_backup();
 	}
-
-	/* A cold start with no valid clock should fall back to the "power off"
-	 * behavior once startup bring-up has completed.
-	 */
-	startup_should_behave_as_poweroff = (g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet();
 
 	int tries = 5;
 	/* Power the transmitter briefly so the firmware can detect whether the
@@ -1289,14 +1306,29 @@ int main(void)
 	 */
 	if(g_awakenedBy == POWER_UP_START)
 	{
+		if(coldStartLedFeedbackShouldStayOn(bootloader_power_button_held))
+		{
+			setWakeAuthorizationLedPinsOn();
+		}
 		g_foreground_check_for_long_wakeup_press = g_foreground_check_for_long_wakeup_press || switchIsClosedAtStartup();
 		if(g_foreground_check_for_long_wakeup_press)
 		{
 			LEDS.init();
 			LEDS.setWakeAuthorizationBlink(true);
-			atomic_write_u16(&g_button_hold_countdown, WAKE_AUTH_HOLD_TICKS);
+			uint16_t countdown = atomic_read_u16(&g_button_hold_countdown);
+			uint16_t startup_countdown = initialWakeAuthorizationTicks(bootloader_power_button_held);
+			if(countdown > startup_countdown)
+			{
+				atomic_write_u16(&g_button_hold_countdown, startup_countdown);
+			}
 		}
 	}
+
+	/* A cold start with no valid clock should fall back to the "power off"
+	 * behavior once startup bring-up has completed, but only after the final
+	 * startup switch sample has had a chance to recognize a held power button.
+	 */
+	startup_should_behave_as_poweroff = (g_awakenedBy == POWER_UP_START) && !g_foreground_check_for_long_wakeup_press && !timeIsSet();
 
 	if(startup_should_behave_as_poweroff)
 	{
@@ -1337,6 +1369,7 @@ int main(void)
 			{
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
+				g_go_to_sleep_now = false;
 				LEDS.setWakeAuthorizationBlink(false);
 
 				/* Reassert the main power latch at the exact moment the wake-auth
@@ -1693,6 +1726,11 @@ int main(void)
 						sleep_disable();
 					}
 
+					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
+					{
+						setWakeAuthorizationLedPinsOn();
+					}
+
 					CLKCTRL_init();
 					/* Re-run the normal startup helpers after standby wake so the
 					 * peripheral drivers and GPIO configuration are back in the
@@ -1703,6 +1741,10 @@ int main(void)
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					system_resume_from_standby();
+					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
+					{
+						setWakeAuthorizationLedPinsOn();
+					}
 					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
 						serialbus_init(SB_BAUD, SERIALBUS_USART);
@@ -3677,6 +3719,22 @@ static inline bool rawSwitchIsClosed(void)
 }
 
 /**
+ * Capture a button wake from standby and record the state needed by foreground.
+ */
+static inline void captureButtonWakeFromSleep(void)
+{
+	PORTD_pin_set_isc(SWITCH, PORT_ISC_INTDISABLE_gc);
+	setWakeAuthorizationLedPinsOn();
+	g_button_wake_prior_sleep_type = (uint8_t)g_sleepType;
+	g_button_wake_prior_event_enabled = g_evteng_event_enabled;
+	g_button_wake_prior_event_commenced = g_evteng_event_commenced;
+	g_go_to_sleep_now = false;
+	g_sleeping = false;
+	g_awakenedBy = AWAKENED_BY_BUTTONPRESS;
+	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+}
+
+/**
  * Sample the wake switch during startup until its initial state settles.
  *
  * @return true if the startup samples indicate a stable closed switch.
@@ -3727,15 +3785,15 @@ static inline void configureSwitchInterruptForAwake(void)
 /**
  * Configure the switch interrupt for sleep/wake detection behavior.
  *
- * While waiting for the user to release the wake button, the interrupt is
- * temporarily switched to rising-edge mode so the firmware does not wake again
- * immediately on the held-low level.
+ * While waiting for the user to release the wake button, both edges stay armed
+ * so a quick release-and-repress cannot be lost before foreground re-enters
+ * sleep.
  */
 static inline void configureSwitchInterruptForSleepWake(void)
 {
 	if(g_ignore_sleep_button_wake_until_release)
 	{
-		PORTD_pin_set_isc(SWITCH, PORT_ISC_RISING_gc);
+		PORTD_pin_set_isc(SWITCH, PORT_ISC_BOTHEDGES_gc);
 	}
 	else
 	{
@@ -3752,6 +3810,82 @@ static inline void clearPendingWakeInterruptFlags(void)
 	 * new button press or fresh serial activity can wake the device. */
 	VPORTC.INTFLAGS = 0xFF;
 	VPORTD.INTFLAGS = 0xFF;
+}
+
+/**
+ * Turn on both LED pins immediately while the normal LED subsystem is offline.
+ *
+ * Standby button wake has to restore clocks and GPIO before foreground can
+ * restart timer-driven LED blinking. This raw indication gives the user
+ * feedback as soon as the switch wake is captured; LEDS takes ownership again
+ * when wake authorization is armed.
+ */
+static inline void setWakeAuthorizationLedPinsOn(void)
+{
+	PORTD_set_pin_dir(LED_RED, PORT_DIR_OUT);
+	PORTD_set_pin_level(LED_RED, ON);
+	PORTD_set_pin_dir(LED_GREEN, PORT_DIR_OUT);
+	PORTD_set_pin_level(LED_GREEN, ON);
+}
+
+/**
+ * Consume the bootloader-to-app power-button handoff marker.
+ *
+ * BINIO_init deliberately blanks both LEDs during app bring-up, so the app
+ * needs an explicit marker to know whether the bootloader saw the power
+ * button still held at handoff.
+ */
+static inline bool bootloaderHandoffReportedPowerButtonHeld(void)
+{
+	bool button_held = GPR.GPR0 == SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD;
+	GPR.GPR0 = 0;
+	return button_held;
+}
+
+/**
+ * Report whether cold-start LED feedback should be preserved.
+ *
+ * The bootloader turns both LEDs on immediately at POR/BOR. Keep that visible
+ * while the app completes early startup only when the bootloader confirms the
+ * user was still holding the power button at app handoff.
+ */
+static inline bool coldStartLedFeedbackShouldStayOn(bool bootloader_power_button_held)
+{
+	return (g_awakenedBy == POWER_UP_START) && bootloader_power_button_held;
+}
+
+/**
+ * Pick the app-side wake authorization countdown.
+ *
+ * When the bootloader already saw the held button, shorten the app countdown
+ * so bootloader-plus-app feedback stays near the desired total duration.
+ */
+static inline uint16_t initialWakeAuthorizationTicks(bool bootloader_power_button_held)
+{
+	if(bootloader_power_button_held && (WAKE_AUTH_HOLD_TICKS > BOOTLOADER_WAKE_AUTH_CREDIT_TICKS))
+	{
+		return WAKE_AUTH_HOLD_TICKS - BOOTLOADER_WAKE_AUTH_CREDIT_TICKS;
+	}
+
+	return WAKE_AUTH_HOLD_TICKS;
+}
+
+/**
+ * Notice a button press that begins while cold-start initialization is still
+ * inside its blocking bring-up delays.
+ */
+static void serviceColdStartButtonDuringStartup(bool *button_held_closed)
+{
+	if((g_awakenedBy != POWER_UP_START) || g_foreground_check_for_long_wakeup_press || !rawSwitchIsClosed())
+	{
+		return;
+	}
+
+	*button_held_closed = true;
+	g_foreground_check_for_long_wakeup_press = true;
+	LEDS.init();
+	LEDS.setWakeAuthorizationBlink(true);
+	atomic_write_u16(&g_button_hold_countdown, initialWakeAuthorizationTicks(false));
 }
 
 /**
