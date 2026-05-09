@@ -28,6 +28,8 @@ param(
 
     [switch]$CheckPrereqs,
 
+    [switch]$CheckProgrammer,
+
     [string]$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
 
     [string]$PymcuprogCommand = 'pymcuprog',
@@ -50,7 +52,8 @@ $BootSizeFuseOffset = 8
 $CodeSizeFuseOffset = 7
 $DesiredBootSize = 0x10
 $DesiredCodeSize = 0x00
-$FuseReadBytes = 16
+$AtprogramFuseReadBytes = 16
+$PymcuprogFuseReadBytes = 9
 
 if([string]::IsNullOrWhiteSpace($BootloaderHexPath))
 {
@@ -68,6 +71,14 @@ if([string]::IsNullOrWhiteSpace($CombinedHexPath))
 if($CheckPrereqs -and ($ProgramFuses -or $ConfirmFuseWrite))
 {
     throw '-CheckPrereqs cannot be combined with fuse-write switches.'
+}
+if($CheckProgrammer -and ($ProgramFuses -or $ConfirmFuseWrite))
+{
+    throw '-CheckProgrammer cannot be combined with fuse-write switches.'
+}
+if($CheckPrereqs -and $CheckProgrammer)
+{
+    throw '-CheckPrereqs and -CheckProgrammer must be run separately.'
 }
 
 function Assert-PathExists {
@@ -92,6 +103,85 @@ function Test-CommandAvailable {
     )
 
     return $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
+}
+
+function Test-IsWindows {
+    return $PSVersionTable.PSVersion.Major -lt 6 -or $IsWindows
+}
+
+function Get-CurrentPowerShellCommand {
+    try
+    {
+        $processPath = (Get-Process -Id $PID).Path
+        if(-not [string]::IsNullOrWhiteSpace($processPath))
+        {
+            return $processPath
+        }
+    }
+    catch
+    {
+    }
+
+    if(Test-IsWindows)
+    {
+        return 'powershell'
+    }
+    return 'pwsh'
+}
+
+function ConvertTo-PymcuprogClock {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ClockText
+    )
+
+    $trimmed = $ClockText.Trim()
+    if($trimmed -match '^(\d+)\s*[kK][hH][zZ]$')
+    {
+        return ('{0}k' -f $matches[1])
+    }
+    if($trimmed -match '^(\d+)\s*[mM][hH][zZ]$')
+    {
+        return ('{0}M' -f $matches[1])
+    }
+    if($trimmed -match '^(\d+)\s*[hH][zZ]$')
+    {
+        return $matches[1]
+    }
+    if($trimmed -match '^\d+[kKmM]?$')
+    {
+        return $trimmed
+    }
+
+    throw "Clock '$ClockText' is not supported for pymcuprog. Use values like 100k."
+}
+
+function Get-PymcuprogGeneratedFilePath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RequestedPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$MemoryName
+    )
+
+    $directory = [System.IO.Path]::GetDirectoryName($RequestedPath)
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($RequestedPath)
+    $extension = [System.IO.Path]::GetExtension($RequestedPath)
+    return [System.IO.Path]::Combine($directory, ('{0}_{1}{2}' -f $baseName, $MemoryName, $extension))
+}
+
+function Get-FuseReadBytes {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ResolvedBackend
+    )
+
+    if($ResolvedBackend -eq 'Pymcuprog')
+    {
+        return $PymcuprogFuseReadBytes
+    }
+    return $AtprogramFuseReadBytes
 }
 
 function Add-PrereqResult {
@@ -127,7 +217,7 @@ function Test-Prerequisites {
 
     Add-PrereqResult -Results $results -Name 'PowerShell' -Present ($PSVersionTable.PSVersion.Major -ge 5) -Required $true -Install 'Windows: built in or install PowerShell 7. macOS: brew install --cask powershell'
     Add-PrereqResult -Results $results -Name 'atprogram' -Present (Test-Path -LiteralPath $AtprogramPath) -Required $requiresAtprogram -Install 'Install Microchip Studio 7 on Windows, or pass -AtprogramPath to atprogram.exe.'
-    Add-PrereqResult -Results $results -Name 'pymcuprog' -Present (Test-CommandAvailable $PymcuprogCommand) -Required $requiresPymcuprog -Install 'Install Python, then run: python -m pip install pymcuprog'
+    Add-PrereqResult -Results $results -Name 'pymcuprog' -Present (Test-CommandAvailable $PymcuprogCommand) -Required $requiresPymcuprog -Install 'Install Python, then run: python -m pip install pymcuprog. If installed with pipx, run: pipx inject pymcuprog pyusb'
     Add-PrereqResult -Results $results -Name 'Python' -Present ((Test-CommandAvailable 'python') -or (Test-CommandAvailable 'python3')) -Required $requiresPymcuprog -Install 'Windows: install from python.org. macOS: use system Python, python.org, or brew install python.'
     Add-PrereqResult -Results $results -Name 'Bootloader build script' -Present (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'build-bootloader.ps1')) -Required $requiresBuildTools -Install 'Use the SignalSlinger repo with Software/AVR128DA28 build scripts.'
     Add-PrereqResult -Results $results -Name 'Relocated app build script' -Present (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'build-relocated-firmware.ps1')) -Required $requiresBuildTools -Install 'Use the SignalSlinger repo with Software/AVR128DA28 build scripts.'
@@ -139,6 +229,10 @@ function Test-Prerequisites {
     Write-Host ("Requested backend: {0}" -f $Backend)
     Write-Host ("Build required: {0}" -f $requiresBuildTools)
     Write-Host ("Serial validation required: {0}" -f (-not $SkipSerialValidation))
+    if($requiresPymcuprog)
+    {
+        Write-Host 'Programmer/USB check: run this script again with -CheckProgrammer after connecting the Atmel-ICE.'
+    }
     Write-Host ''
     $results | Format-Table -AutoSize | Out-String | Write-Host
 
@@ -407,7 +501,11 @@ function Get-AtprogramBaseArgs {
 }
 
 function Get-PymcuprogBaseArgs {
-    return @('-t', $Tool, '-s', $ToolSerial, '-i', $Interface.ToLowerInvariant(), '-d', $Device, '-c', $Clock)
+    return @('-t', $Tool, '-s', $ToolSerial, '-i', $Interface.ToLowerInvariant(), '-d', $Device, '-c', (ConvertTo-PymcuprogClock -ClockText $Clock))
+}
+
+function Invoke-PymcuprogProgrammerProbe {
+    Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments (@('ping') + (Get-PymcuprogBaseArgs)) -Description 'pymcuprog programmer probe'
 }
 
 function Read-Fuses {
@@ -417,16 +515,17 @@ function Read-Fuses {
     )
 
     $tempPath = [System.IO.Path]::GetTempFileName()
+    $pymcuprogOutputPath = Get-PymcuprogGeneratedFilePath -RequestedPath $tempPath -MemoryName 'fuses'
     try
     {
         if($ResolvedBackend -eq 'Atprogram')
         {
-            $args = (Get-AtprogramBaseArgs) + @('read', '-fs', '--format', 'bin', '-s', "$FuseReadBytes", '-f', $tempPath)
+            $args = (Get-AtprogramBaseArgs) + @('read', '-fs', '--format', 'bin', '-s', "$(Get-FuseReadBytes -ResolvedBackend $ResolvedBackend)", '-f', $tempPath)
             Invoke-CheckedCommand -FilePath $AtprogramPath -Arguments $args -Description 'Read fuses'
         }
         else
         {
-            $args = @('read') + (Get-PymcuprogBaseArgs) + @('-m', 'fuses', '-b', "$FuseReadBytes", '-f', $tempPath)
+            $args = @('read') + (Get-PymcuprogBaseArgs) + @('-m', 'fuses', '-b', "$(Get-FuseReadBytes -ResolvedBackend $ResolvedBackend)", '-f', $tempPath)
             Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments $args -Description 'Read fuses'
         }
 
@@ -434,11 +533,16 @@ function Read-Fuses {
         {
             return ,([byte[]]::new(0))
         }
-        return ,([System.IO.File]::ReadAllBytes($tempPath))
+        $readPath = $tempPath
+        if($ResolvedBackend -eq 'Pymcuprog' -and (Test-Path -LiteralPath $pymcuprogOutputPath))
+        {
+            $readPath = $pymcuprogOutputPath
+        }
+        return ,([System.IO.File]::ReadAllBytes($readPath))
     }
     finally
     {
-        Remove-Item -LiteralPath $tempPath -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $tempPath, $pymcuprogOutputPath -ErrorAction SilentlyContinue
     }
 }
 
@@ -494,9 +598,25 @@ if($resolvedBackend -eq 'Atprogram')
 {
     Assert-PathExists -Path $AtprogramPath -Description 'Atmel Studio atprogram.exe'
 }
-elseif($null -eq (Get-Command $PymcuprogCommand -ErrorAction SilentlyContinue))
+elseif($null -eq (Get-Command $PymcuprogCommand -ErrorAction SilentlyContinue) -and -not $DryRun)
 {
     throw "pymcuprog command not found: $PymcuprogCommand"
+}
+
+if($CheckProgrammer)
+{
+    Write-Host 'Programmer check only; not writing flash or fuses.'
+    Write-Host "Provisioning backend: $resolvedBackend"
+    if($resolvedBackend -eq 'Pymcuprog')
+    {
+        Write-Host 'Checking pymcuprog USB/programmer access. If this fails with "No module named usb", install pyusb in the pymcuprog environment.'
+        Write-Host 'For pipx installs, run: pipx inject pymcuprog pyusb'
+        Invoke-PymcuprogProgrammerProbe
+    }
+    $probeFuses = Read-Fuses -ResolvedBackend $resolvedBackend
+    Show-FuseSummary -Fuses $probeFuses
+    Write-Host 'Programmer check completed successfully.'
+    exit 0
 }
 
 if($ProgramFuses -and -not $ConfirmFuseWrite)
@@ -568,13 +688,21 @@ if(-not $DryRun -and ($finalFuses[$CodeSizeFuseOffset] -ne $DesiredCodeSize -or 
 
 if(-not $SkipSerialValidation)
 {
+    if($resolvedBackend -eq 'Pymcuprog')
+    {
+        Write-Warning 'Skipping bootloader serial validation for pymcuprog provisioning. The bundled validation script still requires atprogram reset support.'
+        Write-Warning 'After setup, SerialSlinger should verify the bootloader with ? at 115200 baud, then run the app and confirm INF.'
+    }
+    else
+    {
     Start-Sleep -Seconds 3
     $testScript = Join-Path $PSScriptRoot 'test-bootloader-serial.ps1'
+    $powerShellCommand = Get-CurrentPowerShellCommand
     $validationPassed = $false
     for($attempt = 1; $attempt -le 2 -and -not $validationPassed; $attempt++)
     {
         Write-Host ("Running bootloader serial validation attempt {0}/2..." -f $attempt)
-        & powershell -ExecutionPolicy Bypass -File $testScript -Port $Port
+        & $powerShellCommand -ExecutionPolicy Bypass -File $testScript -Port $Port
         if($LASTEXITCODE -eq 0)
         {
             $validationPassed = $true
@@ -589,6 +717,7 @@ if(-not $SkipSerialValidation)
     if(-not $validationPassed)
     {
         throw "Bootloader serial validation failed."
+    }
     }
 }
 

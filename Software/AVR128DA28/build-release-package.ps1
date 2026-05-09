@@ -415,11 +415,15 @@ param(
 
     [switch]`$CheckPrereqs,
 
+    [switch]`$CheckProgrammer,
+
     [switch]`$ProgramFuses,
 
     [switch]`$ConfirmFuseWrite,
 
     [switch]`$SkipSerialValidation,
+
+    [switch]`$DryRun,
 
     [string]`$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
 
@@ -427,7 +431,9 @@ param(
 
     [string]`$Tool = 'atmelice',
 
-    [string]`$ToolSerial = 'J41800053674'
+    [string]`$ToolSerial = 'J41800053674',
+
+    [string]`$Clock = '100kHz'
 )
 
 Set-StrictMode -Version Latest
@@ -469,11 +475,16 @@ if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
     PymcuprogCommand = `$PymcuprogCommand
     Tool = `$Tool
     ToolSerial = `$ToolSerial
+    Clock = `$Clock
 }
 
 if(`$CheckPrereqs)
 {
     `$provisionArgs.CheckPrereqs = `$true
+}
+if(`$CheckProgrammer)
+{
+    `$provisionArgs.CheckProgrammer = `$true
 }
 if(`$ProgramFuses)
 {
@@ -486,6 +497,10 @@ if(`$ConfirmFuseWrite)
 if(`$SkipSerialValidation)
 {
     `$provisionArgs.SkipSerialValidation = `$true
+}
+if(`$DryRun)
+{
+    `$provisionArgs.DryRun = `$true
 }
 
 try
@@ -671,6 +686,8 @@ Files:
 
 - $setupLauncherFile
   Workshop setup tools can run this script to check the computer, program update support, and verify the SignalSlinger.
+  Use -CheckPrereqs to check installed tools without touching hardware.
+  Use -CheckProgrammer after connecting the programmer to run a no-write programmer/device check.
 
 - $releaseInfoFile
   SerialSlinger reads this information automatically. Most users do not need to open it.
