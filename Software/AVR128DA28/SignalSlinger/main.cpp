@@ -143,6 +143,10 @@ typedef struct
 #define STARTUP_SWITCH_SETTLE_DELAY_MS 5
 #define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
 #define SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST 0xA5U
+#define SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC 0xB0U
+#define SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC_MASK 0xF0U
+#define SIGNALSLINGER_BOOT_HANDOFF_INFO_PROTOCOL_MASK 0x0FU
+#define SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE 0xFFU
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -153,6 +157,9 @@ typedef struct
  ************************************************************************/
 #define TEMP_STRING_SIZE 50
 static char g_tempStr[TEMP_STRING_SIZE + 1] = {'\0'};
+static uint8_t g_bootloader_protocol = SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE;
+static uint8_t g_bootloader_version_major = SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE;
+static uint8_t g_bootloader_version_minor = SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE;
 
 volatile bool g_device_enabled = false;
 
@@ -406,7 +413,9 @@ static void sendFirmwareInfo(void);
 static inline void captureButtonWakeFromSleep(void);
 static inline void clearPendingWakeInterruptFlags(void);
 static inline void setWakeAuthorizationLedPinsOn(void);
+static inline void bootloaderHandoffCaptureInfo(void);
 static inline bool bootloaderHandoffReportedPowerButtonHeld(void);
+static inline bool bootloaderHandoffInfoAvailable(void);
 static inline bool coldStartLedFeedbackShouldStayOn(bool bootloader_power_button_held);
 static inline uint16_t initialWakeAuthorizationTicks(bool bootloader_power_button_held);
 static void serviceColdStartButtonDuringStartup(bool *button_held_closed);
@@ -1171,6 +1180,7 @@ int main(void)
 	bool bootloader_power_button_held = false;
 
 	atmel_start_init();
+	bootloaderHandoffCaptureInfo();
 	bootloader_power_button_held = bootloaderHandoffReportedPowerButtonHeld();
 	configureSwitchInterruptForAwake();
 	serialbus_init(SB_BAUD, SERIALBUS_USART);
@@ -3845,6 +3855,27 @@ static inline bool bootloaderHandoffReportedPowerButtonHeld(void)
 	return button_held;
 }
 
+static inline void bootloaderHandoffCaptureInfo(void)
+{
+	uint8_t info = GPR.GPR1;
+	if((info & SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC_MASK) == SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC)
+	{
+		g_bootloader_protocol = info & SIGNALSLINGER_BOOT_HANDOFF_INFO_PROTOCOL_MASK;
+		g_bootloader_version_major = GPR.GPR2;
+		g_bootloader_version_minor = GPR.GPR3;
+	}
+	GPR.GPR1 = 0;
+	GPR.GPR2 = 0;
+	GPR.GPR3 = 0;
+}
+
+static inline bool bootloaderHandoffInfoAvailable(void)
+{
+	return (g_bootloader_protocol != SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE) &&
+	       (g_bootloader_version_major != SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE) &&
+	       (g_bootloader_version_minor != SIGNALSLINGER_BOOT_HANDOFF_UNAVAILABLE);
+}
+
 static const char *hardwareBuildString(void)
 {
 #ifdef HW_TARGET_3_5
@@ -3863,6 +3894,16 @@ static void sendFirmwareInfo(void)
 
 	sb_send_string((char *)"* INF product=SignalSlinger update=UPD\n");
 	snprintf(g_tempStr, sizeof(g_tempStr), "* INF sw=%s hw=%s app=0x2000 baud=115200\n", SW_REVISION, hardwareBuildString());
+	sb_send_string(g_tempStr);
+	if(bootloaderHandoffInfoAvailable())
+	{
+		snprintf(g_tempStr, sizeof(g_tempStr), "* INF bl=BL%u.%02u proto=%u\n",
+		         g_bootloader_version_major, g_bootloader_version_minor, g_bootloader_protocol);
+	}
+	else
+	{
+		snprintf(g_tempStr, sizeof(g_tempStr), "* INF bl=unknown proto=unknown\n");
+	}
 	sb_send_string(g_tempStr);
 }
 
@@ -5901,6 +5942,16 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 					sprintf(g_tempStr, "* SW Ver: %s HW Build: %s\n", SW_REVISION, hardwareBuildString());
 
+					sb_send_string(g_tempStr);
+					if(bootloaderHandoffInfoAvailable())
+					{
+						snprintf(g_tempStr, sizeof(g_tempStr), "* Bootloader: BL%u.%02u protocol %u\n",
+						         g_bootloader_version_major, g_bootloader_version_minor, g_bootloader_protocol);
+					}
+					else
+					{
+						snprintf(g_tempStr, sizeof(g_tempStr), "* Bootloader: unknown\n");
+					}
 					sb_send_string(g_tempStr);
 				}
 			}

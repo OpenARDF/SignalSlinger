@@ -2,7 +2,10 @@ avr8-gnu-toolchain-win32_x86_64/
 release-packages/
 tmp/studio-toolchain-upgrade.log
 tmp/firmware-hash-verification*/
+tmp/bootloader-check-*/
 tmp/bootloader-repeatability*/
+tmp/forensic-*/
+*.bin
 
 # Visual Studio / Atmel Studio workspace state
 .vs/

@@ -25,6 +25,8 @@ static uint8_t last_usart_error;
 #define SIGNALSLINGER_STARTUP_LED_BLINK_HALF_PERIOD_MS 50U
 #define SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD 0x53U
 #define SIGNALSLINGER_BOOT_APP_UPDATE_REQUEST 0xA5U
+#define SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC 0xB0U
+#define SIGNALSLINGER_BOOT_HANDOFF_INFO_PROTOCOL_MASK 0x0FU
 #define SIGNALSLINGER_USART_RX_ERROR_MASK (USART_PERR_bm | USART_FERR_bm | USART_BUFOVF_bm)
 #define SIGNALSLINGER_RESET_FLAGS_MASK \
 	(RSTCTRL_UPDIRF_bm | RSTCTRL_SWRF_bm | RSTCTRL_WDRF_bm | RSTCTRL_EXTRF_bm | RSTCTRL_BORF_bm | RSTCTRL_PORF_bm)
@@ -574,6 +576,14 @@ static void set_app_handoff_power_button_state(bool button_held)
 	GPR.GPR0 = button_held ? SIGNALSLINGER_BOOT_HANDOFF_POWER_BUTTON_HELD : 0U;
 }
 
+static void set_app_handoff_bootloader_info(void)
+{
+	GPR.GPR1 = SIGNALSLINGER_BOOT_HANDOFF_INFO_MAGIC |
+	           (SIGNALSLINGER_BOOT_PROTOCOL_VERSION & SIGNALSLINGER_BOOT_HANDOFF_INFO_PROTOCOL_MASK);
+	GPR.GPR2 = SIGNALSLINGER_BOOTLOADER_VERSION_MAJOR;
+	GPR.GPR3 = SIGNALSLINGER_BOOTLOADER_VERSION_MINOR;
+}
+
 static void send_banner(void)
 {
 	usart_write_text("\r\nSignalSlinger ");
@@ -634,6 +644,7 @@ int main(void)
 	{
 		bool handoff_power_button_held = reset_was_power_start(reset_flags) && switch_is_held();
 		set_app_handoff_power_button_state(handoff_power_button_held);
+		set_app_handoff_bootloader_info();
 		if(handoff_power_button_held)
 		{
 			startup_leds_on();
@@ -671,6 +682,7 @@ int main(void)
 			else if(command == SIGNALSLINGER_RUN_APP_CHAR && app_vector_looks_programmed())
 			{
 				set_app_handoff_power_button_state(false);
+				set_app_handoff_bootloader_info();
 				jump_to_application();
 			}
 			else if(command == SIGNALSLINGER_ERASE_PAGE_CHAR)
