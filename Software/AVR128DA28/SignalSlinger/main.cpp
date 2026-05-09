@@ -266,6 +266,7 @@ static volatile bool g_event_canceled_by_user = false;
 static volatile bool g_button_hold_preview_active = false;
 
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
+#define ADC_CONVERSION_TIMEOUT_TICKS 10
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = {2000, 2000, 4000};
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = {0, 0, 0};
@@ -585,6 +586,7 @@ ISR(TCB0_INT_vect)
 	{
 		static bool conversionInProcess = false;
 		static int8_t indexConversionInProcess = 0;
+		static uint16_t adcConversionWaitTicks = 0;
 		bool repeat, finished;
 		static uint16_t switch_closures_count_period = 40;
 		uint8_t holdSwitch = 0;
@@ -1021,6 +1023,8 @@ ISR(TCB0_INT_vect)
 		{
 			/* Note: countdowns will pause while a conversion is in process. Conversions are so fast that this should not be an issue though. */
 			indexConversionInProcess = -1;
+			conversionInProcess = false;
+			adcConversionWaitTicks = 0;
 			g_restart_conversions = false;
 
 			for(uint8_t i = 0; i < NUMBER_OF_POLLED_ADC_CHANNELS; i++)
@@ -1043,6 +1047,7 @@ ISR(TCB0_INT_vect)
 				ADC0_setADCChannel(g_adcChannelOrder[indexConversionInProcess]);
 				ADC0_startConversion();
 				conversionInProcess = true;
+				adcConversionWaitTicks = 0;
 			}
 		}
 		else if(ADC0_conversionDone()) /* wait for conversion to complete */
@@ -1084,6 +1089,18 @@ ISR(TCB0_INT_vect)
 			}
 
 			conversionInProcess = false;
+			adcConversionWaitTicks = 0;
+		}
+		else if(++adcConversionWaitTicks >= ADC_CONVERSION_TIMEOUT_TICKS)
+		{
+			/* A missed ADC completion must not wedge periodic temperature sampling. */
+			if((indexConversionInProcess >= 0) && (indexConversionInProcess < NUMBER_OF_POLLED_ADC_CHANNELS))
+			{
+				g_adcCountdownCount[indexConversionInProcess] = 0;
+			}
+			conversionInProcess = false;
+			adcConversionWaitTicks = 0;
+			g_restart_conversions = true;
 		}
 	}
 
@@ -1754,10 +1771,7 @@ int main(void)
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					system_resume_from_standby();
-					if(g_awakenedBy == AWAKENED_BY_BUTTONPRESS)
-					{
-						setWakeAuthorizationLedPinsOn();
-					}
+					g_restart_conversions = true;
 					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
 						serialbus_init(SB_BAUD, SERIALBUS_USART);
