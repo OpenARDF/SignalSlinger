@@ -387,6 +387,122 @@ function Copy-PackageFile {
     }
 }
 
+function New-WorkshopSetupScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BoardName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BootloaderFileName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApplicationFileName
+    )
+
+    $script = @"
+[CmdletBinding()]
+param(
+    [string]`$Port = 'COM6',
+
+    [ValidateSet('Auto', 'Atprogram', 'Pymcuprog')]
+    [string]`$Backend = 'Auto',
+
+    [switch]`$CheckPrereqs,
+
+    [switch]`$ProgramFuses,
+
+    [switch]`$ConfirmFuseWrite,
+
+    [switch]`$SkipSerialValidation,
+
+    [string]`$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
+
+    [string]`$PymcuprogCommand = 'pymcuprog',
+
+    [string]`$Tool = 'atmelice',
+
+    [string]`$ToolSerial = 'J41800053674'
+)
+
+Set-StrictMode -Version Latest
+`$ErrorActionPreference = 'Stop'
+
+`$scriptRoot = `$PSScriptRoot
+`$provisionScript = Join-Path `$scriptRoot 'provision-bootloader.ps1'
+`$bootloaderHex = Join-Path `$scriptRoot '$BootloaderFileName'
+`$applicationHex = Join-Path `$scriptRoot '$ApplicationFileName'
+
+foreach(`$required in @(`$provisionScript, `$bootloaderHex, `$applicationHex))
+{
+    if(-not (Test-Path -LiteralPath `$required))
+    {
+        throw "Required setup file not found: `$required"
+    }
+}
+
+Write-Host 'SignalSlinger update-support setup'
+Write-Host 'Board: $BoardName'
+Write-Host 'Firmware: $Version'
+Write-Host ''
+
+if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
+{
+    Write-Warning 'This script will not write fuses unless both -ProgramFuses and -ConfirmFuseWrite are provided.'
+    Write-Host 'To check this computer without touching the SignalSlinger, run with -CheckPrereqs.'
+    Write-Host 'To prepare a connected SignalSlinger, run again with -ProgramFuses -ConfirmFuseWrite.'
+    Write-Host ''
+}
+
+`$provisionArgs = @{
+    Port = `$Port
+    Backend = `$Backend
+    BootloaderHexPath = `$bootloaderHex
+    ApplicationHexPath = `$applicationHex
+    SkipBuild = `$true
+    AtprogramPath = `$AtprogramPath
+    PymcuprogCommand = `$PymcuprogCommand
+    Tool = `$Tool
+    ToolSerial = `$ToolSerial
+}
+
+if(`$CheckPrereqs)
+{
+    `$provisionArgs.CheckPrereqs = `$true
+}
+if(`$ProgramFuses)
+{
+    `$provisionArgs.ProgramFuses = `$true
+}
+if(`$ConfirmFuseWrite)
+{
+    `$provisionArgs.ConfirmFuseWrite = `$true
+}
+if(`$SkipSerialValidation)
+{
+    `$provisionArgs.SkipSerialValidation = `$true
+}
+
+try
+{
+    & `$provisionScript @provisionArgs
+    exit 0
+}
+catch
+{
+    Write-Error `$_.Exception.Message
+    exit 1
+}
+"@
+
+    $script | Set-Content -LiteralPath $OutputPath -Encoding UTF8
+}
+
 Assert-PathExists -Path $defsPath -Description 'SignalSlinger definitions'
 Assert-PathExists -Path $bootConfigPath -Description 'Bootloader configuration'
 
@@ -441,7 +557,10 @@ $generatedPackagePatterns = @(
     'SignalSlinger-Release-Info-*.json',
     'SignalSlinger-Checksums-*.txt',
     'README-SignalSlinger-*.txt',
-    'SignalSlinger-*-Release-Files.zip'
+    'SignalSlinger-*-Release-Files.zip',
+    'Prepare-SignalSlinger-Updates-*.ps1',
+    'provision-bootloader.ps1',
+    'test-bootloader-serial.ps1'
 )
 foreach($pattern in $generatedPackagePatterns)
 {
@@ -457,6 +576,7 @@ $releaseInfoFile = "SignalSlinger-Release-Info-$friendlyVersion-$boardName.json"
 $checksumsFile = "SignalSlinger-Checksums-$friendlyVersion-$boardName.txt"
 $readmeFile = "README-SignalSlinger-$friendlyVersion-$boardName.txt"
 $releaseZipFile = "SignalSlinger-$friendlyVersion-$boardName-Release-Files.zip"
+$setupLauncherFile = "Prepare-SignalSlinger-Updates-$friendlyVersion-$boardName.ps1"
 
 $updatePath = Join-Path $OutputDir $updateFile
 $firstInstallPath = Join-Path $OutputDir $firstInstallFile
@@ -465,6 +585,9 @@ $releaseInfoPath = Join-Path $OutputDir $releaseInfoFile
 $checksumsPath = Join-Path $OutputDir $checksumsFile
 $readmePath = Join-Path $OutputDir $readmeFile
 $releaseZipPath = Join-Path $OutputDir $releaseZipFile
+$setupLauncherPath = Join-Path $OutputDir $setupLauncherFile
+$provisionScriptPath = Join-Path $OutputDir 'provision-bootloader.ps1'
+$serialTestScriptPath = Join-Path $OutputDir 'test-bootloader-serial.ps1'
 
 $mergeSummary = Merge-HexFiles -BootloaderPath $bootloaderHexPath -ApplicationPath $applicationHexPath -OutputPath $firstInstallPath
 
@@ -472,6 +595,10 @@ $files = @()
 $files += Copy-PackageFile -SourcePath $applicationHexPath -DestinationPath $updatePath -Kind 'update' -Purpose 'For SerialSlinger to update a SignalSlinger that already supports software updates.'
 $files += Copy-PackageFile -SourcePath $firstInstallPath -DestinationPath $firstInstallPath -Kind 'first-install' -Purpose 'For workshop setup of a new board using a programmer.'
 $files += Copy-PackageFile -SourcePath $bootloaderHexPath -DestinationPath $bootloaderPath -Kind 'setup-helper' -Purpose 'Used by workshop setup tools when installing update support.'
+New-WorkshopSetupScript -OutputPath $setupLauncherPath -BoardName $boardName -Version $friendlyVersion -BootloaderFileName $bootloaderFile -ApplicationFileName $updateFile
+$files += Copy-PackageFile -SourcePath $setupLauncherPath -DestinationPath $setupLauncherPath -Kind 'workshop-setup-launcher' -Purpose 'Friendly setup launcher for adding software-update support with a programmer.'
+$files += Copy-PackageFile -SourcePath (Join-Path $repoRoot 'provision-bootloader.ps1') -DestinationPath $provisionScriptPath -Kind 'workshop-setup-tool' -Purpose 'Advanced setup tool used by the friendly setup launcher.'
+$files += Copy-PackageFile -SourcePath (Join-Path $repoRoot 'test-bootloader-serial.ps1') -DestinationPath $serialTestScriptPath -Kind 'workshop-setup-tool' -Purpose 'Serial verification tool used after adding software-update support.'
 
 $gitCommit = ''
 try
@@ -513,6 +640,9 @@ $releaseInfo = [pscustomobject]@{
     }
     workshopSetup = [pscustomobject]@{
         setupHelperFileName = $bootloaderFile
+        setupLauncherFileName = $setupLauncherFile
+        provisioningScriptFileName = 'provision-bootloader.ps1'
+        serialValidationScriptFileName = 'test-bootloader-serial.ps1'
         bootSectionPages = $bootPages
         fuseBootSize = ('0x{0:X2}' -f $bootPages)
         fuseCodeSize = '0x00'
@@ -538,6 +668,9 @@ Files:
 
 - $bootloaderFile
   Workshop setup tools use this helper file when adding software-update support to a new board.
+
+- $setupLauncherFile
+  Workshop setup tools can run this script to check the computer, program update support, and verify the SignalSlinger.
 
 - $releaseInfoFile
   SerialSlinger reads this information automatically. Most users do not need to open it.
@@ -571,6 +704,9 @@ $zipSourcePaths = @(
     $updatePath,
     $firstInstallPath,
     $bootloaderPath,
+    $setupLauncherPath,
+    $provisionScriptPath,
+    $serialTestScriptPath,
     $releaseInfoPath,
     $checksumsPath,
     $readmePath
