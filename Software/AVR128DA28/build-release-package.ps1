@@ -448,6 +448,7 @@ foreach(`$required in @(`$provisionScript, `$bootloaderHex, `$applicationHex))
 {
     if(-not (Test-Path -LiteralPath `$required))
     {
+        Write-Host ("SS_SETUP_ERROR code=missing_package_file detail={0}" -f ((`$required -replace '\s+', '_') -replace '[^A-Za-z0-9._:\\-]', '_'))
         throw "Required setup file not found: `$required"
     }
 }
@@ -510,7 +511,7 @@ try
 }
 catch
 {
-    Write-Error `$_.Exception.Message
+    Write-Host ("Setup failed: {0}" -f `$_.Exception.Message)
     exit 1
 }
 "@

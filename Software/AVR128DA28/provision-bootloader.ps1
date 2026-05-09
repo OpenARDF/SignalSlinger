@@ -47,6 +47,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:SetupErrorEmitted = $false
 
 $BootSizeFuseOffset = 8
 $CodeSizeFuseOffset = 7
@@ -103,6 +104,96 @@ function Test-CommandAvailable {
     )
 
     return $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
+}
+
+function Format-SetupTokenValue {
+    param(
+        [string]$Text
+    )
+
+    if([string]::IsNullOrWhiteSpace($Text))
+    {
+        return 'none'
+    }
+    return (($Text.Trim() -replace '\s+', '_') -replace '[^A-Za-z0-9._:-]', '_')
+}
+
+function Write-SetupOk {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Step
+    )
+
+    Write-Host ("SS_SETUP_OK step={0}" -f (Format-SetupTokenValue -Text $Step))
+}
+
+function Write-SetupError {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Code,
+
+        [string]$Step = '',
+
+        [string]$Detail = ''
+    )
+
+    $parts = [System.Collections.Generic.List[string]]::new()
+    $parts.Add('SS_SETUP_ERROR')
+    $parts.Add(("code={0}" -f (Format-SetupTokenValue -Text $Code)))
+    if(-not [string]::IsNullOrWhiteSpace($Step))
+    {
+        $parts.Add(("step={0}" -f (Format-SetupTokenValue -Text $Step)))
+    }
+    if(-not [string]::IsNullOrWhiteSpace($Detail))
+    {
+        $parts.Add(("detail={0}" -f (Format-SetupTokenValue -Text $Detail)))
+    }
+    Write-Host ($parts -join ' ')
+    $script:SetupErrorEmitted = $true
+}
+
+function Get-SetupErrorCode {
+    param(
+        [string]$Text,
+
+        [string]$Description
+    )
+
+    $combined = ("$Description`n$Text")
+    if($combined -match 'pymcuprog command not found|No programming backend found')
+    {
+        return 'missing_pymcuprog'
+    }
+    if($combined -match "No module named '?usb'?|ModuleNotFoundError: No module named '?usb'?")
+    {
+        return 'missing_pyusb'
+    }
+    if($combined -match 'Could not find tool|No CMSIS-DAP devices found|No debugger or programmer|no compatible.*(tool|programmer)|Unable to connect to USB device')
+    {
+        return 'no_programmer'
+    }
+    if($combined -match 'access denied|permission denied|Operation not permitted|LIBUSB_ERROR_ACCESS|Access is denied')
+    {
+        return 'usb_access_denied'
+    }
+    if($combined -match 'target power|target voltage|no target|Target.*not.*detected|UPDI.*failed|failed to activate|unable to enter programming mode')
+    {
+        return 'target_not_detected'
+    }
+    if($Description -match 'Read fuses')
+    {
+        return 'fuse_read_failed'
+    }
+    if($Description -match 'Write fuse')
+    {
+        return 'fuse_write_failed'
+    }
+    if($Description -match 'Program combined flash')
+    {
+        return 'programming_failed'
+    }
+
+    return 'command_failed'
 }
 
 function Test-IsWindows {
@@ -243,10 +334,22 @@ function Test-Prerequisites {
         foreach($item in $missingRequired)
         {
             Write-Host ("- {0}: {1}" -f $item.Name, $item.Install)
+            $code = switch -Regex ($item.Name)
+            {
+                '^pymcuprog$' { 'missing_pymcuprog'; break }
+                '^PowerShell$' { 'missing_powershell'; break }
+                '^atprogram$' { 'missing_atprogram'; break }
+                '^Python$' { 'missing_python'; break }
+                '^Bootloader HEX$' { 'missing_bootloader_hex'; break }
+                '^Relocated app HEX$' { 'missing_application_hex'; break }
+                default { 'missing_prerequisite' }
+            }
+            Write-SetupError -Code $code -Step 'check_prereqs' -Detail $item.Name
         }
         exit 1
     }
 
+    Write-SetupOk -Step 'check_prereqs'
     Write-Host 'All required prerequisites are present for the selected mode.'
     exit 0
 }
@@ -269,9 +372,30 @@ function Invoke-CheckedCommand {
         return
     }
 
-    & $FilePath @Arguments | Out-Host
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try
+    {
+        $output = @(& $FilePath @Arguments 2>&1)
+    }
+    finally
+    {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    foreach($line in $output)
+    {
+        $lineText = if($line -is [System.Management.Automation.ErrorRecord]) { $line.ToString() } else { [string]$line }
+        if(-not [string]::IsNullOrWhiteSpace($lineText))
+        {
+            Write-Host $lineText
+        }
+    }
     if($LASTEXITCODE -ne 0)
     {
+        $outputText = ($output | ForEach-Object {
+            if($_ -is [System.Management.Automation.ErrorRecord]) { $_.ToString() } else { [string]$_ }
+        }) -join "`n"
+        Write-SetupError -Code (Get-SetupErrorCode -Text $outputText -Description $Description) -Step (Format-SetupTokenValue -Text $Description) -Detail ("exit_{0}" -f $LASTEXITCODE)
         throw "$Description failed with exit code $LASTEXITCODE."
     }
 }
@@ -600,6 +724,7 @@ if($resolvedBackend -eq 'Atprogram')
 }
 elseif($null -eq (Get-Command $PymcuprogCommand -ErrorAction SilentlyContinue) -and -not $DryRun)
 {
+    Write-SetupError -Code 'missing_pymcuprog' -Step 'resolve_backend' -Detail $PymcuprogCommand
     throw "pymcuprog command not found: $PymcuprogCommand"
 }
 
@@ -615,6 +740,7 @@ if($CheckProgrammer)
     }
     $probeFuses = Read-Fuses -ResolvedBackend $resolvedBackend
     Show-FuseSummary -Fuses $probeFuses
+    Write-SetupOk -Step 'check_programmer'
     Write-Host 'Programmer check completed successfully.'
     exit 0
 }
@@ -683,6 +809,7 @@ $finalFuses = Read-Fuses -ResolvedBackend $resolvedBackend
 Show-FuseSummary -Fuses $finalFuses
 if(-not $DryRun -and ($finalFuses[$CodeSizeFuseOffset] -ne $DesiredCodeSize -or $finalFuses[$BootSizeFuseOffset] -ne $DesiredBootSize))
 {
+    Write-SetupError -Code 'fuse_verify_failed' -Step 'verify_fuses'
     throw ("Fuse verification failed. Expected CODESIZE=0x{0:X2}, BOOTSIZE=0x{1:X2}." -f $DesiredCodeSize, $DesiredBootSize)
 }
 
@@ -722,3 +849,4 @@ if(-not $SkipSerialValidation)
 }
 
 Write-Host 'Bootloader provisioning completed successfully.'
+Write-SetupOk -Step 'provision'
