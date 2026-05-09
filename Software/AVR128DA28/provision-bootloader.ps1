@@ -34,9 +34,11 @@ param(
 
     [string]$PymcuprogCommand = 'pymcuprog',
 
-    [string]$Tool = 'atmelice',
+    [string]$Tool = 'Auto',
 
-    [string]$ToolSerial = 'J41800053674',
+    [string]$ToolSerial = '',
+
+    [string]$SupportedTools = 'atmelice,pickit4,snap,powerdebugger,edbg,medbg,nedbg',
 
     [string]$Interface = 'UPDI',
 
@@ -48,6 +50,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:SetupErrorEmitted = $false
+$script:LastCommandErrorCode = ''
+$script:LastCommandExitCode = 0
+$script:ActiveTool = ''
 
 $BootSizeFuseOffset = 8
 $CodeSizeFuseOffset = 7
@@ -121,10 +126,19 @@ function Format-SetupTokenValue {
 function Write-SetupOk {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$Step
+        [string]$Step,
+
+        [string]$Tool = ''
     )
 
-    Write-Host ("SS_SETUP_OK step={0}" -f (Format-SetupTokenValue -Text $Step))
+    $parts = [System.Collections.Generic.List[string]]::new()
+    $parts.Add('SS_SETUP_OK')
+    $parts.Add(("step={0}" -f (Format-SetupTokenValue -Text $Step)))
+    if(-not [string]::IsNullOrWhiteSpace($Tool))
+    {
+        $parts.Add(("tool={0}" -f (Format-SetupTokenValue -Text $Tool)))
+    }
+    Write-Host ($parts -join ' ')
 }
 
 function Write-SetupError {
@@ -150,6 +164,72 @@ function Write-SetupError {
     }
     Write-Host ($parts -join ' ')
     $script:SetupErrorEmitted = $true
+}
+
+function Get-SupportedToolList {
+    $tools = @($SupportedTools -split '[,;\s]+' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if($tools.Count -eq 0)
+    {
+        return @('atmelice')
+    }
+    return $tools
+}
+
+function Get-RequestedToolList {
+    if(-not [string]::IsNullOrWhiteSpace($Tool) -and $Tool -ne 'Auto')
+    {
+        return @($Tool)
+    }
+    return @(Get-SupportedToolList)
+}
+
+function Get-ProgrammerDisplayName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ToolName
+    )
+
+    switch($ToolName.ToLowerInvariant())
+    {
+        'atmelice' { return 'Atmel-ICE' }
+        'pickit4' { return 'MPLAB PICkit 4' }
+        'snap' { return 'MPLAB Snap' }
+        'powerdebugger' { return 'Power Debugger' }
+        'edbg' { return 'EDBG' }
+        'medbg' { return 'mEDBG' }
+        'nedbg' { return 'nEDBG' }
+        default { return $ToolName }
+    }
+}
+
+function Write-SupportedProgrammers {
+    param(
+        [string]$ResolvedBackend = $Backend
+    )
+
+    $tools = @(Get-SupportedToolList)
+    Write-Host ("SS_SETUP_SUPPORTED_PROGRAMMERS backend={0} tools={1}" -f (Format-SetupTokenValue -Text $ResolvedBackend), ($tools -join ','))
+    $displayNames = @($tools | ForEach-Object { Get-ProgrammerDisplayName -ToolName $_ })
+    Write-Host ("Supported programmers: {0}" -f ($displayNames -join ', '))
+}
+
+function Set-ActiveProgrammerTool {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ToolName
+    )
+
+    $script:ActiveTool = $ToolName
+}
+
+function Get-ActiveProgrammerTool {
+    if(-not [string]::IsNullOrWhiteSpace($script:ActiveTool))
+    {
+        return $script:ActiveTool
+    }
+
+    $requested = @(Get-RequestedToolList)
+    return $requested[0]
 }
 
 function Get-SetupErrorCode {
@@ -320,9 +400,10 @@ function Test-Prerequisites {
     Write-Host ("Requested backend: {0}" -f $Backend)
     Write-Host ("Build required: {0}" -f $requiresBuildTools)
     Write-Host ("Serial validation required: {0}" -f (-not $SkipSerialValidation))
+    Write-SupportedProgrammers -ResolvedBackend $Backend
     if($requiresPymcuprog)
     {
-        Write-Host 'Programmer/USB check: run this script again with -CheckProgrammer after connecting the Atmel-ICE.'
+        Write-Host 'Programmer/USB check: run this script again with -CheckProgrammer after connecting the programmer.'
     }
     Write-Host ''
     $results | Format-Table -AutoSize | Out-String | Write-Host
@@ -363,10 +444,19 @@ function Invoke-CheckedCommand {
         [string[]]$Arguments,
 
         [Parameter(Mandatory = $true)]
-        [string]$Description
+        [string]$Description,
+
+        [switch]$SuppressSetupError,
+
+        [switch]$Quiet
     )
 
-    Write-Host ('> {0} {1}' -f $FilePath, ($Arguments -join ' '))
+    $script:LastCommandErrorCode = ''
+    $script:LastCommandExitCode = 0
+    if(-not $Quiet)
+    {
+        Write-Host ('> {0} {1}' -f $FilePath, ($Arguments -join ' '))
+    }
     if($DryRun)
     {
         return
@@ -377,6 +467,7 @@ function Invoke-CheckedCommand {
     try
     {
         $output = @(& $FilePath @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
     }
     finally
     {
@@ -385,18 +476,23 @@ function Invoke-CheckedCommand {
     foreach($line in $output)
     {
         $lineText = if($line -is [System.Management.Automation.ErrorRecord]) { $line.ToString() } else { [string]$line }
-        if(-not [string]::IsNullOrWhiteSpace($lineText))
+        if(-not $Quiet -and -not [string]::IsNullOrWhiteSpace($lineText))
         {
             Write-Host $lineText
         }
     }
-    if($LASTEXITCODE -ne 0)
+    if($exitCode -ne 0)
     {
         $outputText = ($output | ForEach-Object {
             if($_ -is [System.Management.Automation.ErrorRecord]) { $_.ToString() } else { [string]$_ }
         }) -join "`n"
-        Write-SetupError -Code (Get-SetupErrorCode -Text $outputText -Description $Description) -Step (Format-SetupTokenValue -Text $Description) -Detail ("exit_{0}" -f $LASTEXITCODE)
-        throw "$Description failed with exit code $LASTEXITCODE."
+        $script:LastCommandExitCode = $exitCode
+        $script:LastCommandErrorCode = Get-SetupErrorCode -Text $outputText -Description $Description
+        if(-not $SuppressSetupError)
+        {
+            Write-SetupError -Code $script:LastCommandErrorCode -Step (Format-SetupTokenValue -Text $Description) -Detail ("exit_{0}" -f $exitCode)
+        }
+        throw "$Description failed with exit code $exitCode."
     }
 }
 
@@ -621,21 +717,43 @@ function Merge-IntelHexFiles {
 }
 
 function Get-AtprogramBaseArgs {
-    return @('-t', $Tool, '-s', $ToolSerial, '-i', $Interface, '-d', $Device, '-cl', $Clock)
+    $args = @('-t', (Get-ActiveProgrammerTool))
+    if(-not [string]::IsNullOrWhiteSpace($ToolSerial))
+    {
+        $args += @('-s', $ToolSerial)
+    }
+    $args += @('-i', $Interface, '-d', $Device, '-cl', $Clock)
+    return $args
 }
 
 function Get-PymcuprogBaseArgs {
-    return @('-t', $Tool, '-s', $ToolSerial, '-i', $Interface.ToLowerInvariant(), '-d', $Device, '-c', (ConvertTo-PymcuprogClock -ClockText $Clock))
+    $args = @('-t', (Get-ActiveProgrammerTool))
+    if(-not [string]::IsNullOrWhiteSpace($ToolSerial))
+    {
+        $args += @('-s', $ToolSerial)
+    }
+    $args += @('-i', $Interface.ToLowerInvariant(), '-d', $Device, '-c', (ConvertTo-PymcuprogClock -ClockText $Clock))
+    return $args
 }
 
 function Invoke-PymcuprogProgrammerProbe {
-    Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments (@('ping') + (Get-PymcuprogBaseArgs)) -Description 'pymcuprog programmer probe'
+    param(
+        [switch]$SuppressSetupError,
+
+        [switch]$Quiet
+    )
+
+    Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments (@('ping') + (Get-PymcuprogBaseArgs)) -Description 'pymcuprog programmer probe' -SuppressSetupError:$SuppressSetupError -Quiet:$Quiet
 }
 
 function Read-Fuses {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$ResolvedBackend
+        [string]$ResolvedBackend,
+
+        [switch]$SuppressSetupError,
+
+        [switch]$Quiet
     )
 
     $tempPath = [System.IO.Path]::GetTempFileName()
@@ -645,12 +763,12 @@ function Read-Fuses {
         if($ResolvedBackend -eq 'Atprogram')
         {
             $args = (Get-AtprogramBaseArgs) + @('read', '-fs', '--format', 'bin', '-s', "$(Get-FuseReadBytes -ResolvedBackend $ResolvedBackend)", '-f', $tempPath)
-            Invoke-CheckedCommand -FilePath $AtprogramPath -Arguments $args -Description 'Read fuses'
+            Invoke-CheckedCommand -FilePath $AtprogramPath -Arguments $args -Description 'Read fuses' -SuppressSetupError:$SuppressSetupError -Quiet:$Quiet
         }
         else
         {
             $args = @('read') + (Get-PymcuprogBaseArgs) + @('-m', 'fuses', '-b', "$(Get-FuseReadBytes -ResolvedBackend $ResolvedBackend)", '-f', $tempPath)
-            Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments $args -Description 'Read fuses'
+            Invoke-CheckedCommand -FilePath $PymcuprogCommand -Arguments $args -Description 'Read fuses' -SuppressSetupError:$SuppressSetupError -Quiet:$Quiet
         }
 
         if($DryRun)
@@ -662,12 +780,94 @@ function Read-Fuses {
         {
             $readPath = $pymcuprogOutputPath
         }
-        return ,([System.IO.File]::ReadAllBytes($readPath))
+        $fuses = [System.IO.File]::ReadAllBytes($readPath)
+        $expectedFuseBytes = Get-FuseReadBytes -ResolvedBackend $ResolvedBackend
+        if($fuses.Length -lt $expectedFuseBytes)
+        {
+            $errorCode = if($fuses.Length -eq 0) { 'no_programmer' } else { 'fuse_read_failed' }
+            $script:LastCommandErrorCode = $errorCode
+            $script:LastCommandExitCode = 0
+            if(-not $SuppressSetupError)
+            {
+                Write-SetupError -Code $errorCode -Step 'Read_fuses' -Detail ("bytes_{0}_expected_{1}" -f $fuses.Length, $expectedFuseBytes)
+            }
+            throw ("Read fuses returned {0} bytes; expected at least {1}." -f $fuses.Length, $expectedFuseBytes)
+        }
+        return ,$fuses
     }
     finally
     {
         Remove-Item -LiteralPath $tempPath, $pymcuprogOutputPath -ErrorAction SilentlyContinue
     }
+}
+
+function Resolve-ProgrammerTool {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ResolvedBackend
+    )
+
+    $tools = @(Get-RequestedToolList)
+    $quietProbe = $tools.Count -gt 1
+    $failureCodes = [System.Collections.Generic.List[string]]::new()
+    $lastExitCode = 0
+    foreach($toolName in $tools)
+    {
+        Set-ActiveProgrammerTool -ToolName $toolName
+        Write-Host ("Checking programmer: {0}" -f (Get-ProgrammerDisplayName -ToolName $toolName))
+        try
+        {
+            if($ResolvedBackend -eq 'Pymcuprog')
+            {
+                Invoke-PymcuprogProgrammerProbe -SuppressSetupError -Quiet:$quietProbe
+            }
+            $fuses = Read-Fuses -ResolvedBackend $ResolvedBackend -SuppressSetupError -Quiet:$quietProbe
+            Write-Host ("Detected programmer: {0}" -f (Get-ProgrammerDisplayName -ToolName $toolName))
+            return [pscustomobject]@{
+                Tool = $toolName
+                Fuses = $fuses
+            }
+        }
+        catch
+        {
+            if(-not [string]::IsNullOrWhiteSpace($script:LastCommandErrorCode))
+            {
+                $failureCodes.Add($script:LastCommandErrorCode)
+                $lastExitCode = $script:LastCommandExitCode
+            }
+        }
+    }
+
+    $code = 'no_programmer'
+    if($failureCodes -contains 'usb_access_denied')
+    {
+        $code = 'usb_access_denied'
+    }
+    elseif($failureCodes -contains 'missing_pyusb')
+    {
+        $code = 'missing_pyusb'
+    }
+    elseif($failureCodes -contains 'target_not_detected')
+    {
+        $code = 'target_not_detected'
+    }
+    elseif($failureCodes -contains 'no_programmer')
+    {
+        $code = 'no_programmer'
+    }
+    elseif($failureCodes -contains 'fuse_read_failed')
+    {
+        $code = 'fuse_read_failed'
+    }
+
+    Write-SupportedProgrammers -ResolvedBackend $ResolvedBackend
+    $detail = 'tools_' + (($tools | ForEach-Object { Format-SetupTokenValue -Text $_ }) -join ',')
+    if($lastExitCode -ne 0)
+    {
+        $detail += ("_exit_{0}" -f $lastExitCode)
+    }
+    Write-SetupError -Code $code -Step 'detect_programmer' -Detail $detail
+    throw ("No supported programmer/target was detected. Tried: {0}" -f ($tools -join ', '))
 }
 
 function Write-FuseByte {
@@ -717,6 +917,7 @@ if($CheckPrereqs)
 
 $resolvedBackend = Resolve-Backend
 Write-Host "Provisioning backend: $resolvedBackend"
+Write-SupportedProgrammers -ResolvedBackend $resolvedBackend
 
 if($resolvedBackend -eq 'Atprogram')
 {
@@ -736,11 +937,11 @@ if($CheckProgrammer)
     {
         Write-Host 'Checking pymcuprog USB/programmer access. If this fails with "No module named usb", install pyusb in the pymcuprog environment.'
         Write-Host 'For pipx installs, run: pipx inject pymcuprog pyusb'
-        Invoke-PymcuprogProgrammerProbe
     }
-    $probeFuses = Read-Fuses -ResolvedBackend $resolvedBackend
+    $programmerProbe = Resolve-ProgrammerTool -ResolvedBackend $resolvedBackend
+    $probeFuses = $programmerProbe.Fuses
     Show-FuseSummary -Fuses $probeFuses
-    Write-SetupOk -Step 'check_programmer'
+    Write-SetupOk -Step 'check_programmer' -Tool $programmerProbe.Tool
     Write-Host 'Programmer check completed successfully.'
     exit 0
 }
@@ -777,7 +978,8 @@ if($BuildOnly)
     exit 0
 }
 
-$initialFuses = Read-Fuses -ResolvedBackend $resolvedBackend
+$programmerProbe = Resolve-ProgrammerTool -ResolvedBackend $resolvedBackend
+$initialFuses = $programmerProbe.Fuses
 Show-FuseSummary -Fuses $initialFuses
 
 $needsCodeSize = $initialFuses.Length -gt $CodeSizeFuseOffset -and $initialFuses[$CodeSizeFuseOffset] -ne $DesiredCodeSize

@@ -20,6 +20,8 @@ $bootloaderHexPath = Join-Path $repoRoot 'bootloader\Release\SignalSlingerBootlo
 $applicationHexPath = Join-Path $repoRoot 'SignalSlinger\Release\SignalSlinger.hex'
 $applicationMapPath = Join-Path $repoRoot 'SignalSlinger\Release\SignalSlinger.map'
 $bootloaderMapPath = Join-Path $repoRoot 'bootloader\Release\SignalSlingerBootloader.map'
+$supportedProgrammerTools = @('atmelice', 'pickit4', 'snap', 'powerdebugger', 'edbg', 'medbg', 'nedbg')
+$supportedProgrammerToolsText = $supportedProgrammerTools -join ','
 
 function Assert-PathExists {
     param(
@@ -429,9 +431,11 @@ param(
 
     [string]`$PymcuprogCommand = 'pymcuprog',
 
-    [string]`$Tool = 'atmelice',
+    [string]`$Tool = 'Auto',
 
-    [string]`$ToolSerial = 'J41800053674',
+    [string]`$ToolSerial = '',
+
+    [string]`$SupportedTools = '$supportedProgrammerToolsText',
 
     [string]`$Clock = '100kHz'
 )
@@ -476,6 +480,7 @@ if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
     PymcuprogCommand = `$PymcuprogCommand
     Tool = `$Tool
     ToolSerial = `$ToolSerial
+    SupportedTools = `$SupportedTools
     Clock = `$Clock
 }
 
@@ -662,6 +667,7 @@ $releaseInfo = [pscustomobject]@{
         bootSectionPages = $bootPages
         fuseBootSize = ('0x{0:X2}' -f $bootPages)
         fuseCodeSize = '0x00'
+        supportedProgrammers = $supportedProgrammerTools
     }
     files = $files
 }
@@ -689,6 +695,7 @@ Files:
   Workshop setup tools can run this script to check the computer, program update support, and verify the SignalSlinger.
   Use -CheckPrereqs to check installed tools without touching hardware.
   Use -CheckProgrammer after connecting the programmer to run a no-write programmer/device check.
+  Supported programmers: $supportedProgrammerToolsText
 
 - $releaseInfoFile
   SerialSlinger reads this information automatically. Most users do not need to open it.
