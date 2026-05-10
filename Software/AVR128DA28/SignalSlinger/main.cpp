@@ -4350,7 +4350,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					if(!g_meshmode)
 						sb_send_NewLine();
 
-					if(sb_buff->fields[SB_FIELD2][0] == 'X')
+					if(sb_buff->fields[SB_FIELD2][0] == '\0')
+					{
+						sb_send_string((char *)"* TMP R\n");
+					}
+					else if(sb_buff->fields[SB_FIELD2][0] == 'X')
 					{
 						if(resetProcessorTemperatureExtremesToCurrent(&reset_temperature))
 						{
