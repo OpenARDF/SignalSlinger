@@ -146,7 +146,7 @@ All multi-byte fields are little-endian. CRC is CRC-16/CCITT-FALSE initialized t
 The `?` response is intentionally machine-readable for host programmers. New fields are added append-only so host tools can keep parsing the tokens they understand:
 
 ```text
-SignalSlinger BL0.12 proto=1 minproto=1 maxproto=1 app=0x2000 page=512 flash=131072 baud=115200 boot=16 write=0x2000-0x1FFFF features=appmark,pagecrc,resetlast cmds=U,R,?,E,W,C
+SignalSlinger BL0.13 proto=1 minproto=1 maxproto=1 app=0x2000 page=512 flash=131072 baud=115200 boot=16 write=0x2000-0x1FFFF features=appmark,pagecrc,resetlast cmds=U,R,?,E,W,C
 ```
 
 The `write` field names the only flash range the bootloader will erase or program. The `features` field advertises the app reset marker (`appmark`), per-page CRC command (`pagecrc`), and reset-vector page written last for interrupted-update recovery (`resetlast`).
