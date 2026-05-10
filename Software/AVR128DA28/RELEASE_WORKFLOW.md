@@ -56,15 +56,17 @@ $env:HTTPS_PROXY=''
 $env:ALL_PROXY=''
 ```
 
-11. Generate GitHub release notes that cover the changes since the previous release.
+11. Draft user-readable GitHub release notes that cover the changes since the previous release.
+   - Match the style of `v1.2.1`: a short version introduction, two to four plain-language paragraphs about user-visible changes, an overall summary sentence, and a `Full Changelog` compare link.
+   - Do not publish GitHub's generated PR summary as the final release body. Use generated notes only as source material for the user-readable draft.
 12. Create the GitHub release:
    - Use a prerelease or a normal release on `Development2` according to the requested release channel.
    - Use a normal release on `main` unless a prerelease is explicitly requested.
-   - Prefer GitHub-generated notes so the release body captures the changes since the prior release automatically.
+   - Prefer `--notes-file` or edit the release immediately after creation so the published body uses the drafted user-readable notes.
 13. Upload both hardware assets to the release.
 14. Verify remotely:
    - the release page includes both `.hex` files
-   - the release notes summarize the changes since the previous release
+   - the release notes are user-readable and summarize the changes since the previous release
    - `main` README points to stable downloads
    - `Development2` README points to the intended development-branch downloads
 

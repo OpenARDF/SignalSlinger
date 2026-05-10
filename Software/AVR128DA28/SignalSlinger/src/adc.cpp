@@ -227,15 +227,10 @@ float temperatureCfromADC(uint16_t adc_reading)
 {
 	uint16_t sigrow_offset = SIGROW.TEMPSENSE1; // Read unsigned value from signature row
 	uint16_t sigrow_slope = SIGROW.TEMPSENSE0;  // Read unsigned value from signature row
-	float temperature_in_C = -273.15;
+	int32_t sensor_delta = (int32_t)sigrow_offset - (int32_t)adc_reading;
+	float temperature_in_K = ((float)sensor_delta * (float)sigrow_slope) / 4096.0f;
 
-	uint32_t temp = sigrow_offset - adc_reading;
-	temp *= sigrow_slope; // Result will overflow 16-bit variable
-	temp += 0x0800;       // Add 4096/2 to get correct rounding on division below
-	temp >>= 12;          // Round off to nearest degree in Kelvin, by dividing with 2^12 (4096)
-	temperature_in_C += (float)temp;
-
-	return (temperature_in_C);
+	return (temperature_in_K - 273.15f);
 }
 
 /**

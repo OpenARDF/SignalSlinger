@@ -18,14 +18,14 @@ SignalSlinger is planned to be available in kit form from [Backwoods Orienteerin
 
 ## Updating Software
 
-This `Development2` branch currently carries the active development release line. Download the release file that matches your hardware revision:
+This `main` branch corresponds to the current stable firmware release. Download the update file that matches your hardware revision:
 
-* `SignalSlinger-v1.2.1-3.5.hex`
-* `SignalSlinger-v1.2.1-3.4.hex`
+* `SignalSlinger-Update-v2.0.0-HW-3.5.hex`
+* `SignalSlinger-Update-v2.0.0-HW-3.4.hex`
 
-Use an Atmel-ICE programmer over the board's UPDI programming header (`P101`) to install the firmware. Always choose the `.hex` file that matches your hardware revision, and do not modify fuses or disable UPDI.
+Use SerialSlinger for normal updates on devices that already support software updates. For first-time bootloader setup, use the matching complete release bundle and an approved programmer over the board's UPDI programming header (`P101`). Always choose the file that matches your hardware revision, and do not modify fuses or disable UPDI outside the documented setup flow.
 
-For complete programming steps, avrdude examples, and hardware connection details, see the [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing). If you want the release files referenced from `main` instead, switch to that branch and use the downloads listed there.
+For complete programming steps, setup-bundle usage, and hardware connection details, see the [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing). If you want the current development branch instead of the stable public release, switch to the `Development2` branch and use the release files referenced there.
 
 ## Firmware Development
 
