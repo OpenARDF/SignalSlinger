@@ -137,7 +137,7 @@ extern "C"
 	} SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > INF - Firmware information\n* > UI [S|C|P n] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
+#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [B|C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > TMP [H [n]|R [X|E]] - Temperature\n* > INF - Firmware information\n* > UI [S|C|P n] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
 
 	/**
 	 * Configure the serial bus with a baud rate and USART instance.

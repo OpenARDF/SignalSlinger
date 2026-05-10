@@ -97,6 +97,8 @@ static bool evaluateThermalShutdownState(float processor_temperature, bool inter
 static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
 static void updateTemperatureState(float temperature);
 static float sampleTemperatureNow(void);
+static bool resetProcessorTemperatureExtremesToCurrent(float *temperature_out);
+static bool resetProcessorMaxEverTemperatureToCurrent(float *temperature_out);
 
 /* Track the current step in the serial cloning/synchronization exchange. */
 typedef enum
@@ -4102,6 +4104,54 @@ static float sampleTemperatureNow(void)
 }
 
 /**
+ * Reset the session high/low temperature trackers to the current reading.
+ *
+ * @param temperature_out Optional destination for the reading used.
+ * @return true when a valid temperature was available.
+ */
+static bool resetProcessorTemperatureExtremesToCurrent(float *temperature_out)
+{
+	float processor_temperature = sampleTemperatureNow();
+	if(!isValidTemp(processor_temperature))
+	{
+		return false;
+	}
+
+	atomic_write_float(&g_processor_max_temperature, processor_temperature);
+	atomic_write_float(&g_processor_min_temperature, processor_temperature);
+	if(temperature_out)
+	{
+		*temperature_out = processor_temperature;
+	}
+	return true;
+}
+
+/**
+ * Reset the EEPROM-backed hottest-ever temperature and session maximum to the
+ * current reading.
+ *
+ * @param temperature_out Optional destination for the reading used.
+ * @return true when a valid temperature was available.
+ */
+static bool resetProcessorMaxEverTemperatureToCurrent(float *temperature_out)
+{
+	float processor_temperature = sampleTemperatureNow();
+	if(!isValidTemp(processor_temperature))
+	{
+		return false;
+	}
+
+	atomic_write_float(&g_processor_max_temperature, processor_temperature);
+	atomic_write_float(&g_processor_max_ever_temperature, processor_temperature);
+	g_ee_mgr.updateEEPROMVar(Hottest_Ever_Temperature, (void *)&processor_temperature);
+	if(temperature_out)
+	{
+		*temperature_out = processor_temperature;
+	}
+	return true;
+}
+
+/**
  * Parse a user-supplied thermal shutdown threshold from serial command text.
  *
  * @param text Null-terminated decimal string to parse.
@@ -4294,11 +4344,48 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						sb_send_NewLine();
 					sendThermalShutdownThresholdLine();
 				}
+				else if(sb_buff->fields[SB_FIELD1][0] == 'R')
+				{
+					float reset_temperature = MINIMUM_VALID_TEMP - 1.;
+					if(!g_meshmode)
+						sb_send_NewLine();
+
+					if(sb_buff->fields[SB_FIELD2][0] == 'X')
+					{
+						if(resetProcessorTemperatureExtremesToCurrent(&reset_temperature))
+						{
+							sb_send_string((char *)"* Temperature extremes reset\n");
+							sendTemperatureReportLine("Max Temp", reset_temperature);
+							sendTemperatureReportLine("Min Temp", reset_temperature);
+						}
+						else
+						{
+							sb_send_string((char *)"* Err: temperature not available\n");
+						}
+					}
+					else if(sb_buff->fields[SB_FIELD2][0] == 'E')
+					{
+						if(resetProcessorMaxEverTemperatureToCurrent(&reset_temperature))
+						{
+							sb_send_string((char *)"* Max Ever reset\n");
+							sendTemperatureReportLine("Max Ever", reset_temperature);
+							sendTemperatureReportLine("Max Temp", reset_temperature);
+						}
+						else
+						{
+							sb_send_string((char *)"* Err: temperature not available\n");
+						}
+					}
+					else
+					{
+						sb_send_string((char *)"* Err: TMP R [X|E]\n");
+					}
+				}
 				else if(sb_buff->fields[SB_FIELD1][0] != '\0')
 				{
 					if(!g_meshmode)
 						sb_send_NewLine();
-					sb_send_string((char *)"* Err: TMP [H [n]]\n");
+					sb_send_string((char *)"* Err: TMP [H [n]|R [X|E]]\n");
 				}
 				else
 				{
