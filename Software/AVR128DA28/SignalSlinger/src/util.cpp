@@ -117,11 +117,9 @@ static const char *const g_fox_text[USE_CURRENT_FOX] =
 /* Human-readable names for Event_t values in enum order. */
 static const char *const g_event_text[EVENT_NUMBER_OF_EVENTS] =
     {
-        "None Set",
         "Classic",
         "Sprint",
-        "Foxoring",
-        "Blind ARDF"};
+        "Foxoring"};
 
 /**
  * Return the signed difference between two time values without using `difftime()`.

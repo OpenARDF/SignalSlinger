@@ -302,7 +302,7 @@ EepromManager g_ee_mgr;
 
 volatile bool g_isMaster = false;
 volatile uint16_t isMasterCountdownSeconds = 0;
-Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, FOX_1, SPRINT_S1, FOXORING_FOX1, USE_CURRENT_FOX}; /* none, classic, sprint, foxoring */
+Fox_t g_fox[EVENT_NUMBER_OF_EVENTS] = {FOX_1, SPRINT_S1, FOXORING_FOX1}; /* classic, sprint, foxoring */
 
 Event_t g_event = EEPROM_EVENT_SETTING_DEFAULT;
 Frequency_Hz g_frequency = EEPROM_FREQUENCY_DEFAULT;
@@ -468,7 +468,7 @@ static void reportUiDiagnostics(void);
 static bool injectUiButtonPresses(const char *text);
 static void finalizeLocalClockUpdate(void);
 static void finalizeDisabledEventStartUpdate(void);
-static Event_t eventFromSerialArg(char eventArg);
+static bool eventFromSerialArg(char eventArg, Event_t *event);
 static bool alignSavedClassicStartTimeIfNeeded(char *notice, size_t noticeSize);
 static void persistFoxSettingForCurrentEvent(Fox_t fox);
 static void persistFrequencyValue(EE_var_t eeVar, Frequency_Hz frequency);
@@ -3524,26 +3524,31 @@ static void finalizeDisabledEventStartUpdate(void)
  * Map a single-letter serial command argument to the corresponding event enum.
  *
  * @param eventArg Serial command character.
- * @return Event enum that corresponds to the supplied command letter.
+ * @return true when the command letter names a supported event.
  */
-static Event_t eventFromSerialArg(char eventArg)
+static bool eventFromSerialArg(char eventArg, Event_t *event)
 {
+	if(!event)
+	{
+		return false;
+	}
+
 	switch(eventArg)
 	{
 		case 'F':
-			return EVENT_FOXORING;
+			*event = EVENT_FOXORING;
+			return true;
 
 		case 'C':
-			return EVENT_CLASSIC;
+			*event = EVENT_CLASSIC;
+			return true;
 
 		case 'S':
-			return EVENT_SPRINT;
-
-		case 'B':
-			return EVENT_BLIND_ARDF;
+			*event = EVENT_SPRINT;
+			return true;
 
 		default:
-			return EVENT_NONE;
+			return false;
 	}
 }
 
@@ -3554,7 +3559,7 @@ static Event_t eventFromSerialArg(char eventArg)
  */
 static void persistFoxSettingForCurrentEvent(Fox_t fox)
 {
-	EE_var_t eeVar = Fox_setting_none;
+	EE_var_t eeVar = Fox_setting_classic;
 
 	switch(g_event)
 	{
@@ -3570,12 +3575,8 @@ static void persistFoxSettingForCurrentEvent(Fox_t fox)
 			eeVar = Fox_setting_foxoring;
 			break;
 
-		case EVENT_BLIND_ARDF:
-			eeVar = Fox_setting_blind;
-			break;
-
 		default:
-			break;
+			return;
 	}
 
 	g_ee_mgr.updateEEPROMVar(eeVar, (void *)&fox);
@@ -4518,7 +4519,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							}
 						}
 					}
-					else if((g_event == EVENT_CLASSIC) || (g_event == EVENT_BLIND_ARDF))
+					else if(g_event == EVENT_CLASSIC)
 					{
 						if(c1 == '1')
 						{
@@ -5331,30 +5332,38 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				eventNotice[0] = '\0';
 				if(g_cloningInProgress)
 				{
-					/* During cloning, the incoming event selector is accepted verbatim
-					 * and acknowledged as part of the rolling checksum exchange.
+					/* During cloning, the incoming event selector is validated before
+					 * being acknowledged as part of the rolling checksum exchange.
 					 */
 					char c = sb_buff->fields[SB_FIELD1][0];
-					g_event = eventFromSerialArg(c);
-
-					g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
-					atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
-					g_event_checksum += c;
-					sb_send_string((char *)"EVT\n");
+					Event_t requestedEvent;
+					if(eventFromSerialArg(c, &requestedEvent))
+					{
+						g_event = requestedEvent;
+						g_ee_mgr.updateEEPROMVar(Event_setting, (void *)&g_event);
+						atomic_write_u16(&g_programming_countdown, PROGRAMMING_MESSAGE_TIMEOUT_PERIOD);
+						g_event_checksum += c;
+						sb_send_string((char *)"EVT\n");
+					}
+					else
+					{
+						sb_send_string((char *)"* Err: EVT [C|F|S]\n");
+					}
 				}
 				else
 				{
 					bool validArg = false;
 					Event_t previousEvent = g_event;
+					Event_t requestedEvent = g_event;
 
 					if(sb_buff->fields[SB_FIELD1][0])
 					{
-						g_event = eventFromSerialArg(sb_buff->fields[SB_FIELD1][0]);
-						validArg = true;
+						validArg = eventFromSerialArg(sb_buff->fields[SB_FIELD1][0], &requestedEvent);
 					}
 
 					if(validArg)
 					{
+						g_event = requestedEvent;
 						/* Changing the event outside clone mode rebuilds the loaded event
 						 * window and the active fox/pattern selection immediately.
 						 */
@@ -5370,6 +5379,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						}
 						reinitializeEventEngine();
 						setupForFox(getFoxSetting(), START_EVENT_WITH_STARTFINISH_TIMES);
+					}
+					else if(sb_buff->fields[SB_FIELD1][0])
+					{
+						sb_send_string((char *)"* Err: EVT [C|F|S]\n");
 					}
 				}
 
@@ -7532,7 +7545,7 @@ void reportSettings(void)
 	}
 	else
 	{
-		sprintf(g_tempStr, "*   Event: None Set\n");
+		sprintf(g_tempStr, "*   Event: err\n");
 	}
 	sb_send_string(g_tempStr);
 
@@ -7616,52 +7629,49 @@ void reportSettings(void)
 		sb_send_string((char *)"*   No remaining scheduled day window at the current time\n");
 	}
 
-	if(g_event != EVENT_NONE)
+	sb_send_string(TEXT_EVENT_SETTINGS_TXT);
+
+	if(frequencyString(buf, g_frequency_low))
 	{
-		sb_send_string(TEXT_EVENT_SETTINGS_TXT);
+		sprintf(g_tempStr, "*   [FRE 1] Freq Low: Error\n");
+	}
+	else
+	{
+		sprintf(g_tempStr, "*   [FRE 1] Freq Low: %s\n", buf);
+		sb_send_string(g_tempStr);
+	}
 
-		if(frequencyString(buf, g_frequency_low))
+	if(g_event != EVENT_CLASSIC)
+	{
+		if(frequencyString(buf, g_frequency_med))
 		{
-			sprintf(g_tempStr, "*   [FRE 1] Freq Low: Error\n");
+			sprintf(g_tempStr, "*   [FRE 2] Error\n");
 		}
 		else
 		{
-			sprintf(g_tempStr, "*   [FRE 1] Freq Low: %s\n", buf);
+			sprintf(g_tempStr, "*   [FRE 2] Freq Med: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
 
-		if(g_event != EVENT_CLASSIC)
+		if(frequencyString(buf, g_frequency_hi))
 		{
-			if(frequencyString(buf, g_frequency_med))
-			{
-				sprintf(g_tempStr, "*   [FRE 2] Error\n");
-			}
-			else
-			{
-				sprintf(g_tempStr, "*   [FRE 2] Freq Med: %s\n", buf);
-				sb_send_string(g_tempStr);
-			}
-
-			if(frequencyString(buf, g_frequency_hi))
-			{
-				sprintf(g_tempStr, "*   [FRE 3] Error\n");
-			}
-			else
-			{
-				sprintf(g_tempStr, "*   [FRE 3] Freq High: %s\n", buf);
-				sb_send_string(g_tempStr);
-			}
-		}
-
-		if(frequencyString(buf, g_frequency_beacon))
-		{
-			sprintf(g_tempStr, "*   [FRE B] Error\n");
+			sprintf(g_tempStr, "*   [FRE 3] Error\n");
 		}
 		else
 		{
-			sprintf(g_tempStr, "*   [FRE B] Beacon Freq: %s\n", buf);
+			sprintf(g_tempStr, "*   [FRE 3] Freq High: %s\n", buf);
 			sb_send_string(g_tempStr);
 		}
+	}
+
+	if(frequencyString(buf, g_frequency_beacon))
+	{
+		sprintf(g_tempStr, "*   [FRE B] Error\n");
+	}
+	else
+	{
+		sprintf(g_tempStr, "*   [FRE B] Beacon Freq: %s\n", buf);
+		sb_send_string(g_tempStr);
 	}
 
 	ConfigurationState_t cfg = WAITING_FOR_START;
@@ -8210,7 +8220,7 @@ void handleSerialCloning(void)
 						}
 						else
 						{
-							c = 'N';
+							c = 'C';
 						}
 
 						g_event_checksum += c;

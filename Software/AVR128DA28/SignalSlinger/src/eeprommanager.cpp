@@ -90,7 +90,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00000000,                                   // 	reserved
         0x0000,                                       // 	int16_t intra_cycle_delay_time;
         0x00000000,                                   // 	reserved
-        (Event_t)0x00,                                // Event_t event_setting;
+        EEPROM_EVENT_SETTING_DEFAULT,                 // Event_t event_setting;
         0x00000000,                                   // 	reserved
         0x00000000,                                   // uint32_t frequency;
         0x00000000,                                   // 	reserved
@@ -412,6 +412,82 @@ static Fox_t avr_eeprom_read_clamped_fox(eeprom_addr_t index, Fox_t max_value)
 }
 
 /**
+ * Decode a current-layout EEPROM event byte into a valid runtime event.
+ *
+ * @param stored_event Raw byte read from EEPROM.
+ * @return Valid event, or the firmware default if the byte is out of range.
+ */
+static Event_t currentEEPROMEventOrDefault(uint8_t stored_event)
+{
+	Event_t event = (Event_t)stored_event;
+	return EVENT_IS_VALID(event) ? event : EEPROM_EVENT_SETTING_DEFAULT;
+}
+
+/**
+ * Decode an EEPROM event byte saved by firmware versions that still used zero
+ * as an explicit "no event" selector.
+ *
+ * @param stored_event Raw legacy byte read from EEPROM.
+ * @return Valid current-layout event, defaulting old none/invalid values to Classic.
+ */
+static Event_t legacyEEPROMEventOrDefault(uint8_t stored_event)
+{
+	switch(stored_event)
+	{
+		case 1:
+			return EVENT_CLASSIC;
+
+		case 2:
+			return EVENT_SPRINT;
+
+		case 3:
+			return EVENT_FOXORING;
+
+		case 4:
+			return EEPROM_EVENT_SETTING_DEFAULT;
+
+		default:
+			return EEPROM_EVENT_SETTING_DEFAULT;
+	}
+}
+
+/**
+ * Rewrite an event selector already using the no-none enum layout, mapping any
+ * retired or out-of-range value to the firmware default.
+ */
+static void migrateCurrentEEPROMEventSetting(void)
+{
+	Event_t migrated_event = currentEEPROMEventOrDefault(avr_eeprom_read_byte_at(Event_setting));
+	avr_eeprom_write_byte(Event_setting, (uint8_t)migrated_event);
+}
+
+/**
+ * Rewrite an event selector from the old zero-based no-event enum layout to
+ * the current real-events-only enum layout.
+ */
+static void migrateLegacyEEPROMEventSetting(void)
+{
+	Event_t migrated_event = legacyEEPROMEventOrDefault(avr_eeprom_read_byte_at(Event_setting));
+	avr_eeprom_write_byte(Event_setting, (uint8_t)migrated_event);
+}
+
+/**
+ * Rewrite an event selector from any supported previous layout to the current
+ * real-events-only enum layout.
+ */
+static void migrateEEPROMEventSetting(uint16_t initialization_flag)
+{
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0134)
+	{
+		migrateCurrentEEPROMEventSetting();
+	}
+	else
+	{
+		migrateLegacyEEPROMEventSetting();
+	}
+}
+
+/**
  * Upgrade known older EEPROM layouts in place to the current version.
  *
  * Version 0x0131 predates both new thermal fields, so migration seeds the
@@ -430,6 +506,7 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 		avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT);
 		avr_eeprom_write_byte(Thermal_Shutdown_Threshold + 1, 0);
 		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
+		migrateEEPROMEventSetting(initialization_flag);
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 		return true;
 	}
@@ -437,6 +514,14 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0132)
 	{
 		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
+		migrateEEPROMEventSetting(initialization_flag);
+		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
+		return true;
+	}
+
+	if((initialization_flag == EEPROM_INITIALIZED_FLAG_V0133) || (initialization_flag == EEPROM_INITIALIZED_FLAG_V0134))
+	{
+		migrateEEPROMEventSetting(initialization_flag);
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 		return true;
 	}
@@ -477,7 +562,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Fox_setting_sprint:
 		case Fox_setting_foxoring:
 		case Fox_setting_blind:
-		case Event_setting:
 		case Utc_offset:
 		case Days_to_run:
 		case Thermal_Shutdown_Threshold:
@@ -487,6 +571,16 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Device_Enabled:
 			avr_eeprom_write_byte_if_changed((eeprom_addr_t)v, *(const uint8_t *)val);
 			break;
+
+		case Event_setting:
+		{
+			Event_t event = *(const Event_t *)val;
+			if(EVENT_IS_VALID(event))
+			{
+				avr_eeprom_write_byte_if_changed((eeprom_addr_t)v, (uint8_t)event);
+			}
+			break;
+		}
 
 		case Frequency:
 		case Frequency_Low:
@@ -527,11 +621,9 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 void EepromManager::saveAllEEPROM(void)
 {
 	updateEEPROMVar(Id_codespeed, (void *)&g_evteng_id_codespeed);
-	updateEEPROMVar(Fox_setting_none, (void *)&g_fox[EVENT_NONE]);
 	updateEEPROMVar(Fox_setting_classic, (void *)&g_fox[EVENT_CLASSIC]);
 	updateEEPROMVar(Fox_setting_sprint, (void *)&g_fox[EVENT_SPRINT]);
 	updateEEPROMVar(Fox_setting_foxoring, (void *)&g_fox[EVENT_FOXORING]);
-	updateEEPROMVar(Fox_setting_blind, (void *)&g_fox[EVENT_BLIND_ARDF]);
 	updateEEPROMVar(Event_setting, (void *)&g_event);
 	updateEEPROMVar(Frequency, (void *)&g_frequency);
 	updateEEPROMVar(Frequency_Low, (void *)&g_frequency_low);
@@ -580,18 +672,17 @@ bool EepromManager::readNonVols(void)
 	{
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
 		g_evteng_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, avr_eeprom_read_byte_at(Id_codespeed), MAX_CODE_SPEED_WPM);
-		g_event = (Event_t)avr_eeprom_read_byte_at(Event_setting);
+		g_event = currentEEPROMEventOrDefault(avr_eeprom_read_byte_at(Event_setting));
+		avr_eeprom_write_byte_if_changed(Event_setting, (uint8_t)g_event);
 		g_frequency = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency), TX_MAXIMUM_FREQUENCY);
 		g_frequency_low = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency_Low), TX_MAXIMUM_FREQUENCY);
 		g_frequency_med = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency_Med), TX_MAXIMUM_FREQUENCY);
 		g_frequency_hi = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency_Hi), TX_MAXIMUM_FREQUENCY);
 		g_frequency_beacon = CLAMP(TX_MINIMUM_FREQUENCY, avr_eeprom_read_dword_at(Frequency_Beacon), TX_MAXIMUM_FREQUENCY);
 		g_enable_boost_regulator = (bool)avr_eeprom_read_byte_at(Enable_Boost_Regulator);
-		fox_setting_slot_write_atomic(EVENT_NONE, avr_eeprom_read_clamped_fox(Fox_setting_none, SPRINT_F5));
 		fox_setting_slot_write_atomic(EVENT_CLASSIC, avr_eeprom_read_clamped_fox(Fox_setting_classic, FOX_5));
 		fox_setting_slot_write_atomic(EVENT_SPRINT, avr_eeprom_read_clamped_fox(Fox_setting_sprint, SPRINT_F5));
 		fox_setting_slot_write_atomic(EVENT_FOXORING, avr_eeprom_read_clamped_fox(Fox_setting_foxoring, FREQUENCY_TEST_BEACON));
-		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, avr_eeprom_read_clamped_fox(Fox_setting_blind, FOX_5));
 		g_event_start_epoch = avr_eeprom_read_dword_at(Event_start_epoch);
 		g_event_finish_epoch = avr_eeprom_read_dword_at(Event_finish_epoch);
 		g_utc_offset = (int8_t)avr_eeprom_read_byte_at(Utc_offset);
@@ -680,8 +771,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
 		avr_eeprom_write_byte(Reserved_Master_Setting, 0);
 
-		fox_setting_slot_write_atomic(EVENT_NONE, EEPROM_FOX_SETTING_NONE_DEFAULT);
-		avr_eeprom_write_byte(Fox_setting_none, (uint8_t)g_fox[EVENT_NONE]);
+		avr_eeprom_write_byte(Fox_setting_none, (uint8_t)EEPROM_FOX_SETTING_NONE_DEFAULT);
 
 		fox_setting_slot_write_atomic(EVENT_CLASSIC, EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
 		avr_eeprom_write_byte(Fox_setting_classic, (uint8_t)g_fox[EVENT_CLASSIC]);
@@ -692,8 +782,7 @@ bool EepromManager::initializeEEPROMVars(void)
 		fox_setting_slot_write_atomic(EVENT_FOXORING, EEPROM_FOX_SETTING_FOXORING_DEFAULT);
 		avr_eeprom_write_byte(Fox_setting_foxoring, (uint8_t)g_fox[EVENT_FOXORING]);
 
-		fox_setting_slot_write_atomic(EVENT_BLIND_ARDF, EEPROM_FOX_SETTING_BLIND_DEFAULT);
-		avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)g_fox[EVENT_BLIND_ARDF]);
+		avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
 
 		g_event = EEPROM_EVENT_SETTING_DEFAULT;
 		avr_eeprom_write_byte(Event_setting, (uint8_t)g_event);

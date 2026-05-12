@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.0"
+#define SW_REVISION "2.0.1"
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
 
@@ -175,7 +175,9 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
  * EEPROM definitions */
 #define EEPROM_INITIALIZED_FLAG_V0131 (uint16_t)0x0131
 #define EEPROM_INITIALIZED_FLAG_V0132 (uint16_t)0x0132
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0133
+#define EEPROM_INITIALIZED_FLAG_V0133 (uint16_t)0x0133
+#define EEPROM_INITIALIZED_FLAG_V0134 (uint16_t)0x0134
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0135
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
@@ -217,8 +219,7 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define EEPROM_FOX_SETTING_CLASSIC_DEFAULT FOX_1
 #define EEPROM_FOX_SETTING_SPRINT_DEFAULT SPRINT_S1
 #define EEPROM_FOX_SETTING_FOXORING_DEFAULT FOXORING_FOX1
-#define EEPROM_FOX_SETTING_BLIND_DEFAULT FOX_1
-#define EEPROM_EVENT_SETTING_DEFAULT EVENT_FOXORING
+#define EEPROM_EVENT_SETTING_DEFAULT EVENT_CLASSIC
 #define EEPROM_FOX_PATTERN_DEFAULT "MOE"
 #define EEPROM_FOXORING_PATTERN_DEFAULT "MOE"
 #define EEPROM_FREQUENCY_DEFAULT 3520000
@@ -355,13 +356,13 @@ typedef enum
 /* Identify the event family that determines timing and fox-selection rules. */
 typedef enum
 {
-	EVENT_NONE,
 	EVENT_CLASSIC,
 	EVENT_SPRINT,
 	EVENT_FOXORING,
-	EVENT_BLIND_ARDF,
 	EVENT_NUMBER_OF_EVENTS
 } Event_t;
+
+#define EVENT_IS_VALID(event) ((event) >= EVENT_CLASSIC && (event) < EVENT_NUMBER_OF_EVENTS)
 
 /* Periodic TIMER2 interrupt timing definitions */
 #define OCR2A_OVF_FREQ_300 0x0C
