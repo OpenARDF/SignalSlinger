@@ -96,6 +96,7 @@ typedef enum
 static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state);
 static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
 static void updateTemperatureState(float temperature);
+static void turnCoolingFanOffForSleep(void);
 static float sampleTemperatureNow(void);
 static bool resetProcessorTemperatureExtremesToCurrent(float *temperature_out);
 static bool resetProcessorMaxEverTemperatureToCurrent(float *temperature_out);
@@ -1674,6 +1675,7 @@ int main(void)
 						g_sleepType = SLEEP_FOREVER;
 					}
 
+					turnCoolingFanOffForSleep();
 					powerToTransmitter(OFF);
 					atomic_write_u16(&g_demo_event_countdown, 0);
 					g_foreground_reset_after_demo = false;
@@ -1778,6 +1780,7 @@ int main(void)
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					system_resume_from_standby();
+					sampleTemperatureNow();
 					g_restart_conversions = true;
 					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
@@ -4103,6 +4106,27 @@ static void updateTemperatureState(float temperature)
 
 	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
 	                                                                                                                    : g_turn_on_fan;
+}
+
+/**
+ * Stop any temperature-commanded fan drive before entering standby sleep.
+ *
+ * Sleep disables periodic temperature sampling, so a hot-state fan latch must
+ * not be allowed to survive into standby and keep draining the battery after
+ * the device cools.
+ */
+static void turnCoolingFanOffForSleep(void)
+{
+	g_turn_on_fan = false;
+
+#ifdef HW_TARGET_3_5
+	setCoolingFanLSEnable(OFF);
+#else
+	if(!g_enable_external_battery_control)
+	{
+		setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+	}
+#endif
 }
 
 /**
