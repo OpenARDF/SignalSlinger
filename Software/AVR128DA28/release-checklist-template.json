@@ -1,0 +1,90 @@
+{
+  "release": "vX.Y",
+  "repository": "OpenARDF/SignalSlinger",
+  "items": [
+    {
+      "id": "branch-announced",
+      "description": "Confirm the current branch and announce it to the user before making changes.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "working-tree-reviewed",
+      "description": "Confirm the working tree is clean or existing changes are intentionally excluded from release work.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "firmware-version-readme",
+      "description": "Confirm the intended firmware version in SignalSlinger/defs.h and matching repo-root README asset references.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-channel",
+      "description": "Decide the release channel for main or Development2.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-build",
+      "description": "Run the Release firmware build or dual-target hash verification.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "prepare-release",
+      "description": "Run the repo-root prepare-release.ps1 flow.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-assets",
+      "description": "Verify both hardware-specific Release HEX assets exist.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "readme-review",
+      "description": "Review README.md and confirm it matches the intended branch and release channel.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "development2-commit-policy",
+      "description": "On Development2, leave changes uncommitted unless the user explicitly asks for a commit.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "gh-environment",
+      "description": "Clean GitHub CLI environment variables before using gh.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-notes",
+      "description": "Draft user-readable GitHub release notes in the required style.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "github-release-created",
+      "description": "Create the GitHub release using the requested prerelease or normal release channel.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "hardware-assets-uploaded",
+      "description": "Upload both hardware assets to the release.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "remote-release-verified",
+      "description": "Verify the remote release assets, readable notes, and branch README targets.",
+      "status": "pending",
+      "evidence": ""
+    }
+  ]
+}

@@ -13,6 +13,15 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 
 ## Standard Release Checklist
 
+Before starting a release, copy `release-checklist-template.json` to a release-specific file such as `release-checklist-vX.Y.json`. Each checklist item must be marked `done` with evidence, or `skipped` with both `skipReason` and `skipRequestedBy` when the user specifically requested the skip.
+
+Run the checklist guard before creating the GitHub release and again before declaring the release complete:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase pre-release
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase final
+```
+
 1. Confirm the current branch and announce it to the user before making changes.
 2. Confirm the working tree is clean or that any existing changes are intentionally excluded from the release work:
 
@@ -59,6 +68,13 @@ $env:ALL_PROXY=''
 11. Draft user-readable GitHub release notes that cover the changes since the previous release.
    - Match the style of `v1.2.1`: a short version introduction, two to four plain-language paragraphs about user-visible changes, an overall summary sentence, and a `Full Changelog` compare link.
    - Do not publish GitHub's generated PR summary as the final release body. Use generated notes only as source material for the user-readable draft.
+
+Before creating the GitHub release, update the release checklist through `release-notes` and run:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase pre-release
+```
+
 12. Create the GitHub release:
    - Use a prerelease or a normal release on `Development2` according to the requested release channel.
    - Use a normal release on `main` unless a prerelease is explicitly requested.
@@ -69,6 +85,12 @@ $env:ALL_PROXY=''
    - the release notes are user-readable and summarize the changes since the previous release
    - `main` README points to stable downloads
    - `Development2` README points to the intended development-branch downloads
+
+Update the release checklist through `remote-release-verified` and run:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase final
+```
 
 ## Notes
 
