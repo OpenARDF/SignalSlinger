@@ -45,9 +45,15 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.1"
+#define SW_REVISION "2.0.3"
+#if !defined(HW_TARGET_3_4) && !defined(HW_TARGET_3_5)
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
+#endif
+
+#if defined(HW_TARGET_3_4) && defined(HW_TARGET_3_5)
+#error "Select exactly one SignalSlinger hardware target"
+#endif
 
 // #define TRANQUILIZE_WATCHDOG
 

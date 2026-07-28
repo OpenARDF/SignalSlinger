@@ -96,6 +96,7 @@ typedef enum
 static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state);
 static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
 static void updateTemperatureState(float temperature);
+static void turnCoolingFanOffForSleep(void);
 static float sampleTemperatureNow(void);
 static bool resetProcessorTemperatureExtremesToCurrent(float *temperature_out);
 static bool resetProcessorMaxEverTemperatureToCurrent(float *temperature_out);
@@ -1674,6 +1675,7 @@ int main(void)
 						g_sleepType = SLEEP_FOREVER;
 					}
 
+					turnCoolingFanOffForSleep();
 					powerToTransmitter(OFF);
 					atomic_write_u16(&g_demo_event_countdown, 0);
 					g_foreground_reset_after_demo = false;
@@ -1778,6 +1780,7 @@ int main(void)
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
 					system_resume_from_standby();
+					sampleTemperatureNow();
 					g_restart_conversions = true;
 					configureSwitchInterruptForAwake();
 					if(!sb_enabled())
@@ -3923,6 +3926,31 @@ static const char *hardwareBuildString(void)
 #endif
 }
 
+static void sendDeviceUniqueId(void)
+{
+	static const char hex_digits[] = "0123456789ABCDEF";
+	static const char prefix[] = "* INF uid=";
+	static_assert((sizeof(prefix) - 1) + 32 + 1 <= TEMP_STRING_SIZE, "Device UID report exceeds g_tempStr");
+	const volatile uint8_t *serial_number = &SIGROW.SERNUM0;
+	size_t output_index = 0;
+
+	for(size_t i = 0; i < (sizeof(prefix) - 1); i++)
+	{
+		g_tempStr[output_index++] = prefix[i];
+	}
+
+	for(uint8_t i = 0; i < 16; i++)
+	{
+		const uint8_t value = serial_number[i];
+		g_tempStr[output_index++] = hex_digits[value >> 4];
+		g_tempStr[output_index++] = hex_digits[value & 0x0F];
+	}
+
+	g_tempStr[output_index++] = '\n';
+	g_tempStr[output_index] = '\0';
+	sb_send_string(g_tempStr);
+}
+
 static void sendFirmwareInfo(void)
 {
 	if(g_cloningInProgress || g_meshmode)
@@ -3943,6 +3971,7 @@ static void sendFirmwareInfo(void)
 		snprintf(g_tempStr, sizeof(g_tempStr), "* INF bl=unknown proto=unknown\n");
 	}
 	sb_send_string(g_tempStr);
+	sendDeviceUniqueId();
 }
 
 /**
@@ -4103,6 +4132,27 @@ static void updateTemperatureState(float temperature)
 
 	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
 	                                                                                                                    : g_turn_on_fan;
+}
+
+/**
+ * Stop any temperature-commanded fan drive before entering standby sleep.
+ *
+ * Sleep disables periodic temperature sampling, so a hot-state fan latch must
+ * not be allowed to survive into standby and keep draining the battery after
+ * the device cools.
+ */
+static void turnCoolingFanOffForSleep(void)
+{
+	g_turn_on_fan = false;
+
+#ifdef HW_TARGET_3_5
+	setCoolingFanLSEnable(OFF);
+#else
+	if(!g_enable_external_battery_control)
+	{
+		setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+	}
+#endif
 }
 
 /**
@@ -7475,6 +7525,7 @@ void reportSettings(void)
 
 	sprintf(g_tempStr, "\n* SW Ver: %s HW Build: %s\n", SW_REVISION, hardwareBuildString());
 	sb_send_string(g_tempStr);
+	sendDeviceUniqueId();
 
 	if(g_hardware_error & (int)HARDWARE_NO_RTC)
 	{

@@ -4,13 +4,15 @@ param(
 
     [string]$TargetBranch = 'main',
 
+    [string]$RepositoryRoot = $PSScriptRoot,
+
     [switch]$Commit
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Set-Location -LiteralPath $PSScriptRoot
+Set-Location -LiteralPath $RepositoryRoot
 
 function Invoke-Git {
     param(
@@ -52,7 +54,19 @@ function Get-GitConfigValue {
         [string]$Name
     )
 
-    return (Get-GitOutput -Arguments @('config', '--default', '', '--get', $Name))
+    $output = & git config --get $Name
+    $exitCode = $LASTEXITCODE
+
+    if($exitCode -eq 1)
+    {
+        return ''
+    }
+    if($exitCode -ne 0)
+    {
+        throw "git config --get $Name failed with exit code $exitCode."
+    }
+
+    return ($output | Out-String).Trim()
 }
 
 function Test-MergeInProgress {

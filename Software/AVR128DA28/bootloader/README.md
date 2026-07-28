@@ -75,7 +75,21 @@ On Windows, the provisioner uses Microchip Studio `atprogram` by default. On mac
 pwsh ./provision-bootloader.ps1 -Backend Pymcuprog -SkipBuild -BootloaderHexPath ./bootloader/Release/SignalSlingerBootloader.hex -ApplicationHexPath ./SignalSlinger/Release/SignalSlinger.hex
 ```
 
-The current build helpers are Windows/Microchip Studio centered. On macOS, use prebuilt bootloader and relocated application HEX files with `-SkipBuild`, unless the AVR GCC build tooling has been ported locally.
+The PowerShell build helpers remain Windows/Microchip Studio centered. The
+repository also has a pinned native macOS build path:
+
+```sh
+just avr-setup-macos
+just avr-doctor
+just avr-boot-chain-build
+```
+
+That build writes the bootloader and both hardware revisions of the relocated
+application beneath ignored `tmp/avr-*` directories, verifies the `0x2000`
+application start and 8 KiB bootloader boundary, and records hashes, sizes, and
+warnings in `build-evidence.json`. See
+[`BUILD_ENVIRONMENT.md`](../BUILD_ENVIRONMENT.md) for the exact compiler/device
+pack and individual build recipes.
 
 Required programming PC software:
 
@@ -122,7 +136,10 @@ SerialSlinger should use the firmware already running on the device as the first
 ```text
 * INF product=SignalSlinger update=UPD
 * INF sw=2.0.0 hw=3.5 app=0x2000 baud=115200
+* INF uid=314A323536384E171D00321700000000
 ```
+
+The `uid` field is the AVR's factory-programmed 16-byte serial number rendered as 32 uppercase hexadecimal characters. It remains stable across firmware updates and settings changes, allowing SerialSlinger to detect when a different transmitter replaces the previously loaded unit behind the same USB serial adapter. Firmware that predates this field remains compatible and simply omits the line.
 
 The `hw` field should match the release package `board` field and the `HW-3.4` or `HW-3.5` text in the file name before SerialSlinger enters update mode. If `INF` is not supported, SerialSlinger can fall back to parsing the older human `VER` response, for example `SW Ver: 1.2.2 HW Build: 3.5`. Firmware versions below `2.0.0` should be treated as legacy: use `RST` plus the bootloader-catch path instead of relying on `UPD`.
 
