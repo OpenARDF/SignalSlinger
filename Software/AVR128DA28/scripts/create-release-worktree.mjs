@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import {
+  firmwareRoot,
   parseVersion,
   readFirmwareVersion,
   readRemoteHeads,
@@ -84,8 +85,8 @@ try {
 
   runGit(["worktree", "add", worktreePath, "main"]);
   const mergeScript = resolve(
-    worktreePath,
-    "Software/AVR128DA28/merge-development2-into-main.ps1",
+    firmwareRoot,
+    "merge-development2-into-main.ps1",
   );
   const merge = runGit(
     ["-C", worktreePath, "status", "--short"],
@@ -97,7 +98,14 @@ try {
 
   const result = spawnSync(
     "pwsh",
-    ["-NoLogo", "-NoProfile", "-File", mergeScript],
+    [
+      "-NoLogo",
+      "-NoProfile",
+      "-File",
+      mergeScript,
+      "-RepositoryRoot",
+      resolve(worktreePath, "Software/AVR128DA28"),
+    ],
     {
       cwd: worktreePath,
       encoding: "utf8",
