@@ -3,6 +3,7 @@
 # Keep source and text assets consistent across platforms.
 /.gitattributes text eol=lf
 /.gitignore text eol=lf
+/.gitleaksignore text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
 *.json text eol=lf
@@ -21,6 +22,9 @@
 *.S text eol=lf
 Makefile text eol=lf
 *.mk text eol=lf
+Justfile text eol=lf
+*.mjs text eol=lf
+*.sh text eol=lf
 
 # Preserve Windows-native line endings for local tooling.
 *.ps1 text eol=crlf

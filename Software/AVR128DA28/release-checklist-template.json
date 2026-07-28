@@ -1,6 +1,13 @@
 {
-  "release": "vX.Y",
+  "release": "vX.Y.Z",
   "repository": "OpenARDF/SignalSlinger",
+  "channel": "stable",
+  "sourceCommit": "",
+  "firmwareVersion": "X.Y.Z",
+  "hardwareTargets": [
+    "HW-3.4",
+    "HW-3.5"
+  ],
   "items": [
     {
       "id": "branch-announced",
@@ -27,26 +34,56 @@
       "evidence": ""
     },
     {
-      "id": "release-build",
-      "description": "Run the Release firmware build or dual-target hash verification.",
+      "id": "source-commit-frozen",
+      "description": "Freeze and record the exact clean source commit used for release builds.",
       "status": "pending",
       "evidence": ""
     },
     {
-      "id": "prepare-release",
-      "description": "Run the repo-root prepare-release.ps1 flow.",
+      "id": "full-repository-check",
+      "description": "Run just check and just secrets at the frozen source commit.",
       "status": "pending",
       "evidence": ""
     },
     {
-      "id": "release-assets",
-      "description": "Verify both hardware-specific Release HEX assets exist.",
+      "id": "deterministic-avr-builds",
+      "description": "Run the normal, relocated, and bootloader repeatability checks with pinned tools and zero warnings.",
       "status": "pending",
       "evidence": ""
     },
     {
-      "id": "readme-review",
-      "description": "Review README.md and confirm it matches the intended branch and release channel.",
+      "id": "artifact-manifest",
+      "description": "Generate both hardware-specific release packages, manifests, checksums, READMEs, and ZIP archives.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "package-validation",
+      "description": "Independently validate package contents, hashes, ZIP members, and flash geometry.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "hardware-checklist",
+      "description": "Complete representative hardware programming, update, recovery, and version-report checks.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "live-version-report",
+      "description": "Install each hardware build on a representative unit and capture its INF version report.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "rollback-package",
+      "description": "Select and verify the prior release package and documented recovery path.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-notes",
+      "description": "Draft user-readable GitHub release notes in the required style.",
       "status": "pending",
       "evidence": ""
     },
@@ -57,14 +94,26 @@
       "evidence": ""
     },
     {
-      "id": "gh-environment",
-      "description": "Clean GitHub CLI environment variables before using gh.",
+      "id": "integration-approved",
+      "description": "Obtain explicit approval to integrate the release candidate into main.",
       "status": "pending",
       "evidence": ""
     },
     {
-      "id": "release-notes",
-      "description": "Draft user-readable GitHub release notes in the required style.",
+      "id": "release-branch-verified",
+      "description": "Re-run release-preflight from the clean integrated main commit.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-approved",
+      "description": "Obtain explicit approval for the release tag and GitHub publication.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "annotated-tag",
+      "description": "Create and push an annotated release tag at the verified commit.",
       "status": "pending",
       "evidence": ""
     },

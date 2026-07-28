@@ -1,0 +1,157 @@
+repo_root := justfile_directory() + "/../.."
+kicad_exclusion := ":(top,exclude)KiCad/**"
+
+# Show the available firmware workspace recipes.
+default:
+    @just --list
+
+# Show the current branch and concise repository status.
+status:
+    git -C "{{repo_root}}" status --short --branch
+
+# Verify that this Mac has every tool used by the checked-in workflows.
+doctor:
+    ./scripts/repository-doctor.sh
+
+# Verify local links in repository Markdown files.
+docs-check:
+    node ./scripts/check-markdown-links.mjs
+
+# Verify ignore rules, attributes, JSON, checklist structure, and diff hygiene.
+policy-check:
+    ./scripts/check-repository-policy.sh
+    node ./scripts/check-release-checklist.mjs --file ./release-checklist-template.json --phase template
+
+# Run dependency-light host checks for the portable workflow.
+test:
+    for script in ./scripts/*.mjs; do node --check "$script"; done
+    shellcheck ./scripts/*.sh
+    shfmt -d ./scripts/*.sh
+    node ./scripts/check-release-version-consistency.mjs
+
+# Run all non-firmware repository checks.
+check: doctor docs-check policy-check test
+
+# Scan the repository and history for secrets.
+secrets:
+    gitleaks detect --source "{{repo_root}}" --gitleaks-ignore-path "{{justfile_directory()}}/.gitleaksignore" --no-banner --redact
+
+# Install the exact archived AVR compiler and device pack for macOS.
+avr-setup-macos:
+    ./scripts/setup-avr-build-macos.sh
+
+# Verify the pinned AVR compiler and device pack without compiling firmware.
+avr-doctor:
+    node ./scripts/build-avr-release.mjs --doctor
+
+# Build the active hardware target's normal Release firmware.
+avr-build:
+    node ./scripts/build-avr-release.mjs
+
+# Build normal Release firmware for an explicit 3.4 or 3.5 hardware target.
+avr-build-hw target:
+    node ./scripts/build-avr-release.mjs --hardware "{{target}}"
+
+# Build normal Release firmware for both supported hardware targets.
+avr-dual-build:
+    node ./scripts/build-avr-release.mjs --hardware "3.4"
+    node ./scripts/build-avr-release.mjs --hardware "3.5"
+
+# Build the active target twice and require byte-identical evidence.
+avr-repeatability:
+    node ./scripts/check-avr-build-repeatability.mjs
+
+# Build an explicit target twice and require byte-identical evidence.
+avr-repeatability-hw target:
+    node ./scripts/check-avr-build-repeatability.mjs --hardware "{{target}}"
+
+# Build the active target's bootloader-relocated application at 0x2000.
+avr-relocated-build:
+    node ./scripts/build-avr-release.mjs --application-start "0x2000"
+
+# Build a target's bootloader-relocated application at 0x2000.
+avr-relocated-build-hw target:
+    node ./scripts/build-avr-release.mjs --hardware "{{target}}" --application-start "0x2000"
+
+# Build a target's relocated application twice and require byte-identical evidence.
+avr-relocated-repeatability-hw target:
+    node ./scripts/check-avr-build-repeatability.mjs --hardware "{{target}}" --application-start "0x2000"
+
+# Build the resident 8 KiB bootloader.
+avr-bootloader-build:
+    node ./scripts/build-avr-bootloader.mjs
+
+# Build the bootloader twice and require byte-identical evidence.
+avr-bootloader-repeatability:
+    node ./scripts/check-avr-build-repeatability.mjs --bootloader
+
+# Build both relocated release applications and their shared bootloader.
+avr-boot-chain-build:
+    node ./scripts/build-avr-bootloader.mjs
+    node ./scripts/build-avr-release.mjs --hardware "3.4" --application-start "0x2000"
+    node ./scripts/build-avr-release.mjs --hardware "3.5" --application-start "0x2000"
+
+# Check the macOS PowerShell/pymcuprog provisioning prerequisites without touching hardware.
+avr-programmer-prereqs:
+    pwsh -NoLogo -NoProfile -File ./provision-bootloader.ps1 -Backend Pymcuprog -SkipBuild -BootloaderHexPath ./tmp/avr-bootloader-release/SignalSlingerBootloader.hex -ApplicationHexPath ./tmp/avr-release-relocated-hw-3-5/SignalSlinger.hex -CheckPrereqs -SkipSerialValidation
+
+# Probe a connected programmer and AVR without writing; entering UPDI may reset the target.
+avr-probe:
+    pwsh -NoLogo -NoProfile -File ./provision-bootloader.ps1 -Backend Pymcuprog -SkipBuild -CheckProgrammer -SkipSerialValidation
+
+# Build and independently validate a complete release package for one hardware target.
+avr-release-package-hw target:
+    node ./scripts/build-avr-bootloader.mjs
+    node ./scripts/build-avr-release.mjs --hardware "{{target}}" --application-start "0x2000"
+    node ./scripts/package-avr-release.mjs --hardware "{{target}}"
+
+# Build and independently validate complete release packages for both hardware targets.
+avr-release-packages:
+    node ./scripts/build-avr-bootloader.mjs
+    node ./scripts/build-avr-release.mjs --hardware "3.4" --application-start "0x2000"
+    node ./scripts/package-avr-release.mjs --hardware "3.4"
+    node ./scripts/build-avr-release.mjs --hardware "3.5" --application-start "0x2000"
+    node ./scripts/package-avr-release.mjs --hardware "3.5"
+
+# Independently validate an existing release-package directory.
+avr-release-package-validate package_dir:
+    node ./scripts/validate-avr-release-package.mjs --package-dir "{{package_dir}}"
+
+# Generate both release packages twice and require byte-identical results.
+avr-release-package-repeatability:
+    node ./scripts/check-avr-release-package-repeatability.mjs
+
+# Validate a release-specific evidence checklist.
+release-checklist file phase:
+    node ./scripts/check-release-checklist.mjs --file "{{file}}" --phase "{{phase}}"
+
+# Run all deterministic firmware and package release gates.
+release-build-preflight:
+    just avr-repeatability-hw "3.4"
+    just avr-repeatability-hw "3.5"
+    just avr-relocated-repeatability-hw "3.4"
+    just avr-relocated-repeatability-hw "3.5"
+    just avr-bootloader-repeatability
+    just avr-release-package-repeatability
+
+# Run the complete Mac release-candidate preflight.
+release-preflight: check secrets release-build-preflight
+
+# Preview everything that stage-non-kicad would add to the index.
+stage-preview:
+    git -C "{{repo_root}}" diff --cached --quiet -- KiCad
+    git -C "{{repo_root}}" add --dry-run -A -- . "{{kicad_exclusion}}"
+
+# Stage all non-KiCad changes; fail if a KiCad change was already staged.
+stage-non-kicad:
+    git -C "{{repo_root}}" diff --cached --quiet -- KiCad
+    git -C "{{repo_root}}" add -A -- . "{{kicad_exclusion}}"
+    git -C "{{repo_root}}" diff --cached --quiet -- KiCad
+    git -C "{{repo_root}}" diff --cached --check
+    gitleaks git --staged --no-banner --redact "{{repo_root}}"
+    git -C "{{repo_root}}" status --short
+
+# Stage non-KiCad changes, commit them, and push the current upstream branch.
+commit-push message: stage-non-kicad
+    git -C "{{repo_root}}" commit -m {{quote(message)}}
+    git -C "{{repo_root}}" push

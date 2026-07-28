@@ -75,7 +75,21 @@ On Windows, the provisioner uses Microchip Studio `atprogram` by default. On mac
 pwsh ./provision-bootloader.ps1 -Backend Pymcuprog -SkipBuild -BootloaderHexPath ./bootloader/Release/SignalSlingerBootloader.hex -ApplicationHexPath ./SignalSlinger/Release/SignalSlinger.hex
 ```
 
-The current build helpers are Windows/Microchip Studio centered. On macOS, use prebuilt bootloader and relocated application HEX files with `-SkipBuild`, unless the AVR GCC build tooling has been ported locally.
+The PowerShell build helpers remain Windows/Microchip Studio centered. The
+repository also has a pinned native macOS build path:
+
+```sh
+just avr-setup-macos
+just avr-doctor
+just avr-boot-chain-build
+```
+
+That build writes the bootloader and both hardware revisions of the relocated
+application beneath ignored `tmp/avr-*` directories, verifies the `0x2000`
+application start and 8 KiB bootloader boundary, and records hashes, sizes, and
+warnings in `build-evidence.json`. See
+[`BUILD_ENVIRONMENT.md`](../BUILD_ENVIRONMENT.md) for the exact compiler/device
+pack and individual build recipes.
 
 Required programming PC software:
 

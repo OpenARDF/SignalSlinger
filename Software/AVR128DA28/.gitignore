@@ -5,6 +5,9 @@ tmp/firmware-hash-verification*/
 tmp/bootloader-check-*/
 tmp/bootloader-repeatability*/
 tmp/forensic-*/
+tmp/avr-tools/
+tmp/avr-release*/
+tmp/avr-bootloader-release/
 *.bin
 
 # Visual Studio / Atmel Studio workspace state

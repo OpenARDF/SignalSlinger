@@ -13,13 +13,16 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 
 ## Standard Release Checklist
 
-Before starting a release, copy `release-checklist-template.json` to a release-specific file such as `release-checklist-vX.Y.json`. Each checklist item must be marked `done` with evidence, or `skipped` with both `skipReason` and `skipRequestedBy` when the user specifically requested the skip.
+Before starting a release, copy `release-checklist-template.json` to a release-specific file such as `release-checklist-vX.Y.Z.json`. Each checklist item must be marked `done` with evidence, or `skipped` with both `skipReason` and `skipRequestedBy` when the user specifically requested the skip.
 
-Run the checklist guard before creating the GitHub release and again before declaring the release complete:
+Validate the untouched template, then run the checklist guard at candidate,
+release, and final publication boundaries:
 
-```powershell
-node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase pre-release
-node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase final
+```sh
+just release-checklist release-checklist-template.json template
+just release-checklist release-checklist-vX.Y.Z.json candidate
+just release-checklist release-checklist-vX.Y.Z.json release
+just release-checklist release-checklist-vX.Y.Z.json final
 ```
 
 1. Confirm the current branch and announce it to the user before making changes.
@@ -33,27 +36,47 @@ git status --short
 4. Decide the release channel:
    - `main` for a stable release.
    - `Development2` for a development-branch release, using either a prerelease or a normal release as explicitly requested.
-5. For routine patch verification before handoff, run:
+5. On macOS, run the complete release-candidate preflight:
+
+```sh
+just release-preflight
+```
+
+This runs the repository checks and secret scan, then requires deterministic
+normal and relocated builds for HW-3.4 and HW-3.5, a deterministic bootloader,
+and byte-identical complete release packages. The package builder independently
+validates manifest hashes, ZIP membership, and flash geometry.
+
+For routine patch verification rather than release preparation, continue to use
+`just avr-build` or `just avr-dual-build`.
+
+On Windows, the established equivalents remain:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
-```
-
-Optional: for dual-target `.hex` verification with SHA256 reporting, run:
-
-```powershell
 powershell -ExecutionPolicy Bypass -File .\verify-firmware-hashes.ps1 -Configuration Release
 ```
 
-6. Run the release preparation script from the repo root:
+6. Build the complete hardware-specific release packages:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File ..\..\prepare-release.ps1
+```sh
+just avr-release-packages
 ```
 
-7. Verify the generated `Release` assets exist:
-   - `SignalSlinger-vX.Y-3.4.hex`
-   - `SignalSlinger-vX.Y-3.5.hex`
+The validated packages are written beneath:
+
+- `release-packages/SignalSlinger-X.Y.Z-HW-3.4`
+- `release-packages/SignalSlinger-X.Y.Z-HW-3.5`
+
+For GitHub, upload each unzipped `SignalSlinger-Update-...hex` plus its matching
+`SignalSlinger-...-Release-Files.zip`.
+
+On Windows, `build-all-release-packages.ps1` and
+`validate-release-package.ps1` remain supported.
+
+7. Verify both packages report `sourceTreeDirty: false`, the recorded full
+   commit is the frozen release commit, and all build profiles report
+   `reference-version-match` with zero warnings.
 8. Review `README.md` and confirm it matches the intended branch and release channel.
 9. On `Development2`, leave changes uncommitted unless the user explicitly asks for a commit.
 10. Before using `gh`, ensure the GitHub CLI environment is clean in this VM session:
@@ -69,18 +92,24 @@ $env:ALL_PROXY=''
    - Match the style of `v1.2.1`: a short version introduction, two to four plain-language paragraphs about user-visible changes, an overall summary sentence, and a `Full Changelog` compare link.
    - Do not publish GitHub's generated PR summary as the final release body. Use generated notes only as source material for the user-readable draft.
 
-Before creating the GitHub release, update the release checklist through `release-notes` and run:
+Before integrating the candidate, update the checklist through `release-notes`
+and run:
 
-```powershell
-node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase pre-release
+```sh
+just release-checklist release-checklist-vX.Y.Z.json candidate
 ```
 
-12. Create the GitHub release:
+12. After explicit approval, integrate into `main`, re-run
+    `just release-preflight` from the clean integrated commit, record the new
+    package hashes, and run the `release` checklist phase.
+13. Create and push the annotated tag, then create the GitHub release:
    - Use a prerelease or a normal release on `Development2` according to the requested release channel.
    - Use a normal release on `main` unless a prerelease is explicitly requested.
    - Prefer `--notes-file` or edit the release immediately after creation so the published body uses the drafted user-readable notes.
-13. Upload both hardware assets to the release.
-14. Verify remotely:
+14. Upload both hardware update HEX files and both matching release ZIPs.
+15. Download the published assets into a fresh directory and independently
+    verify their hashes, package validation, release notes, and tag target.
+16. Verify remotely:
    - the release page includes both `.hex` files
    - the release notes are user-readable and summarize the changes since the previous release
    - `main` README points to stable downloads
@@ -88,8 +117,8 @@ node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json 
 
 Update the release checklist through `remote-release-verified` and run:
 
-```powershell
-node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json --phase final
+```sh
+just release-checklist release-checklist-vX.Y.Z.json final
 ```
 
 ## Notes
@@ -97,7 +126,7 @@ node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.json 
 - `build-firmware.ps1` is the standard local build entry point for patch verification and can also be reused by other scripts.
 - `verify-firmware-hashes.ps1` builds both hardware targets, reports SHA256 hashes for the copied `.hex` files, and restores the original active hardware target afterward.
 - Use `-OutputDir` or `-KeepArtifacts` with `verify-firmware-hashes.ps1` if you want to keep the copied comparison artifacts.
-- `prepare-release.ps1` lives at the repository root and updates the repo-root `README.md` unless you pass `-SkipReadmeUpdate`.
+- `prepare-release.ps1` remains the Windows path for older standalone HEX asset preparation. The Mac release package path reads the version directly from `defs.h` and checks matching README asset references.
 - The release-prep flow should build `Release`, not `Debug`.
 - The expected asset naming pattern is `SignalSlinger-vX.Y-3.4.hex` and `SignalSlinger-vX.Y-3.5.hex`.
 - `prepare-release.ps1` should restore the default hardware target after the dual-build process completes.

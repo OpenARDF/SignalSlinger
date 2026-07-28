@@ -36,7 +36,11 @@
 #ifndef DRIVER_INIT_H_INCLUDED
 #define DRIVER_INIT_H_INCLUDED
 
-#include "utils\compiler.h"
+/*
+ * Keep this generated include portable. A backslash works in Microchip Studio
+ * on Windows but is interpreted as part of the filename by the macOS compiler.
+ */
+#include "utils/compiler.h"
 #include <clock_config.h>
 #include <port.h>
 #include <atmel_start_pins.h>
