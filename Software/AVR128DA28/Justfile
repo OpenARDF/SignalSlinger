@@ -1,5 +1,6 @@
 repo_root := justfile_directory() + "/../.."
 kicad_exclusion := ":(top,exclude)KiCad/**"
+release_evidence_exclusion := ":(top,exclude)release-evidence/**"
 
 # Show the available firmware workspace recipes.
 default:
@@ -125,6 +126,45 @@ avr-release-package-repeatability:
 release-checklist file phase:
     node ./scripts/check-release-checklist.mjs --file "{{file}}" --phase "{{phase}}"
 
+# Validate the versioned GitHub release-notes file named by a checklist.
+release-notes-check checklist:
+    node ./scripts/check-release-notes.mjs --checklist "{{checklist}}"
+
+# Validate the notes for the firmware version currently selected in defs.h.
+release-notes-current-check:
+    node ./scripts/check-release-notes.mjs
+
+# Require ready source state, release notes, and checklist evidence before publication.
+release-publication-check checklist phase:
+    node ./scripts/check-release-state.mjs
+    node ./scripts/check-release-notes.mjs --checklist "{{checklist}}"
+    node ./scripts/check-release-checklist.mjs --file "{{checklist}}" --phase "{{phase}}"
+
+# Confirm the published GitHub body exactly matches the checked release-notes file.
+release-notes-remote-check checklist:
+    node ./scripts/check-github-release-notes.mjs --checklist "{{checklist}}"
+
+# Mark one release-checklist item done with concrete evidence.
+release-checklist-done file item evidence:
+    node ./scripts/update-release-checklist.mjs --file "{{file}}" --id "{{item}}" --done-evidence "{{evidence}}"
+
+# Mark one release-checklist item skipped with the user's explicit waiver.
+release-checklist-skip file item requested_by reason:
+    node ./scripts/update-release-checklist.mjs --file "{{file}}" --id "{{item}}" --skip-requested-by "{{requested_by}}" --skip-reason "{{reason}}"
+
+# Increment the next patch version, update README assets, and create notes/checklist.
+release-version-prepare version channel:
+    node ./scripts/prepare-release-version.mjs --version "{{version}}" --channel "{{channel}}"
+    node ./scripts/check-release-state.mjs --candidate-version "{{version}}" --allow-dirty
+
+# Verify remote/local tags, next-patch version sources, and checklist metadata.
+release-state-check:
+    node ./scripts/check-release-state.mjs
+
+# Create a clean main integration worktree and stage the renormalized merge.
+release-integration-worktree version:
+    node ./scripts/create-release-worktree.mjs --version "{{version}}"
+
 # Run all deterministic firmware and package release gates.
 release-build-preflight:
     just avr-repeatability-hw "3.4"
@@ -134,19 +174,22 @@ release-build-preflight:
     just avr-bootloader-repeatability
     just avr-release-package-repeatability
 
-# Run the complete Mac release-candidate preflight.
-release-preflight: check secrets release-build-preflight
+# Run the complete Mac release-candidate preflight, including release notes.
+release-preflight: release-state-check release-notes-current-check check secrets release-build-preflight
 
 # Preview everything that stage-non-kicad would add to the index.
 stage-preview:
     git -C "{{repo_root}}" diff --cached --quiet -- KiCad
-    git -C "{{repo_root}}" add --dry-run -A -- . "{{kicad_exclusion}}"
+    git -C "{{repo_root}}" diff --cached --quiet -- release-evidence
+    git -C "{{repo_root}}" add --dry-run -A -- . "{{kicad_exclusion}}" "{{release_evidence_exclusion}}"
 
 # Stage all non-KiCad changes; fail if a KiCad change was already staged.
 stage-non-kicad:
     git -C "{{repo_root}}" diff --cached --quiet -- KiCad
-    git -C "{{repo_root}}" add -A -- . "{{kicad_exclusion}}"
+    git -C "{{repo_root}}" diff --cached --quiet -- release-evidence
+    git -C "{{repo_root}}" add -A -- . "{{kicad_exclusion}}" "{{release_evidence_exclusion}}"
     git -C "{{repo_root}}" diff --cached --quiet -- KiCad
+    git -C "{{repo_root}}" diff --cached --quiet -- release-evidence
     git -C "{{repo_root}}" diff --cached --check
     gitleaks git --staged --no-banner --redact "{{repo_root}}"
     git -C "{{repo_root}}" status --short

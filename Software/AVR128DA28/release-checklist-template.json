@@ -1,9 +1,11 @@
 {
   "release": "vX.Y.Z",
+  "previousRelease": "vX.Y.Z",
   "repository": "OpenARDF/SignalSlinger",
   "channel": "stable",
   "sourceCommit": "",
   "firmwareVersion": "X.Y.Z",
+  "releaseNotesFile": "Software/AVR128DA28/release-notes/vX.Y.Z.md",
   "hardwareTargets": [
     "HW-3.4",
     "HW-3.5"
@@ -22,6 +24,18 @@
       "evidence": ""
     },
     {
+      "id": "release-version-incremented",
+      "description": "Increment the firmware patch version from the latest origin release and confirm the candidate tag does not already exist.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-tags-reconciled",
+      "description": "Confirm local semantic release tags match origin without moving any published tag.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
       "id": "firmware-version-readme",
       "description": "Confirm the intended firmware version in SignalSlinger/defs.h and matching repo-root README asset references.",
       "status": "pending",
@@ -36,6 +50,12 @@
     {
       "id": "source-commit-frozen",
       "description": "Freeze and record the exact clean source commit used for release builds.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "clean-release-worktree",
+      "description": "Prepare release integration in a clean worktree so unrelated local changes cannot enter the release.",
       "status": "pending",
       "evidence": ""
     },
@@ -82,8 +102,14 @@
       "evidence": ""
     },
     {
-      "id": "release-notes",
-      "description": "Draft user-readable GitHub release notes in the required style.",
+      "id": "release-notes-user-visible",
+      "description": "Document the salient user-observable changes since the previous release in the checked release-notes file.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-notes-reliability",
+      "description": "Document significant stability and reliability improvements since the previous release in the checked release-notes file.",
       "status": "pending",
       "evidence": ""
     },
@@ -119,7 +145,7 @@
     },
     {
       "id": "github-release-created",
-      "description": "Create the GitHub release using the requested prerelease or normal release channel.",
+      "description": "Create the GitHub release using --notes-file with the checked release notes and the requested prerelease or normal release channel.",
       "status": "pending",
       "evidence": ""
     },
@@ -131,7 +157,7 @@
     },
     {
       "id": "remote-release-verified",
-      "description": "Verify the remote release assets, readable notes, and branch README targets.",
+      "description": "Verify the remote release body matches the checked notes file, both required change sections remain present, all assets are downloadable, and branch README targets are correct.",
       "status": "pending",
       "evidence": ""
     }

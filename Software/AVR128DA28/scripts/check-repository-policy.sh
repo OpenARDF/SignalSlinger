@@ -44,11 +44,14 @@ expect_ignored "Software/AVR128DA28/release-packages/example"
 expect_ignored "Software/AVR128DA28/SignalSlinger/Release/example.hex"
 expect_ignored "KiCad/SignalSlinger/SignalSlinger-backups/example.zip"
 expect_visible "Software/AVR128DA28/SignalSlinger/defs.h"
+expect_visible "Software/AVR128DA28/release-notes/v9.9.9.md"
 expect_visible "KiCad/SignalSlinger/SignalSlinger.kicad_pro"
+expect_visible "release-evidence/release-checklist-v9.9.9.json"
 
 expect_eol "lf" "README.md"
 expect_eol "lf" "Software/AVR128DA28/Justfile"
 expect_eol "lf" "Software/AVR128DA28/.gitleaksignore"
+expect_eol "lf" "Software/AVR128DA28/release-notes/v9.9.9.md"
 expect_eol "lf" "Software/AVR128DA28/scripts/package-avr-release.mjs"
 expect_eol "lf" "Software/AVR128DA28/scripts/setup-avr-build-macos.sh"
 expect_eol "crlf" "Software/AVR128DA28/build-release-package.ps1"
@@ -76,6 +79,44 @@ if [ "$ignore_count" -ne 6 ] ||
 	failure=1
 else
 	printf '%s\n' "exact gitleaks baseline: 6 reviewed KiCad cache fingerprints"
+fi
+
+if ! rg -q 'release_evidence_exclusion.*release-evidence' "$firmware_root/Justfile"; then
+	printf '%s\n' "ERROR: normal staging must exclude release-evidence" >&2
+	failure=1
+fi
+
+if ! rg -q '^release-notes-check checklist:' "$firmware_root/Justfile" ||
+	! rg -q '^release-notes-current-check:' "$firmware_root/Justfile" ||
+	! rg -q '^release-publication-check checklist phase:' "$firmware_root/Justfile" ||
+	! rg -q '^release-notes-remote-check checklist:' "$firmware_root/Justfile"; then
+	printf '%s\n' "ERROR: required release-note validation recipes are missing" >&2
+	failure=1
+fi
+
+if ! rg -q \
+	'^release-preflight:.*release-notes-current-check' \
+	"$firmware_root/Justfile"; then
+	printf '%s\n' "ERROR: release preflight must require checked release notes" >&2
+	failure=1
+fi
+
+if ! rg -q '"id": "release-notes-user-visible"' "$firmware_root/release-checklist-template.json" ||
+	! rg -q '"id": "release-notes-reliability"' "$firmware_root/release-checklist-template.json"; then
+	printf '%s\n' "ERROR: release checklist must separately require user-visible and reliability notes" >&2
+	failure=1
+fi
+
+if ! rg -q -- '--notes-file release-notes/vX\.Y\.Z\.md' "$firmware_root/RELEASE_WORKFLOW.md" ||
+	! rg -q 'User-visible changes' "$firmware_root/RELEASE_WORKFLOW.md" ||
+	! rg -q 'Stability and reliability' "$firmware_root/RELEASE_WORKFLOW.md"; then
+	printf '%s\n' "ERROR: GitHub release-note publication policy is incomplete" >&2
+	failure=1
+fi
+
+if rg -q 'SignalSlinger-vX\.Y-3\.[45]\.hex' "$firmware_root/RELEASE_WORKFLOW.md"; then
+	printf '%s\n' "ERROR: legacy two-component release asset naming is documented" >&2
+	failure=1
 fi
 
 git -C "$repo_root" diff --check

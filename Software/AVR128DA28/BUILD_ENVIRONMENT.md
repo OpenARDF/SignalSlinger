@@ -137,15 +137,31 @@ just secrets
 Validate a release-specific evidence checklist with:
 
 ```sh
-just release-checklist release-checklist-v2.0.3.json candidate
-just release-checklist release-checklist-v2.0.3.json release
-just release-checklist release-checklist-v2.0.3.json final
+just release-version-prepare 2.0.3 stable
+just release-state-check
+just release-notes-check ../../release-evidence/release-checklist-v2.0.3.json
+just release-publication-check ../../release-evidence/release-checklist-v2.0.3.json candidate
+just release-checklist ../../release-evidence/release-checklist-v2.0.3.json release
+just release-checklist ../../release-evidence/release-checklist-v2.0.3.json final
 ```
 
-`just release-preflight` runs the non-firmware checks, secret scan, normal and
-relocated repeatability for HW-3.4 and HW-3.5, bootloader repeatability, and
-release-package repeatability. It does not replace physical programming,
+`just release-preflight` validates the current version's release notes, runs
+the non-firmware checks and secret scan, and requires normal and relocated
+repeatability for HW-3.4 and HW-3.5, bootloader repeatability, and
+release-package repeatability. It first verifies that the firmware and README
+use the next unused patch version and that local semantic tags agree with
+GitHub. It does not replace physical programming,
 serial-update, recovery, or live `INF` verification on representative hardware.
+The publication gate also requires versioned release notes with substantive
+user-visible and stability/reliability sections. GitHub publication must use
+that checked file with `gh release create --notes-file`; after publication,
+`just release-notes-remote-check <checklist>` requires the remote body to match
+the file exactly.
+
+For stable integration, `just release-integration-worktree 2.0.3` creates a
+clean main worktree under `/private/tmp` and stages the renormalized
+Development2 merge without committing it. This keeps unrelated changes in the
+normal checkout, including KiCad edits, outside the release merge.
 
 ## Pinned archives
 
