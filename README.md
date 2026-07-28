@@ -14,7 +14,7 @@ SignalSlinger is an open-source 80-meter radio orienteering (ARDF) transmitter k
 
 ## Availability
 
-SignalSlinger is planned to be available in kit form from [Backwoods Orienteering Klub](https://backwoodsok.org/). Please check the club website for current kit availability and pricing; if it is not listed there yet, it should be coming soon.
+SignalSlinger is available in kit form from Backwoods Orienteering Klub. [Order the SignalSlinger Transmitter Kit](https://backwoodsok.org/store/SignalSlinger-Transmitter-Kit-p799230332) or visit the product page for current pricing, availability, shipping information, and kit details.
 
 ## Updating Software
 

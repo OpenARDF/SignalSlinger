@@ -122,7 +122,10 @@ SerialSlinger should use the firmware already running on the device as the first
 ```text
 * INF product=SignalSlinger update=UPD
 * INF sw=2.0.0 hw=3.5 app=0x2000 baud=115200
+* INF uid=314A323536384E171D00321700000000
 ```
+
+The `uid` field is the AVR's factory-programmed 16-byte serial number rendered as 32 uppercase hexadecimal characters. It remains stable across firmware updates and settings changes, allowing SerialSlinger to detect when a different transmitter replaces the previously loaded unit behind the same USB serial adapter. Firmware that predates this field remains compatible and simply omits the line.
 
 The `hw` field should match the release package `board` field and the `HW-3.4` or `HW-3.5` text in the file name before SerialSlinger enters update mode. If `INF` is not supported, SerialSlinger can fall back to parsing the older human `VER` response, for example `SW Ver: 1.2.2 HW Build: 3.5`. Firmware versions below `2.0.0` should be treated as legacy: use `RST` plus the bootloader-catch path instead of relying on `UPD`.
 

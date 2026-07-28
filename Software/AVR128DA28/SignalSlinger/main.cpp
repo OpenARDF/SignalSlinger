@@ -3926,6 +3926,31 @@ static const char *hardwareBuildString(void)
 #endif
 }
 
+static void sendDeviceUniqueId(void)
+{
+	static const char hex_digits[] = "0123456789ABCDEF";
+	static const char prefix[] = "* INF uid=";
+	static_assert((sizeof(prefix) - 1) + 32 + 1 <= TEMP_STRING_SIZE, "Device UID report exceeds g_tempStr");
+	const volatile uint8_t *serial_number = &SIGROW.SERNUM0;
+	size_t output_index = 0;
+
+	for(size_t i = 0; i < (sizeof(prefix) - 1); i++)
+	{
+		g_tempStr[output_index++] = prefix[i];
+	}
+
+	for(uint8_t i = 0; i < 16; i++)
+	{
+		const uint8_t value = serial_number[i];
+		g_tempStr[output_index++] = hex_digits[value >> 4];
+		g_tempStr[output_index++] = hex_digits[value & 0x0F];
+	}
+
+	g_tempStr[output_index++] = '\n';
+	g_tempStr[output_index] = '\0';
+	sb_send_string(g_tempStr);
+}
+
 static void sendFirmwareInfo(void)
 {
 	if(g_cloningInProgress || g_meshmode)
@@ -3946,6 +3971,7 @@ static void sendFirmwareInfo(void)
 		snprintf(g_tempStr, sizeof(g_tempStr), "* INF bl=unknown proto=unknown\n");
 	}
 	sb_send_string(g_tempStr);
+	sendDeviceUniqueId();
 }
 
 /**
@@ -7499,6 +7525,7 @@ void reportSettings(void)
 
 	sprintf(g_tempStr, "\n* SW Ver: %s HW Build: %s\n", SW_REVISION, hardwareBuildString());
 	sb_send_string(g_tempStr);
+	sendDeviceUniqueId();
 
 	if(g_hardware_error & (int)HARDWARE_NO_RTC)
 	{
