@@ -28,6 +28,13 @@ test:
     for script in ./scripts/*.mjs; do node --check "$script"; done
     shellcheck ./scripts/*.sh
     shfmt -d ./scripts/*.sh
+    mkdir -p ./tmp
+    c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-thermal-shutdown-policy.cpp -o ./tmp/test-thermal-shutdown-policy
+    ./tmp/test-thermal-shutdown-policy
+    c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-session-policy.cpp -o ./tmp/test-session-policy
+    ./tmp/test-session-policy
+    python3 ./scripts/test-session-storage.py
+    python3 ./scripts/test-session-runtime.py
     node ./scripts/check-release-version-consistency.mjs
 
 # Run all non-firmware repository checks.

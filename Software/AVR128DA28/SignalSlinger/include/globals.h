@@ -98,6 +98,7 @@ extern volatile float g_internal_voltage_low_threshold; /* FG->ISR + ISR->FG, us
 extern volatile float g_internal_bat_voltage;          /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile bool g_internal_bat_detected;
 extern volatile int8_t g_thermal_shutdown_threshold;   /* FG->ISR + ISR->FG, byte-sized setting is read directly */
+extern volatile bool g_thermal_shutdown_enabled;       /* FG->ISR + ISR->FG, byte-sized setting is read directly */
 extern volatile float g_external_voltage;              /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_processor_temperature;         /* ISR->FG, use shared_state float helpers for snapshots */
 extern volatile float g_processor_min_temperature;     /* ISR->FG, use shared_state float helpers for snapshots */
@@ -142,5 +143,9 @@ extern int8_t g_utc_offset;
 extern uint8_t g_unlockCode[UNLOCK_CODE_SIZE + 2];
 
 extern volatile bool g_enable_manual_transmissions; /* FG->ISR + ISR->FG (paired with g_text_buff/LEDS synchronization) */
+
+
+/* Shared RF interlock; applies to automatic, manual, and test transmissions. */
+bool transmitterThermallyBlocked(void);
 
 #endif /* SIGNALSLINGER_GLOBALS_H_ */

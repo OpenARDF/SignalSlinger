@@ -20,8 +20,8 @@ SignalSlinger is available in kit form from Backwoods Orienteering Klub. [Order 
 
 This `main` branch corresponds to the current stable firmware release. Download the update file that matches your hardware revision:
 
-* `SignalSlinger-Update-v2.0.3-HW-3.5.hex`
-* `SignalSlinger-Update-v2.0.3-HW-3.4.hex`
+* `SignalSlinger-Update-v2.0.4-HW-3.5.hex`
+* `SignalSlinger-Update-v2.0.4-HW-3.4.hex`
 
 Use SerialSlinger for normal updates on devices that already support software updates. For first-time bootloader setup, use the matching complete release bundle and an approved programmer over the board's UPDI programming header (`P101`). Always choose the file that matches your hardware revision, and do not modify fuses or disable UPDI outside the documented setup flow.
 

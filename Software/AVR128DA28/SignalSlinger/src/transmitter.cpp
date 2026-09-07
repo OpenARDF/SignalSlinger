@@ -164,6 +164,7 @@ bool getDisableTransmissions(void)
  */
 bool powerToTransmitter(bool state)
 {
+	if(state && transmitterThermallyBlocked()) state = false;
 	bool success = true;
 
 	/* BAT X 2 disables the internal RF chain but still uses the external-control
@@ -239,6 +240,7 @@ bool powerToTransmitter(bool state)
  */
 bool keyTransmitter(bool on)
 {
+	if(on && transmitterThermallyBlocked()) on = false;
 	if(g_tx_initialized)
 	{
 		int tries = TX_CONTROL_RETRY_COUNT;

@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.3"
+#define SW_REVISION "2.0.4"
 #if !defined(HW_TARGET_3_4) && !defined(HW_TARGET_3_5)
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
@@ -153,11 +153,12 @@ typedef enum
 #define EXT_BAT_CHARGE_SUPPORT_THRESH_LOW (8.5)
 #define EXT_BAT_PRESENT_VOLTAGE (6.0)
 
-#define EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT ((int8_t)50)
+#define EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT ((int8_t)65)
+#define EEPROM_THERMAL_SHUTDOWN_ENABLED_DEFAULT true
 #define EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT (0.)
 #define THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C ((int8_t)5)
-#define THERMAL_SHUTDOWN_THRESHOLD_MIN_C ((int8_t)-14)
-#define THERMAL_SHUTDOWN_THRESHOLD_MAX_C ((int8_t)119)
+#define THERMAL_SHUTDOWN_THRESHOLD_MIN_C ((int8_t)30)
+#define THERMAL_SHUTDOWN_THRESHOLD_MAX_C ((int8_t)85)
 
 // #define FAN_TURN_ON_TEMP (45.)
 // #define FAN_TURN_OFF_TEMP (40.)
