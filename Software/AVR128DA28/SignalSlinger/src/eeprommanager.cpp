@@ -40,6 +40,8 @@
 #include "transmitter.h"
 #include "globals.h"
 #include "shared_state.h"
+#include "thermal_shutdown.h"
+#include "session_history.h"
 #include <avr/pgmspace.h>
 #include <string.h>
 
@@ -111,7 +113,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00,                                         //  uint8_t days_to_run
         0x00000000,                                   //  reserved
         0x00,                                         // int8_t thermal_shutdown_threshold;
-        0x00,                                         // uint8_t reserved_thermal_shutdown_threshold_padding;
+        0x00,                                         // uint8_t thermal_shutdown_enabled_marker;
         0x00000000,                                   //  float hottest_ever_temperature
         0x00,                                         //  uint8_t function
         0x00000000,                                   //  reserved
@@ -196,6 +198,72 @@ void avr_eeprom_write_float(eeprom_addr_t index, float in)
 static uint8_t avr_eeprom_read_byte_at(eeprom_addr_t index)
 {
 	return eeprom_read_byte((const uint8_t *)(eeprom_addr_t)index);
+}
+
+/* Append-only journal in the unused tail. All established setting offsets stay
+ * unchanged. A checksum plus a last-written magic byte rejects torn records. */
+static const uint16_t SESSION_JOURNAL_START = sizeof(EE_prom);
+static const uint8_t SESSION_JOURNAL_SLOTS = (EEPROM_SIZE - sizeof(EE_prom)) / sizeof(SessionRecord);
+static_assert(sizeof(EE_prom) + 4 * sizeof(SessionRecord) <= EEPROM_SIZE, "Not enough EEPROM for session history");
+static_assert(SESSION_JOURNAL_SLOTS <= 16, "Increase the bounded history report buffer");
+
+uint8_t sessionHistoryCapacity() { return SESSION_JOURNAL_SLOTS; }
+
+static SessionRecord readSessionSlot(uint8_t slot)
+{
+	SessionRecord record;
+	uint8_t* bytes = (uint8_t*)&record;
+	for(uint8_t i = 0; i < sizeof(record); ++i)
+		bytes[i] = avr_eeprom_read_byte_at(SESSION_JOURNAL_START + slot * sizeof(record) + i);
+	return record;
+}
+
+uint8_t readSessionHistory(SessionRecord* records, uint8_t capacity)
+{
+	uint8_t count = 0;
+	for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
+	{
+		SessionRecord record = readSessionSlot(slot);
+		if(!sessionRecordValid(record) || !capacity) continue;
+		if(count == capacity)
+		{
+			if(!sessionSequenceAfter(record.sequence, records[0].sequence)) continue;
+			memmove(records, records + 1, (count - 1) * sizeof(record));
+			--count;
+		}
+		uint8_t pos = count;
+		while(pos && sessionSequenceAfter(records[pos - 1].sequence, record.sequence))
+		{
+			records[pos] = records[pos - 1]; --pos;
+		}
+		records[pos] = record; ++count;
+	}
+	return count;
+}
+
+void appendSessionHistory(SessionRecord record)
+{
+	uint8_t next = 0;
+	uint32_t latest = 0;
+	bool found = false;
+	for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
+	{
+		SessionRecord previous = readSessionSlot(slot);
+		if(sessionRecordValid(previous) && (!found || sessionSequenceAfter(previous.sequence, latest)))
+		{
+			latest = previous.sequence; next = (slot + 1) % SESSION_JOURNAL_SLOTS; found = true;
+		}
+	}
+	if(sessionRecordValid(readSessionSlot(next))) record.flags |= SESSION_HISTORY_GAP;
+	record.sequence = found ? latest + 1 : 1;
+	record.magic = 0xa7; record.version = 1;
+	record.checksum = sessionRecordChecksum(record);
+	uint16_t offset = SESSION_JOURNAL_START + next * sizeof(record);
+	const uint8_t* bytes = (const uint8_t*)&record;
+	avr_eeprom_write_byte(offset + offsetof(SessionRecord, magic), 0);
+	for(uint8_t i = 0; i < sizeof(record); ++i)
+		if(i != offsetof(SessionRecord, magic)) avr_eeprom_write_byte(offset + i, bytes[i]);
+	avr_eeprom_write_byte(offset + offsetof(SessionRecord, magic), record.magic);
 }
 
 /**
@@ -565,6 +633,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Utc_offset:
 		case Days_to_run:
 		case Thermal_Shutdown_Threshold:
+		case Thermal_Shutdown_Enabled_Marker:
 		case Function:
 		case Enable_Boost_Regulator:
 		case Enable_External_Battery_Control:
@@ -647,6 +716,8 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
 	updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
 	updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
+	uint8_t thermal_shutdown_enabled_marker = thermalShutdownMarkerForEnabled(g_thermal_shutdown_enabled);
+	updateEEPROMVar(Thermal_Shutdown_Enabled_Marker, (void *)&thermal_shutdown_enabled_marker);
 	updateEEPROMVar(Hottest_Ever_Temperature, (void *)&g_processor_max_ever_temperature);
 	updateEEPROMVar(Function, (void *)&g_function);
 	updateEEPROMVar(Enable_Boost_Regulator, (void *)&g_enable_boost_regulator);
@@ -716,10 +787,18 @@ bool EepromManager::readNonVols(void)
 
 		g_days_to_run = avr_eeprom_read_byte_at(Days_to_run);
 
-		g_thermal_shutdown_threshold =
-		    CLAMP(THERMAL_SHUTDOWN_THRESHOLD_MIN_C,
-		          (int8_t)avr_eeprom_read_byte_at(Thermal_Shutdown_Threshold),
-		          THERMAL_SHUTDOWN_THRESHOLD_MAX_C);
+		uint8_t thermal_marker = avr_eeprom_read_byte_at(Thermal_Shutdown_Enabled_Marker);
+		int8_t saved_threshold = (int8_t)avr_eeprom_read_byte_at(Thermal_Shutdown_Threshold);
+		g_thermal_shutdown_threshold = thermalShutdownMarkerIsKnown(thermal_marker) &&
+		                                  saved_threshold >= THERMAL_SHUTDOWN_THRESHOLD_MIN_C &&
+		                                  saved_threshold <= THERMAL_SHUTDOWN_THRESHOLD_MAX_C
+		                              ? saved_threshold : EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
+		g_thermal_shutdown_enabled = thermalShutdownEnabledFromMarker(thermal_marker);
+		if(!thermalShutdownMarkerIsKnown(thermal_marker))
+		{
+			avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)g_thermal_shutdown_threshold);
+			avr_eeprom_write_byte(Thermal_Shutdown_Enabled_Marker, THERMAL_SHUTDOWN_ENABLED_MARKER);
+		}
 
 		float hottest_ever_temperature = avr_eeprom_read_float_at(Hottest_Ever_Temperature);
 		g_processor_max_ever_temperature =
@@ -855,6 +934,9 @@ bool EepromManager::initializeEEPROMVars(void)
 
 		g_thermal_shutdown_threshold = EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
 		avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)g_thermal_shutdown_threshold);
+		g_thermal_shutdown_enabled = EEPROM_THERMAL_SHUTDOWN_ENABLED_DEFAULT;
+		avr_eeprom_write_byte(Thermal_Shutdown_Enabled_Marker,
+		                      thermalShutdownMarkerForEnabled(g_thermal_shutdown_enabled));
 
 		g_processor_max_ever_temperature = EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
 		avr_eeprom_write_float(Hottest_Ever_Temperature, g_processor_max_ever_temperature);

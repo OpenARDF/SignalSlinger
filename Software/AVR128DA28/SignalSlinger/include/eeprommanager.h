@@ -116,7 +116,7 @@ struct EE_prom
 	uint8_t days_to_run;
 	uint32_t reserved_32;
 	int8_t thermal_shutdown_threshold;
-	uint8_t reserved_thermal_shutdown_threshold_padding;
+	uint8_t thermal_shutdown_enabled_marker;
 	float hottest_ever_temperature;
 	uint8_t function;
 	uint32_t reserved_34;
@@ -202,6 +202,7 @@ typedef enum
 	Days_to_run = EEPROM_OFFSET(days_to_run),
 	Reserved_32 = EEPROM_OFFSET(reserved_32),
 	Thermal_Shutdown_Threshold = EEPROM_OFFSET(thermal_shutdown_threshold),
+	Thermal_Shutdown_Enabled_Marker = EEPROM_OFFSET(thermal_shutdown_enabled_marker),
 	Hottest_Ever_Temperature = EEPROM_OFFSET(hottest_ever_temperature),
 	Function = EEPROM_OFFSET(function),
 	Reserved_34 = EEPROM_OFFSET(reserved_34),

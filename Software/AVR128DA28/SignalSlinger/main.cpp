@@ -45,6 +45,8 @@
 #include "CircularStringBuff.h"
 #include "globals.h"
 #include "shared_state.h"
+#include "thermal_shutdown.h"
+#include "session_history.h"
 #include "rtc.h"
 #include "rstctrl.h"
 
@@ -93,7 +95,7 @@ typedef enum
 	HARDWARE_NO_SI5351 = 0x02
 } HardwareError_t;
 
-static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state);
+static bool evaluateThermalShutdownState(float processor_temperature, bool current_state);
 static uint16_t adcConversionPeriodTicks(uint8_t channel_index);
 static void updateTemperatureState(float temperature);
 static void turnCoolingFanOffForSleep(void);
@@ -220,6 +222,7 @@ volatile float g_internal_voltage_low_threshold = EEPROM_INT_BATTERY_LOW_THRESHO
 volatile float g_internal_bat_voltage = 0.;
 volatile bool g_internal_bat_detected = false;
 volatile int8_t g_thermal_shutdown_threshold = EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
+volatile bool g_thermal_shutdown_enabled = EEPROM_THERMAL_SHUTDOWN_ENABLED_DEFAULT;
 volatile float g_external_voltage = 0.;
 volatile float g_processor_temperature = MINIMUM_VALID_TEMP - 1.;
 volatile float g_processor_min_temperature = MAXIMUM_VALID_TEMP + 1.;
@@ -230,7 +233,7 @@ volatile bool g_seconds_transition = false;
 volatile bool g_muteAfterID = false; /* Inhibit any transmissions after the ID has been sent */
 volatile uint32_t g_event_checksum = 0;
 volatile uint8_t g_days_to_run = 1;
-volatile uint8_t g_days_run = 0;
+volatile uint8_t g_schedule_day_index = 0;
 volatile Function_t g_function = Function_ARDF_TX;
 volatile uint8_t g_foxoring_pattern_codespeed = EEPROM_FOXORING_PATTERN_CODESPEED_DEFAULT;
 volatile uint16_t g_time_needed_for_ID = 0;
@@ -440,7 +443,7 @@ static bool foxUsesFastCodeSpeed(Event_t event, Fox_t fox);
 /*******************************/
 /* Hardcoded event support     */
 /*******************************/
-void suspendEvent(void);
+void suspendEvent(SessionReason reason = REASON_SETTINGS);
 void startEventNow(bool configOverride);
 void startSyncdEventNow(bool configOverride);
 bool startEventUsingRTC(void);
@@ -485,6 +488,7 @@ static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 static bool currentLoadedEventWindowCanceled(void);
 static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error);
+#include "session_runtime.h"
 static void reviveLedActivityForCurrentState(void);
 
 /***********************************************************************
@@ -517,6 +521,7 @@ ISR(RTC_CNT_vect)
 		}
 
 		g_seconds_transition = true;
+		if(g_temperature_fresh_seconds) --g_temperature_fresh_seconds;
 
 		if(g_sleeping)
 		{
@@ -1091,12 +1096,14 @@ ISR(TCB0_INT_vect)
 					updateTemperatureState(temp);
 				}
 			}
+			else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature) g_temperature_fresh_seconds = 0;
 
 			conversionInProcess = false;
 			adcConversionWaitTicks = 0;
 		}
 		else if(++adcConversionWaitTicks >= ADC_CONVERSION_TIMEOUT_TICKS)
 		{
+			if(indexConversionInProcess >= 0 && g_adcChannelOrder[indexConversionInProcess] == ADCTemperature) g_temperature_fresh_seconds = 0;
 			/* A missed ADC completion must not wedge periodic temperature sampling. */
 			if((indexConversionInProcess >= 0) && (indexConversionInProcess < NUMBER_OF_POLLED_ADC_CHANNELS))
 			{
@@ -1217,6 +1224,8 @@ int main(void)
 	g_ee_mgr.initializeEEPROMVars();
 
 	g_ee_mgr.readNonVols();
+	restoreSessionHistory();
+	sampleTemperatureNow();
 	/* Rebuild the currently loaded event window from the saved settings. */
 	reloadLoadedEventWindowFromSavedSettings();
 	g_isMaster = false; /* Never start up as master */
@@ -1372,6 +1381,8 @@ int main(void)
 
 	while(1)
 	{
+		flushSessionHistory();
+		noteSessionStarted();
 		refreshProcessorMaxEverTemperature();
 
 		if(g_foreground_enable_serialbus)
@@ -1516,6 +1527,7 @@ int main(void)
 				}
 			}
 
+			handleThermalSession();
 			if(g_thermal_shutdown) // Extremely high temperature detected
 			{
 #ifdef HW_TARGET_3_5
@@ -1526,10 +1538,8 @@ int main(void)
 					setExtBatLoadSwitch(ON, INITIALIZE_LS);
 				}
 #endif
-				suspendEvent();
-				sb_send_string(TEXT_EXCESSIVE_TEMPERATURE);
-				atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-				g_thermal_shutdown = false; // It will probably be activated several times before sufficiently cool
+				/* The thermal latch clears only after a valid, cool measurement.
+				 * handleThermalSession records each pause once and preserves its finish. */
 			}
 			else
 			{
@@ -1565,7 +1575,7 @@ int main(void)
 			}
 
 			/* Handle transitions into and out of standby sleep. */
-			if(g_go_to_sleep_now && !g_cloningInProgress)
+			if(g_go_to_sleep_now && !g_cloningInProgress && !sessionCooling() && !g_thermal_start_pending)
 			{
 				bool enterSleep = true;
 
@@ -1581,6 +1591,7 @@ int main(void)
 
 				if(enterSleep)
 				{
+					flushSessionHistory();
 					if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_POWER_OFF_OVERRIDE))
 					{
 						time_t loaded_start_epoch;
@@ -1700,6 +1711,7 @@ int main(void)
 
 					while(g_go_to_sleep_now)
 					{
+						flushSessionHistory();
 						if((g_sleepType == SLEEP_FOREVER) || (g_sleepType == SLEEP_UNTIL_START_TIME))
 						{
 							volatile time_t now = time(null);
@@ -1779,6 +1791,7 @@ int main(void)
 					 */
 					g_sleeping = false;
 					atomic_write_time(&g_seconds_since_wakeup, 0);
+					g_temperature_fresh_seconds = 0;
 					system_resume_from_standby();
 					sampleTemperatureNow();
 					g_restart_conversions = true;
@@ -2198,7 +2211,7 @@ int main(void)
 							future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
 						}
 
-						suspendEvent();
+						suspendEvent(REASON_USER);
 
 						if(current_window_running)
 						{
@@ -2444,6 +2457,18 @@ int main(void)
 
 			if(g_long_button_press) /* Shut things down and go to sleep or power off */
 			{
+				if(sessionCooling()) {
+					noteSessionStopped(REASON_USER);
+					g_evteng_event_commenced = false;
+					g_event_canceled_by_user = true;
+					g_thermal_start_pending = false;
+				}
+				else if(atomic_read_i32(&g_evteng_on_the_air) >= 0) {
+					noteSessionStopped(REASON_USER);
+					g_evteng_event_enabled = false;
+					g_foreground_enable_transmitter = false;
+					keyTransmitter(OFF);
+				}
 				g_long_button_press = false;
 				g_foreground_check_for_long_wakeup_press = false;
 				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
@@ -2521,6 +2546,7 @@ int main(void)
 
 		if(g_foreground_reset_after_demo)
 		{
+			noteSessionStopped(REASON_TIMEOUT);
 			atomic_write_u16(&g_demo_event_countdown, 0);
 			g_foreground_reset_after_demo = false;
 
@@ -2544,6 +2570,7 @@ int main(void)
 
 		if(g_foreground_reset_after_keydown)
 		{
+			noteSessionStopped(REASON_TIMEOUT);
 			bool should_resume_scheduled_event = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
 
 			atomic_write_u16(&g_key_down_countdown, 0);
@@ -2620,7 +2647,7 @@ static void captureCloneTimingSnapshot(void)
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 	uint8_t total_days = g_days_to_run;
-	uint8_t completed_days = g_days_run;
+	uint8_t completed_days = g_schedule_day_index;
 	uint8_t days_remaining = (completed_days < total_days) ? (total_days - completed_days) : 1;
 
 	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
@@ -2895,7 +2922,7 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 
 	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
 
-	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
+	if((g_days_to_run > 0) && (g_schedule_day_index >= g_days_to_run))
 	{
 		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, 0, 0);
 		return false;
@@ -2910,7 +2937,7 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 		return false;
 	}
 
-	uint8_t day_index = MIN(g_days_run, (uint8_t)((g_days_to_run > 0) ? (g_days_to_run - 1) : 0));
+	uint8_t day_index = MIN(g_schedule_day_index, (uint8_t)((g_days_to_run > 0) ? (g_days_to_run - 1) : 0));
 	loaded_start_epoch += ((time_t)day_index * SECONDS_24H);
 	loaded_finish_epoch += ((time_t)day_index * SECONDS_24H);
 
@@ -2925,6 +2952,9 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
 		}
 	}
 
+	if(timeIsSet() && loaded_finish_epoch <= time(null)) day_index = g_days_to_run;
+	g_schedule_day_index = day_index;
+	if(day_index >= g_days_to_run) loaded_start_epoch = loaded_finish_epoch = 0;
 	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
 
 	return eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch) || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
@@ -2941,6 +2971,8 @@ static bool reloadLoadedEventWindowFromSavedSettings(void)
  */
 static bool resyncLoadedEventWindowAfterClockSet(void)
 {
+	noteSessionStopped(REASON_CLOCK);
+	g_thermal_start_pending = false;
 	time_t saved_start_epoch;
 	time_t saved_finish_epoch;
 	time_t prior_loaded_start_epoch;
@@ -2980,7 +3012,7 @@ static bool resyncLoadedEventWindowAfterClockSet(void)
 		                          eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
 	}
 
-	g_days_run = day_index;
+	g_schedule_day_index = day_index;
 	atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, loaded_start_epoch, loaded_finish_epoch);
 
 	/* A clock change can move us onto a different day's window. Only preserve the cancel
@@ -3002,12 +3034,13 @@ static bool resyncLoadedEventWindowAfterClockSet(void)
  */
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void)
 {
-	if((g_days_to_run <= 1) || ((g_days_run + 1) >= g_days_to_run))
+	reloadLoadedEventWindowFromSavedSettings();
+	if((g_days_to_run <= 1) || ((g_schedule_day_index + 1) >= g_days_to_run))
 	{
 		return false;
 	}
 
-	g_days_run++;
+	g_schedule_day_index++;
 	return reloadLoadedEventWindowFromSavedSettings();
 }
 
@@ -3076,16 +3109,14 @@ static bool finishTimedEventIfExpired(time_t now)
 	g_evteng_event_enabled = false;
 	g_evteng_event_commenced = false;
 	LEDS.init();
-	g_days_run++;
+	noteSessionStopped(REASON_FINISH);
+	g_schedule_day_index = sessionDayIndex(g_event_start_epoch, g_event_finish_epoch, g_days_to_run, now);
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 3);
 
-	if(g_days_run < g_days_to_run)
+	if(g_schedule_day_index < g_days_to_run)
 	{
-		time_t loaded_start_epoch;
-		time_t loaded_finish_epoch_pair;
-		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch_pair);
-		time_t next_start_epoch = loaded_start_epoch + SECONDS_24H;
-		time_t next_finish_epoch = loaded_finish_epoch_pair + SECONDS_24H;
+		time_t next_start_epoch = g_event_start_epoch + (time_t)g_schedule_day_index * SECONDS_24H;
+		time_t next_finish_epoch = g_event_finish_epoch + (time_t)g_schedule_day_index * SECONDS_24H;
 		atomic_write_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, next_start_epoch, next_finish_epoch);
 		atomic_write_time(&g_time_to_wake_up, next_start_epoch - 15); /* Wake shortly before the next day's event begins. */
 		g_sleepType = SLEEP_UNTIL_START_TIME;
@@ -3501,7 +3532,7 @@ static void finalizeLocalClockUpdate(void)
 {
 	cancelManualTransientState();
 	g_days_to_run = 1;
-	g_days_run = 0;
+	g_schedule_day_index = 0;
 	startEventUsingRTC();
 }
 
@@ -3512,7 +3543,7 @@ static void finalizeDisabledEventStartUpdate(void)
 {
 	cancelManualTransientState();
 	g_days_to_run = 1;
-	g_days_run = 0;
+	g_schedule_day_index = 0;
 	suspendEvent();
 
 	if(!g_meshmode)
@@ -3643,7 +3674,7 @@ void handle_1sec_tasks(void)
 		temp_time = time(null);
 		finishTimedEventIfExpired(temp_time);
 
-		if(g_evteng_event_enabled && !g_isMaster)
+		if(g_evteng_event_enabled && !g_isMaster && !transmitterThermallyBlocked())
 		{
 			if(g_evteng_event_commenced) /* an event is in progress */
 			{
@@ -3686,6 +3717,7 @@ void handle_1sec_tasks(void)
 					{
 						loadEventTimingForFox(USE_CURRENT_FOX);
 						g_evteng_event_commenced = true;
+						noteSessionStarted();
 						g_evteng_initialize_event = true;
 						g_sleepType = SLEEP_AFTER_EVENT;
 
@@ -4058,34 +4090,19 @@ static void refreshProcessorMaxEverTemperature(void)
 }
 
 /**
- * Apply the configured thermal-shutdown hysteresis for the current battery mode.
- *
- * The EEPROM-backed threshold is the internal-battery trip temperature and the
- * no-internal-battery clear temperature. Internal-battery clear uses a 5 C
- * hysteresis band below that threshold, while no-internal-battery trip uses a
- * 5 C band above it.
+ * Apply the configured thermal-shutdown setting and hysteresis.
  *
  * @param processor_temperature Current measured processor temperature in C.
- * @param internal_bat_detected true when an internal battery is present.
  * @param current_state Existing latched thermal shutdown state.
  * @return Updated latched thermal shutdown state.
  */
-static bool evaluateThermalShutdownState(float processor_temperature, bool internal_bat_detected, bool current_state)
+static bool evaluateThermalShutdownState(float processor_temperature, bool current_state)
 {
-	int8_t threshold = g_thermal_shutdown_threshold;
-	int8_t clear_threshold_with_internal_battery = threshold - THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C;
-	int8_t trip_threshold_without_internal_battery = threshold + THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C;
-
-	if(internal_bat_detected)
-	{
-		return (processor_temperature >= threshold)                               ? true
-		       : (processor_temperature <= clear_threshold_with_internal_battery) ? false
-		                                                                          : current_state;
-	}
-
-	return (processor_temperature >= trip_threshold_without_internal_battery) ? true
-	       : (processor_temperature <= threshold)                             ? false
-	                                                                          : current_state;
+	return evaluateThermalShutdownStateForPolicy(processor_temperature,
+	                                             g_thermal_shutdown_threshold,
+	                                             THERMAL_SHUTDOWN_THRESHOLD_HYSTERESIS_C,
+	                                             g_thermal_shutdown_enabled,
+	                                             current_state);
 }
 
 /**
@@ -4119,8 +4136,12 @@ static void updateTemperatureState(float temperature)
 {
 	if(!isValidTemp(temperature))
 	{
+		g_temperature_fresh_seconds = 0;
 		return;
 	}
+	ENTER_CRITICAL(temperature_sample);
+	g_last_temperature_sample = temperature;
+	g_temperature_fresh_seconds = 10;
 
 	g_processor_temperature = isValidTemp(g_processor_temperature) ? (g_processor_temperature + temperature) / 2. : temperature;
 	if(g_processor_temperature > g_processor_max_temperature)
@@ -4128,10 +4149,11 @@ static void updateTemperatureState(float temperature)
 	if(g_processor_temperature < g_processor_min_temperature)
 		g_processor_min_temperature = g_processor_temperature;
 
-	g_thermal_shutdown = evaluateThermalShutdownState(g_processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
+	g_thermal_shutdown = evaluateThermalShutdownState(MAX(temperature, g_processor_temperature), g_thermal_shutdown);
 
 	g_turn_on_fan = (g_processor_temperature > FAN_TURN_ON_TEMP) ? true : (g_processor_temperature < FAN_TURN_OFF_TEMP) ? false
 	                                                                                                                    : g_turn_on_fan;
+	EXIT_CRITICAL(temperature_sample);
 }
 
 /**
@@ -4287,6 +4309,24 @@ static void sendThermalShutdownThresholdLine(void)
 	sb_send_string(g_tempStr);
 }
 
+/** Report whether over-temperature event suspension is enabled. */
+static void sendThermalShutdownEnabledLine(void)
+{
+	sprintf(g_tempStr, "* Thermal shutdown: %s\n", g_thermal_shutdown_enabled ? "Enabled" : "Disabled");
+	sb_send_string(g_tempStr);
+}
+
+/** Persist and immediately apply an explicit thermal-shutdown enable choice. */
+static void setThermalShutdownEnabled(bool enabled)
+{
+	g_temperature_fresh_seconds = 0;
+	g_thermal_shutdown_enabled = enabled;
+	uint8_t marker = thermalShutdownMarkerForEnabled(enabled);
+	g_ee_mgr.updateEEPROMVar(Thermal_Shutdown_Enabled_Marker, (void *)&marker);
+
+	sampleTemperatureNow();
+}
+
 /**
  * Consume and handle all pending serialbus commands.
  *
@@ -4390,30 +4430,45 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(sb_buff->fields[SB_FIELD2][0] != '\0')
 					{
-						int8_t new_threshold = 0;
-						if(tryParseThermalShutdownThreshold(sb_buff->fields[SB_FIELD2], &new_threshold))
+						const char *setting = sb_buff->fields[SB_FIELD2];
+						if((toupper((unsigned char)setting[0]) == 'O') &&
+						   (toupper((unsigned char)setting[1]) == 'N') &&
+						   (setting[2] == '\0'))
 						{
-							g_thermal_shutdown_threshold = new_threshold;
-							g_ee_mgr.updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
-
-							float processor_temperature = atomic_read_float(&g_processor_temperature);
-							g_thermal_shutdown =
-							    evaluateThermalShutdownState(processor_temperature, g_internal_bat_detected, g_thermal_shutdown);
+							setThermalShutdownEnabled(true);
+						}
+						else if((toupper((unsigned char)setting[0]) == 'O') &&
+						        (toupper((unsigned char)setting[1]) == 'F') &&
+						        (toupper((unsigned char)setting[2]) == 'F') &&
+						        (setting[3] == '\0'))
+						{
+							setThermalShutdownEnabled(false);
 						}
 						else
 						{
-							if(!g_meshmode)
-								sb_send_NewLine();
-							sprintf(g_tempStr, "* Err: %dC <= TMP H <= %dC\n",
-							        THERMAL_SHUTDOWN_THRESHOLD_MIN_C,
-							        THERMAL_SHUTDOWN_THRESHOLD_MAX_C);
-							sb_send_string(g_tempStr);
-							break;
+							int8_t new_threshold = 0;
+							if(!tryParseThermalShutdownThreshold(setting, &new_threshold))
+							{
+								if(!g_meshmode)
+									sb_send_NewLine();
+								sprintf(g_tempStr, "* Err: TMP H [ON|OFF|%d-%d]\n",
+								        THERMAL_SHUTDOWN_THRESHOLD_MIN_C,
+								        THERMAL_SHUTDOWN_THRESHOLD_MAX_C);
+								sb_send_string(g_tempStr);
+								break;
+							}
+
+							g_temperature_fresh_seconds = 0;
+							g_thermal_shutdown_threshold = new_threshold;
+							g_ee_mgr.updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
+
+							sampleTemperatureNow();
 						}
 					}
 
 					if(!g_meshmode)
 						sb_send_NewLine();
+					sendThermalShutdownEnabledLine();
 					sendThermalShutdownThresholdLine();
 				}
 				else if(sb_buff->fields[SB_FIELD1][0] == 'R')
@@ -4461,7 +4516,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				{
 					if(!g_meshmode)
 						sb_send_NewLine();
-					sb_send_string((char *)"* Err: TMP [H [n]|R [X|E]]\n");
+					sb_send_string((char *)"* Err: TMP [H [ON|OFF|n]|R [X|E]]\n");
 				}
 				else
 				{
@@ -4477,6 +4532,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					sendTemperatureReportLine("Max Temp", processor_max_temperature);
 					sendTemperatureReportLine("Temp", processor_temperature);
 					sendTemperatureReportLine("Min Temp", processor_min_temperature);
+					sendThermalShutdownEnabledLine();
 					sendThermalShutdownThresholdLine();
 				}
 			}
@@ -4987,6 +5043,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						if(sb_buff->fields[SB_FIELD1][0] == '0')
 						{
+							noteSessionStopped(REASON_USER);
 							cancelManualTransientState();
 							atomic_write_u16(&g_key_down_countdown, 0);
 							g_foreground_reset_after_keydown = true;
@@ -5057,7 +5114,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						 */
 						if(arg == '0') /* Stop an event in progress. Resume countdown to any future event */
 						{
-							suspendEvent(); // Stop any running event and initialize loaded event engine settings
+							suspendEvent(REASON_USER); // Stop any running event and initialize loaded event engine settings
 							setupForFox(USE_CURRENT_FOX, START_NOTHING);
 							g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
 							g_event_launched_by_user_action = false;
@@ -5515,6 +5572,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					{
 						sb_send_string((char *)"* Not scheduled\n");
 					}
+					reportSessionHistory();
 				}
 			}
 			break;
@@ -5668,7 +5726,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 							time_t loaded_finish_epoch;
 							atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &saved_start_epoch, &saved_finish_epoch);
 							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-							uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
+							uint8_t days_remaining = scheduledDaysRemaining();
 							bool effective_window_scheduled = false;
 							bool show_effective_window = false;
 
@@ -5953,7 +6011,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 						/* Reset the day counter whenever the programmed multi-day length
 						 * changes so scheduling restarts from day one of the new window.
 						 */
-						g_days_run = 0;
+						g_schedule_day_index = 0;
 
 						g_ee_mgr.updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
 
@@ -6061,6 +6119,7 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else if(c == '2') // Control the external battery to connect it for charging the internal battery, but disable transmissions
 					{
+						noteSessionStopped(REASON_DEVICE_DISABLED);
 						setDisableTransmissions(true);
 						g_enable_external_battery_control = true;
 						updateStoredValue = true;
@@ -6230,6 +6289,10 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
  */
 bool __attribute__((optimize("O0"))) loadedEventShouldBeEnabled()
 {
+	if(transmitterThermallyBlocked()) {
+		g_thermal_start_pending = !g_evteng_run_event_until_canceled && !g_event_launched_by_user_action;
+		return false;
+	}
 	time_t loaded_start_epoch;
 	time_t loaded_finish_epoch;
 	time_t time_to_wake_up;
@@ -6326,6 +6389,10 @@ bool __attribute__((optimize("O0"))) launchLoadedEvent(void)
 	time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
 	bool launched = activateEventEngineUsingCurrentSettings(loaded_start_epoch, loaded_finish_epoch);
 
+	if(launched && !g_evteng_run_event_until_canceled && time(null) >= loaded_finish_epoch) {
+		finishTimedEventIfExpired(time(null));
+		return false;
+	}
 	if(launched)
 	{
 		g_evteng_event_enabled = loadedEventShouldBeEnabled();
@@ -6348,11 +6415,16 @@ bool __attribute__((optimize("O0"))) launchLoadedEvent(void)
  */
 bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime)
 {
+	if(transmitterThermallyBlocked()) {
+		g_thermal_start_pending = !g_evteng_run_event_until_canceled && !g_event_launched_by_user_action;
+		return false;
+	}
 	time_t now = time(null);
 
 	/* Make sure everything has been sanely initialized */
 	if(!g_evteng_run_event_until_canceled)
 	{
+		if(now >= finishTime) return false;
 		if(now < MINIMUM_VALID_EPOCH) /* The RTC has not been set */
 		{
 			return false;
@@ -6532,8 +6604,10 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 /**
  * Stop the current event immediately and leave the device in a non-running state.
  */
-void suspendEvent()
+void suspendEvent(SessionReason reason)
 {
+	noteSessionStopped(reason);
+	g_thermal_start_pending = false;
 	keyTransmitter(OFF);
 	setupForFox(USE_CURRENT_FOX, START_NOTHING); // Stop any running event
 	LEDS.setRed(OFF);
@@ -6950,6 +7024,7 @@ static void reviveLedActivityForCurrentState(void)
  */
 void setupForFox(Fox_t fox, EventAction_t action)
 {
+	noteSessionStopped(REASON_SETTINGS);
 	g_evteng_run_event_until_canceled = false;
 	atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
 
@@ -7508,7 +7583,7 @@ void reportSettings(void)
 	/* Multi-day events may have a currently effective window that differs from
 	 * the originally saved start/finish pair.
 	 */
-	if((g_days_to_run > 1) && (g_days_run > 0))
+	if((g_days_to_run > 1) && (g_schedule_day_index > 0))
 	{
 		time_t effective_start_epoch = loaded_start_epoch;
 		time_t effective_finish_epoch = loaded_finish_epoch;
@@ -7650,7 +7725,7 @@ void reportSettings(void)
 
 	if(g_days_to_run > 1)
 	{
-		uint8_t days_remaining = (g_days_run < g_days_to_run) ? (uint8_t)(g_days_to_run - g_days_run) : 0;
+		uint8_t days_remaining = scheduledDaysRemaining();
 		sprintf(g_tempStr, "\n*   == Configured for %d days ==\n", g_days_to_run);
 		sb_send_string(g_tempStr);
 		sprintf(g_tempStr, "*   Days remaining: %d\n", days_remaining);
@@ -7675,7 +7750,7 @@ void reportSettings(void)
 		sprintf(g_tempStr, "*   Current window finish: %s\n", convertEpochToTimeString(loaded_finish_epoch, buf, TEMP_STRING_SIZE));
 		sb_send_string(g_tempStr);
 	}
-	else if((g_days_to_run > 1) && timeIsSet() && (g_days_run >= g_days_to_run))
+	else if((g_days_to_run > 1) && timeIsSet() && (g_schedule_day_index >= g_days_to_run))
 	{
 		sb_send_string((char *)"*   No remaining scheduled day window at the current time\n");
 	}
@@ -8570,7 +8645,7 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 		return false;
 	}
 
-	if((g_days_to_run > 0) && (g_days_run >= g_days_to_run))
+	if((g_days_to_run > 0) && (g_schedule_day_index >= g_days_to_run))
 	{
 		*start_epoch = 0;
 		*finish_epoch = 0;
@@ -8593,7 +8668,7 @@ bool eventIsScheduledToRun(time_t *start_epoch, time_t *finish_epoch)
 					time_t f = *finish_epoch;
 					time_t saved_start_epoch = atomic_read_time(&g_event_start_epoch);
 					time_t earliest_remaining_start = saved_start_epoch;
-					uint8_t minimum_day_offset = MIN(g_days_run, (uint8_t)(g_days_to_run - 1));
+					uint8_t minimum_day_offset = MIN(g_schedule_day_index, (uint8_t)(g_days_to_run - 1));
 
 					if(saved_start_epoch > MINIMUM_VALID_EPOCH)
 					{

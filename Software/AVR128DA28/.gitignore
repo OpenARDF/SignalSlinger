@@ -28,3 +28,7 @@ SignalSlinger/Debug/makedep.mk
 SignalSlinger/Release/makedep.mk
 SignalSlinger/Debug/src/
 SignalSlinger/Release/src/
+
+# Host policy-test executables
+/tmp/test-session-policy
+/tmp/test-thermal-shutdown-policy
