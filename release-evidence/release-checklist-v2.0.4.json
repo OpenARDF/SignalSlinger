@@ -2,8 +2,8 @@
   "release": "v2.0.4",
   "previousRelease": "v2.0.3",
   "repository": "OpenARDF/SignalSlinger",
-  "channel": "prerelease",
-  "sourceCommit": "",
+  "channel": "stable",
+  "sourceCommit": "859bad61c081bf4c450c3e8b5dc310ac6258bae6",
   "firmwareVersion": "2.0.4",
   "releaseNotesFile": "Software/AVR128DA28/release-notes/v2.0.4.md",
   "hardwareTargets": [
@@ -14,14 +14,14 @@
     {
       "id": "branch-announced",
       "description": "Confirm the current branch and announce it to the user before making changes.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Development2 announced before release edits; full GitHub deployment requested by Charles Scharlau on 2026-09-07."
     },
     {
       "id": "working-tree-reviewed",
       "description": "Confirm the working tree is clean or existing changes are intentionally excluded from release work.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Release preparation began from clean Development2 at c2bd678; KiCad preference change had been reverted. Only release notes and checklist metadata were changed."
     },
     {
       "id": "release-version-incremented",
@@ -45,121 +45,125 @@
       "id": "release-channel",
       "description": "Decide the release channel for main or Development2.",
       "status": "done",
-      "evidence": "prerelease release selected."
+      "evidence": "Stable release on main requested as a full GitHub deployment; field-test limitations are explicit in the release notes."
     },
     {
       "id": "source-commit-frozen",
       "description": "Freeze and record the exact clean source commit used for release builds.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Exact clean integrated main source 859bad61c081bf4c450c3e8b5dc310ac6258bae6 was pushed before the full final release-preflight and package builds."
     },
     {
       "id": "clean-release-worktree",
       "description": "Prepare release integration in a clean worktree so unrelated local changes cannot enter the release.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Repository helper created /private/tmp/SignalSlinger-release-v2.0.4 on main and staged the renormalized merge. No conflicts, no KiCad changes, and staged firmware/README are byte-identical to Development2."
     },
     {
       "id": "full-repository-check",
       "description": "Run just check and just secrets at the frozen source commit.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Complete just release-preflight passed again from clean main 859bad61c081bf4c450c3e8b5dc310ac6258bae6: repository policy, script checks, thermal/session tests, production journal/runtime tests, version checks and full-history secret scan."
     },
     {
       "id": "deterministic-avr-builds",
       "description": "Run the normal, relocated, and bootloader repeatability checks with pinned tools and zero warnings.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Final main release-preflight passed: both normal and 0x2000 relocated hardware profiles repeated with seven byte-identical artifacts and zero warnings; bootloader repeated with five byte-identical artifacts and zero warnings; complete packages repeated identically."
     },
     {
       "id": "artifact-manifest",
       "description": "Generate both hardware-specific release packages, manifests, checksums, READMEs, and ZIP archives.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Both final hardware packages contain ten files, including manifests, checksums, READMEs, update/first-install/setup HEX and ZIPs. Manifests report sourceTreeDirty=false, reference-version-match, and exact main source 859bad61c081bf4c450c3e8b5dc310ac6258bae6."
     },
     {
       "id": "package-validation",
       "description": "Independently validate package contents, hashes, ZIP members, and flash geometry.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Final main packages independently validated for hashes, ZIP members and flash geometry; ten byte-identical package files per target on repeated generation. HW-3.4 ZIP SHA256 9cf7656e2bac3589bd6969855c779f5df6faeff61c46b8305eab2e3768e17db8; HW-3.5 ZIP SHA256 ed34d09b3a79fdc5b2e06cc2b94b9c4423ae27ae8b68eab8247087814cc5cddf"
     },
     {
       "id": "hardware-checklist",
       "description": "Complete representative hardware programming, update, recovery, and version-report checks.",
-      "status": "pending",
-      "evidence": ""
+      "status": "skipped",
+      "evidence": "",
+      "skipReason": "On 2026-09-07 Charles explicitly approved publishing for Joseph field testing while recording representative HW-3.4/HW-3.5 programming, serial update, interrupted-update recovery and hardware rollback as untested.",
+      "skipRequestedBy": "Charles Scharlau"
     },
     {
       "id": "live-version-report",
       "description": "Install each hardware build on a representative unit and capture its INF version report.",
-      "status": "pending",
-      "evidence": ""
+      "status": "skipped",
+      "evidence": "",
+      "skipReason": "On 2026-09-07 Charles explicitly approved the field-test release without physical installation and live INF version reports on representative HW-3.4/HW-3.5 units.",
+      "skipRequestedBy": "Charles Scharlau"
     },
     {
       "id": "rollback-package",
       "description": "Select and verify the prior release package and documented recovery path.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Freshly downloaded v2.0.3 HW-3.4 and HW-3.5 ZIPs independently validated: hashes, ZIP contents and flash geometry pass; standalone update HEX files match ZIP members. Packaged READMEs provide normal-update and recovery procedures. Actual hardware rollback remains untested."
     },
     {
       "id": "release-notes-user-visible",
       "description": "Document the salient user-observable changes since the previous release in the checked release-notes file.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Checked v2.0.4 notes document enabled 65 C default, configurable threshold, same-session thermal recovery, retained later days, and paired SerialSlinger 2.0.20 installation and field-test instructions."
     },
     {
       "id": "release-notes-reliability",
       "description": "Document significant stability and reliability improvements since the previous release in the checked release-notes file.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Checked notes describe EEPROM migration and journal integrity, stale-sensor RF interlock, honest interrupted/expired history, and explicit physical-test limitations."
     },
     {
       "id": "development2-commit-policy",
       "description": "On Development2, leave changes uncommitted unless the user explicitly asks for a commit.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Charles Scharlau explicitly authorized commit and push of all open non-KiCad work, followed by full GitHub deployment."
     },
     {
       "id": "integration-approved",
       "description": "Obtain explicit approval to integrate the release candidate into main.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Charles Scharlau requested full deployment on GitHub on 2026-09-07; this authorizes standard integration into main."
     },
     {
       "id": "release-branch-verified",
       "description": "Re-run release-preflight from the clean integrated main commit.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Clean main 859bad61c081bf4c450c3e8b5dc310ac6258bae6 matches origin/main and passed complete release-preflight. Its firmware and README match the reviewed Development2 candidate exactly."
     },
     {
       "id": "release-approved",
       "description": "Obtain explicit approval for the release tag and GitHub publication.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Charles requested full GitHub deployment and explicitly approved proceeding with the recorded physical-hardware validation waiver on 2026-09-07."
     },
     {
       "id": "annotated-tag",
       "description": "Create and push an annotated release tag at the verified commit.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Annotated v2.0.4 was pushed and its remote peeled target verified as exact clean package-build commit 859bad61c081bf4c450c3e8b5dc310ac6258bae6. The tag remains fixed."
     },
     {
       "id": "github-release-created",
       "description": "Create the GitHub release using --notes-file with the checked release notes and the requested prerelease or normal release channel.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Published non-draft, non-prerelease https://github.com/OpenARDF/SignalSlinger/releases/tag/v2.0.4 using the checked release-notes file. Physical testing limitations remain explicit."
     },
     {
       "id": "hardware-assets-uploaded",
       "description": "Upload both hardware assets to the release.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "All four assets uploaded: HW-3.4 and HW-3.5 update HEX files and matching complete release ZIPs."
     },
     {
       "id": "remote-release-verified",
       "description": "Verify the remote release body matches the checked notes file, both required change sections remain present, all assets are downloadable, and branch README targets are correct.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Fresh unauthenticated curl downloads of all four assets exactly matched local release files. Extracted public ZIPs passed independent checksums, ZIP membership and flash geometry validation; both manifests name 859bad61c081bf4c450c3e8b5dc310ac6258bae6 with sourceTreeDirty=false and reference-version-match. Remote annotated tag targets that commit. Published notes exactly match the checked file. Both branch README source versions reference v2.0.4 assets."
     }
   ]
 }
