@@ -44,7 +44,17 @@ static void PORT_init(void);
 static void VREF0_init(void);
 static void ADC0_init(bool freerun);
 
+/* AVR128DA temperature measurements require >=25 us initialization and >=28 us
+ * sample length (DS40002183, Temperature Measurement). At 24 MHz / 64,
+ * 16 initialization clocks provide 42.7 us and 11 sample clocks provide 29.3 us.
+ * Use hardware timing so periodic conversions still complete asynchronously. */
+static constexpr uint32_t ADC_CLOCK_HZ = F_CPU / 64UL;
+static constexpr uint8_t TEMPERATURE_SAMPLE_CLOCKS = (28UL * ADC_CLOCK_HZ + 999999UL) / 1000000UL;
+static_assert(16UL * 1000000UL >= 25UL * ADC_CLOCK_HZ, "ADC initialization delay is too short");
+
 ADC_Init_t g_adc_initialization = ADC_NOT_INITIALIZED;
+/* Public peripheral initialization does not know the next requested input. */
+static volatile bool adcChannelPrepared = false;
 
 /**
  * Select the active ADC input channel, initializing the ADC for single conversion if needed.
@@ -53,70 +63,36 @@ ADC_Init_t g_adc_initialization = ADC_NOT_INITIALIZED;
  */
 void ADC0_setADCChannel(ADC_Active_Channel_t chan)
 {
+	uint8_t mux;
 	switch(chan)
 	{
-		case ADCInternalBatteryVoltage:
-		{
-			/* Voltage and temperature spot reads use the single-conversion configuration path. */
-			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
-			{
-				ADC0_SYSTEM_init(SINGLE_CONVERSION);
-			}
-
-			ADC0.MUXPOS = ADC_MUXPOS_AIN0_gc;
-		}
-		break;
-
-		case ADCExternalBatteryVoltage:
-		{
-			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
-			{
-				ADC0_SYSTEM_init(SINGLE_CONVERSION);
-			}
-
-			ADC0.MUXPOS = ADC_MUXPOS_AIN1_gc;
-		}
-		break;
-
-		case ADC12VRegulatedVoltage:
-		{
-			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
-			{
-				ADC0_SYSTEM_init(SINGLE_CONVERSION);
-			}
-
-			ADC0.MUXPOS = ADC_MUXPOS_AIN4_gc;
-		}
-		break;
-
-		case ADCTXAdjustableVoltage:
-		{
-			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
-			{
-				ADC0_SYSTEM_init(SINGLE_CONVERSION);
-			}
-
-			ADC0.MUXPOS = ADC_MUXPOS_AIN5_gc;
-		}
-		break;
-
-		case ADCTemperature:
-		{
-			if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
-			{
-				ADC0_SYSTEM_init(SINGLE_CONVERSION);
-			}
-
-			ADC0.MUXPOS = ADC_MUXPOS_TEMPSENSE_gc;
-		}
-		break;
-
+		case ADCInternalBatteryVoltage: mux = ADC_MUXPOS_AIN0_gc; break;
+		case ADCExternalBatteryVoltage: mux = ADC_MUXPOS_AIN1_gc; break;
+		case ADC12VRegulatedVoltage: mux = ADC_MUXPOS_AIN4_gc; break;
+		case ADCTXAdjustableVoltage: mux = ADC_MUXPOS_AIN5_gc; break;
+		case ADCTemperature: mux = ADC_MUXPOS_TEMPSENSE_gc; break;
 		default:
-		{
 			ADC0_SYSTEM_shutdown();
-		}
-		break;
+			return;
 	}
+
+	if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED || !adcChannelPrepared)
+	{
+		/* Select the input BEFORE enabling the ADC/reference. With INITDLY,
+		 * changing MUX afterward can leave the first result on the old channel.
+		 * Stop any prior free-running conversion before reconfiguration, too. */
+		ADC0_SYSTEM_shutdown();
+		ADC0.MUXPOS = mux;
+		ADC0_SYSTEM_init(SINGLE_CONVERSION);
+	}
+	else
+	{
+		ADC0.MUXPOS = mux;
+	}
+
+	/* Restore the short voltage acquisition after leaving the temperature input. */
+	ADC0.SAMPCTRL = (chan == ADCTemperature) ? TEMPERATURE_SAMPLE_CLOCKS : 0;
+	adcChannelPrepared = true;
 }
 
 /**
@@ -127,6 +103,7 @@ void ADC0_startConversion(void)
 	if(g_adc_initialization != ADC_NOT_INITIALIZED)
 	{
 		ADC0.INTCTRL = 0x00;          /* Disable interrupt */
+		ADC0.INTFLAGS = ADC_RESRDY_bm; /* A previous result cannot complete this request. */
 		ADC0.COMMAND = ADC_STCONV_bm; /* Start conversion */
 	}
 }
@@ -153,6 +130,35 @@ int ADC0_read()
 }
 
 /**
+ * Acquire one foreground sample, returning false on timeout or invalid input.
+ * Callers must exclude the periodic ADC service while this blocking read owns
+ * the converter. Abort any displaced conversion before selecting the input.
+ */
+static bool readSingleConversion(ADC_Active_Channel_t chan, uint16_t *result)
+{
+	ADC0_SYSTEM_shutdown();
+	ADC0_setADCChannel(chan);
+	if(g_adc_initialization != ADC_SINGLE_CONVERSION_INITIALIZED)
+	{
+		return false;
+	}
+	ADC0_startConversion();
+
+	for(uint16_t remaining = 10000; remaining > 0; --remaining)
+	{
+		if(ADC0_conversionDone())
+		{
+			*result = ADC0_read();
+			return true;
+		}
+	}
+
+	/* Do not accept a stale result or leave a timed-out conversion running. */
+	ADC0_SYSTEM_shutdown();
+	return false;
+}
+
+/**
  * Perform a single conversion on the requested voltage channel and scale it to volts.
  *
  * @param chan ADC channel to sample.
@@ -161,23 +167,11 @@ int ADC0_read()
 float readVoltage(ADC_Active_Channel_t chan)
 {
 	uint16_t adc_reading;
-	uint32_t wait = 10000;
-	float voltage = 0;
-
-	adc_reading = ADC0.RES;
-	ADC0_setADCChannel(chan);
-	ADC0_startConversion();
-
-	while((!ADC0_conversionDone()) && wait--)
-		;
-
-	if(wait)
+	if(readSingleConversion(chan, &adc_reading))
 	{
-		adc_reading = ADC0.RES;
-		voltage = (0.00725 * (float)adc_reading) + 0.05;
+		return (0.00725 * (float)adc_reading) + 0.05;
 	}
-
-	return (voltage);
+	return 0;
 }
 
 /**
@@ -187,23 +181,12 @@ float readVoltage(ADC_Active_Channel_t chan)
  */
 float readTemperature(void)
 {
-	uint16_t adc_reading = ADC0.RES;
-	uint32_t wait = 10000;
-	float temperature = MINIMUM_VALID_TEMP - 1.;
-
-	ADC0_setADCChannel(ADCTemperature);
-	ADC0_startConversion();
-
-	while((!ADC0_conversionDone()) && wait--)
-		;
-
-	if(wait)
+	uint16_t adc_reading;
+	if(readSingleConversion(ADCTemperature, &adc_reading))
 	{
-		adc_reading = ADC0.RES;
-		temperature = temperatureCfromADC(adc_reading);
+		return temperatureCfromADC(adc_reading);
 	}
-
-	return (temperature);
+	return MINIMUM_VALID_TEMP - 1.;
 }
 
 /**
@@ -261,7 +244,9 @@ static void VREF0_init(void)
  */
 static void ADC0_init(bool freerun)
 {
-	ADC0.CTRLC = ADC_PRESC_DIV64_gc; /* CLK_PER divided by 4 => 24096 sps */
+	ADC0.CTRLC = ADC_PRESC_DIV64_gc; /* 24 MHz / 64 = 375 kHz ADC clock */
+	ADC0.CTRLD = ADC_INITDLY_DLY16_gc;
+	ADC0.SAMPCTRL = 0;
 
 	if(freerun)
 	{
@@ -289,6 +274,7 @@ static void ADC0_init(bool freerun)
  */
 void ADC0_SYSTEM_init(bool freerun)
 {
+	ADC0_SYSTEM_shutdown();
 	PORT_init();
 	VREF0_init();
 	ADC0_init(freerun);
@@ -302,6 +288,7 @@ void ADC0_SYSTEM_shutdown(void)
 	ADC0.INTCTRL = 0x00;              /* Disable interrupt */
 	ADC0.CTRLA = ADC_RESSEL_12BIT_gc; /* Turn off ADC leaving 12-bit resolution set */
 	g_adc_initialization = ADC_NOT_INITIALIZED;
+	adcChannelPrepared = false;
 }
 
 /**

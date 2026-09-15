@@ -38,6 +38,7 @@
 #include "transmitter.h"
 #include "morse.h"
 #include "adc.h"
+#include "external_battery_feedback.h"
 #include "util.h"
 #include "eeprommanager.h"
 #include "binio.h"
@@ -276,6 +277,17 @@ static volatile bool g_button_hold_preview_active = false;
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
 static volatile uint16_t g_adcCountdownCount[NUMBER_OF_POLLED_ADC_CHANNELS] = {2000, 2000, 4000};
 static volatile uint16_t g_lastConversionResult[NUMBER_OF_POLLED_ADC_CHANNELS] = {0, 0, 0};
+static ExternalBatteryFeedback g_external_battery_feedback;
+
+/* Release only the awake measurement client, preserving charge/transmit demand.
+ * Called with interrupts masked at sleep entry and by the ADC service ISR.
+ */
+static void cancelExternalBatteryFeedback(void)
+{
+	g_external_battery_feedback.reset();
+	setExtBatLoadSwitch(OFF, BATTERY_MEASUREMENT);
+}
+
 static volatile bool g_thermal_shutdown = false;
 
 volatile uint16_t g_foreground_handle_counted_presses = 0;
@@ -1025,11 +1037,25 @@ ISR(TCB0_INT_vect)
 			}
 		}
 
+		bool priorProbe = g_external_battery_feedback.probeRequested();
+		g_external_battery_feedback.tick(
+		    g_device_wakeup_complete && !g_sleeping && !g_go_to_sleep_now,
+		    LEDS.active(), g_enable_external_battery_control, externalBatteryPowerRequested());
+		if(priorProbe != g_external_battery_feedback.probeRequested())
+		{
+			setExtBatLoadSwitch(g_external_battery_feedback.probeRequested(), BATTERY_MEASUREMENT);
+		}
+
 		/**
 		 * Handle Periodic ADC Readings
 		 * The following algorithm allows multiple ADC channel readings to be performed at different polling intervals. */
 		if(!conversionInProcess || g_restart_conversions)
 		{
+			if(g_restart_conversions && conversionInProcess && indexConversionInProcess >= 0)
+			{
+				// Retry a conversion displaced by a foreground status read.
+				g_adcCountdownCount[indexConversionInProcess] = 0;
+			}
 			/* Note: countdowns will pause while a conversion is in process. Conversions are so fast that this should not be an issue though. */
 			indexConversionInProcess = -1;
 			conversionInProcess = false;
@@ -1038,6 +1064,17 @@ ISR(TCB0_INT_vect)
 
 			for(uint8_t i = 0; i < NUMBER_OF_POLLED_ADC_CHANNELS; i++)
 			{
+				if(g_adcChannelOrder[i] == ADCExternalBatteryVoltage)
+				{
+					// Reuse this scheduler and converter; never sample a disconnected supply.
+					if(g_external_battery_feedback.sampleDue())
+					{
+						indexConversionInProcess = (int8_t)i;
+						break;
+					}
+					continue;
+				}
+
 				if(g_adcCountdownCount[i])
 				{
 					g_adcCountdownCount[i]--;
@@ -1085,7 +1122,8 @@ ISR(TCB0_INT_vect)
 				}
 				else if(g_adcChannelOrder[indexConversionInProcess] == ADCExternalBatteryVoltage)
 				{
-					if(!g_enable_external_battery_control || getExtBatLSEnable()) // Don't try to read a disconnected external battery
+					if(g_external_battery_feedback.sampleDue() &&
+					   (!g_enable_external_battery_control || getExtBatLSEnable()))
 					{
 						g_external_voltage = (0.00725 * (float)g_lastConversionResult[indexConversionInProcess]) + 0.05;
 					}
@@ -1098,12 +1136,23 @@ ISR(TCB0_INT_vect)
 			}
 			else if(g_adcChannelOrder[indexConversionInProcess] == ADCTemperature) g_temperature_fresh_seconds = 0;
 
+			if(g_adcChannelOrder[indexConversionInProcess] == ADCExternalBatteryVoltage)
+			{
+				g_external_battery_feedback.complete();
+				setExtBatLoadSwitch(OFF, BATTERY_MEASUREMENT);
+			}
+
 			conversionInProcess = false;
 			adcConversionWaitTicks = 0;
 		}
 		else if(++adcConversionWaitTicks >= ADC_CONVERSION_TIMEOUT_TICKS)
 		{
 			if(indexConversionInProcess >= 0 && g_adcChannelOrder[indexConversionInProcess] == ADCTemperature) g_temperature_fresh_seconds = 0;
+			if(indexConversionInProcess >= 0 && g_adcChannelOrder[indexConversionInProcess] == ADCExternalBatteryVoltage)
+			{
+				g_external_battery_feedback.complete();
+				setExtBatLoadSwitch(OFF, BATTERY_MEASUREMENT);
+			}
 			/* A missed ADC completion must not wedge periodic temperature sampling. */
 			if((indexConversionInProcess >= 0) && (indexConversionInProcess < NUMBER_OF_POLLED_ADC_CHANNELS))
 			{
@@ -1694,6 +1743,7 @@ int main(void)
 					g_foreground_reset_after_keydown = false;
 
 					DISABLE_INTERRUPTS();
+					cancelExternalBatteryFeedback();
 					LEDS.deactivate();
 					serialbus_disable();
 					system_sleep_config();
@@ -4185,7 +4235,11 @@ static void turnCoolingFanOffForSleep(void)
  */
 static float sampleTemperatureNow(void)
 {
+	// Foreground spot reads must not steal a conversion from the periodic ADC service.
+	ENTER_CRITICAL(temperature_status_read);
 	float immediate_temperature = readTemperature();
+	g_restart_conversions = true;
+	EXIT_CRITICAL(temperature_status_read);
 	updateTemperatureState(immediate_temperature);
 	float processor_temperature = atomic_read_float(&g_processor_temperature);
 	float processor_max_ever_temperature = atomic_read_float(&g_processor_max_ever_temperature);
@@ -6133,7 +6187,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 					if(updateStoredValue)
 					{
+						ENTER_CRITICAL(battery_mode_change);
+						cancelExternalBatteryFeedback();
+						g_restart_conversions = true;
 						setExtBatLoadSwitch(OFF, INITIALIZE_LS);
+						EXIT_CRITICAL(battery_mode_change);
 						g_ee_mgr.updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
 
 						/* Reapply any active load-switch-controlled power path using the
@@ -6154,10 +6212,15 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 
 				// 				sprintf(g_tempStr, "\nBoost: %sabled\n", g_enable_boost_regulator ? "En":"Dis");
 				// 				sb_send_string(g_tempStr);
+				// A status request must not replace the last confirmed external-battery
+				// measurement with zero while that battery is deliberately disconnected.
+				// Keep its acquisition in the awake scheduler (including probe settling).
+				ENTER_CRITICAL(battery_status_read);
 				float internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
-				float external_voltage = readVoltage(ADCExternalBatteryVoltage);
-				atomic_write_float(&g_internal_bat_voltage, internal_bat_voltage);
-				atomic_write_float(&g_external_voltage, external_voltage);
+				g_restart_conversions = true;
+				float external_voltage = g_external_voltage;
+				g_internal_bat_voltage = internal_bat_voltage;
+				EXIT_CRITICAL(battery_status_read);
 				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 
 				if(!g_meshmode)

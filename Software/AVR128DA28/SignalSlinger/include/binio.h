@@ -87,6 +87,7 @@ enum hardwareResourceClients
 {
 	INTERNAL_BATTERY_CHARGING,
 	TRANSMITTER,
+	BATTERY_MEASUREMENT,
 	NUMBER_OF_LS_CONTROLLERS,
 	INITIALIZE_LS,
 	RE_APPLY_LS_STATE
@@ -174,6 +175,9 @@ bool setExtBatLoadSwitch(hardwareResourceClients client);
  * @return The effective shared output state after arbitration.
  */
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender);
+
+/* Transmission/charging demand, excluding a temporary voltage probe. */
+bool externalBatteryPowerRequested(void);
 
 /**
  * Request or release the signal-generator supply on behalf of a firmware client.

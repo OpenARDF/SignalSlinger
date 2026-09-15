@@ -39,6 +39,7 @@
 #include "atmel_start_pins.h"
 #include "adc.h"
 #include "globals.h"
+#include <atomic.h>
 
 /* Three-sample histories and debounced snapshots for the polled input ports. */
 uint8_t portDpinReadings[3];
@@ -218,10 +219,17 @@ static void updateLoadSwitchCallerState(volatile bool *callerStates,
 		}
 		break;
 
+		case BATTERY_MEASUREMENT:
+		{
+			if(trackInternalBatteryCharging) callerStates[BATTERY_MEASUREMENT] = onoff;
+		}
+		break;
+
 		case INITIALIZE_LS:
 		{
 			callerStates[INTERNAL_BATTERY_CHARGING] = onoff;
 			callerStates[TRANSMITTER] = onoff;
+			callerStates[BATTERY_MEASUREMENT] = OFF;
 		}
 		break;
 
@@ -238,7 +246,7 @@ static void updateLoadSwitchCallerState(volatile bool *callerStates,
  */
 static bool anyLoadSwitchCallerEnabled(const volatile bool *callerStates)
 {
-	return callerStates[INTERNAL_BATTERY_CHARGING] || callerStates[TRANSMITTER];
+	return callerStates[INTERNAL_BATTERY_CHARGING] || callerStates[TRANSMITTER] || callerStates[BATTERY_MEASUREMENT];
 }
 
 /**
@@ -297,8 +305,18 @@ bool setExtBatLoadSwitch(hardwareResourceClients client)
  */
 bool setExtBatLoadSwitch(bool onoff, hardwareResourceClients sender)
 {
+	ENTER_CRITICAL(external_battery_switch);
 	bool state = getArbitratedLoadSwitchState(chargeLScallerStates, onoff, sender, true);
 	setExtBatLSEnable(state);
+	EXIT_CRITICAL(external_battery_switch);
+	return state;
+}
+
+bool externalBatteryPowerRequested(void)
+{
+	ENTER_CRITICAL(external_battery_demand);
+	bool state = chargeLScallerStates[INTERNAL_BATTERY_CHARGING] || chargeLScallerStates[TRANSMITTER];
+	EXIT_CRITICAL(external_battery_demand);
 	return state;
 }
 
