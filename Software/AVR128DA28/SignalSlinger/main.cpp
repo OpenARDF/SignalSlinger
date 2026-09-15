@@ -4237,7 +4237,6 @@ static float sampleTemperatureNow(void)
 {
 	// Foreground spot reads must not steal a conversion from the periodic ADC service.
 	ENTER_CRITICAL(temperature_status_read);
-	ADC0_SYSTEM_shutdown();
 	float immediate_temperature = readTemperature();
 	g_restart_conversions = true;
 	EXIT_CRITICAL(temperature_status_read);
@@ -6217,7 +6216,6 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 				// measurement with zero while that battery is deliberately disconnected.
 				// Keep its acquisition in the awake scheduler (including probe settling).
 				ENTER_CRITICAL(battery_status_read);
-				ADC0_SYSTEM_shutdown();
 				float internal_bat_voltage = readVoltage(ADCInternalBatteryVoltage);
 				g_restart_conversions = true;
 				float external_voltage = g_external_voltage;

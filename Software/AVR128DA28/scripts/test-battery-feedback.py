@@ -81,6 +81,7 @@ bool ADC0_conversionDone() { return !adcStuck; }
 uint16_t ADC0_read() { return converted; }
 void ADC0_SYSTEM_shutdown() { converted=0; }
 float readVoltage(ADC_Active_Channel_t c) {
+    ADC0_SYSTEM_shutdown(); // The shared blocking driver aborts any displaced conversion.
     ADC0_setADCChannel(c);ADC0_startConversion();
     return converted*0.00725f+0.05f;
 }

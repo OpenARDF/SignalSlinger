@@ -32,6 +32,27 @@ intentionally disconnected jack. Its internal measurement and foreground
 temperature reads temporarily own the ADC; any displaced periodic conversion is
 retried, so results are not attributed to the wrong channel.
 
+The ADC allows 16 ADC clocks for initialization after enabling its reference.
+Temperature-channel acquisitions use 11 sample-length clocks at the 375 kHz ADC
+clock (29.3 microseconds), meeting the AVR128DA sensor's 25-microsecond startup
+and 28-microsecond sampling requirements. Voltage channels restore the short
+sampling window. The input is selected before enabling the ADC/reference so
+the initialization delay cannot retain the previous input for the first sample.
+This prevents immediate `TMP` queries after ADC restart from
+reporting false heat and changing the fan state. Sampling cadence and sleep
+shutdown remain unchanged. `scripts/test-adc-temperature.py` exercises the
+production driver across cold starts, channel switches, and shutdown.
+
+Peripheral initialization leaves channel preparation pending. The shared channel
+selector then establishes the requested input before enabling the ADC, even
+when startup or standby charging code initialized it first. Blocking voltage and
+temperature reads reuse one conversion helper: it aborts any displaced sample,
+waits for a fresh result with a bounded counter, and disables the ADC on timeout.
+Voltage failures return zero and temperature failures return an invalid value;
+neither accepts the previous conversion as a successful sample. Every new
+conversion clears the old result-ready flag. Callers retain their existing
+interrupt guards and periodic-conversion restart notification.
+
 The existing sleep loop, approximately 90-second sleep probe, charging decisions,
 and wake schedule are unchanged. Awake probes are canceled before sleep and do
 not wake the device or extend the LED timeout. No new settings are persisted.

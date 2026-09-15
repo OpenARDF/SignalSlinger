@@ -36,6 +36,7 @@ test:
     python3 ./scripts/test-session-storage.py
     python3 ./scripts/test-session-runtime.py
     python3 ./scripts/test-battery-feedback.py
+    python3 ./scripts/test-adc-temperature.py
     node ./scripts/check-release-version-consistency.mjs
 
 # Run all non-firmware repository checks.
