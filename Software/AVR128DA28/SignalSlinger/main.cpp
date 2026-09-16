@@ -499,7 +499,7 @@ static bool resyncLoadedEventWindowAfterClockSet(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 static bool currentLoadedEventWindowCanceled(void);
-static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error);
+static void configGreenLEDForCurrentState(bool internal_bat_error, float external_voltage);
 #include "session_runtime.h"
 static void reviveLedActivityForCurrentState(void);
 
@@ -1252,7 +1252,6 @@ int main(void)
 {
 	bool buttonHeldClosed = false;
 	bool internal_bat_error = false;
-	bool external_pwr_error = false;
 	bool startup_should_behave_as_poweroff = false;
 	bool bootloader_power_button_held = false;
 
@@ -2496,9 +2495,8 @@ int main(void)
 				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 				float external_voltage = atomic_read_float(&g_external_voltage);
 				internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
-				external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
-				configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
+				configGreenLEDForCurrentState(internal_bat_error, external_voltage);
 			}
 			else
 			{
@@ -7007,31 +7005,28 @@ void configRedLEDforEvent(void)
 /**
  * Update the green LED to reflect the current power and battery state.
  *
- * @param internal_bat_error true if the internal battery is present but below its threshold.
- * @param external_pwr_error true if external power is expected but currently invalid.
+ * @param internal_bat_error true if the internal battery is present and at or below its threshold.
+ * @param external_voltage Most recent confirmed external-source voltage.
  */
-static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
+static void configGreenLEDForCurrentState(bool internal_bat_error, float external_voltage)
 {
 	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
 	{
 		return;
 	}
 
-	if(external_pwr_error)
-	{
-		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
-		return;
-	}
-
-	if(g_charge_battery)
-	{
-		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-		return;
-	}
-
-	if(internal_bat_error)
+	/* Warn about a low internal battery only when external power is below
+	 * the presence threshold, independently of the charging request.
+	 */
+	if(internal_bat_error && (external_voltage < EXT_BAT_PRESENT_VOLTAGE))
 	{
 		LEDS.blink(LEDS_GREEN_BLINK_FAST);
+		return;
+	}
+
+	if(external_voltage <= EXT_BAT_PRESENT_VOLTAGE)
+	{
+		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
 		return;
 	}
 
@@ -7060,7 +7055,6 @@ static void reviveLedActivityForCurrentState(void)
 	float external_voltage = atomic_read_float(&g_external_voltage);
 
 	bool internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
-	bool external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
 	/* Re-arm LED timeout and restore the current logical indication state. */
 	LEDS.init();
@@ -7072,7 +7066,7 @@ static void reviveLedActivityForCurrentState(void)
 	}
 
 	configRedLEDforEvent();
-	configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
+	configGreenLEDForCurrentState(internal_bat_error, external_voltage);
 }
 
 /**

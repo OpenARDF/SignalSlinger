@@ -2,8 +2,12 @@
 
 The green LED uses the most recent confirmed external-battery voltage. A healthy
 battery can therefore produce steady green even while its power-control cable is
-deliberately switched off. The existing internal-battery warning and charging
-indications still apply. This is a voltage indication, not a capacity estimate.
+deliberately switched off. During normal status display, green blinks fast when
+an internal battery is detected, its voltage is at or below the configured low
+threshold (default 3.8 V), and external voltage is strictly below 6.0 V. Charging
+state does not affect this indication. Other readings at or below 6.0 V produce
+slow green blinking, including exactly 6.0 V; readings above 6.0 V produce steady
+green. This is a voltage indication, not a capacity estimate.
 
 Awake firmware uses the existing periodic ADC scheduler:
 
