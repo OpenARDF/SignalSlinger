@@ -33,6 +33,7 @@
  * Event scheduling and higher-level transmit policy belong elsewhere.
  */
 
+#include "serial_latency.h"
 #include <string.h>
 #include <stdlib.h>
 #include <avr/eeprom.h>
@@ -240,6 +241,7 @@ bool powerToTransmitter(bool state)
  */
 bool keyTransmitter(bool on)
 {
+	SERIAL_LATENCY_SCOPE(LAT_KEY);
 	if(on && transmitterThermallyBlocked()) on = false;
 	if(g_tx_initialized)
 	{
@@ -285,6 +287,11 @@ bool keyTransmitter(bool on)
 	}
 
 	return (g_transmitter_keyed);
+}
+
+bool txIsKeyed(void)
+{
+	return g_transmitter_keyed;
 }
 
 bool txIsInitialized(void)

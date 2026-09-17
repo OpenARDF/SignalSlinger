@@ -22,6 +22,7 @@
  *  SOFTWARE.
  */
 
+#include "serial_latency.h"
 #include "atmel_start.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -272,6 +273,12 @@ static volatile bool g_pending_led_revival = false;
 static volatile bool g_event_canceled_by_user = false;
 static volatile bool g_button_hold_preview_active = false;
 
+/* Preserve the intent of the press even if a test expires or a scheduled start
+ * arrives while the user is still holding the button. */
+enum ButtonHoldIntent { BUTTON_HOLD_DEFAULT, BUTTON_HOLD_STOP_TEST, BUTTON_HOLD_SLEEP_SCHEDULE };
+static volatile uint8_t g_button_hold_intent = BUTTON_HOLD_DEFAULT;
+static volatile uint8_t g_long_button_hold_intent = BUTTON_HOLD_DEFAULT;
+
 #define NUMBER_OF_POLLED_ADC_CHANNELS 3
 #define ADC_CONVERSION_TIMEOUT_TICKS 10
 static ADC_Active_Channel_t g_adcChannelOrder[NUMBER_OF_POLLED_ADC_CHANNELS] = {ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature};
@@ -426,6 +433,7 @@ bool eventScheduledForTheFuture(time_t start_epoch, time_t finish_epoch);
 bool noEventWillRun(void);
 bool eventRunning(void);
 void restoreStateAfterButtonWakeAuthorization(void);
+static void restoreEventAfterWakeAuthorization(void);
 static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
 static const char *hardwareBuildString(void);
 static void sendFirmwareInfo(void);
@@ -499,8 +507,15 @@ static bool resyncLoadedEventWindowAfterClockSet(void);
 static bool advanceLoadedEventWindowAfterCurrentDayCancel(void);
 static inline void extendMasterModeTimeout(void);
 static bool currentLoadedEventWindowCanceled(void);
-static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error);
+static bool manualTestInProgress(void);
+static uint8_t buttonHoldIntent(void);
+static void cancelEventFromButton(void);
+static bool handleScheduledButtonHold(void);
+static void handleLongButtonPress(void);
+static bool savedScheduleCanLimitManualRun(void);
+static void configGreenLEDForCurrentState(bool internal_bat_error, float external_voltage);
 #include "session_runtime.h"
+#include "ui_bench.h"
 static void reviveLedActivityForCurrentState(void);
 
 /***********************************************************************
@@ -517,6 +532,7 @@ static void reviveLedActivityForCurrentState(void);
  */
 ISR(RTC_CNT_vect)
 {
+	SERIAL_LATENCY_SCOPE(LAT_RTC);
 	uint8_t x = RTC.INTFLAGS;
 
 	if(x & RTC_OVF_bm)
@@ -567,6 +583,7 @@ ISR(RTC_CNT_vect)
 		}
 	}
 
+	if(x & RTC_OVF_bm) captureUiBenchTick();
 	RTC.INTFLAGS = (RTC_OVF_bm | RTC_CMP_bm);
 }
 
@@ -579,6 +596,7 @@ ISR(RTC_CNT_vect)
  */
 ISR(TCB0_INT_vect)
 {
+	SERIAL_LATENCY_SCOPE(LAT_TCB0);
 	static uint8_t fiftyMS = 6;
 	static bool on_air_finished = false;
 	static bool transitionPrepped = false;
@@ -657,16 +675,19 @@ ISR(TCB0_INT_vect)
 		if(g_device_wakeup_complete)
 		{
 			fiftyMS++;
-			/* Sample the pushbutton once every 6 TCB0 periods, or about every 50 ms. */
+			/* Sample the pushbutton once every 6 TCB0 periods (nominally 20 ms). */
 			if(!(fiftyMS % 6))
 			{
 				holdSwitch = portDdebouncedVals() & (1 << SWITCH);
 				debounce();
+				uint8_t switchNow = portDdebouncedVals() & (1 << SWITCH);
+				applyUiButtonSample(&holdSwitch, &switchNow);
 
-				if(holdSwitch != (portDdebouncedVals() & (1 << SWITCH))) /* Change detected */
+				if(holdSwitch != switchNow) /* Change detected */
 				{
 					if(holdSwitch) /* Switch was open, so it must have just now closed */
 					{
+						g_button_hold_intent = buttonHoldIntent();
 						/* If the unit is awake but the LEDs have timed out, the first press only
 						 * revives LED activity and must not be interpreted as a command. */
 						if(!g_sleeping && !LEDS.active())
@@ -722,6 +743,7 @@ ISR(TCB0_INT_vect)
 						{
 							setButtonHoldPreviewIndicator(false);
 							consumeHeldPreviewPress = false;
+							g_long_button_hold_intent = g_button_hold_intent;
 							g_long_button_press = true;
 							switch_closed_time = 0;
 							g_switch_presses_count = 0;
@@ -799,6 +821,7 @@ ISR(TCB0_INT_vect)
 				wakeAuthSwitchClosed = true;
 			}
 
+			clearUiButtonInjection();
 			longPressEnabled = false;
 			switch_closed_time = 0;
 			g_switch_presses_count = 0;
@@ -919,7 +942,7 @@ ISR(TCB0_INT_vect)
 						int32_t timeRemaining = SECONDS_24H; // Any  big number will do;
 						time_t temp_time = time(null);
 
-						if(timeIsSet())
+						if(timeIsSet() && !g_evteng_run_event_until_canceled)
 						{
 							time_t loaded_start_epoch;
 							time_t loaded_finish_epoch;
@@ -1252,7 +1275,6 @@ int main(void)
 {
 	bool buttonHeldClosed = false;
 	bool internal_bat_error = false;
-	bool external_pwr_error = false;
 	bool startup_should_behave_as_poweroff = false;
 	bool bootloader_power_button_held = false;
 
@@ -1483,27 +1505,7 @@ int main(void)
 					setExtBatLoadSwitch(g_charge_battery, INTERNAL_BATTERY_CHARGING);
 				}
 
-				bool restoring_mid_event_button_wake =
-				    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
-				    (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) &&
-				    g_button_wake_prior_event_commenced;
-
-				if(!g_event_launched_by_user_action && !restoring_mid_event_button_wake) // re-initialize event engine with stored event start and stop if it might be needed
-				{
-					reloadLoadedEventWindowFromSavedSettings();
-				}
-
-				// If the event loaded into the event engine is disabled, set it to start.
-				if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event &&
-				   !currentLoadedEventWindowCanceled())
-				{
-					g_foreground_start_event = true;
-				}
-
-				if((g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && !g_foreground_start_event)
-				{
-					restoreStateAfterButtonWakeAuthorization();
-				}
+				restoreEventAfterWakeAuthorization();
 
 				atomic_write_u16(&g_demo_event_countdown, 0);
 				g_foreground_reset_after_demo = false;
@@ -1747,6 +1749,7 @@ int main(void)
 					LEDS.deactivate();
 					serialbus_disable();
 					system_sleep_config();
+					clearUiButtonInjection();
 					g_ignore_sleep_button_wake_until_release = rawSwitchIsClosed();
 					configureSwitchInterruptForSleepWake();
 					clearPendingWakeInterruptFlags();
@@ -2243,46 +2246,7 @@ int main(void)
 					}
 					else if(counted_presses == 3)
 					{
-						time_t loaded_start_epoch = 0;
-						time_t loaded_finish_epoch = 0;
-						bool event_is_scheduled;
-						bool current_window_running = false;
-						bool future_window_only = false;
-
-						cancelManualTransientState();
-						g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
-						g_event_launched_by_user_action = false;
-
-						event_is_scheduled = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
-						if(event_is_scheduled)
-						{
-							atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-							current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
-							future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
-						}
-
-						suspendEvent(REASON_USER);
-
-						if(current_window_running)
-						{
-							g_event_canceled_by_user = true;
-							if(advanceLoadedEventWindowAfterCurrentDayCancel())
-							{
-								g_event_canceled_by_user = false;
-								startEventUsingRTC();
-							}
-							atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-						}
-						else if(future_window_only) // Preserve existing future-event behavior
-						{
-							g_event_canceled_by_user = false;
-							startEventUsingRTC();
-							atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
-						}
-						else
-						{
-							g_event_canceled_by_user = false;
-						}
+						cancelEventFromButton();
 					}
 					else if(counted_presses == 5)
 					{
@@ -2496,9 +2460,8 @@ int main(void)
 				float internal_voltage_low_threshold = atomic_read_float(&g_internal_voltage_low_threshold);
 				float external_voltage = atomic_read_float(&g_external_voltage);
 				internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
-				external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
-				configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
+				configGreenLEDForCurrentState(internal_bat_error, external_voltage);
 			}
 			else
 			{
@@ -2507,90 +2470,7 @@ int main(void)
 
 			if(g_long_button_press) /* Shut things down and go to sleep or power off */
 			{
-				if(sessionCooling()) {
-					noteSessionStopped(REASON_USER);
-					g_evteng_event_commenced = false;
-					g_event_canceled_by_user = true;
-					g_thermal_start_pending = false;
-				}
-				else if(atomic_read_i32(&g_evteng_on_the_air) >= 0) {
-					noteSessionStopped(REASON_USER);
-					g_evteng_event_enabled = false;
-					g_foreground_enable_transmitter = false;
-					keyTransmitter(OFF);
-				}
-				g_long_button_press = false;
-				g_foreground_check_for_long_wakeup_press = false;
-				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
-				LEDS.blink(LEDS_OFF);
-				g_isMaster = false;
-				atomic_write_u16(&isMasterCountdownSeconds, 0);
-				g_defer_cloned_event_start = false;
-				atomic_write_u16(&g_send_clone_success_countdown, 0);
-				g_cloningInProgress = false;
-				atomic_write_u16(&g_programming_countdown, 0);
-				atomic_write_u16(&g_programming_msg_throttle, 0);
-
-				{
-					time_t loaded_start_epoch;
-					time_t loaded_finish_epoch;
-					time_t now = time(null);
-
-					finishTimedEventIfExpired(now);
-					atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
-					int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
-					if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (on_the_air < 0))
-					{
-						int32_t timeRemaining = SECONDS_24H; // Any big number will do
-
-						if(timeIsSet() && (loaded_start_epoch != loaded_finish_epoch) && (now < loaded_finish_epoch))
-						{
-							timeRemaining = timeDif(loaded_finish_epoch, now);
-						}
-
-						/* Match the event engine's normal off-air sleep guard so we do not wake for an
-						 * extra post-finish slot after the user manually puts the unit back to sleep. */
-						if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
-						{
-							time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-on_the_air - 10));
-							g_evteng_event_enabled = true;
-							g_evteng_event_commenced = true;
-							atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
-							ENTER_CRITICAL(main_sendid_sleep_adjust);
-							g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
-							EXIT_CRITICAL(main_sendid_sleep_adjust);
-							g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
-						}
-						else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
-						{
-							/* Keep tracking the scheduled finish time, but leave transmissions disabled so
-							 * a later manual wake cannot resurrect a slot that no longer fully fits before
-							 * the event ends. */
-							g_evteng_event_enabled = false;
-							g_evteng_event_commenced = true;
-							atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
-							g_sleepType = SLEEP_AFTER_EVENT;
-						}
-						else
-						{
-							g_sleepType = SLEEP_AFTER_EVENT;
-						}
-					}
-					else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
-					{
-						g_sleepType = SLEEP_UNTIL_START_TIME;
-					}
-					else if(timeIsSet())
-					{
-						g_sleepType = SLEEP_FOREVER;
-					}
-					else
-					{
-						suspendEvent();
-					}
-				}
-
-				g_go_to_sleep_now = true;
+				handleLongButtonPress();
 			}
 		}
 
@@ -3122,6 +3002,220 @@ static bool currentLoadedEventWindowCanceled(void)
 	 * has advanced to the future, passive wake/scheduler logic must stop treating it as
 	 * canceled. */
 	return eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+}
+
+/** Is a temporary button/serial carrier or Morse demo still pending? */
+static bool manualTestInProgress(void)
+{
+	return g_start_event_after_keydown || atomic_read_u16(&g_key_down_countdown) ||
+	    atomic_read_u16(&g_demo_event_countdown) || g_foreground_reset_after_keydown || g_foreground_reset_after_demo;
+}
+
+/** Snapshot the meaning of an awake hold at its first debounced edge. */
+static uint8_t buttonHoldIntent(void)
+{
+	if(manualTestInProgress()) return BUTTON_HOLD_STOP_TEST;
+	time_t start, finish;
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &start, &finish);
+	return eventScheduledForTheFuture(start, finish) ? BUTTON_HOLD_SLEEP_SCHEDULE : BUTTON_HOLD_DEFAULT;
+}
+
+/** Cancel today's event, or clear a test and re-arm a future event. */
+static void cancelEventFromButton(void)
+{
+	uint8_t prior_day = g_schedule_day_index;
+	bool was_temporary = manualTestInProgress();
+	bool was_manual = g_event_launched_by_user_action || g_evteng_run_event_until_canceled;
+	time_t loaded_start_epoch = 0;
+	time_t loaded_finish_epoch = 0;
+	bool event_is_scheduled;
+	bool current_window_running = false;
+	bool future_window_only = false;
+
+	cancelManualTransientState();
+	g_frequency_to_test = NUMBER_OF_TEST_FREQUENCIES;
+	g_event_launched_by_user_action = false;
+
+	event_is_scheduled = eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch);
+	if(event_is_scheduled)
+	{
+		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+		current_window_running = eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch);
+		future_window_only = eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch);
+	}
+
+	suspendEvent(REASON_USER);
+
+	if(current_window_running)
+	{
+		g_event_canceled_by_user = true;
+		if(advanceLoadedEventWindowAfterCurrentDayCancel())
+		{
+			g_event_canceled_by_user = false;
+			startEventUsingRTC();
+		}
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+	}
+	else if(future_window_only) // Preserve existing future-event behavior
+	{
+		g_event_canceled_by_user = false;
+		startEventUsingRTC();
+		atomic_write_u16(&g_evteng_sleepshutdown_seconds, 300);
+	}
+	else
+	{
+		g_event_canceled_by_user = false;
+	}
+	noteButtonAction(current_window_running && (!was_manual || was_temporary) ? BUTTON_CANCEL_DAY :
+	    (was_temporary ? BUTTON_STOP_TEST : (was_manual ? BUTTON_CANCEL_MANUAL : BUTTON_REARM_SCHEDULE)), prior_day);
+}
+
+/**
+ * A hold stops only a temporary test; otherwise an active calendar event uses
+ * the same cancellation as three presses. Manual-run hold behavior stays below.
+ */
+static bool handleScheduledButtonHold(void)
+{
+	uint8_t prior_day = g_schedule_day_index;
+	uint8_t intent = g_long_button_hold_intent;
+	g_long_button_hold_intent = BUTTON_HOLD_DEFAULT;
+	bool stop_test = manualTestInProgress() || intent == BUTTON_HOLD_STOP_TEST;
+	if(stop_test || intent == BUTTON_HOLD_SLEEP_SCHEDULE)
+	{
+		bool test_still_running = manualTestInProgress();
+		cancelManualTransientState();
+		suspendEvent(test_still_running ? REASON_USER : REASON_SETTINGS);
+		g_event_launched_by_user_action = false;
+		if(reloadLoadedEventWindowFromSavedSettings() && !currentLoadedEventWindowCanceled())
+		{
+			startEventUsingRTC();
+			time_t start, finish;
+			atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &start, &finish);
+			if(g_evteng_event_enabled && eventIsScheduledToRunNow(start, finish) && !transmitterThermallyBlocked())
+			{
+				// Retain the restored phase, waking before the next slot. If that
+				// slot is already on air, the RTC resumes it on its next tick.
+				int32_t on_air = atomic_read_i32(&g_evteng_on_the_air);
+				time_t delay = on_air < -10 ? (time_t)(-on_air - 10) : 1;
+				atomic_write_time(&g_time_to_wake_up, time(null) + delay);
+				g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+			}
+		}
+		g_foreground_enable_transmitter = false;
+		keyTransmitter(OFF);
+		powerToTransmitter(OFF);
+		noteButtonAction(stop_test ? BUTTON_STOP_TEST : BUTTON_SLEEP_SCHEDULE, prior_day);
+		return true;
+	}
+
+	time_t start, finish;
+	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &start, &finish);
+	if(!g_event_launched_by_user_action && !g_evteng_run_event_until_canceled &&
+	   eventIsScheduledToRunNow(start, finish))
+	{
+		cancelEventFromButton();
+		return true;
+	}
+	return false;
+}
+
+/** Handle an awake long hold after the switch detector has consumed the press. */
+static void handleLongButtonPress(void)
+{
+	bool handled_schedule = handleScheduledButtonHold();
+	if(!handled_schedule && sessionCooling()) {
+		noteSessionStopped(REASON_USER);
+		g_evteng_event_commenced = false;
+		g_event_canceled_by_user = true;
+		g_thermal_start_pending = false;
+	}
+	else if(!handled_schedule && atomic_read_i32(&g_evteng_on_the_air) >= 0) {
+		noteSessionStopped(REASON_USER);
+		g_evteng_event_enabled = false;
+		g_foreground_enable_transmitter = false;
+		keyTransmitter(OFF);
+	}
+	g_long_button_press = false;
+	g_foreground_check_for_long_wakeup_press = false;
+	atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+	LEDS.blink(LEDS_OFF);
+	g_isMaster = false;
+	atomic_write_u16(&isMasterCountdownSeconds, 0);
+	g_defer_cloned_event_start = false;
+	atomic_write_u16(&g_send_clone_success_countdown, 0);
+	g_cloningInProgress = false;
+	atomic_write_u16(&g_programming_countdown, 0);
+	atomic_write_u16(&g_programming_msg_throttle, 0);
+
+	if(!handled_schedule)
+	{
+		time_t loaded_start_epoch;
+		time_t loaded_finish_epoch;
+		time_t now = time(null);
+
+		finishTimedEventIfExpired(now);
+		atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+		int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
+		if(g_evteng_event_enabled && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch) && (on_the_air < 0))
+		{
+			int32_t timeRemaining = SECONDS_24H; // Any big number will do
+
+			if(timeIsSet() && !g_evteng_run_event_until_canceled && (loaded_start_epoch != loaded_finish_epoch) && (now < loaded_finish_epoch))
+			{
+				timeRemaining = timeDif(loaded_finish_epoch, now);
+			}
+
+			/* Match the event engine's normal off-air sleep guard so we do not wake for an
+			 * extra post-finish slot after the user manually puts the unit back to sleep. */
+			if((g_evteng_off_air_seconds > 15) && (timeRemaining > (g_evteng_off_air_seconds + g_evteng_on_air_seconds + 15)))
+			{
+				time_t seconds_to_sleep = MAX((time_t)1, (time_t)(-on_the_air - 10));
+				g_evteng_event_enabled = true;
+				g_evteng_event_commenced = true;
+				atomic_write_time(&g_time_to_wake_up, now + seconds_to_sleep);
+				ENTER_CRITICAL(main_sendid_sleep_adjust);
+				g_evteng_sendID_seconds_countdown = MAX(0, g_evteng_sendID_seconds_countdown - (int)seconds_to_sleep);
+				EXIT_CRITICAL(main_sendid_sleep_adjust);
+				g_sleepType = SLEEP_UNTIL_NEXT_XMSN;
+			}
+			else if((loaded_start_epoch != loaded_finish_epoch) && (timeRemaining > 0))
+			{
+				/* Keep tracking the scheduled finish time, but leave transmissions disabled so
+				 * a later manual wake cannot resurrect a slot that no longer fully fits before
+				 * the event ends. */
+				g_evteng_event_enabled = false;
+				g_evteng_event_commenced = true;
+				atomic_write_time(&g_time_to_wake_up, FOREVER_EPOCH);
+				g_sleepType = SLEEP_AFTER_EVENT;
+			}
+			else
+			{
+				g_sleepType = SLEEP_AFTER_EVENT;
+			}
+		}
+		else if(eventScheduledForTheFuture(loaded_start_epoch, loaded_finish_epoch))
+		{
+			g_sleepType = SLEEP_UNTIL_START_TIME;
+		}
+		else if(timeIsSet())
+		{
+			g_sleepType = SLEEP_FOREVER;
+		}
+		else
+		{
+			suspendEvent();
+		}
+	}
+
+	g_go_to_sleep_now = true;
+}
+
+/** Inspect saved calendar relevance using local copies, without changing a run. */
+static bool savedScheduleCanLimitManualRun(void)
+{
+	time_t start, finish;
+	atomic_read_time_pair(&g_event_start_epoch, &g_event_finish_epoch, &start, &finish);
+	return (start > MINIMUM_VALID_EPOCH) && (finish > start) && eventIsScheduledToRun(&start, &finish);
 }
 
 /**
@@ -4451,7 +4545,11 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_UI_DIAGNOSTICS:
 			{
 				char command = sb_buff->fields[SB_FIELD1][0];
-				if(command == 'S')
+				if(handleUiBenchCommand(command, sb_buff->fields[SB_FIELD2]))
+				{
+					// Diagnostic command handled, including explicit argument errors.
+				}
+				else if(command == 'S')
 				{
 					reportUiDiagnostics();
 				}
@@ -4468,12 +4566,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					}
 					else
 					{
-						sb_send_master_string((char *)"* Err: UI [S|C|P n]\n");
+						sb_send_master_string((char *)"* Err: UI [S|C|P n|D|B samples|T [seconds]]\n");
 					}
 				}
 				else
 				{
-					sb_send_master_string((char *)"* Err: UI [S|C|P n]\n");
+					sb_send_master_string((char *)"* Err: UI [S|C|P n|D|B samples|T [seconds]]\n");
 				}
 			}
 			break;
@@ -5575,35 +5673,38 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 					time_t now = time(null);
 					if(g_event_launched_by_user_action)
 					{
-						time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
-						sb_send_string((char *)"* User launched. \n");
-						if(g_evteng_run_event_until_canceled)
+						if(!reportManualEventOutcome())
 						{
-							sb_send_string((char *)"* Running forever.\n");
-						}
-						else if(loaded_finish_epoch > now)
-						{
-							reportTimeTill(now, loaded_finish_epoch, "* Time remaining: ", NULL);
-						}
-						else
-						{
-							sb_send_string((char *)"* Config err 1\n");
-						}
+							time_t loaded_finish_epoch = atomic_read_time(&g_evteng_loaded_finish_epoch);
+							sb_send_string((char *)"* User launched. \n");
+							if(g_evteng_run_event_until_canceled)
+							{
+								sb_send_string((char *)"* Running forever.\n");
+							}
+							else if(loaded_finish_epoch > now)
+							{
+								reportTimeTill(now, loaded_finish_epoch, "* Time remaining: ", NULL);
+							}
+							else
+							{
+								sb_send_string((char *)"* Config err 1\n");
+							}
 
-						int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
-						if(on_the_air > 0)
-						{
-							sb_send_string((char *)"* On the air.\n");
-						}
-						else
-						{
-							sprintf(g_tempStr, "* On the air in %d seconds.\n", (int)-on_the_air);
-							sb_send_string(g_tempStr);
-						}
+							int32_t on_the_air = atomic_read_i32(&g_evteng_on_the_air);
+							if(on_the_air > 0)
+							{
+								sb_send_string((char *)"* On the air.\n");
+							}
+							else
+							{
+								sprintf(g_tempStr, "* On the air in %d seconds.\n", (int)-on_the_air);
+								sb_send_string(g_tempStr);
+							}
 
-						if(!g_evteng_event_enabled)
-						{
-							sb_send_string((char *)"* Event interrupted!\n");
+							if(!g_evteng_event_enabled)
+							{
+								sb_send_string((char *)"* Event interrupted!\n");
+							}
 						}
 					}
 					else if(eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch))
@@ -6304,6 +6405,12 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			}
 			break;
 
+			case SB_RX_CORRUPT:
+			{
+				sb_send_string((char *)"* Err: serial receive error; command ignored\n");
+			}
+			break;
+
 			case SB_RX_IDLE_TIMEOUT:
 			{
 				suppressResponse = true;
@@ -6570,6 +6677,9 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 			atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds);
 			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 			LEDS.blink(LEDS_RED_OFF);
+			/* Publish the initialized immediate phase before the RTC can see an
+			 * enabled run and replace it with the scheduled fox offset. */
+			g_evteng_event_commenced = true;
 			g_evteng_event_enabled = true;
 			if(!powerToTransmitter(g_device_enabled))
 			{
@@ -6786,6 +6896,40 @@ bool startEventUsingRTC(void)
 }
 
 /**
+ * Complete event restoration only after wake authorization has been earned.
+ * Manual runs own their loaded window; calendar checks can mutate that window
+ * and must not apply an exhausted saved schedule to an independent manual run.
+ */
+static void restoreEventAfterWakeAuthorization(void)
+{
+	bool button_wake = g_awakenedBy == AWAKENED_BY_BUTTONPRESS;
+	if(button_wake) captureButtonWakeDiagnostic(false);
+	bool restoring_mid_event_button_wake =
+	    (g_awakenedBy == AWAKENED_BY_BUTTONPRESS) &&
+	    (g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) &&
+	    g_button_wake_prior_event_commenced;
+
+	if(!g_event_launched_by_user_action && !g_evteng_run_event_until_canceled && !restoring_mid_event_button_wake) // re-initialize event engine with stored event start and stop if it might be needed
+	{
+		reloadLoadedEventWindowFromSavedSettings();
+	}
+
+	// If the event loaded into the event engine is disabled, set it to start.
+	if(!g_event_launched_by_user_action && !g_evteng_run_event_until_canceled &&
+	   eventIsScheduledToRun(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch) && !g_evteng_event_enabled && !g_foreground_start_event &&
+	   !currentLoadedEventWindowCanceled())
+	{
+		g_foreground_start_event = true;
+	}
+
+	if((g_awakenedBy == AWAKENED_BY_BUTTONPRESS) && !g_foreground_start_event)
+	{
+		restoreStateAfterButtonWakeAuthorization();
+	}
+	if(button_wake) captureButtonWakeDiagnostic(true);
+}
+
+/**
  * Restore the event and sleep state after the user wakes the device with the button.
  *
  * This helper reconstructs the correct post-authorization state from the sleep
@@ -6798,6 +6942,30 @@ void restoreStateAfterButtonWakeAuthorization(void)
 	time_t loaded_finish_epoch;
 	time_t now = time(null);
 	atomic_read_time_pair(&g_evteng_loaded_start_epoch, &g_evteng_loaded_finish_epoch, &loaded_start_epoch, &loaded_finish_epoch);
+
+	/* Resume an already-running manual session in place. Do not re-arm a session
+	 * stopped during wake authorization, and do not require calendar timestamps
+	 * for an indefinite run (including Start == Finish or an unset clock).
+	 */
+	if((g_event_launched_by_user_action || g_evteng_run_event_until_canceled) &&
+	   ((g_button_wake_prior_sleep_type == SLEEP_UNTIL_NEXT_XMSN) ||
+	    (g_button_wake_prior_sleep_type == SLEEP_AFTER_EVENT)))
+	{
+		if(!g_button_wake_prior_event_enabled || !g_button_wake_prior_event_commenced ||
+		   !g_evteng_event_enabled || !g_evteng_event_commenced || g_event_canceled_by_user ||
+		   !g_device_enabled || getDisableTransmissions() || transmitterThermallyBlocked() || sessionCooling())
+		{
+			g_evteng_event_enabled = false;
+			return;
+		}
+
+		if(finishTimedEventIfExpired(now)) return;
+		if(g_evteng_run_event_until_canceled || eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
+		{
+			g_sleepType = SLEEP_AFTER_EVENT;
+			return;
+		}
+	}
 
 	if(currentLoadedEventWindowCanceled() && eventIsScheduledToRunNow(loaded_start_epoch, loaded_finish_epoch))
 	{
@@ -7007,31 +7175,28 @@ void configRedLEDforEvent(void)
 /**
  * Update the green LED to reflect the current power and battery state.
  *
- * @param internal_bat_error true if the internal battery is present but below its threshold.
- * @param external_pwr_error true if external power is expected but currently invalid.
+ * @param internal_bat_error true if the internal battery is present and at or below its threshold.
+ * @param external_voltage Most recent confirmed external-source voltage.
  */
-static void configGreenLEDForCurrentState(bool internal_bat_error, bool external_pwr_error)
+static void configGreenLEDForCurrentState(bool internal_bat_error, float external_voltage)
 {
 	if(g_foreground_check_for_long_wakeup_press || g_go_to_sleep_now)
 	{
 		return;
 	}
 
-	if(external_pwr_error)
-	{
-		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
-		return;
-	}
-
-	if(g_charge_battery)
-	{
-		LEDS.blink(LEDS_GREEN_ON_CONSTANT);
-		return;
-	}
-
-	if(internal_bat_error)
+	/* Warn about a low internal battery only when external power is below
+	 * the presence threshold, independently of the charging request.
+	 */
+	if(internal_bat_error && (external_voltage < EXT_BAT_PRESENT_VOLTAGE))
 	{
 		LEDS.blink(LEDS_GREEN_BLINK_FAST);
+		return;
+	}
+
+	if(external_voltage <= EXT_BAT_PRESENT_VOLTAGE)
+	{
+		LEDS.blink(LEDS_GREEN_BLINK_SLOW);
 		return;
 	}
 
@@ -7060,7 +7225,6 @@ static void reviveLedActivityForCurrentState(void)
 	float external_voltage = atomic_read_float(&g_external_voltage);
 
 	bool internal_bat_error = (g_internal_bat_detected && (internal_bat_voltage <= internal_voltage_low_threshold));
-	bool external_pwr_error = (external_voltage <= EXT_BAT_PRESENT_VOLTAGE);
 
 	/* Re-arm LED timeout and restore the current logical indication state. */
 	LEDS.init();
@@ -7072,7 +7236,7 @@ static void reviveLedActivityForCurrentState(void)
 	}
 
 	configRedLEDforEvent();
-	configGreenLEDForCurrentState(internal_bat_error, external_pwr_error);
+	configGreenLEDForCurrentState(internal_bat_error, external_voltage);
 }
 
 /**
@@ -7114,7 +7278,7 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			time_t newFinish = FOREVER_EPOCH;
 			bool forceForever = false;
 
-			if(allClocksSet(SAVED_SETTINGS))
+			if(allClocksSet(SAVED_SETTINGS) && savedScheduleCanLimitManualRun())
 			{
 				time_t event_start_epoch;
 				time_t event_finish_epoch;
@@ -7123,8 +7287,8 @@ void setupForFox(Fox_t fox, EventAction_t action)
 			}
 			else
 			{
-				/* Without a valid saved schedule, fall back to a user-launched
-				 * "run forever" event instead of inventing a timed finish.
+				/* Unset or exhausted schedules must not limit a new manual run.
+				 * Keep clock alignment, but run until explicitly canceled.
 				 */
 				forceForever = true;
 			}

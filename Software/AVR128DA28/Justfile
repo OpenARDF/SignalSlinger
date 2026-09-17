@@ -25,6 +25,7 @@ policy-check:
 
 # Run dependency-light host checks for the portable workflow.
 test:
+    python3 -c "import ast,pathlib; ast.parse(pathlib.Path('scripts/run-hardware-bench.py').read_text()); ast.parse(pathlib.Path('scripts/run-serial-latency.py').read_text())"
     for script in ./scripts/*.mjs; do node --check "$script"; done
     shellcheck ./scripts/*.sh
     shfmt -d ./scripts/*.sh
@@ -33,8 +34,12 @@ test:
     ./tmp/test-thermal-shutdown-policy
     c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-session-policy.cpp -o ./tmp/test-session-policy
     ./tmp/test-session-policy
+    python3 ./scripts/test-eeprom-access.py
+    python3 ./scripts/test-hardware-bench.py
     python3 ./scripts/test-session-storage.py
     python3 ./scripts/test-session-runtime.py
+    python3 ./scripts/test-serial-rx-errors.py
+    python3 ./scripts/test-serial-latency.py
     python3 ./scripts/test-battery-feedback.py
     python3 ./scripts/test-adc-temperature.py
     node ./scripts/check-release-version-consistency.mjs
@@ -207,3 +212,19 @@ stage-non-kicad:
 commit-push message: stage-non-kicad
     git -C "{{repo_root}}" commit -m {{quote(message)}}
     git -C "{{repo_root}}" push
+
+# Exercise an identified, idle HW 3.5 Classic Fox 3 and restore its saved schedule.
+hardware-bench port uid output:
+    python3 ./scripts/run-hardware-bench.py --port {{quote(port)}} --uid {{quote(uid)}} --output {{quote(output)}} --extended --byte-gap-ms 0
+
+# Build opt-in serial latency instrumentation separately from normal images.
+avr-latency-build-hw target:
+    node ./scripts/build-avr-release.mjs --hardware "{{target}}" --application-start "0x2000" --latency-diagnostics
+
+# Capture bounded UART timing diagnostics and restore the idle test device.
+serial-latency-bench port uid output:
+    python3 ./scripts/run-serial-latency.py --port {{quote(port)}} --uid {{quote(uid)}} --output {{quote(output)}}
+
+# Fail if the EEPROM regression reproductions cause receive errors or timer stalls.
+serial-eeprom-regression port uid output:
+    python3 ./scripts/run-serial-latency.py --port {{quote(port)}} --uid {{quote(uid)}} --output {{quote(output)}} --focus-demo --repeats 3 --require-clean

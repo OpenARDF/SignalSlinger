@@ -82,6 +82,7 @@ function verifySourceList() {
 function parseArguments(argv) {
   const options = {
     doctor: false,
+    latencyDiagnostics: false,
     hardware: null,
     applicationStart: 0,
   };
@@ -89,6 +90,8 @@ function parseArguments(argv) {
     const argument = argv[index];
     if (argument === "--doctor") {
       options.doctor = true;
+    } else if (argument === "--latency-diagnostics") {
+      options.latencyDiagnostics = true;
     } else if (argument === "--hardware") {
       options.hardware = argv[index + 1];
       index += 1;
@@ -142,7 +145,7 @@ function main() {
   const outputRoot = join(
     workspaceRoot,
     "tmp",
-    `avr-release${relocationSuffix}${hardwareSuffix}`,
+    `avr-release${relocationSuffix}${hardwareSuffix}${options.latencyDiagnostics ? "-latency" : ""}`,
   );
   prepareOutputDirectory(outputRoot);
 
@@ -169,6 +172,7 @@ function main() {
       "-funsigned-bitfields",
       "-DNDEBUG",
       ...hardwareFlags,
+      ...(options.latencyDiagnostics ? ["-DSIGNALSLINGER_LATENCY_DIAGNOSTICS"] : []),
       ...includeDirectories.flatMap((directory) => ["-I", directory]),
       "-O1",
       "-ffunction-sections",
@@ -330,6 +334,7 @@ function main() {
     dfpVersion: environment.dfpVersion,
     expectedDfpVersion,
     mcu,
+    latencyDiagnostics: options.latencyDiagnostics,
     hardwareTarget: options.hardware || "selected-by-defs.h",
     applicationStart: options.applicationStart,
     applicationStartHex: `0x${options.applicationStart.toString(16)}`,

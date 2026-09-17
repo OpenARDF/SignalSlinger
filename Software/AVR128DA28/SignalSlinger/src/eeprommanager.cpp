@@ -33,6 +33,7 @@
  * scheduling or radio behavior.
  */
 
+#include "serial_latency.h"
 #include "defs.h"
 #include "eeprommanager.h"
 #include "serialbus.h"
@@ -126,6 +127,16 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 
 typedef uint16_t eeprom_addr_t;
 
+/* EEPROM access is foreground/startup work. Polling busy permits already-enabled
+ * interrupts to run, unlike a mapped-memory access while EEPROM is busy, which
+ * stalls the CPU. Never change the caller's interrupt state here. ISR code must
+ * continue to queue persistence work for the foreground rather than call us. */
+static void avr_eeprom_wait_ready(void)
+{
+	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
+		;
+}
+
 /**
  * Write one byte to EEPROM through the AVR mapped EEPROM window.
  *
@@ -137,11 +148,20 @@ typedef uint16_t eeprom_addr_t;
  */
 void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in)
 {
-	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
-		;
+	SERIAL_LATENCY_SCOPE(LAT_EE_BYTE);
+	avr_eeprom_wait_ready();
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint8_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
+	*(volatile uint8_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
 	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
+}
+
+/* Preserve the AVR object representation and ascending byte order. Each byte
+ * waits for its predecessor through the existing writer; the final byte remains
+ * asynchronous, as before. Every reader also waits before accessing EEPROM. */
+static void avr_eeprom_write_bytes(eeprom_addr_t index, const uint8_t *bytes, uint8_t count)
+{
+	for(uint8_t i = 0; i < count; ++i)
+		avr_eeprom_write_byte(index + i, bytes[i]);
 }
 
 /**
@@ -152,11 +172,8 @@ void avr_eeprom_write_byte(eeprom_addr_t index, uint8_t in)
  */
 void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in)
 {
-	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
-		;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint16_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
+	SERIAL_LATENCY_SCOPE(LAT_EE_WORD);
+	avr_eeprom_write_bytes(index, (const uint8_t *)&in, sizeof(in));
 }
 
 /**
@@ -167,11 +184,8 @@ void avr_eeprom_write_word(eeprom_addr_t index, uint16_t in)
  */
 void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in)
 {
-	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
-		;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(uint32_t *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
+	SERIAL_LATENCY_SCOPE(LAT_EE_DWORD);
+	avr_eeprom_write_bytes(index, (const uint8_t *)&in, sizeof(in));
 }
 
 /**
@@ -182,11 +196,8 @@ void avr_eeprom_write_dword(eeprom_addr_t index, uint32_t in)
  */
 void avr_eeprom_write_float(eeprom_addr_t index, float in)
 {
-	while(NVMCTRL.STATUS & NVMCTRL_EEBUSY_bm)
-		;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_EEERWR_gc);
-	*(float *)(eeprom_addr_t)(MAPPED_EEPROM_START + index) = in;
-	_PROTECTED_WRITE_SPM(NVMCTRL.CTRLA, NVMCTRL_CMD_NONE_gc);
+	SERIAL_LATENCY_SCOPE(LAT_EE_FLOAT);
+	avr_eeprom_write_bytes(index, (const uint8_t *)&in, sizeof(in));
 }
 
 /**
@@ -197,6 +208,8 @@ void avr_eeprom_write_float(eeprom_addr_t index, float in)
  */
 static uint8_t avr_eeprom_read_byte_at(eeprom_addr_t index)
 {
+	SERIAL_LATENCY_SCOPE(LAT_EE_READ);
+	avr_eeprom_wait_ready();
 	return eeprom_read_byte((const uint8_t *)(eeprom_addr_t)index);
 }
 
@@ -243,6 +256,7 @@ uint8_t readSessionHistory(SessionRecord* records, uint8_t capacity)
 
 void appendSessionHistory(SessionRecord record)
 {
+	SERIAL_LATENCY_SCOPE(LAT_HISTORY);
 	uint8_t next = 0;
 	uint32_t latest = 0;
 	bool found = false;
@@ -274,6 +288,8 @@ void appendSessionHistory(SessionRecord record)
  */
 static uint16_t avr_eeprom_read_word_at(eeprom_addr_t index)
 {
+	SERIAL_LATENCY_SCOPE(LAT_EE_READ);
+	avr_eeprom_wait_ready();
 	return eeprom_read_word((const uint16_t *)(eeprom_addr_t)index);
 }
 
@@ -285,6 +301,8 @@ static uint16_t avr_eeprom_read_word_at(eeprom_addr_t index)
  */
 static uint32_t avr_eeprom_read_dword_at(eeprom_addr_t index)
 {
+	SERIAL_LATENCY_SCOPE(LAT_EE_READ);
+	avr_eeprom_wait_ready();
 	return eeprom_read_dword((const uint32_t *)(eeprom_addr_t)index);
 }
 
@@ -296,6 +314,8 @@ static uint32_t avr_eeprom_read_dword_at(eeprom_addr_t index)
  */
 static float avr_eeprom_read_float_at(eeprom_addr_t index)
 {
+	SERIAL_LATENCY_SCOPE(LAT_EE_READ);
+	avr_eeprom_wait_ready();
 	return eeprom_read_float((const float *)(eeprom_addr_t)index);
 }
 

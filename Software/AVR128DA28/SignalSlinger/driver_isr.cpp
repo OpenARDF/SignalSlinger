@@ -33,6 +33,7 @@
  * to avoid losing it when reconfiguring.
  */
 
+#include "serial_latency.h"
 #include <driver_init.h>
 #include <compiler.h>
 #include <atomic.h>
@@ -42,6 +43,8 @@
 #include "usart_basic.h"
 #include "morse.h"
 #include "globals.h"
+
+#include "serial_latency_impl.h"
 
 void serial_Rx(uint8_t rx_char);
 static int serialbus_parse_msg_id(const char *text, uint8_t len);
@@ -65,6 +68,7 @@ static bool g_serial_rx_inEscapeSequence = false;
 static volatile bool g_serial_rx_useMeshMode = false;
 static volatile bool g_serial_rx_accepting_input = false;
 static bool g_serial_rx_invalidCommand = false;
+static bool g_serial_rx_discard_corrupt_line = false;
 
 static bool serialbus_rx_is_delayed_submit_command(void)
 {
@@ -123,6 +127,7 @@ static int serialbus_parse_msg_id(const char *text, uint8_t len)
 
 void serialbus_reset_rx_parser(void)
 {
+	g_serial_rx_discard_corrupt_line = false;
 	memset(g_serial_rx_textBuff, 0, sizeof(g_serial_rx_textBuff));
 	g_serial_rx_buff = NULL;
 	g_serial_rx_charIndex = 0;
@@ -166,19 +171,63 @@ void serialbus_rx_idle_tick(void)
 	}
 }
 
+static volatile uint16_t g_rx_overrun = 0, g_rx_framing = 0, g_rx_parity = 0;
+
+static void noteSerialRxStatus(uint8_t status)
+{
+    if((status & USART_BUFOVF_bm) && g_rx_overrun != UINT16_MAX) ++g_rx_overrun;
+    if((status & USART_FERR_bm) && g_rx_framing != UINT16_MAX) ++g_rx_framing;
+    if((status & USART_PERR_bm) && g_rx_parity != UINT16_MAX) ++g_rx_parity;
+}
+
+void serialbusRxErrors(uint16_t *overrun, uint16_t *framing, uint16_t *parity)
+{
+    ENTER_CRITICAL(serial_rx_diagnostics);
+    *overrun = g_rx_overrun; *framing = g_rx_framing; *parity = g_rx_parity;
+    EXIT_CRITICAL(serial_rx_diagnostics);
+}
+
+/* A lost byte can turn a valid argument into a different valid argument.
+ * Drop the entire damaged line; never dispatch a truncated mutation. */
+static void serialRxChecked(uint8_t rx_char, uint8_t status)
+{
+#ifdef SIGNALSLINGER_LATENCY_DIAGNOSTICS
+    serialLatencyRx(status);
+#endif
+    noteSerialRxStatus(status);
+    if(status & (USART_BUFOVF_bm | USART_FERR_bm | USART_PERR_bm)) {
+        serialbus_reset_rx_parser();
+        g_serial_rx_discard_corrupt_line = true;
+    }
+    if(g_serial_rx_discard_corrupt_line) {
+        if(rx_char == '\r' || rx_char == '\n') {
+            serialbus_reset_rx_parser();
+            SerialbusRxBuffer *error = nextEmptySBRxBuffer();
+            if(error) {
+                error->type = SERIALBUS_MSG_INVALID;
+                error->id = SB_RX_CORRUPT;
+            }
+        }
+        return;
+    }
+    serial_Rx(rx_char);
+}
+
 ISR(USART0_RXC_vect)
 {
+	uint8_t status = USART0.RXDATAH; // Read status before popping its data byte.
 	uint8_t rx_char = USART0_get_data();
 
 	if(g_serialbus_usart_number == USART_0)
 	{
-		serial_Rx(rx_char);
+		serialRxChecked(rx_char, status);
 	}
 }
 
 // void __attribute__((optimize("O0"))) serial_Rx(uint8_t rx_char)
 void serial_Rx(uint8_t rx_char)
 {
+	SERIAL_LATENCY_SCOPE(LAT_RX);
 	uint8_t echo_char = rx_char;
 
 	if(!g_serial_rx_accepting_input)
@@ -524,10 +573,11 @@ ISR(USART1_DRE_vect)
 */
 ISR(USART1_RXC_vect)
 {
+	uint8_t status = USART1.RXDATAH; // Read status before popping its data byte.
 	uint8_t rx_char = USART1_get_data();
 
 	if(g_serialbus_usart_number == USART_1)
 	{
-		serial_Rx(rx_char);
+		serialRxChecked(rx_char, status);
 	}
 }

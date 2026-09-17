@@ -9,6 +9,7 @@
  * Higher-level UI policy and state selection belong elsewhere.
  */
 
+#include "serial_latency.h"
 #include "defs.h"
 #include "atmel_start_pins.h"
 #include "leds.h"
@@ -85,6 +86,7 @@ static void text_buff_reset_and_disable_manual_atomic(void)
  */
 ISR(TCB1_INT_vect)
 {
+	SERIAL_LATENCY_SCOPE(LAT_TCB1);
 	uint8_t x = TCB1.INTFLAGS;
 
 	if(x & TCB_CAPT_bm)

@@ -175,6 +175,112 @@ static uint8_t scheduledDaysRemaining(void)
     return day < g_days_to_run ? g_days_to_run - day : 0;
 }
 
+/* Report the actual manual outcome without changing scheduler or power state. */
+static bool reportManualEventOutcome(void)
+{
+    SessionRecord current;
+    bool enabled;
+    ENTER_CRITICAL(manual_outcome);
+    current = g_session.record;
+    enabled = g_evteng_event_enabled;
+    EXIT_CRITICAL(manual_outcome);
+    if(enabled || sessionActionActive(current.action)) return false;
+    switch(current.action) {
+        case SESSION_COMPLETED:
+            sb_send_string((char *)"* Event completed.\n");
+            return true;
+        case SESSION_FINISHED_INTERRUPTED:
+            sb_send_string((char *)"* Event finished with interruptions.\n");
+            return true;
+        case SESSION_INTERRUPTED:
+            sb_send_string((char *)"* Event interrupted!\n");
+            return true;
+        default:
+            return false;
+    }
+}
+
+/* Last authorized button wake, retained only in RAM until reset. Foreground
+ * snapshots add no serial traffic, EEPROM writes, ADC work, or sleep wake-ups.
+ */
+struct WakeEventSnapshot {
+    uint32_t start, finish;
+    int32_t on_air;
+    uint8_t sleep, enabled, commenced, manual, forever, day, days;
+};
+static WakeEventSnapshot g_button_wake_before = {}, g_button_wake_after = {};
+static uint32_t g_button_wake_count = 0, g_button_wake_at = 0;
+
+static WakeEventSnapshot wakeEventSnapshot(void)
+{
+    WakeEventSnapshot snapshot;
+    ENTER_CRITICAL(wake_snapshot);
+    snapshot.start = g_evteng_loaded_start_epoch;
+    snapshot.finish = g_evteng_loaded_finish_epoch;
+    snapshot.on_air = g_evteng_on_the_air;
+    snapshot.sleep = g_sleepType;
+    snapshot.enabled = g_evteng_event_enabled;
+    snapshot.commenced = g_evteng_event_commenced;
+    snapshot.manual = g_event_launched_by_user_action;
+    snapshot.forever = g_evteng_run_event_until_canceled;
+    snapshot.day = g_schedule_day_index;
+    snapshot.days = g_days_to_run;
+    EXIT_CRITICAL(wake_snapshot);
+    return snapshot;
+}
+
+static void captureButtonWakeDiagnostic(bool after)
+{
+    if(after) g_button_wake_after = wakeEventSnapshot();
+    else {
+        g_button_wake_before = wakeEventSnapshot();
+        g_button_wake_at = timeIsSet() ? (uint32_t)time(null) : 0;
+        if(g_button_wake_count != UINT32_MAX) ++g_button_wake_count;
+    }
+}
+
+static void reportWakeSnapshot(const char *label, const WakeEventSnapshot& s)
+{
+    char line[180];
+    snprintf(line, sizeof(line), "* %s: v=1 start=%lu finish=%lu onair=%ld sleep=%u enabled=%u commenced=%u manual=%u forever=%u day=%u days=%u\n",
+             label, (unsigned long)s.start, (unsigned long)s.finish, (long)s.on_air,
+             s.sleep, s.enabled, s.commenced, s.manual, s.forever, s.day, s.days);
+    sb_send_string(line);
+}
+
+enum ButtonAction { BUTTON_STOP_TEST = 1, BUTTON_CANCEL_DAY, BUTTON_CANCEL_MANUAL, BUTTON_REARM_SCHEDULE, BUTTON_SLEEP_SCHEDULE };
+static uint32_t g_button_action_count = 0, g_button_action_at = 0;
+static uint8_t g_button_action = 0, g_button_action_day_before = 0, g_button_action_day_after = 0;
+
+static void noteButtonAction(ButtonAction action, uint8_t prior_day)
+{
+    if(g_button_action_count != UINT32_MAX) ++g_button_action_count;
+    g_button_action_at = timeIsSet() ? (uint32_t)time(null) : 0;
+    g_button_action = action;
+    g_button_action_day_before = prior_day;
+    g_button_action_day_after = g_schedule_day_index;
+}
+
+static void reportWakeDiagnostics(void)
+{
+    reportWakeSnapshot("Runtime", wakeEventSnapshot());
+    if(g_button_action_count) {
+        char action_line[120];
+        snprintf(action_line, sizeof(action_line), "* Button action: v=1 count=%lu at=%lu action=%u day_before=%u day_after=%u\n",
+                 (unsigned long)g_button_action_count, (unsigned long)g_button_action_at, g_button_action,
+                 g_button_action_day_before, g_button_action_day_after);
+        sb_send_string(action_line);
+    }
+    char line[80];
+    snprintf(line, sizeof(line), "* Button wake: v=1 count=%lu at=%lu\n",
+             (unsigned long)g_button_wake_count, (unsigned long)g_button_wake_at);
+    sb_send_string(line);
+    if(g_button_wake_count) {
+        reportWakeSnapshot("Wake before", g_button_wake_before);
+        reportWakeSnapshot("Wake after", g_button_wake_after);
+    }
+}
+
 static void reportSessionHistory(void)
 {
     flushSessionHistory();
@@ -205,6 +311,7 @@ static void reportSessionHistory(void)
                  (unsigned long)r.timestamp, r.action, r.reason, r.flags, r.temperature, r.threshold);
         sb_send_string(line);
     }
+    reportWakeDiagnostics();
 }
 
 #endif

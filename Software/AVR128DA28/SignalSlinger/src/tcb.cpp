@@ -33,6 +33,7 @@
  * Higher-level scheduling policy and ISR-side work belong elsewhere.
  */
 
+#include "serial_latency.h"
 #include <tcb.h>
 #include <atomic.h>
 #include "globals.h"
@@ -234,6 +235,7 @@ ISR(TCA0_OVF_vect)
  */
 ISR(TCB2_INT_vect)
 {
+	SERIAL_LATENCY_SCOPE(LAT_TCB2);
 	uint8_t x = TCB2.INTFLAGS;
 	
 	if(x & TCB_CAPT_bm)

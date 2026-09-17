@@ -1,0 +1,48 @@
+{
+  "ss-eeprom-diag-focus": {
+    "passing_rows": 2,
+    "uart_snapshots": 13,
+    "max_error_counters": [
+      0,
+      0,
+      0
+    ],
+    "captures": 7,
+    "maximum_timer_gap_ms": 2.01416015625
+  },
+  "ss-eeprom-diag-broad": {
+    "passing_rows": 2,
+    "uart_snapshots": 13,
+    "max_error_counters": [
+      0,
+      0,
+      0
+    ],
+    "captures": 7,
+    "maximum_timer_gap_ms": 2.01416015625
+  },
+  "ss-eeprom-normal-full-verified": {
+    "passing_rows": 25,
+    "uart_snapshots": 96,
+    "max_error_counters": [
+      0,
+      0,
+      0
+    ]
+  },
+  "ss-eeprom-normal-focus": {
+    "passing_rows": 2,
+    "uart_snapshots": 13,
+    "max_error_counters": [
+      0,
+      0,
+      0
+    ],
+    "captures": 7
+  },
+  "images": {
+    "hw-3-5-latency": "a9afd57e387099bce66c4f61cd5b60a49fd8294f2b917c45eec569aa883c4b75",
+    "hw-3-5": "60b4f83232955c0bdf81e00f6db7b178823011b6cdc413664d12c06e487b2be2",
+    "hw-3-4": "5cc66886cc927ffcfd9e5cef765c4aeea48b133d77c06450f8f4163b9966027c"
+  }
+}

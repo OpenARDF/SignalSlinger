@@ -44,13 +44,20 @@ enum ADC_Active_Channel_t { ADCInternalBatteryVoltage, ADCExternalBatteryVoltage
 static bool g_device_wakeup_complete=true, g_sleeping=false, g_go_to_sleep_now=false;
 static bool g_enable_external_battery_control=true, g_restart_conversions=false;
 static bool g_internal_bat_detected=false;
+static bool g_foreground_check_for_long_wakeup_press=false, g_charge_battery=false;
 static float g_external_voltage=0.1f, g_internal_bat_voltage=4.2f;
 static int g_temperature_fresh_seconds=10;
 static ADC_Active_Channel_t g_adcChannelOrder[] = { ADCInternalBatteryVoltage, ADCExternalBatteryVoltage, ADCTemperature };
 static uint16_t g_adcCountdownCount[] = {2000,2000,4000};
 static uint16_t g_lastConversionResult[3] = {};
 static ExternalBatteryFeedback g_external_battery_feedback;
-static struct { bool visible=true; bool active() { return visible; } } LEDS;
+enum Blink_t { LEDS_OFF, LEDS_GREEN_BLINK_FAST, LEDS_GREEN_BLINK_SLOW, LEDS_GREEN_ON_CONSTANT };
+static struct {
+    bool visible=true;
+    Blink_t mode=LEDS_OFF;
+    bool active() { return visible; }
+    void blink(Blink_t value) { mode=value; }
+} LEDS;
 static unsigned nowTick=0, powerOnTick=0, conversions[3]={};
 static bool switchOn=false, batteryConnected=true, adcStuck=false;
 static ADC_Active_Channel_t channel=ADCInternalBatteryVoltage;
@@ -86,7 +93,15 @@ float readVoltage(ADC_Active_Channel_t c) {
     return converted*0.00725f+0.05f;
 }
 '''
+# Read the production threshold and LED selector, including its strict boundary.
+firmware_defs = (root / 'SignalSlinger/defs.h').read_text()
+external_threshold = next(line for line in firmware_defs.splitlines()
+                          if line.startswith('#define EXT_BAT_PRESENT_VOLTAGE '))
+green_signature = 'static void configGreenLEDForCurrentState('
+green_policy = function(main[main.rindex(green_signature):], green_signature)
 production = '\n'.join([
+    external_threshold,
+    green_policy,
     enum,
     'static volatile bool chargeLScallerStates[NUMBER_OF_LS_CONTROLLERS] = {};',
     function(binio, 'static void updateLoadSwitchCallerState('),
@@ -112,6 +127,35 @@ void restart() {
     externalSampleTicks.clear();g_external_voltage=0.1f;
 }
 int main() {
+    // A charging request must not mask the low-battery warning. Exercise the
+    // exact external threshold and both normal and low internal-battery states.
+    for(bool charging : {false, true}) {
+        g_charge_battery=charging;
+        struct LedCase { float external; Blink_t normal; Blink_t low; };
+        const LedCase cases[] = {
+            {0.0f, LEDS_GREEN_BLINK_SLOW, LEDS_GREEN_BLINK_FAST},
+            {5.999f, LEDS_GREEN_BLINK_SLOW, LEDS_GREEN_BLINK_FAST},
+            {6.0f, LEDS_GREEN_BLINK_SLOW, LEDS_GREEN_BLINK_SLOW},
+            {6.001f, LEDS_GREEN_ON_CONSTANT, LEDS_GREEN_ON_CONSTANT},
+            {12.0f, LEDS_GREEN_ON_CONSTANT, LEDS_GREEN_ON_CONSTANT},
+        };
+        for(const auto &test : cases) {
+            configGreenLEDForCurrentState(false, test.external);
+            assert(LEDS.mode==test.normal);
+            configGreenLEDForCurrentState(true, test.external);
+            assert(LEDS.mode==test.low);
+        }
+    }
+    // Wake authorization and sleep retain ownership of the LEDs.
+    for(bool waking : {false, true}) {
+        g_foreground_check_for_long_wakeup_press=waking;
+        g_go_to_sleep_now=!waking;
+        LEDS.mode=LEDS_OFF;
+        configGreenLEDForCurrentState(true, 5.0f);
+        assert(LEDS.mode==LEDS_OFF);
+    }
+    g_foreground_check_for_long_wakeup_press=false;g_go_to_sleep_now=false;
+    puts("PASS green LED: low battery, strict 6 V boundary, charging independence, wake/sleep overrides");
     restart();advance(1);assert(switchOn);
     advance(2);assert(conversions[1]==0 && g_external_voltage<6);
     advance(1);assert(conversions[1]==1 && switchOn);
