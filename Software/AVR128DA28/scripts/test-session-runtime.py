@@ -18,6 +18,7 @@ def function(signature):
     result=source[start:end]
     if signature.startswith('bool activateEventEngineUsingCurrentSettings('):
         result=result.replace('{', '{\n activation_start=startTime;activation_finish=finishTime;', 1)
+        result=result.replace('g_evteng_event_enabled = true;', 'g_evteng_event_enabled = true; if(inject_start_tick) manualStartTick();')
     return result
 
 stubs = r'''
@@ -104,6 +105,8 @@ int getFoxCodeSpeed() { return 8; }
 int throttleValue(int) { return 10; }
 uint16_t timeNeededForID() { return 5; }
 static uint16_t g_time_needed_for_ID=0;
+static bool inject_start_tick=false;
+void manualStartTick();
 static bool keyed=false;
 bool txIsKeyed() { return keyed; }
 bool rawSwitchIsClosed() { return input_closed; }
@@ -184,6 +187,14 @@ bool startEventUsingRTC(void) {
     return false;
 }
 '''
+# Exercise the production RTC manual-start branch at the exact enable boundary.
+rtc_start=source.index('void handle_1sec_tasks(void)\n{')
+manual_start=source.index('else if(g_evteng_run_event_until_canceled)',rtc_start)
+manual_body=source.index('{',manual_start)
+depth=1;manual_end=manual_body+1
+while depth:
+    depth+=(source[manual_end]=='{')-(source[manual_end]=='}');manual_end+=1
+manual_tick='void manualStartTick() { if(g_evteng_event_enabled && !g_evteng_event_commenced && g_evteng_run_event_until_canceled) '+source[manual_body:manual_end]+' }\n'
 sleep_begin=source.index('int32_t timeRemaining = SECONDS_24H; // Any  big number will do;')
 sleep_end=source.index('\n\t\t\t\t\t\tmuteAfterID = false;', sleep_begin)
 sleep_policy='void endSlotSleepPolicy() {\n'+source[sleep_begin:sleep_end]+'\n}\n'
@@ -591,11 +602,22 @@ int main() {
     testButtonEventPolicy();
     testButtonInput();
     testUiBenchHooks();
+    // A clock tick after enabling must not replace the immediate manual slot
+    // with Fox 3's 120-second scheduled offset.
+    now=946684800;g_thermal_shutdown=false;g_temperature_fresh_seconds=10;
+    g_evteng_event_enabled=false;g_evteng_event_commenced=false;
+    g_evteng_run_event_until_canceled=true;g_foreground_enable_transmitter=false;
+    g_evteng_intra_cycle_delay_time=120;inject_start_tick=true;
+    assert(activateEventEngineUsingCurrentSettings(0,0));
+    assert(g_evteng_on_the_air==g_evteng_on_air_seconds);
+    assert(g_evteng_event_commenced && !g_foreground_enable_transmitter);
+    inject_start_tick=false;
+    puts("Manual start: RTC tick at enable boundary preserves immediate transmit phase.");
 }
 '''
 with tempfile.TemporaryDirectory(prefix='signalslinger-runtime-') as temp:
     cpp=Path(temp)/'runtime.cpp'
-    cpp.write_text(stubs + ''.join(function(signature) for signature in [
+    cpp.write_text(stubs + manual_tick + ''.join(function(signature) for signature in [
         'bool timeIsSet(void)',
         'bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime)',
         'static bool cancelManualTransientState(void)',

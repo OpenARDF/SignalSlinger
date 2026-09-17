@@ -6677,6 +6677,9 @@ bool activateEventEngineUsingCurrentSettings(time_t startTime, time_t finishTime
 			atomic_write_i32(&g_evteng_on_the_air, g_evteng_on_air_seconds);
 			atomic_write_int(&g_evteng_sendID_seconds_countdown, g_evteng_on_air_seconds - atomic_read_u16(&g_time_needed_for_ID));
 			LEDS.blink(LEDS_RED_OFF);
+			/* Publish the initialized immediate phase before the RTC can see an
+			 * enabled run and replace it with the scheduled fox offset. */
+			g_evteng_event_commenced = true;
 			g_evteng_event_enabled = true;
 			if(!powerToTransmitter(g_device_enabled))
 			{
