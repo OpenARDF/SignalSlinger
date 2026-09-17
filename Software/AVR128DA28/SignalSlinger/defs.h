@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.5"
+#define SW_REVISION "2.0.6"
 #if !defined(HW_TARGET_3_4) && !defined(HW_TARGET_3_5)
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
