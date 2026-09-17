@@ -1,0 +1,16 @@
+{
+  "release": "https://github.com/OpenARDF/SignalSlinger/releases/tag/v2.0.6",
+  "tagCommit": "bbd45e0e5aa10652251d808d24c0da2c81e840cc",
+  "stable": true,
+  "notesMatch": true,
+  "assets": {
+    "SignalSlinger-Update-v2.0.6-HW-3.4.hex": "24b4f75914050cec239adbabb6cee2ac50d3194e204ff6152bbf868f71dcf880",
+    "SignalSlinger-Update-v2.0.6-HW-3.5.hex": "9fe22b6c802824ebd45ce8b7fed3cdffc3d13a4858084699fd4621ad7edeb1bb",
+    "SignalSlinger-v2.0.6-HW-3.4-Release-Files.zip": "9c37e4cad26e1ab8b000f9936c5c32c066328769c239f95462624987a4bb7fc4",
+    "SignalSlinger-v2.0.6-HW-3.5-Release-Files.zip": "53780dbe6fde34f3b47a162489ca26e7508e875843c5e55ff67ea4dd40795af8"
+  },
+  "serialSlingerUpdaterVerification": [
+    "PASS: published SerialSlinger selects Downloaded SignalSlinger 2.0.6 update for HW-3.4.",
+    "PASS: published SerialSlinger selects Downloaded SignalSlinger 2.0.6 update for HW-3.5."
+  ]
+}

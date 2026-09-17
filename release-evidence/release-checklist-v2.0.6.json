@@ -1,0 +1,169 @@
+{
+  "release": "v2.0.6",
+  "previousRelease": "v2.0.5",
+  "repository": "OpenARDF/SignalSlinger",
+  "channel": "stable",
+  "sourceCommit": "bbd45e0e5aa10652251d808d24c0da2c81e840cc",
+  "firmwareVersion": "2.0.6",
+  "releaseNotesFile": "Software/AVR128DA28/release-notes/v2.0.6.md",
+  "hardwareTargets": [
+    "HW-3.4",
+    "HW-3.5"
+  ],
+  "items": [
+    {
+      "id": "branch-announced",
+      "description": "Confirm the current branch and announce it to the user before making changes.",
+      "status": "done",
+      "evidence": "Development2 identified and announced before release changes."
+    },
+    {
+      "id": "working-tree-reviewed",
+      "description": "Confirm the working tree is clean or existing changes are intentionally excluded from release work.",
+      "status": "done",
+      "evidence": "Reviewed and committed the authorized firmware changes; unrelated KiCad lock and generated bench captures excluded."
+    },
+    {
+      "id": "release-version-incremented",
+      "description": "Increment the firmware patch version from the latest origin release and confirm the candidate tag does not already exist.",
+      "status": "done",
+      "evidence": "Origin latest release v2.0.5; v2.0.6 was unused and is the exact next patch."
+    },
+    {
+      "id": "release-tags-reconciled",
+      "description": "Confirm local semantic release tags match origin without moving any published tag.",
+      "status": "done",
+      "evidence": "All local semantic release tag object IDs matched origin; no remote tag was changed."
+    },
+    {
+      "id": "firmware-version-readme",
+      "description": "Confirm the intended firmware version in SignalSlinger/defs.h and matching repo-root README asset references.",
+      "status": "done",
+      "evidence": "SW_REVISION and both README update assets use 2.0.6."
+    },
+    {
+      "id": "release-channel",
+      "description": "Decide the release channel for main or Development2.",
+      "status": "done",
+      "evidence": "stable release selected for main."
+    },
+    {
+      "id": "source-commit-frozen",
+      "description": "Freeze and record the exact clean source commit used for release builds.",
+      "status": "done",
+      "evidence": "Clean main source bbd45e0e5aa10652251d808d24c0da2c81e840cc; staged integration matched final tested Development2 source exactly. Both final main update HEX files are byte-identical to tested candidate images."
+    },
+    {
+      "id": "clean-release-worktree",
+      "description": "Prepare release integration in a clean worktree so unrelated local changes cannot enter the release.",
+      "status": "done",
+      "evidence": "Clean renormalized integration in /private/tmp/SignalSlinger-release-v2.0.6 at bbd45e0e5aa10652251d808d24c0da2c81e840cc; unrelated KiCad files excluded."
+    },
+    {
+      "id": "full-repository-check",
+      "description": "Run just check and just secrets at the frozen source commit.",
+      "status": "done",
+      "evidence": "Complete final-main release-preflight passed repository checks and gitleaks; /private/tmp/ss-206-main-preflight.log."
+    },
+    {
+      "id": "deterministic-avr-builds",
+      "description": "Run the normal, relocated, and bootloader repeatability checks with pinned tools and zero warnings.",
+      "status": "done",
+      "evidence": "Final main normal and relocated HW 3.4/3.5 applications, bootloader and complete packages passed repeatability with zero compiler warnings."
+    },
+    {
+      "id": "artifact-manifest",
+      "description": "Generate both hardware-specific release packages, manifests, checksums, READMEs, and ZIP archives.",
+      "status": "done",
+      "evidence": "Both final main release packages have gitCommit bbd45e0e5aa10652251d808d24c0da2c81e840cc and sourceTreeDirty false; update HEX hashes match final tested development candidate."
+    },
+    {
+      "id": "package-validation",
+      "description": "Independently validate package contents, hashes, ZIP members, and flash geometry.",
+      "status": "done",
+      "evidence": "Both final main packages independently validated including checksums, ZIP members and flash geometry; package repeatability passed."
+    },
+    {
+      "id": "hardware-checklist",
+      "description": "Complete representative hardware programming, update, recovery, and version-report checks.",
+      "status": "skipped",
+      "evidence": "",
+      "skipReason": "Charles waived remaining checks on 2026-09-16. Final HW 3.4 passed all 24 behavioral cases, five extra clockless starts, seven stress captures, 129 zero-error UART snapshots, published 2.0.5 rollback and interrupted-update recovery. Earlier HW 3.5 passed 24 behavioral cases and UART stress before the final one-line manual-start race fix. Remaining final-image HW 3.5 retest and recovery checks are waived; see v2.0.6-hw34-validation.json and v2.0.6-hw34-recovery.json.",
+      "skipRequestedBy": "Charles Scharlau"
+    },
+    {
+      "id": "live-version-report",
+      "description": "Install each hardware build on a representative unit and capture its INF version report.",
+      "status": "skipped",
+      "evidence": "",
+      "skipReason": "Charles waived remaining checks on 2026-09-16. Final HW 3.4 image was installed and INF-confirmed as 2.0.6 / HW 3.4 / BL0.13 after recovery. Installing and obtaining INF for the final HW 3.5 image after the one-line manual-start race fix is waived.",
+      "skipRequestedBy": "Charles Scharlau"
+    },
+    {
+      "id": "rollback-package",
+      "description": "Select and verify the prior release package and documented recovery path.",
+      "status": "done",
+      "evidence": "Both previous 2.0.5 packages independently validated; fresh public update HEX downloads matched local images. Actual HW 3.4 rollback and interrupted-update recovery to 2.0.6 passed; final HW 3.5 recovery waived by Charles."
+    },
+    {
+      "id": "release-notes-user-visible",
+      "description": "Document the salient user-observable changes since the previous release in the checked release-notes file.",
+      "status": "done",
+      "evidence": "Checked release-notes/v2.0.6.md documents manual-run expiry, sleep/wake, button semantics and completed-event reporting; notes guard passed."
+    },
+    {
+      "id": "release-notes-reliability",
+      "description": "Document significant stability and reliability improvements since the previous release in the checked release-notes file.",
+      "status": "done",
+      "evidence": "Checked notes describe EEPROM serial-stall repair, manual-start interrupt race, and automated bench support. Final HW 3.4 behavior/stress/recovery passed; remaining HW 3.5 checks explicitly waived."
+    },
+    {
+      "id": "development2-commit-policy",
+      "description": "On Development2, leave changes uncommitted unless the user explicitly asks for a commit.",
+      "status": "done",
+      "evidence": "Charles explicitly requested committing these changes and moving forward with deployment on 2026-09-16; fixes committed as 4644def and version preparation as b3e82d0, pushed to origin."
+    },
+    {
+      "id": "integration-approved",
+      "description": "Obtain explicit approval to integrate the release candidate into main.",
+      "status": "done",
+      "evidence": "Charles explicitly requested committing these changes and moving forward with deploying SignalSlinger and SerialSlinger on 2026-09-16."
+    },
+    {
+      "id": "release-branch-verified",
+      "description": "Re-run release-preflight from the clean integrated main commit.",
+      "status": "done",
+      "evidence": "Complete release-preflight passed on pushed clean main bbd45e0e5aa10652251d808d24c0da2c81e840cc, with pinned compiler and device pack; update binaries match tested candidate."
+    },
+    {
+      "id": "release-approved",
+      "description": "Obtain explicit approval for the release tag and GitHub publication.",
+      "status": "done",
+      "evidence": "Charles requested deployment and explicitly waived all remaining checks on 2026-09-16; publication authorized."
+    },
+    {
+      "id": "annotated-tag",
+      "description": "Create and push an annotated release tag at the verified commit.",
+      "status": "done",
+      "evidence": "Annotated v2.0.6 pushed at bbd45e0e5aa10652251d808d24c0da2c81e840cc; remote tag object and peeled commit match."
+    },
+    {
+      "id": "github-release-created",
+      "description": "Create the GitHub release using --notes-file with the checked release notes and the requested prerelease or normal release channel.",
+      "status": "done",
+      "evidence": "Stable non-draft SignalSlinger v2.0.6 published at https://github.com/OpenARDF/SignalSlinger/releases/tag/v2.0.6 using checked notes verbatim."
+    },
+    {
+      "id": "hardware-assets-uploaded",
+      "description": "Upload both hardware assets to the release.",
+      "status": "done",
+      "evidence": "Both hardware-specific update HEX files and complete release ZIPs uploaded; all four public downloads match final main artifacts byte for byte."
+    },
+    {
+      "id": "remote-release-verified",
+      "description": "Verify the remote release body matches the checked notes file, both required change sections remain present, all assets are downloadable, and branch README targets are correct.",
+      "status": "done",
+      "evidence": "Fresh downloads: all four sizes/SHA-256 hashes match public metadata and local artifacts. Both downloaded packages independently validate; manifests identify clean main bbd45e0. Remote body and main README match. Published SerialSlinger 2.0.21 updater successfully selects, downloads and validates 2.0.6 for both HW 3.4 and HW 3.5 when current firmware is 2.0.5; see v2.0.6-public-verification.json."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "hardware": "3.4",
+  "uid": "42348279800026200111012100000000",
+  "rollback": "PASS",
+  "interruptedUpdateRecovery": "PASS",
+  "restoredSchedule": true,
+  "images": {
+    "2.0.5": {
+      "path": "/Users/charlesscharlau/Documents/GitHub/SignalSlinger/Software/AVR128DA28/release-packages/SignalSlinger-2.0.5-HW-3.4/SignalSlinger-Update-v2.0.5-HW-3.4.hex",
+      "sha256": "2409a75d33c2fcb380d8103d208faa17971f6a7233c263b8217eecae5d6e594e"
+    },
+    "2.0.6": {
+      "path": "/Users/charlesscharlau/Documents/GitHub/SignalSlinger/Software/AVR128DA28/release-packages/SignalSlinger-2.0.6-HW-3.4/SignalSlinger-Update-v2.0.6-HW-3.4.hex",
+      "sha256": "24b4f75914050cec239adbabb6cee2ac50d3194e204ff6152bbf868f71dcf880"
+    }
+  }
+}
