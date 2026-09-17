@@ -74,6 +74,8 @@ typedef int16_t Attenuation;
  * Indicates whether the transmitter hardware has been configured.
  */
  bool txIsInitialized(void);
+/** Last confirmed synthesizer key state; not an RF measurement. */
+bool txIsKeyed(void);
 
 /**
  * Program a new transmit frequency into the active clock generator.

@@ -33,6 +33,7 @@
  * Device-specific register maps and higher-level retry policy belong elsewhere.
  */
 
+#include "serial_latency.h"
 #include "defs.h"
 #include <util/twi.h>
 #include <avr/power.h>
@@ -203,6 +204,7 @@ static uint8_t i2c_0_WaitR(void)
  */
 uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len)
 {
+	SERIAL_LATENCY_SCOPE(LAT_I2C_WRITE);
 	uint8_t retVal = (uint8_t) - 1;
 	
 	/* Send slave address */
@@ -256,6 +258,7 @@ uint8_t I2C_0_SendData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8
  */
 uint8_t I2C_0_GetData(uint8_t slaveAddr, uint8_t regAddr, uint8_t *pData, uint8_t len)
 {
+	SERIAL_LATENCY_SCOPE(LAT_I2C_READ);
 	uint8_t retVal = (uint8_t) -1;
 	
 	/* Send the client address for write */

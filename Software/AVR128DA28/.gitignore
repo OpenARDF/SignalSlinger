@@ -32,3 +32,6 @@ SignalSlinger/Release/src/
 # Host policy-test executables
 /tmp/test-session-policy
 /tmp/test-thermal-shutdown-policy
+
+# Generated hardware-bench captures and frozen diagnostic images
+/tmp/hardware-bench/

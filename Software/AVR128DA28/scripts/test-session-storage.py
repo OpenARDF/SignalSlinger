@@ -14,6 +14,7 @@ migration_end = source.index('float hottest_ever_temperature', migration_start)
 migration = source[migration_start:migration_end]
 stubs = r'''
 #include "session_history.h"
+#include "serial_latency.h"
 #include "thermal_shutdown.h"
 #include <assert.h>
 #include <stdexcept>

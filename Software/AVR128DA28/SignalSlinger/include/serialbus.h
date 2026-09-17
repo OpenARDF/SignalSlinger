@@ -107,6 +107,7 @@ extern "C"
 		SB_MESSAGE_FUNCTION = 'F' * 100 + 'U' * 10 + 'N',      /* Functionality setting */
 		SB_MESSAGE_UI_DIAGNOSTICS = 'U' * 10 + 'I',            /* UI diagnostics and button injection */
 		SB_MODE_MESH = 'M' * 100 + 'S' * 10 + 'H',             /* Meshtastic mode setting */
+		SB_RX_CORRUPT = MAX_UINT16 - 3,                        /* UART reported damaged or lost input */
 		SB_RX_IDLE_TIMEOUT = MAX_UINT16 - 2,                   /* Parser dropped a stale partial RX line */
 		SB_INVALID_MESSAGE = MAX_UINT16,                       /* This value must never overlap a valid message ID */
 		SB_CR_NO_DATA = MAX_UINT16 - 1                         /* This value must never overlap a valid message ID */
@@ -137,7 +138,10 @@ extern "C"
 	} SerialbusRxBuffer;
 
 #define WAITING_FOR_UPDATE -1
-#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > TMP [H [ON|OFF|n]|R [X|E]] - Temperature\n* > INF - Firmware information\n* > UI [S|C|P n] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
+/* Saturating receive error counters since reset, shared by the active UART. */
+void serialbusRxErrors(uint16_t *overrun, uint16_t *framing, uint16_t *parity);
+
+#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > TMP [H [ON|OFF|n]|R [X|E]] - Temperature\n* > INF - Firmware information\n* > UI [S|C|P n|D|B samples|T [seconds]] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
 
 	/**
 	 * Configure the serial bus with a baud rate and USART instance.
