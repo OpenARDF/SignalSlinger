@@ -74,6 +74,7 @@ class LatencyBench(bench.Bench):
 if __name__=="__main__":
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--port",required=True);p.add_argument("--uid",required=True);p.add_argument("--output",required=True);p.add_argument("--restore-from")
+    p.add_argument("--hardware",choices=["3.4","3.5"],default="3.5",help="Expected hardware build")
     p.add_argument("--require-clean",action="store_true",help="Fail on any UART error or a diagnostic timer service gap of 4 ms or more")
     p.add_argument("--normal-image",action="store_true",help="Check receiver errors and behavior without optional timing instrumentation")
     p.add_argument("--focus-demo",action="store_true");p.add_argument("--repeats",type=int,default=3)

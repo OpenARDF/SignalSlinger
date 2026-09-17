@@ -139,7 +139,7 @@ class Bench:
                 import fcntl,termios
                 fcntl.ioctl(self.s.fileno(),termios.TIOCEXCL)
             self.wake();identity=self.cmd('INF');assert 'uid='+self.args.uid in identity,identity
-            assert 'hw=3.5' in identity,identity
+            assert 'hw='+getattr(self.args,'hardware','3.5')+' ' in identity,identity
             initial=self.state()
             assert 'bench=1' in initial['raw']
             assert not initial['runtime']['enabled'] and not initial['key'] and not initial['demo'], 'Dedicate an idle, stopped device to the bench before running'
@@ -282,6 +282,7 @@ class Bench:
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--port',required=True);p.add_argument('--uid',required=True)
+    p.add_argument('--hardware',choices=['3.4','3.5'],default='3.5',help='Expected hardware build; mismatches stop before settings change')
     p.add_argument('--byte-gap-ms',type=float,default=10,help='0 enables unpaced serial stress')
     p.add_argument('--output',required=True);p.add_argument('--restore-from')
     p.add_argument('--extended',action='store_true');p.add_argument('--case',default='');p.add_argument('--start-at',default='');p.add_argument('--stop-before',default='')
