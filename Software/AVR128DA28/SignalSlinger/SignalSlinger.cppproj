@@ -261,6 +261,9 @@
     <Compile Include="include\eeprommanager.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\rf_calibration.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\globals.h">
       <SubType>compile</SubType>
     </Compile>

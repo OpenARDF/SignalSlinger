@@ -112,7 +112,7 @@ struct EE_prom
 	float voltage_threshold;
 	uint32_t reserved_30;
 	uint16_t clock_calibration;
-	uint32_t reserved_31;
+	int32_t si5351_correction_ppb;
 	uint8_t days_to_run;
 	uint32_t reserved_32;
 	int8_t thermal_shutdown_threshold;
@@ -198,7 +198,7 @@ typedef enum
 	Voltage_threshold = EEPROM_OFFSET(voltage_threshold),
 	Reserved_30 = EEPROM_OFFSET(reserved_30),
 	Clock_calibration = EEPROM_OFFSET(clock_calibration),
-	Reserved_31 = EEPROM_OFFSET(reserved_31),
+	Si5351_Correction = EEPROM_OFFSET(si5351_correction_ppb),
 	Days_to_run = EEPROM_OFFSET(days_to_run),
 	Reserved_32 = EEPROM_OFFSET(reserved_32),
 	Thermal_Shutdown_Threshold = EEPROM_OFFSET(thermal_shutdown_threshold),

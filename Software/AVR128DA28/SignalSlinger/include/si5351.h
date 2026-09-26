@@ -98,6 +98,9 @@ extern "C" {
 #define APPLY_XTAL_CALIBRATION_VALUE
 #define SUPPORT_STATUS_READS
 */
+#define APPLY_XTAL_CALIBRATION_VALUE
+#define SUPPORT_FOUT_BELOW_1024KHZ
+#define DO_BOUNDS_CHECKING
 #define PREVENT_UNACHIEVABLE_FREQUENCIES
 /*
  * The following flag is used to disable GCC compiler optimizations in code regions where the optimizer has
@@ -480,7 +483,9 @@ bool si5351_get_phase(Si5351_clock clk, uint8_t* phase);
  * Store the crystal correction factor used by the PLL calculations.
  *
  * The value is a signed parts-per-billion style correction term used only by
- * this library's internal math. Persisting it in EEPROM is the caller's job.
+ * this library's internal math. Changing it invalidates the cached PLLB plan,
+ * so the next CLK1/CLK2 frequency set rewrites corrected PLL parameters.
+ * Persisting it in EEPROM is the caller's job.
  *
  * @param correction Signed reference-frequency correction value.
  */

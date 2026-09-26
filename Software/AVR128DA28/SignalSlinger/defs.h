@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.6"
+#define SW_REVISION "2.0.6d"
 #if !defined(HW_TARGET_3_4) && !defined(HW_TARGET_3_5)
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
@@ -184,7 +184,8 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define EEPROM_INITIALIZED_FLAG_V0132 (uint16_t)0x0132
 #define EEPROM_INITIALIZED_FLAG_V0133 (uint16_t)0x0133
 #define EEPROM_INITIALIZED_FLAG_V0134 (uint16_t)0x0134
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0135
+#define EEPROM_INITIALIZED_FLAG_V0135 (uint16_t)0x0135
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0136
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false
@@ -199,7 +200,7 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
 #define EEPROM_ID_TIME_INTERVAL_DEFAULT 300
 
-#define EEPROM_SI5351_CALIBRATION_DEFAULT 0x00
+#define EEPROM_SI5351_CALIBRATION_DEFAULT 0L
 #define EEPROM_CLK0_OUT_DEFAULT 133000000
 #define EEPROM_CLK1_OUT_DEFAULT 70000000
 #define EEPROM_CLK2_OUT_DEFAULT 10700000

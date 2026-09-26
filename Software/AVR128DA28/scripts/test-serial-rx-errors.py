@@ -39,7 +39,7 @@ tests=r'''
 void reset() { memset(buffers,0,sizeof(buffers));serialbus_set_rx_accepting_input(true); }
 void feed(const std::string &s) { for(char c:s) serialRxChecked(c,0); }
 int main() {
-    for(const std::string command : {"GO 1\r","CLK T 260917120030\r","UI P 3\r","UI B 250\r"}) {
+    for(const std::string command : {"GO 1\r","CLK T 260917120030\r","UI P 3\r","UI B 250\r","FRE CF 10MHZ\r","FRE C -15\r"}) {
         for(unsigned pos=0;pos<command.size();++pos) for(uint8_t error : {0x40,4,2}) {
             reset();
             for(unsigned i=0;i<command.size();++i) serialRxChecked(command[i],i==pos?error:0);
@@ -57,6 +57,12 @@ int main() {
     }
     reset();feed("ui p 3\r");assert(buffers[0].id==SB_MESSAGE_UI_DIAGNOSTICS);
     assert(std::string(buffers[0].fields[0])=="P" && std::string(buffers[0].fields[1])=="3");
+    reset();feed("fre cf 3.6mhz\r");assert(buffers[0].id==SB_MESSAGE_TX_FREQ);
+    assert(std::string(buffers[0].fields[0])=="CF" && std::string(buffers[0].fields[1])=="3.6MHZ");
+    reset();feed("fre c -15\r");assert(buffers[0].id==SB_MESSAGE_TX_FREQ);
+    assert(std::string(buffers[0].fields[0])=="C" && std::string(buffers[0].fields[1])=="-15");
+    reset();feed("fre c +15\r");assert(buffers[0].id==SB_MESSAGE_TX_FREQ);
+    assert(std::string(buffers[0].fields[0])=="C" && std::string(buffers[0].fields[1])=="+15");
     reset();feed("GO 1\b0\n");assert(buffers[0].id==SB_MESSAGE_GO && std::string(buffers[0].fields[0])=="0");
     reset();feed("* comment\rGO 2\r");assert(buffers[0].id==SB_MESSAGE_GO);
     reset();feed("GO 1\rGO 2\rGO 0\rUI S\r");

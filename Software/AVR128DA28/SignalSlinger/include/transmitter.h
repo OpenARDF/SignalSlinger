@@ -39,6 +39,7 @@
 
 #include "defs.h"
 #include "include/si5351.h"
+#include "include/rf_calibration.h"
 
 typedef int16_t Attenuation;
 
@@ -85,6 +86,24 @@ bool txIsKeyed(void);
  * @return true on error, false on success.
  */
 bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff);
+
+/** Select the volatile carrier used only by RF calibration commands. */
+bool txSetCalibrationFrequency(Frequency_Hz frequency);
+Frequency_Hz txGetCalibrationFrequency(void);
+Frequency_Hz txGetAppliedCalibrationFrequency(void);
+
+/** Power/key the selected calibration carrier using the stored correction. */
+bool txStartCalibrationCarrier(void);
+/** Power/key the selected calibration carrier and apply an absolute Hz offset. */
+bool txApplyCalibrationOffsetHz(int32_t offset_hz);
+/** Exit calibration and restore the transmitter power/key state seen on entry. */
+bool txExitCalibrationCarrier(void);
+bool txCalibrationCarrierActive(void);
+
+/** Restore/query the unit-specific persistent Si5351 reference correction. */
+bool txRestoreCalibrationCorrectionPpb(int32_t correction_ppb);
+int32_t txGetCalibrationCorrectionPpb(void);
+int32_t txGetCalibrationOffsetHz(void);
 
 /**
  * Return the current transmit frequency in Hertz.

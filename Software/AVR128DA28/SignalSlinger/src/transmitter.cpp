@@ -52,6 +52,15 @@ volatile Frequency_Hz g_80m_frequency = EEPROM_FREQUENCY_DEFAULT;
 volatile uint16_t g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
 volatile Frequency_Hz g_rtty_offset = EEPROM_RTTY_OFFSET_FREQUENCY_DEFAULT;
 
+static Frequency_Hz g_calibration_frequency_hz = RF_CALIBRATION_DEFAULT_FREQUENCY_HZ;
+static Frequency_Hz g_active_calibration_frequency_hz = RF_CALIBRATION_DEFAULT_FREQUENCY_HZ;
+static volatile bool g_calibration_carrier_active = false;
+/* A calibration session may temporarily power and key an otherwise idle unit.
+ * Retain the entry state so FRE C X can restore it exactly. */
+static bool g_calibration_restore_initialized = false;
+static bool g_calibration_restore_keyed = false;
+static bool g_calibration_restore_valid = false;
+
 static volatile bool g_drain_voltage_enabled = false;
 static volatile bool g_transmitter_keyed = false;
 static volatile bool g_disable_transmissions = false;
@@ -67,6 +76,11 @@ volatile bool g_enable_boost_regulator = false;
  *   the same output for temperature-controlled fan drive.
  */
 volatile bool g_enable_external_battery_control = true;
+
+static_assert(RF_CALIBRATION_MIN_FREQUENCY_HZ == SI5351_CLKOUT_MIN_FREQ,
+	          "RF calibration minimum must match the Si5351 library");
+static_assert(RF_CALIBRATION_MAX_FREQUENCY_HZ == SI5351_CLKOUT_MAX_FREQ,
+	          "RF calibration maximum must match the Si5351 library");
 
 /**
  * Initialize the transmitter using the currently stored frequency.
@@ -112,6 +126,7 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 	if(!g_tx_initialized)
 	{
 		g_80m_frequency = *freq;
+		g_calibration_carrier_active = false;
 		return false;
 	}
 
@@ -120,11 +135,182 @@ bool txSetFrequency(Frequency_Hz *freq, bool leaveClockOff)
 		if(!si5351_set_freq(*freq, TX_CLOCK_HF_0, leaveClockOff))
 		{
 			g_80m_frequency = *freq;
+			g_calibration_carrier_active = false;
 			err = false;
 		}
 	}
 
 	return (err);
+}
+
+bool txSetCalibrationFrequency(Frequency_Hz frequency)
+{
+	if(!rfCalibrationFrequencyIsValid(frequency))
+		return true;
+
+	g_calibration_frequency_hz = rfCalibrationNormalizeFrequencyHz(frequency);
+	return false;
+}
+
+Frequency_Hz txGetCalibrationFrequency(void)
+{
+	return g_calibration_frequency_hz;
+}
+
+Frequency_Hz txGetAppliedCalibrationFrequency(void)
+{
+	return g_calibration_carrier_active ? g_active_calibration_frequency_hz :
+	                                      g_calibration_frequency_hz;
+}
+
+bool txRestoreCalibrationCorrectionPpb(int32_t correction_ppb)
+{
+	if(!rfCalibrationCorrectionIsValid(correction_ppb))
+		return true;
+
+	si5351_set_correction(correction_ppb);
+	return false;
+}
+
+int32_t txGetCalibrationCorrectionPpb(void)
+{
+	return si5351_get_correction();
+}
+
+int32_t txGetCalibrationOffsetHz(void)
+{
+	return rfCalibrationOffsetHzForCorrection(txGetAppliedCalibrationFrequency(),
+	                                         txGetCalibrationCorrectionPpb());
+}
+
+bool txCalibrationCarrierActive(void)
+{
+	return g_calibration_carrier_active;
+}
+
+/* Start or retune a keyed calibration carrier as one transaction. A session
+ * entered from idle owns the temporary transmitter power and FRE C X returns
+ * that hardware to idle; frequency and correction changes retain the original
+ * entry state. */
+static bool applyCalibrationCorrectionPpb(int32_t requested_correction_ppb)
+{
+	if(!rfCalibrationCorrectionIsValid(requested_correction_ppb))
+		return true;
+
+	const bool was_calibration_active = g_calibration_carrier_active;
+	const bool entry_initialized = was_calibration_active ?
+		g_calibration_restore_initialized : g_tx_initialized;
+	const bool entry_keyed = was_calibration_active ?
+		g_calibration_restore_keyed : g_transmitter_keyed;
+
+	if(!g_tx_initialized)
+	{
+		if(!powerToTransmitter(true) || !g_tx_initialized)
+		{
+			powerToTransmitter(false);
+			return true;
+		}
+	}
+
+	const int32_t previous_correction_ppb = si5351_get_correction();
+	const Frequency_Hz previous_frequency = was_calibration_active ?
+		g_active_calibration_frequency_hz : g_80m_frequency;
+	const bool was_keyed = g_transmitter_keyed;
+
+	if(was_keyed)
+	{
+		keyTransmitter(false);
+		if(g_transmitter_keyed)
+			return true;
+	}
+
+	si5351_set_correction(requested_correction_ppb);
+	bool failed = si5351_set_freq(g_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+	if(!failed)
+		failed = !keyTransmitter(true);
+
+	if(!failed)
+	{
+		if(!was_calibration_active)
+		{
+			g_calibration_restore_initialized = entry_initialized;
+			g_calibration_restore_keyed = entry_keyed;
+			g_calibration_restore_valid = true;
+		}
+		g_active_calibration_frequency_hz = g_calibration_frequency_hz;
+		g_calibration_carrier_active = true;
+		return false;
+	}
+
+	if(g_transmitter_keyed)
+		keyTransmitter(false);
+	si5351_set_correction(previous_correction_ppb);
+	si5351_set_freq(previous_frequency, TX_CLOCK_HF_0, true);
+	if(was_keyed)
+		keyTransmitter(true);
+	g_calibration_carrier_active = was_calibration_active;
+	if(!was_calibration_active && !entry_initialized)
+		powerToTransmitter(false);
+	return true;
+}
+
+bool txStartCalibrationCarrier(void)
+{
+	return applyCalibrationCorrectionPpb(si5351_get_correction());
+}
+
+bool txApplyCalibrationOffsetHz(int32_t offset_hz)
+{
+	int32_t requested_correction_ppb;
+	if(!rfCalibrationCorrectionForOffsetHz(g_calibration_frequency_hz,
+	                                       offset_hz,
+	                                       &requested_correction_ppb))
+		return true;
+
+	return applyCalibrationCorrectionPpb(requested_correction_ppb);
+}
+
+bool txExitCalibrationCarrier(void)
+{
+	if(!g_calibration_carrier_active)
+		return false;
+	if(!g_tx_initialized)
+	{
+		g_calibration_carrier_active = false;
+		g_calibration_restore_valid = false;
+		return false;
+	}
+
+	const bool restore_initialized = g_calibration_restore_valid ?
+		g_calibration_restore_initialized : true;
+	const bool restore_keyed = g_calibration_restore_valid ?
+		g_calibration_restore_keyed : false;
+	if(g_transmitter_keyed)
+	{
+		keyTransmitter(false);
+		if(g_transmitter_keyed)
+			return true;
+	}
+
+	if(si5351_set_freq(g_80m_frequency, TX_CLOCK_HF_0, true))
+	{
+		si5351_set_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+		keyTransmitter(true);
+		return true;
+	}
+
+	if(restore_keyed && !keyTransmitter(true))
+	{
+		si5351_set_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+		keyTransmitter(true);
+		return true;
+	}
+
+	g_calibration_carrier_active = false;
+	g_calibration_restore_valid = false;
+	if(!restore_initialized)
+		powerToTransmitter(false);
+	return false;
 }
 
 /**
@@ -184,6 +370,8 @@ bool powerToTransmitter(bool state)
 		setSignalGeneratorEnable(OFF, TRANSMITTER);
 		g_tx_initialized = false;
 		g_transmitter_keyed = false;
+		g_calibration_carrier_active = false;
+		g_calibration_restore_valid = false;
 	}
 	else
 	{
@@ -224,6 +412,8 @@ bool powerToTransmitter(bool state)
 		{
 			g_tx_initialized = false;
 			g_transmitter_keyed = false;
+			g_calibration_carrier_active = false;
+			g_calibration_restore_valid = false;
 		}
 	}
 
