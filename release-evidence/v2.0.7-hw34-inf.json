@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-10-09T14:40:26-04:00",
+  "port": "/dev/cu.usbserial-ABSCDL93",
+  "baud": 9600,
+  "command": "INF",
+  "transcript": [
+    "* INF product=SignalSlinger update=UPD",
+    "* INF sw=2.0.7 hw=3.4 app=0x2000 baud=115200",
+    "* INF bl=BL0.13 proto=1",
+    "* INF uid=42348279800049200113010100000000"
+  ],
+  "result": {
+    "product": "SignalSlinger",
+    "softwareVersion": "2.0.7",
+    "hardware": "3.4",
+    "applicationStart": "0x2000",
+    "updateBaud": 115200,
+    "bootloader": "BL0.13",
+    "protocol": 1,
+    "uid": "42348279800049200113010100000000"
+  }
+}

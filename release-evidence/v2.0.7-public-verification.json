@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-10-09T14:43:54-04:00",
+  "release": "https://github.com/OpenARDF/SignalSlinger/releases/tag/v2.0.7",
+  "tagCommit": "cdc28e6b3d6425009deeaa59ab41769653982770",
+  "stable": true,
+  "draft": false,
+  "prerelease": false,
+  "notesMatch": true,
+  "assets": {
+    "SignalSlinger-Update-v2.0.7-HW-3.4.hex": "c30413e8f83fbf3a04b05e99a3c00dea778636334c203dd89eb4d7f252f4bbd2",
+    "SignalSlinger-Update-v2.0.7-HW-3.5.hex": "57418b05a9dc0216ebf720392c56e79c7e011f91e21ceacf984d942dde1fdfc3",
+    "SignalSlinger-v2.0.7-HW-3.4-Release-Files.zip": "9238e83928193ed043b6739b4e7b1f71e3a946fc94b97c5cb92bfa7310a75cd1",
+    "SignalSlinger-v2.0.7-HW-3.5-Release-Files.zip": "759b3c06e14ea18cd94569bc8ac0d6b4e0fdbad14551fad87982c8af37a57490"
+  },
+  "verification": [
+    "PASS: GitHub-reported SHA-256 digests match the clean-main release build.",
+    "PASS: fresh public downloads reproduce all four expected SHA-256 digests.",
+    "PASS: both downloaded ZIP bundles pass the repository release-package validator.",
+    "PASS: each standalone update HEX is byte-for-byte identical to its matching ZIP member.",
+    "PASS: the published main-branch README names both v2.0.7 update files.",
+    "PASS: the remote GitHub release body exactly matches release-notes/v2.0.7.md."
+  ],
+  "hardwareEvidence": [
+    "release-evidence/v2.0.7-hw34-inf.json",
+    "release-evidence/v2.0.7-hw35-readback.json"
+  ]
+}

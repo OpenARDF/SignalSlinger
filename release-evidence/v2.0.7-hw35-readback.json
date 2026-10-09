@@ -1,0 +1,13 @@
+{
+  "capturedAt": "2026-10-09T14:33:22-04:00",
+  "source": "SerialSlinger 2.0.24 full device reload",
+  "port": "/dev/cu.usbserial-ABSCDL93",
+  "displayedVersion": "SW Ver: 2.0.7 HW Build: 3.5 Bootloader: BL0.13 protocol 1",
+  "result": {
+    "softwareVersion": "2.0.7",
+    "hardware": "3.5",
+    "bootloader": "BL0.13",
+    "protocol": 1,
+    "uid": "42348279800036200109013300000000"
+  }
+}
