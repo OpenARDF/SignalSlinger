@@ -110,7 +110,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00000000,                                   //  float voltage_threshold
         0x00000000,                                   // 	reserved
         0x0000,                                       //  uint16_t clock_calibration
-        0x00000000,                                   //  reserved
+        EEPROM_SI5351_CALIBRATION_DEFAULT,             //  int32_t si5351_correction_ppb
         0x00,                                         //  uint8_t days_to_run
         0x00000000,                                   //  reserved
         0x00,                                         // int8_t thermal_shutdown_threshold;
@@ -124,6 +124,10 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
         0x00000000,                                   //  reserved
         0x00                                          //  uint8_t device_enabled
 };
+
+/* Reusing reserved_31 must not move the session journal that starts
+ * immediately after this fixed EEPROM settings image. */
+static_assert(sizeof(EE_prom) == 288, "EEPROM settings layout changed unexpectedly");
 
 typedef uint16_t eeprom_addr_t;
 
@@ -581,8 +585,9 @@ static void migrateEEPROMEventSetting(uint16_t initialization_flag)
  * Version 0x0131 predates both new thermal fields, so migration seeds the
  * thermal shutdown threshold and hottest-ever temperature with defaults.
  * Version 0x0132 already contains the threshold field, so it only needs the
- * hottest-ever value initialized. In both cases the version marker is written
- * last so a partial migration can be retried safely on the next boot.
+ * hottest-ever value initialized. Versions through 0x0135 used reserved_31,
+ * now the Si5351 correction slot. The version marker is written last so a
+ * partial migration can be retried safely on the next boot.
  *
  * @param initialization_flag Stored EEPROM layout version.
  * @return true when a known prior layout was migrated, false otherwise.
@@ -595,6 +600,7 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 		avr_eeprom_write_byte(Thermal_Shutdown_Threshold + 1, 0);
 		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
 		migrateEEPROMEventSetting(initialization_flag);
+		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 		return true;
 	}
@@ -603,6 +609,7 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 	{
 		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
 		migrateEEPROMEventSetting(initialization_flag);
+		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 		return true;
 	}
@@ -610,6 +617,14 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 	if((initialization_flag == EEPROM_INITIALIZED_FLAG_V0133) || (initialization_flag == EEPROM_INITIALIZED_FLAG_V0134))
 	{
 		migrateEEPROMEventSetting(initialization_flag);
+		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
+		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
+		return true;
+	}
+
+	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0135)
+	{
+		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 		return true;
 	}
@@ -681,6 +696,10 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 			avr_eeprom_write_dword_if_changed((eeprom_addr_t)v, *(const uint32_t *)val);
 			break;
 
+		case Si5351_Correction:
+			avr_eeprom_write_dword_if_changed((eeprom_addr_t)v, (uint32_t)*(const int32_t *)val);
+			break;
+
 		case RF_Power:
 		case Off_Air_Seconds:
 		case On_Air_Seconds:
@@ -734,6 +753,8 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Intra_Cycle_Delay_Seconds, (void *)&g_evteng_intra_cycle_delay_time);
 	updateEEPROMVar(Voltage_threshold, (void *)&g_internal_voltage_low_threshold);
 	updateEEPROMVar(Clock_calibration, (void *)&g_clock_calibration);
+	int32_t si5351_correction_ppb = txGetCalibrationCorrectionPpb();
+	updateEEPROMVar(Si5351_Correction, (void *)&si5351_correction_ppb);
 	updateEEPROMVar(Days_to_run, (void *)&g_days_to_run);
 	updateEEPROMVar(Thermal_Shutdown_Threshold, (void *)&g_thermal_shutdown_threshold);
 	uint8_t thermal_shutdown_enabled_marker = thermalShutdownMarkerForEnabled(g_thermal_shutdown_enabled);
@@ -804,6 +825,14 @@ bool EepromManager::readNonVols(void)
 		g_internal_voltage_low_threshold = CLAMP(3.0, avr_eeprom_read_float_at(Voltage_threshold), 4.1);
 
 		g_clock_calibration = avr_eeprom_read_word_at(Clock_calibration);
+
+		int32_t si5351_correction_ppb = (int32_t)avr_eeprom_read_dword_at(Si5351_Correction);
+		if(txRestoreCalibrationCorrectionPpb(si5351_correction_ppb))
+		{
+			si5351_correction_ppb = EEPROM_SI5351_CALIBRATION_DEFAULT;
+			txRestoreCalibrationCorrectionPpb(si5351_correction_ppb);
+			avr_eeprom_write_dword(Si5351_Correction, (uint32_t)si5351_correction_ppb);
+		}
 
 		g_days_to_run = avr_eeprom_read_byte_at(Days_to_run);
 
@@ -948,6 +977,9 @@ bool EepromManager::initializeEEPROMVars(void)
 
 		g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
 		avr_eeprom_write_word(Clock_calibration, g_clock_calibration);
+
+		txRestoreCalibrationCorrectionPpb(EEPROM_SI5351_CALIBRATION_DEFAULT);
+		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
 
 		g_days_to_run = 1;
 		avr_eeprom_write_byte(Days_to_run, g_days_to_run);

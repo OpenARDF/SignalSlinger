@@ -34,6 +34,11 @@ test:
     ./tmp/test-thermal-shutdown-policy
     c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-session-policy.cpp -o ./tmp/test-session-policy
     ./tmp/test-session-policy
+    c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-rf-calibration.cpp -o ./tmp/test-rf-calibration
+    ./tmp/test-rf-calibration
+    python3 ./scripts/test-rf-calibration-contract.py
+    python3 ./scripts/test-rf-calibration-runtime.py
+    python3 ./scripts/test-si5351-correction-cache.py
     python3 ./scripts/test-eeprom-access.py
     python3 ./scripts/test-hardware-bench.py
     python3 ./scripts/test-session-storage.py

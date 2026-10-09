@@ -850,6 +850,10 @@ void si5351_read_status(void)
 void si5351_set_correction(int32_t corr)
 {
 	g_si5351_ref_correction = corr;
+	/* PLLB parameters are cached after CLK1/CLK2 setup. They were calculated
+	 * with the previous reference correction, so force the next frequency set
+	 * to rebuild and write PLLB instead of reusing the stale VCO plan. */
+	freqVCOB = 0;
 }
 
 /**

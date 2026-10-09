@@ -73,6 +73,7 @@ static struct {
 enum ButtonHoldIntent { BUTTON_HOLD_DEFAULT, BUTTON_HOLD_STOP_TEST, BUTTON_HOLD_SLEEP_SCHEDULE };
 static uint8_t g_button_hold_intent=BUTTON_HOLD_DEFAULT,g_long_button_hold_intent=BUTTON_HOLD_DEFAULT;
 static bool g_device_wakeup_complete=true,g_sleeping=false,g_consume_current_press_for_led_wake=false,g_pending_led_revival=false;
+static bool g_consume_current_press_for_calibration_exit=false,g_foreground_exit_calibration=false;
 static uint16_t g_switch_presses_count=0;
 static bool input_closed=false;
 #define SWITCH 0
@@ -108,7 +109,10 @@ static uint16_t g_time_needed_for_ID=0;
 static bool inject_start_tick=false;
 void manualStartTick();
 static bool keyed=false;
+static bool calibration_active=false;
+static unsigned calibration_exits=0;
 bool txIsKeyed() { return keyed; }
+bool txCalibrationCarrierActive() { return calibration_active; }
 bool rawSwitchIsClosed() { return input_closed; }
 bool get_fet_driver() { return keyed; }
 #define LED_RED 2
@@ -146,6 +150,10 @@ bool txIsInitialized() { return powered; }
 static bool cancelManualTransientState(void);
 void keyTransmitter(bool on) { keyed=on; }
 bool powerToTransmitter(bool on) { powered=on; if(on) ++rf_power_ons; return true; }
+bool txExitCalibrationCarrier() {
+    if(!calibration_active) return false;
+    calibration_active=false;keyed=false;powered=false;++calibration_exits;return false;
+}
 void atomic_write_u16(uint16_t* p, uint16_t v) { *p=v; }
 uint16_t atomic_read_u16(volatile uint16_t* p) { return *p; }
 int32_t atomic_read_i32(int32_t* p) { return *p; }
@@ -206,6 +214,9 @@ input_policy='''void sampleButton() {
     static bool buttonReleased=false, longPressEnabled=true, consumeHeldPreviewPress=false, wakeAuthSwitchClosed=true;
     static uint16_t switch_closed_time=0, switch_closures_count_period=40;
 '''+source[input_begin:input_end]+'\n}\n'
+calibration_exit_begin=source.index('\t\t\tif(g_foreground_exit_calibration)')
+calibration_exit_end=source.index('\n\t\t\tuint16_t counted_presses', calibration_exit_begin)
+calibration_exit_policy='void serviceCalibrationButtonExit() {\n'+source[calibration_exit_begin:calibration_exit_end]+'\n}\n'
 tests = r'''
 
 void seedManualWake(bool exhausted=true) {
@@ -373,7 +384,25 @@ void testButtonInput() {
     seedScheduledButton();
     for(int i=0;i<3;++i) { buttonTicks(true,30);buttonTicks(false,30); }
     buttonTicks(false,600);assert(g_foreground_handle_counted_presses==3 && !g_long_button_press);
-    puts("Button input: wake/LED holds require release, transient expiry and scheduled-start boundaries preserve press intent, triple press passed.");
+    g_foreground_handle_counted_presses=0;
+    releaseButton();
+    // A calibration carrier owns the next press, even after the LEDs time out.
+    // It exits in the foreground without dispatching a short- or long-press action.
+    calibration_active=true;powered=true;keyed=true;LEDS.visible=false;
+    g_pending_led_revival=false;g_consume_current_press_for_led_wake=false;
+    auto exits=calibration_exits;
+    buttonTicks(true,30);
+    assert(g_foreground_exit_calibration && g_consume_current_press_for_calibration_exit);
+    assert(!g_pending_led_revival && !g_switch_presses_count && !g_long_button_press);
+    serviceCalibrationButtonExit();
+    assert(!calibration_active && !powered && !keyed && calibration_exits==exits+1);
+    assert(!g_foreground_exit_calibration && !g_foreground_handle_counted_presses && !g_long_button_press);
+    buttonTicks(true,1500);
+    assert(!g_long_button_press && !g_foreground_handle_counted_presses);
+    buttonTicks(false,30);
+    assert(!g_consume_current_press_for_calibration_exit);
+    releaseButton();LEDS.visible=true;
+    puts("Button input: wake/LED holds require release, transient expiry and scheduled-start boundaries preserve press intent, triple press and calibration exit passed.");
 }
 void testButtonEventPolicy() {
     // Ordinary scheduled cancellation is independent of the on-air phase.
@@ -638,7 +667,7 @@ with tempfile.TemporaryDirectory(prefix='signalslinger-runtime-') as temp:
         'static bool resyncLoadedEventWindowAfterClockSet(void)',
         'void restoreStateAfterButtonWakeAuthorization(void)',
         'static void restoreEventAfterWakeAuthorization(void)',
-    ]) + function('static bool reloadLoadedEventWindowFromSavedSettings(void)') + function('static bool finishTimedEventIfExpired(time_t now)') + function('static void updateTemperatureState(float temperature)') + sleep_policy + input_policy + tests)
+    ]) + function('static bool reloadLoadedEventWindowFromSavedSettings(void)') + function('static bool finishTimedEventIfExpired(time_t now)') + function('static void updateTemperatureState(float temperature)') + sleep_policy + input_policy + calibration_exit_policy + tests)
     binary=Path(temp)/'runtime-test'
     subprocess.run(['c++','-std=c++17','-Wall','-Wextra','-Werror','-I',str(root/'SignalSlinger/include'),str(cpp),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],check=True)

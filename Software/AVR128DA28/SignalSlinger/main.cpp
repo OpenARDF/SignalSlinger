@@ -271,6 +271,10 @@ static bool g_start_event_after_keydown = false; /* Foreground-only: one-press k
 static volatile bool g_consume_current_press_for_led_wake = false;
 static volatile bool g_pending_led_revival = false;
 static volatile bool g_event_canceled_by_user = false;
+/* Calibration consumes the first debounced edge immediately so a press cannot
+ * also become an event command, LED wake, multi-press, or long-hold action. */
+static volatile bool g_consume_current_press_for_calibration_exit = false;
+static volatile bool g_foreground_exit_calibration = false;
 static volatile bool g_button_hold_preview_active = false;
 
 /* Preserve the intent of the press even if a test expires or a scheduled start
@@ -687,11 +691,23 @@ ISR(TCB0_INT_vect)
 				{
 					if(holdSwitch) /* Switch was open, so it must have just now closed */
 					{
-						g_button_hold_intent = buttonHoldIntent();
+						if(txCalibrationCarrierActive())
+						{
+							g_consume_current_press_for_calibration_exit = true;
+							g_foreground_exit_calibration = true;
+							g_switch_presses_count = 0;
+							buttonReleased = false;
+							switch_closures_count_period = 0;
+							switch_closed_time = 0;
+							longPressEnabled = false;
+							consumeHeldPreviewPress = false;
+							setButtonHoldPreviewIndicator(false);
+						}
 						/* If the unit is awake but the LEDs have timed out, the first press only
 						 * revives LED activity and must not be interpreted as a command. */
-						if(!g_sleeping && !LEDS.active())
+						else if(!g_sleeping && !LEDS.active())
 						{
+							g_button_hold_intent = buttonHoldIntent();
 							g_consume_current_press_for_led_wake = true;
 							g_pending_led_revival = true;
 							g_switch_presses_count = 0;
@@ -704,6 +720,7 @@ ISR(TCB0_INT_vect)
 						}
 						else
 						{
+							g_button_hold_intent = buttonHoldIntent();
 							g_switch_presses_count++;
 							buttonReleased = false;
 							switch_closures_count_period = 40;
@@ -714,7 +731,14 @@ ISR(TCB0_INT_vect)
 					{
 						switch_closed_time = 0;
 						buttonReleased = true;
-						if(consumeHeldPreviewPress)
+						if(g_consume_current_press_for_calibration_exit)
+						{
+							g_consume_current_press_for_calibration_exit = false;
+							longPressEnabled = true;
+							g_switch_presses_count = 0;
+							switch_closures_count_period = 0;
+						}
+						else if(consumeHeldPreviewPress)
 						{
 							setButtonHoldPreviewIndicator(false);
 							consumeHeldPreviewPress = false;
@@ -1944,6 +1968,20 @@ int main(void)
 				g_pending_led_revival = false;
 				reviveLedActivityForCurrentState();
 				atomic_max_u16(&g_evteng_sleepshutdown_seconds, 300U);
+			}
+
+			if(g_foreground_exit_calibration)
+			{
+				g_foreground_exit_calibration = false;
+				atomic_write_u16(&g_foreground_handle_counted_presses, 0);
+				g_long_button_press = false;
+				if(txCalibrationCarrierActive())
+				{
+					if(txExitCalibrationCarrier())
+						sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+					else
+						sb_send_string((char *)"* RF calibration carrier exited by button\n");
+				}
 			}
 
 			uint16_t counted_presses = atomic_exchange_u16(&g_foreground_handle_counted_presses, 0);
@@ -4475,6 +4513,108 @@ static void setThermalShutdownEnabled(bool enabled)
 	sampleTemperatureNow();
 }
 
+static void sendRfCalibrationStatus(void)
+{
+	const Frequency_Hz frequency_hz = txGetAppliedCalibrationFrequency();
+	const int32_t correction_ppb = txGetCalibrationCorrectionPpb();
+	const int32_t offset_hz = txGetCalibrationOffsetHz();
+	sprintf(g_tempStr, "* FRE C=%ld Hz (%ld ppb)\n", (long)offset_hz, (long)correction_ppb);
+	sb_send_string(g_tempStr);
+	if(txCalibrationCarrierActive())
+	{
+		sprintf(g_tempStr, "* Calibration carrier active: %lu Hz\n", (unsigned long)frequency_hz);
+		sb_send_string(g_tempStr);
+	}
+}
+
+/* Handle the calibration-only FRE extensions before the normal 80 m parser.
+ * These commands are intentionally excluded from clone traffic because the
+ * correction belongs to one physical oscillator and CF is volatile. */
+static bool handleRfCalibrationCommand(SerialbusRxBuffer *sb_buff)
+{
+	const char *selector = sb_buff->fields[SB_FIELD1];
+	const char *value = sb_buff->fields[SB_FIELD2];
+
+	if(strcmp(selector, "CF") == 0)
+	{
+		if(*value)
+		{
+			Frequency_Hz frequency_hz;
+			if(!rfCalibrationParseFrequencyHz(value, &frequency_hz))
+			{
+				sb_send_string((char *)"* Error: FRE CF requires whole kHz or decimal MHz (8 kHz to 160 MHz)\n");
+				return true;
+			}
+
+			if(eventRunning())
+			{
+				sb_send_string((char *)"* Error: Stop event before RF calibration\n");
+				return true;
+			}
+
+			const Frequency_Hz previous_frequency_hz = txGetCalibrationFrequency();
+			if(txSetCalibrationFrequency(frequency_hz) || txStartCalibrationCarrier())
+			{
+				/* A failed retune restores the prior hardware carrier internally;
+				 * restore its volatile selection here as the command rollback. */
+				txSetCalibrationFrequency(previous_frequency_hz);
+				sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+				return true;
+			}
+		}
+
+		sprintf(g_tempStr, "* FRE CF=%lu Hz (volatile; carrier %s)\n",
+		        (unsigned long)txGetCalibrationFrequency(),
+		        txCalibrationCarrierActive() ? "active" : "inactive");
+		sb_send_string(g_tempStr);
+		return true;
+	}
+
+	if(strcmp(selector, "C") != 0)
+		return false;
+
+	if(!*value)
+	{
+		sendRfCalibrationStatus();
+		return true;
+	}
+
+	if(strcmp(value, "X") == 0)
+	{
+		if(txExitCalibrationCarrier())
+			sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+		else
+			sb_send_string((char *)"* RF calibration carrier exited\n");
+		return true;
+	}
+
+	if(eventRunning())
+	{
+		sb_send_string((char *)"* Error: Stop event before RF calibration\n");
+		return true;
+	}
+
+	int32_t offset_hz;
+	int32_t correction_ppb;
+	if(!rfCalibrationParseOffsetHz(value, &offset_hz) ||
+	   !rfCalibrationCorrectionForOffsetHz(txGetCalibrationFrequency(), offset_hz, &correction_ppb))
+	{
+		sb_send_string((char *)"* Error: Invalid RF calibration offset\n");
+		return true;
+	}
+
+	if(txApplyCalibrationOffsetHz(offset_hz))
+	{
+		sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
+		return true;
+	}
+
+	/* Persist only after the corrected carrier was programmed successfully. */
+	g_ee_mgr.updateEEPROMVar(Si5351_Correction, (void *)&correction_ppb);
+	sendRfCalibrationStatus();
+	return true;
+}
+
 /**
  * Consume and handle all pending serialbus commands.
  *
@@ -4890,6 +5030,9 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			{
 				uint8_t printFreq = 0;
 				atomic_write_u16(&g_report_settings_countdown, 0);
+				if(!g_cloningInProgress && handleRfCalibrationCommand(sb_buff))
+					break;
+
 				char freqTier = sb_buff->fields[SB_FIELD1][0];
 				char buf[TEMP_STRING_SIZE];
 				Frequency_Hz previousFrequency = getFrequencySetting();
@@ -7950,6 +8093,15 @@ void reportSettings(void)
 		sb_send_string((char *)"*   Freq: None set\n");
 	}
 
+	sprintf(g_tempStr, "*   RF calibration: %ld ppb\n", (long)txGetCalibrationCorrectionPpb());
+	sb_send_string(g_tempStr);
+	if(txCalibrationCarrierActive())
+	{
+		sprintf(g_tempStr, "*   WARNING calibration carrier: %lu Hz\n",
+		        (unsigned long)txGetAppliedCalibrationFrequency());
+		sb_send_string(g_tempStr);
+	}
+
 	if(g_days_to_run > 1)
 	{
 		uint8_t days_remaining = scheduledDaysRemaining();
@@ -8265,7 +8417,7 @@ bool syncCurrentFrequencySetting(bool leaveClockOff)
  */
 bool refreshCurrentFrequencySetting(Frequency_Hz previousFrequency, bool leaveClockOff)
 {
-	if(getFrequencySetting() != previousFrequency)
+	if((getFrequencySetting() != previousFrequency) || txCalibrationCarrierActive())
 	{
 		return syncCurrentFrequencySetting(leaveClockOff);
 	}
