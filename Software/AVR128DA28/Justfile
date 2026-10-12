@@ -48,6 +48,7 @@ test:
     python3 ./scripts/test-serial-latency.py
     python3 ./scripts/test-battery-feedback.py
     python3 ./scripts/test-adc-temperature.py
+    node ./scripts/test-release-version-policy.mjs
     node ./scripts/check-release-version-consistency.mjs
 
 # Run all non-firmware repository checks.
@@ -172,12 +173,12 @@ release-checklist-done file item evidence:
 release-checklist-skip file item requested_by reason:
     node ./scripts/update-release-checklist.mjs --file "{{file}}" --id "{{item}}" --skip-requested-by "{{requested_by}}" --skip-reason "{{reason}}"
 
-# Increment the next patch version, update README assets, and create notes/checklist.
+# Prepare the next patch, or an explicitly requested next minor, and create notes/checklist.
 release-version-prepare version channel:
     node ./scripts/prepare-release-version.mjs --version "{{version}}" --channel "{{channel}}"
     node ./scripts/check-release-state.mjs --candidate-version "{{version}}" --allow-dirty
 
-# Verify remote/local tags, next-patch version sources, and checklist metadata.
+# Verify remote/local tags, permitted successor version sources, and checklist metadata.
 release-state-check:
     node ./scripts/check-release-state.mjs
 

@@ -2,6 +2,10 @@
 
 import fs from "node:fs";
 import process from "node:process";
+import {
+  parseVersion,
+  releaseSuccessorPolicy,
+} from "./release-support.mjs";
 
 const candidateItems = [
   "branch-announced",
@@ -134,18 +138,18 @@ function validateMetadata(checklist, templateMode, failures) {
         `releaseNotesFile: expected ${expectedReleaseNotesFile}`,
       );
     }
-    const releaseMatch = /^v(\d+)\.(\d+)\.(\d+)$/.exec(checklist.release);
-    const previousMatch = /^v(\d+)\.(\d+)\.(\d+)$/.exec(checklist.previousRelease);
-    if (
-      releaseMatch
-      && previousMatch
-      && (
-        releaseMatch[1] !== previousMatch[1]
-        || releaseMatch[2] !== previousMatch[2]
-        || Number(releaseMatch[3]) !== Number(previousMatch[3]) + 1
-      )
-    ) {
-      failures.push("release must be the next patch after previousRelease");
+    const releaseMatch = /^v(\d+\.\d+\.\d+)$/.exec(checklist.release);
+    const previousMatch = /^v(\d+\.\d+\.\d+)$/.exec(checklist.previousRelease);
+    if (releaseMatch && previousMatch) {
+      const policy = releaseSuccessorPolicy(
+        parseVersion(previousMatch[1], "previousRelease"),
+        releaseMatch[1],
+      );
+      if (!policy) {
+        failures.push(
+          "release must be the next patch or explicitly requested next minor after previousRelease",
+        );
+      }
     }
     if (!/^[0-9a-f]{40}$/.test(checklist.sourceCommit)) {
       failures.push("sourceCommit: expected the full lowercase Git commit ID");

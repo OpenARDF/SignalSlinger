@@ -15,7 +15,10 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 
 Normal releases increment the patch field from the latest semantic release on
 GitHub. For example, if `v2.0.2` is the latest origin release, prepare `v2.0.3`.
-Do not reuse an existing version or move a published tag.
+When the user explicitly requests a feature/minor release, the immediately next
+minor version with patch zero is also permitted (for example, `v2.1.0` after
+`v2.0.7`). Do not skip other versions, reuse an existing version, or move a
+published tag.
 
 `just release-version-prepare` updates `SignalSlinger/defs.h`, updates both
 repo-root README asset names, creates a tracked versioned release-notes file
@@ -64,15 +67,18 @@ force-push or otherwise move a published release tag.
 4. Decide the release channel:
    - `main` for a stable release.
    - `Development2` for a development-branch release, using either a prerelease or a normal release as explicitly requested.
-5. Prepare the next patch version. For a stable release after `v2.0.2`:
+5. Prepare the next patch version, or the explicitly requested next minor. For
+   a stable patch release after `v2.0.2`:
 
 ```sh
 just release-version-prepare 2.0.3 stable
 ```
 
-The recipe fails unless local semantic tags match GitHub, `v2.0.3` is absent
-locally and remotely, and `2.0.3` is exactly the next patch after the latest
-origin release. Review the resulting changes:
+The recipe fails unless local semantic tags match GitHub, the candidate is
+absent locally and remotely, and the version is either exactly the next patch
+or the immediately next minor with patch zero. The minor path requires an
+explicit user request, which must be recorded in the release checklist.
+Review the resulting changes:
 
 - `SignalSlinger/defs.h`: `SW_REVISION`
 - repo-root `README.md`: both hardware update filenames

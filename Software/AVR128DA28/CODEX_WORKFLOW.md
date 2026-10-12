@@ -15,7 +15,7 @@
 - Use `just avr-dual-build` for both normal hardware targets and `just avr-boot-chain-build` for the resident bootloader plus both applications relocated to `0x2000`.
 - Start repository work with `just --list`; use `just check` for the portable non-firmware gate and `just release-preflight` for the complete Mac release-candidate gate.
 - Use `just avr-release-packages` to create and independently validate both hardware-specific release bundles. Do not reconstruct package manifests, checksums, first-install images, or ZIPs by hand.
-- Use `just release-version-prepare <version> <stable|prerelease>` for the guarded patch-version increment, README update, remote-tag collision check, and release-checklist creation. Do not change release version sources independently.
+- Use `just release-version-prepare <version> <stable|prerelease>` for the guarded version increment, README update, remote-tag collision check, and release-checklist creation. The default is the next patch; the immediately next minor with patch zero is allowed only when the user explicitly requests it. Do not change release version sources independently.
 - Use `just release-state-check` before release preflight. Local semantic tags must match GitHub, and the candidate tag must be unused.
 - Treat `release-notes/vX.Y.Z.md` as a required, versioned release artifact. It must summarize salient user-observable changes and significant stability/reliability improvements since the checklist's previous release, name all four release assets, and link the exact GitHub comparison.
 - Run `just release-publication-check <checklist> <candidate|release>` before GitHub publication. Always create the GitHub release with `gh release create --notes-file release-notes/vX.Y.Z.md`; generated notes are not an acceptable final release body.
@@ -35,5 +35,6 @@
 ## Generated And Hand-Maintained Files
 
 - Hand-maintained firmware files include `main.cpp`, `defs.h`, most files under `SignalSlinger\src`, most files under `SignalSlinger\include`, the PowerShell helper scripts, and the README/workflow documents.
+- The persistent storage map is documented in `EEPROM_MAP.md`. Update that document whenever a setting, record format, region boundary, migration rule, or capacity changes.
 - Treat the following as generated or vendor-managed surfaces that should not be casually reorganized or reformatted: `atmel_start.cpp`, `atmel_start.h`, `include\atmel_start_pins.h`, `driver_isr.cpp`, `Config\*`, `Debug\Makefile`, `Release\Makefile`, `SignalSlinger.cppproj`, `SignalSlinger.componentinfo.xml`, `modules\*`, and `utils\*`.
 - If a targeted fix in a generated or vendor-managed file is unavoidable, keep the existing license block intact, document why the edit was needed, and assume a future START regeneration may overwrite it.
