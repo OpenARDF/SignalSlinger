@@ -25,7 +25,7 @@
     },
     {
       "id": "release-version-incremented",
-      "description": "Increment the firmware patch version from the latest origin release and confirm the candidate tag does not already exist.",
+      "description": "Advance the firmware by the permitted patch or explicitly requested minor step and confirm the candidate tag does not already exist.",
       "status": "pending",
       "evidence": ""
     },
