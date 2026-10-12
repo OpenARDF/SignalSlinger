@@ -43,91 +43,48 @@
 #include "shared_state.h"
 #include "thermal_shutdown.h"
 #include "session_history.h"
+#include "hardware_fault_history.h"
 #include <avr/pgmspace.h>
 #include <string.h>
 
 /* Canonical EEPROM image used both for layout definition and default contents. */
-const struct EE_prom EEMEM EepromManager::ee_vars =
-    {
-        0x00,                                         // 	uint16_t eeprom_initialization_flag;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // 	time_t event_start_epoch;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   //  time_t event_finish_epoch;
-        0x00000000,                                   // 	reserved
-        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	reserved
-        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // 	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	reserved
-        "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", // char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2];
-        0x00000000,                                   // 	reserved
-        "\0\0\0\0\0\0\0\0\0",                         // 	uint8_t reserved_unlock_code[MAX_UNLOCK_CODE_LENGTH + 2];
-        0x00000000,                                   // 	reserved
-        (Fox_t)0x00,                                  // Fox_t fox_setting_none;
-        0x00000000,                                   // 	reserved
-        (Fox_t)0x00,                                  // Fox_t fox_setting_classic;
-        0x00000000,                                   // 	reserved
-        (Fox_t)0x00,                                  // Fox_t fox_setting_sprint;
-        0x00000000,                                   // 	reserved
-        (Fox_t)0x00,                                  // Fox_t fox_setting_foxoring;
-        0x00000000,                                   // 	reserved
-        (Fox_t)0x00,                                  // Fox_t fox_setting_blind;
-        0x00000000,                                   // 	reserved
-        0x00,                                         // 	uint8_t utc_offset;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // 	uint32_t reserved_rtty_offset;
-        0x00000000,                                   // 	reserved
-        0x0000,                                       // 	uint16_t rf_power;
-        0x00000000,                                   // 	reserved
-        0x00,                                         // 	uint8_t id_codespeed;
-        0x00000000,                                   // 	reserved
-        0x00,                                         // 	uint8_t pattern_codespeed;
-        0x00000000,                                   // 	reserved
-        0x00,                                         // 	uint8_t foxoring_pattern_codespeed;
-        0x00000000,                                   // 	reserved
-        0x0000,                                       // 	int16_t off_air_seconds;
-        0x00000000,                                   // 	reserved
-        0x0000,                                       // 	int16_t on_air_seconds;
-        0x00000000,                                   // 	reserved
-        0x0000,                                       // 	int16_t ID_period_seconds;
-        0x00000000,                                   // 	reserved
-        0x0000,                                       // 	int16_t intra_cycle_delay_time;
-        0x00000000,                                   // 	reserved
-        EEPROM_EVENT_SETTING_DEFAULT,                 // Event_t event_setting;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // uint32_t frequency;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // uint32_t frequency_low;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   //	uint32_t frequency_med;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // uint32_t frequency_hi;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   // uint32_t frequency_beacon;
-        0x00000000,                                   // 	reserved
-        0x00,                                         // 	uint8_t reserved_master_setting;
-        0x00000000,                                   // 	reserved
-        0x00000000,                                   //  float voltage_threshold
-        0x00000000,                                   // 	reserved
-        0x0000,                                       //  uint16_t clock_calibration
-        EEPROM_SI5351_CALIBRATION_DEFAULT,             //  int32_t si5351_correction_ppb
-        0x00,                                         //  uint8_t days_to_run
-        0x00000000,                                   //  reserved
-        0x00,                                         // int8_t thermal_shutdown_threshold;
-        0x00,                                         // uint8_t thermal_shutdown_enabled_marker;
-        0x00000000,                                   //  float hottest_ever_temperature
-        0x00,                                         //  uint8_t function
-        0x00000000,                                   //  reserved
-        0x00,                                         //  uint8_t enable_boost_regulator
-        0x00000000,                                   //  reserved
-        0x00,                                         //  uint8_t enable_external_battery_control
-        0x00000000,                                   //  reserved
-        0x00                                          //  uint8_t device_enabled
-};
+const struct EE_prom EEMEM EepromManager::ee_vars = {};
 
-/* Reusing reserved_31 must not move the session journal that starts
- * immediately after this fixed EEPROM settings image. */
-static_assert(sizeof(EE_prom) == 288, "EEPROM settings layout changed unexpectedly");
+static_assert(sizeof(EE_prom) == 135, "Compact EEPROM settings layout changed unexpectedly");
+
+/* Exact v0x0136 layout. It is retained only long enough to migrate installed
+ * units; new code never writes this padded map. AVR data types are byte-aligned. */
+struct __attribute__((packed)) LegacyEEPromV0136
+{
+	uint16_t eeprom_initialization_flag; uint32_t reserved_1; time_t event_start_epoch;
+	uint32_t reserved_2; time_t event_finish_epoch; uint32_t reserved_3;
+	char pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; uint32_t reserved_4;
+	char foxoring_pattern_text[MAX_PATTERN_TEXT_LENGTH + 2]; uint32_t reserved_5;
+	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 2]; uint32_t reserved_6;
+	uint8_t reserved_unlock_code[MAX_UNLOCK_CODE_LENGTH + 2]; uint32_t reserved_7;
+	Fox_t fox_setting_none; uint32_t reserved_8; Fox_t fox_setting_classic;
+	uint32_t reserved_9; Fox_t fox_setting_sprint; uint32_t reserved_10;
+	Fox_t fox_setting_foxoring; uint32_t reserved_11; Fox_t fox_setting_blind;
+	uint32_t reserved_12; uint8_t utc_offset; uint32_t reserved_13;
+	Frequency_Hz reserved_rtty_offset; uint32_t reserved_14; uint16_t rf_power;
+	uint32_t reserved_15; uint8_t id_codespeed; uint32_t reserved_16;
+	uint8_t pattern_codespeed; uint32_t reserved_17; uint8_t foxoring_pattern_codespeed;
+	uint32_t reserved_18; int16_t off_air_seconds; uint32_t reserved_19;
+	int16_t on_air_seconds; uint32_t reserved_20; int16_t ID_period_seconds;
+	uint32_t reserved_21; int16_t intra_cycle_delay_time; uint32_t reserved_22;
+	Event_t event_setting; uint32_t reserved_23; uint32_t frequency;
+	uint32_t reserved_24; uint32_t frequency_low; uint32_t reserved_25;
+	uint32_t frequency_med; uint32_t reserved_26; uint32_t frequency_high;
+	uint32_t reserved_27; uint32_t frequency_beacon; uint32_t reserved_28;
+	bool reserved_master_setting; uint32_t reserved_29; float voltage_threshold;
+	uint32_t reserved_30; uint16_t clock_calibration; int32_t si5351_correction_ppb;
+	uint8_t days_to_run; uint32_t reserved_32; int8_t thermal_shutdown_threshold;
+	uint8_t thermal_shutdown_enabled_marker; float hottest_ever_temperature;
+	uint8_t function; uint32_t reserved_34; uint8_t enable_boost_regulator;
+	uint32_t reserved_35; uint8_t enable_external_battery_control;
+	uint32_t reserved_36; uint8_t device_enabled;
+};
+static_assert(sizeof(LegacyEEPromV0136) == 288, "Legacy EEPROM layout must remain readable");
 
 typedef uint16_t eeprom_addr_t;
 
@@ -217,12 +174,17 @@ static uint8_t avr_eeprom_read_byte_at(eeprom_addr_t index)
 	return eeprom_read_byte((const uint8_t *)(eeprom_addr_t)index);
 }
 
-/* Append-only journal in the unused tail. All established setting offsets stay
- * unchanged. A checksum plus a last-written magic byte rejects torn records. */
-static const uint16_t SESSION_JOURNAL_START = sizeof(EE_prom);
-static const uint8_t SESSION_JOURNAL_SLOTS = (EEPROM_SIZE - sizeof(EE_prom)) / sizeof(SessionRecord);
-static_assert(sizeof(EE_prom) + 4 * sizeof(SessionRecord) <= EEPROM_SIZE, "Not enough EEPROM for session history");
-static_assert(SESSION_JOURNAL_SLOTS <= 16, "Increase the bounded history report buffer");
+/* Fixed EEPROM v2 regions. Mission-critical settings occupy the first region,
+ * including 25 reserved bytes for append-only growth. Bounded logs follow it;
+ * neither a setting addition nor log growth may move another region silently. */
+static const uint16_t EEPROM_SETTINGS_REGION_BYTES = 160;
+static_assert(sizeof(EE_prom) <= EEPROM_SETTINGS_REGION_BYTES, "EEPROM settings exceeded their fixed region");
+static const uint16_t SESSION_JOURNAL_START = EEPROM_SETTINGS_REGION_BYTES;
+static const uint8_t SESSION_JOURNAL_SLOTS = 7;
+static const uint16_t HARDWARE_FAULT_HISTORY_START = SESSION_JOURNAL_START + SESSION_JOURNAL_SLOTS * sizeof(SessionRecord);
+static const uint8_t HARDWARE_FAULT_HISTORY_SLOTS = HARDWARE_FAULT_MAX;
+static_assert(HARDWARE_FAULT_HISTORY_START + HARDWARE_FAULT_HISTORY_SLOTS * sizeof(HardwareFaultRecord) <= EEPROM_SIZE,
+              "EEPROM v2 regions exceed physical storage");
 
 uint8_t sessionHistoryCapacity() { return SESSION_JOURNAL_SLOTS; }
 
@@ -282,6 +244,59 @@ void appendSessionHistory(SessionRecord record)
 	for(uint8_t i = 0; i < sizeof(record); ++i)
 		if(i != offsetof(SessionRecord, magic)) avr_eeprom_write_byte(offset + i, bytes[i]);
 	avr_eeprom_write_byte(offset + offsetof(SessionRecord, magic), record.magic);
+}
+
+uint8_t hardwareFaultHistoryCapacity() { return HARDWARE_FAULT_HISTORY_SLOTS; }
+
+static HardwareFaultRecord readHardwareFaultSlot(uint8_t slot)
+{
+	HardwareFaultRecord record;
+	uint8_t *bytes = (uint8_t *)&record;
+	for(uint8_t i = 0; i < sizeof(record); ++i)
+		bytes[i] = avr_eeprom_read_byte_at(HARDWARE_FAULT_HISTORY_START + slot * sizeof(record) + i);
+	return record;
+}
+
+uint8_t readHardwareFaultHistory(HardwareFaultRecord *records, uint8_t capacity)
+{
+	uint8_t count = 0;
+	for(uint8_t slot = 0; slot < HARDWARE_FAULT_HISTORY_SLOTS && count < capacity; ++slot)
+	{
+		HardwareFaultRecord record = readHardwareFaultSlot(slot);
+		if(hardwareFaultRecordValid(record)) records[count++] = record;
+	}
+	return count;
+}
+
+bool recordHardwareFault(uint8_t code, uint32_t detected_at, bool time_valid)
+{
+	if(code < HARDWARE_FAULT_RTC || code > HARDWARE_FAULT_MAX) return false;
+	if((time_valid && detected_at == 0) || (!time_valid && detected_at != 0)) return false;
+	uint8_t slot = code - 1;
+	if(hardwareFaultRecordValid(readHardwareFaultSlot(slot))) return false;
+
+	HardwareFaultRecord record = {};
+	record.detected_at = time_valid ? detected_at : 0;
+	record.code = code;
+	record.flags = time_valid ? HARDWARE_FAULT_TIME_VALID : 0;
+	record.magic = 0x48;
+	record.version = 1;
+	record.checksum = hardwareFaultRecordChecksum(record);
+	uint16_t offset = HARDWARE_FAULT_HISTORY_START + slot * sizeof(record);
+	const uint8_t *bytes = (const uint8_t *)&record;
+	avr_eeprom_write_byte(offset + offsetof(HardwareFaultRecord, magic), 0);
+	for(uint8_t i = 0; i < sizeof(record); ++i)
+		if(i != offsetof(HardwareFaultRecord, magic)) avr_eeprom_write_byte(offset + i, bytes[i]);
+	avr_eeprom_write_byte(offset + offsetof(HardwareFaultRecord, magic), record.magic);
+	return true;
+}
+
+void clearHardwareFaultHistory()
+{
+	for(uint8_t slot = 0; slot < HARDWARE_FAULT_HISTORY_SLOTS; ++slot)
+		avr_eeprom_write_byte(HARDWARE_FAULT_HISTORY_START + slot * sizeof(HardwareFaultRecord) +
+		                          offsetof(HardwareFaultRecord, magic),
+		                      0);
 }
 
 /**
@@ -478,20 +493,6 @@ static void avr_eeprom_initialize_string(eeprom_addr_t index, const char *value,
 }
 
 /**
- * Fill a contiguous EEPROM range with zero bytes.
- *
- * @param index Byte offset of the first byte to clear.
- * @param length Number of bytes to clear.
- */
-static void avr_eeprom_write_zero_bytes(eeprom_addr_t index, uint8_t length)
-{
-	for(uint8_t i = 0; i < length; i++)
-	{
-		avr_eeprom_write_byte(index + i, 0);
-	}
-}
-
-/**
  * Read a Fox_t value from EEPROM and clamp it to a valid event-specific range.
  *
  * @param index EEPROM offset containing the stored fox value.
@@ -543,93 +544,85 @@ static Event_t legacyEEPROMEventOrDefault(uint8_t stored_event)
 	}
 }
 
-/**
- * Rewrite an event selector already using the no-none enum layout, mapping any
- * retired or out-of-range value to the firmware default.
- */
-static void migrateCurrentEEPROMEventSetting(void)
+static bool legacyEEPROMVersionKnown(uint16_t version)
 {
-	Event_t migrated_event = currentEEPROMEventOrDefault(avr_eeprom_read_byte_at(Event_setting));
-	avr_eeprom_write_byte(Event_setting, (uint8_t)migrated_event);
+	return version >= EEPROM_INITIALIZED_FLAG_V0131 && version <= EEPROM_INITIALIZED_FLAG_V0136;
 }
 
-/**
- * Rewrite an event selector from the old zero-based no-event enum layout to
- * the current real-events-only enum layout.
- */
-static void migrateLegacyEEPROMEventSetting(void)
-{
-	Event_t migrated_event = legacyEEPROMEventOrDefault(avr_eeprom_read_byte_at(Event_setting));
-	avr_eeprom_write_byte(Event_setting, (uint8_t)migrated_event);
-}
-
-/**
- * Rewrite an event selector from any supported previous layout to the current
- * real-events-only enum layout.
- */
-static void migrateEEPROMEventSetting(uint16_t initialization_flag)
-{
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0134)
-	{
-		migrateCurrentEEPROMEventSetting();
-	}
-	else
-	{
-		migrateLegacyEEPROMEventSetting();
-	}
-}
-
-/**
- * Upgrade known older EEPROM layouts in place to the current version.
- *
- * Version 0x0131 predates both new thermal fields, so migration seeds the
- * thermal shutdown threshold and hottest-ever temperature with defaults.
- * Version 0x0132 already contains the threshold field, so it only needs the
- * hottest-ever value initialized. Versions through 0x0135 used reserved_31,
- * now the Si5351 correction slot. The version marker is written last so a
- * partial migration can be retried safely on the next boot.
- *
- * @param initialization_flag Stored EEPROM layout version.
- * @return true when a known prior layout was migrated, false otherwise.
- */
+/* Move an installed unit from the padded 288-byte map to the compact v2 map.
+ * Every old setting and all seven journal slots are copied to RAM before the
+ * first overlapping write. The new version marker is committed last. */
 static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 {
+	if(!legacyEEPROMVersionKnown(initialization_flag)) return false;
+
+	LegacyEEPromV0136 legacy = {};
+	uint8_t *legacy_bytes = (uint8_t *)&legacy;
+	for(uint16_t i = 0; i < sizeof(legacy); ++i) legacy_bytes[i] = avr_eeprom_read_byte_at(i);
+
+	SessionRecord history[SESSION_JOURNAL_SLOTS] = {};
+	uint8_t history_count = 0;
+	for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
+	{
+		SessionRecord record;
+		uint8_t *bytes = (uint8_t *)&record;
+		for(uint8_t i = 0; i < sizeof(record); ++i)
+			bytes[i] = avr_eeprom_read_byte_at(sizeof(LegacyEEPromV0136) + slot * sizeof(record) + i);
+		if(!sessionRecordValid(record)) continue;
+		uint8_t pos = history_count;
+		while(pos && sessionSequenceAfter(history[pos - 1].sequence, record.sequence))
+		{
+			history[pos] = history[pos - 1];
+			--pos;
+		}
+		history[pos] = record;
+		++history_count;
+	}
+
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0131)
 	{
-		avr_eeprom_write_byte(Thermal_Shutdown_Threshold, (uint8_t)EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT);
-		avr_eeprom_write_byte(Thermal_Shutdown_Threshold + 1, 0);
-		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
-		migrateEEPROMEventSetting(initialization_flag);
-		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
-		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
-		return true;
+		legacy.thermal_shutdown_threshold = EEPROM_THERMAL_SHUTDOWN_THRESHOLD_DEFAULT;
+		legacy.thermal_shutdown_enabled_marker = thermalShutdownMarkerForEnabled(EEPROM_THERMAL_SHUTDOWN_ENABLED_DEFAULT);
+		legacy.hottest_ever_temperature = EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
 	}
-
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0132)
+	else if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0132)
 	{
-		avr_eeprom_write_float(Hottest_Ever_Temperature, EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT);
-		migrateEEPROMEventSetting(initialization_flag);
-		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
-		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
-		return true;
+		legacy.hottest_ever_temperature = EEPROM_PROCESSOR_MAX_EVER_TEMPERATURE_DEFAULT;
 	}
+	if(initialization_flag <= EEPROM_INITIALIZED_FLAG_V0135)
+		legacy.si5351_correction_ppb = EEPROM_SI5351_CALIBRATION_DEFAULT;
 
-	if((initialization_flag == EEPROM_INITIALIZED_FLAG_V0133) || (initialization_flag == EEPROM_INITIALIZED_FLAG_V0134))
-	{
-		migrateEEPROMEventSetting(initialization_flag);
-		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
-		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
-		return true;
-	}
+	Event_t migrated_event = initialization_flag >= EEPROM_INITIALIZED_FLAG_V0134
+	                             ? currentEEPROMEventOrDefault((uint8_t)legacy.event_setting)
+	                             : legacyEEPROMEventOrDefault((uint8_t)legacy.event_setting);
 
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0135)
-	{
-		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
-		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
-		return true;
-	}
+	/* Invalidate first; interruption therefore falls back to safe defaults and
+	 * allows SerialSlinger's retained update backup to be restored. */
+	avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_UNINITIALIZED);
+#define COPY_LEGACY_BYTES(field) avr_eeprom_write_bytes(offsetof(EE_prom, field), (const uint8_t *)&legacy.field, sizeof(legacy.field))
+	COPY_LEGACY_BYTES(event_start_epoch); COPY_LEGACY_BYTES(event_finish_epoch);
+	COPY_LEGACY_BYTES(pattern_text); COPY_LEGACY_BYTES(foxoring_pattern_text); COPY_LEGACY_BYTES(stationID_text);
+	COPY_LEGACY_BYTES(fox_setting_classic); COPY_LEGACY_BYTES(fox_setting_sprint); COPY_LEGACY_BYTES(fox_setting_foxoring);
+	COPY_LEGACY_BYTES(utc_offset); COPY_LEGACY_BYTES(rf_power); COPY_LEGACY_BYTES(id_codespeed);
+	COPY_LEGACY_BYTES(pattern_codespeed); COPY_LEGACY_BYTES(foxoring_pattern_codespeed);
+	COPY_LEGACY_BYTES(off_air_seconds); COPY_LEGACY_BYTES(on_air_seconds); COPY_LEGACY_BYTES(ID_period_seconds);
+	COPY_LEGACY_BYTES(intra_cycle_delay_time);
+	avr_eeprom_write_byte(Event_setting, (uint8_t)migrated_event);
+	COPY_LEGACY_BYTES(frequency); COPY_LEGACY_BYTES(frequency_low); COPY_LEGACY_BYTES(frequency_med);
+	COPY_LEGACY_BYTES(frequency_high); COPY_LEGACY_BYTES(frequency_beacon);
+	COPY_LEGACY_BYTES(voltage_threshold); COPY_LEGACY_BYTES(clock_calibration); COPY_LEGACY_BYTES(si5351_correction_ppb);
+	COPY_LEGACY_BYTES(days_to_run); COPY_LEGACY_BYTES(thermal_shutdown_threshold);
+	COPY_LEGACY_BYTES(thermal_shutdown_enabled_marker); COPY_LEGACY_BYTES(hottest_ever_temperature);
+	COPY_LEGACY_BYTES(function); COPY_LEGACY_BYTES(enable_boost_regulator);
+	COPY_LEGACY_BYTES(enable_external_battery_control); COPY_LEGACY_BYTES(device_enabled);
+#undef COPY_LEGACY_BYTES
 
-	return false;
+	for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
+		avr_eeprom_write_byte(SESSION_JOURNAL_START + slot * sizeof(SessionRecord) + offsetof(SessionRecord, magic), 0);
+	for(uint8_t i = 0; i < history_count; ++i) appendSessionHistory(history[i]);
+	clearHardwareFaultHistory();
+	avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
+	return true;
 }
 
 /**
@@ -660,11 +653,9 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Id_codespeed:
 		case Pattern_Code_Speed:
 		case Foxoring_Pattern_Code_Speed:
-		case Fox_setting_none:
 		case Fox_setting_classic:
 		case Fox_setting_sprint:
 		case Fox_setting_foxoring:
-		case Fox_setting_blind:
 		case Utc_offset:
 		case Days_to_run:
 		case Thermal_Shutdown_Threshold:
@@ -897,9 +888,6 @@ bool EepromManager::initializeEEPROMVars(void)
 		avr_eeprom_write_byte(Id_codespeed, g_evteng_id_codespeed);
 
 		g_isMaster = EEPROM_MASTER_SETTING_DEFAULT;
-		avr_eeprom_write_byte(Reserved_Master_Setting, 0);
-
-		avr_eeprom_write_byte(Fox_setting_none, (uint8_t)EEPROM_FOX_SETTING_NONE_DEFAULT);
 
 		fox_setting_slot_write_atomic(EVENT_CLASSIC, EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
 		avr_eeprom_write_byte(Fox_setting_classic, (uint8_t)g_fox[EVENT_CLASSIC]);
@@ -909,8 +897,6 @@ bool EepromManager::initializeEEPROMVars(void)
 
 		fox_setting_slot_write_atomic(EVENT_FOXORING, EEPROM_FOX_SETTING_FOXORING_DEFAULT);
 		avr_eeprom_write_byte(Fox_setting_foxoring, (uint8_t)g_fox[EVENT_FOXORING]);
-
-		avr_eeprom_write_byte(Fox_setting_blind, (uint8_t)EEPROM_FOX_SETTING_CLASSIC_DEFAULT);
 
 		g_event = EEPROM_EVENT_SETTING_DEFAULT;
 		avr_eeprom_write_byte(Event_setting, (uint8_t)g_event);
@@ -947,9 +933,6 @@ bool EepromManager::initializeEEPROMVars(void)
 
 		avr_eeprom_initialize_string(Foxoring_pattern_text, EEPROM_FOXORING_PATTERN_DEFAULT, MAX_PATTERN_TEXT_LENGTH);
 		messages_text_slot_publish_atomic(FOXORING_PATTERN_TEXT, EEPROM_FOXORING_PATTERN_DEFAULT);
-
-		avr_eeprom_write_zero_bytes(Reserved_Unlock_Code, MAX_UNLOCK_CODE_LENGTH + 2);
-		avr_eeprom_write_dword(Reserved_RTTY_Offset, 0);
 
 		g_80m_power_level_mW = EEPROM_TX_80M_POWER_MW_DEFAULT;
 		avr_eeprom_write_word(RF_Power, g_80m_power_level_mW);
@@ -1005,7 +988,11 @@ bool EepromManager::initializeEEPROMVars(void)
 		g_device_enabled = false;
 		avr_eeprom_write_byte(Device_Enabled, (uint8_t)g_device_enabled);
 
-		/* Mark EEPROM as valid only after the default image has been fully written. */
+		for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
+			avr_eeprom_write_byte(SESSION_JOURNAL_START + slot * sizeof(SessionRecord) + offsetof(SessionRecord, magic), 0);
+		clearHardwareFaultHistory();
+
+		/* Mark EEPROM as valid only after settings and persistent logs are initialized. */
 		avr_eeprom_write_word(Eeprom_initialization_flag, EEPROM_INITIALIZED_FLAG);
 
 		init = true;

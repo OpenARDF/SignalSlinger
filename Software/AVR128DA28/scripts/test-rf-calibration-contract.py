@@ -11,18 +11,27 @@ main = (root / "SignalSlinger/main.cpp").read_text()
 transmitter = (root / "SignalSlinger/src/transmitter.cpp").read_text()
 
 assert "#define EEPROM_INITIALIZED_FLAG_V0135 (uint16_t)0x0135" in defs
-assert "#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0136" in defs
+assert "#define EEPROM_INITIALIZED_FLAG_V0136 (uint16_t)0x0136" in defs
+assert "#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0200" in defs
 assert "uint16_t clock_calibration;\n\tint32_t si5351_correction_ppb;\n\tuint8_t days_to_run;" in header
 assert "Reserved_31" not in header
-assert "static_assert(sizeof(EE_prom) == 288" in storage
+assert "static_assert(sizeof(EE_prom) == 135" in storage
+assert "static_assert(sizeof(LegacyEEPromV0136) == 288" in storage
+assert "EEPROM_SETTINGS_REGION_BYTES = 160" in storage
+assert "SESSION_JOURNAL_START = EEPROM_SETTINGS_REGION_BYTES" in storage
+assert "SESSION_JOURNAL_START = sizeof(EE_prom)" not in storage
+assert "static_assert(Eeprom_initialization_flag == 0" in header
+assert "Device_Enabled == 134" in header
 
-migration_start = storage.index("if(initialization_flag == EEPROM_INITIALIZED_FLAG_V0135)")
-migration_end = storage.index("return false;", migration_start)
+migration_start = storage.index("static bool migrateEEPROMLayoutIfNeeded")
+migration_end = storage.index("void EepromManager::updateEEPROMVar", migration_start)
 migration = storage[migration_start:migration_end]
-correction_write = migration.index("avr_eeprom_write_dword(Si5351_Correction")
-marker_write = migration.index("avr_eeprom_write_word(Eeprom_initialization_flag")
+correction_write = migration.index("COPY_LEGACY_BYTES(si5351_correction_ppb)")
+marker_write = migration.rindex("avr_eeprom_write_word(Eeprom_initialization_flag")
 assert correction_write < marker_write
-assert "migrateEEPROMEventSetting" not in migration
+assert migration.index("LegacyEEPromV0136 legacy") < migration.index("EEPROM_UNINITIALIZED")
+assert migration.index("SessionRecord history") < migration.index("EEPROM_UNINITIALIZED")
+assert migration.index("clearHardwareFaultHistory()") < marker_write
 
 assert "*/\n#define APPLY_XTAL_CALIBRATION_VALUE\n#define SUPPORT_FOUT_BELOW_1024KHZ" in si5351
 assert "#define SUPPORT_FOUT_BELOW_1024KHZ" in si5351[si5351.index("*/") :]

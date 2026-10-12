@@ -49,6 +49,7 @@
 #include "shared_state.h"
 #include "thermal_shutdown.h"
 #include "session_history.h"
+#include "hardware_fault_history.h"
 #include "rtc.h"
 #include "rstctrl.h"
 
@@ -441,6 +442,8 @@ static void restoreEventAfterWakeAuthorization(void);
 static bool shouldRestoreTransmitterForSleepContext(SleepType sleepType);
 static const char *hardwareBuildString(void);
 static void sendFirmwareInfo(void);
+static void recordDetectedHardwareFault(uint8_t code);
+static void reportHardwareFaultHistory(void);
 static inline void captureButtonWakeFromSleep(void);
 static inline void clearPendingWakeInterruptFlags(void);
 static inline void setWakeAuthorizationLedPinsOn(void);
@@ -1387,7 +1390,7 @@ int main(void)
 
 	if(now == time(null))
 	{
-		g_hardware_error |= (int)HARDWARE_NO_RTC;
+		recordDetectedHardwareFault(HARDWARE_FAULT_RTC);
 		RTC_init_backup();
 	}
 
@@ -1405,7 +1408,7 @@ int main(void)
 
 	if(!txIsInitialized())
 	{
-		g_hardware_error |= (int)HARDWARE_NO_SI5351;
+		recordDetectedHardwareFault(HARDWARE_FAULT_TRANSMITTER);
 	}
 
 	g_evteng_run_event_until_canceled = false;
@@ -4188,6 +4191,31 @@ static void sendFirmwareInfo(void)
 	sendDeviceUniqueId();
 }
 
+static void recordDetectedHardwareFault(uint8_t code)
+{
+	if(code == HARDWARE_FAULT_RTC) g_hardware_error |= (int)HARDWARE_NO_RTC;
+	if(code == HARDWARE_FAULT_TRANSMITTER) g_hardware_error |= (int)HARDWARE_NO_SI5351;
+	time_t detected_at = time(null);
+	/* A clock that failed its startup test cannot provide trustworthy evidence
+	 * for the time of its own failure. Preserve the condition without a date. */
+	bool time_valid = code != HARDWARE_FAULT_RTC && timeIsSet();
+	recordHardwareFault(code, (uint32_t)detected_at, time_valid);
+}
+
+static void reportHardwareFaultHistory(void)
+{
+	HardwareFaultRecord records[HARDWARE_FAULT_MAX] = {};
+	uint8_t count = readHardwareFaultHistory(records, HARDWARE_FAULT_MAX);
+	snprintf(g_tempStr, sizeof(g_tempStr), "* HWF v=1 count=%u capacity=%u\n", count, hardwareFaultHistoryCapacity());
+	sb_send_string(g_tempStr);
+	for(uint8_t i = 0; i < count; ++i)
+	{
+		snprintf(g_tempStr, sizeof(g_tempStr), "* HWF v=1 code=%u at=%lu flags=%u\n",
+		         records[i].code, (unsigned long)records[i].detected_at, records[i].flags);
+		sb_send_string(g_tempStr);
+	}
+}
+
 /**
  * Report whether cold-start LED feedback should be preserved.
  *
@@ -4679,6 +4707,23 @@ void __attribute__((optimize("O0"))) handleSerialBusMsgs()
 			case SB_MESSAGE_INFO:
 			{
 				sendFirmwareInfo();
+			}
+			break;
+
+			case SB_MESSAGE_HARDWARE_FAULTS:
+			{
+				if(sb_buff->fields[SB_FIELD1][0] == 'C')
+				{
+					clearHardwareFaultHistory();
+					if(g_hardware_error & (int)HARDWARE_NO_RTC) recordDetectedHardwareFault(HARDWARE_FAULT_RTC);
+					if(g_hardware_error & (int)HARDWARE_NO_SI5351) recordDetectedHardwareFault(HARDWARE_FAULT_TRANSMITTER);
+				}
+				else if(sb_buff->fields[SB_FIELD1][0] != '\0')
+				{
+					sb_send_string((char *)"* Err: HWF [C]\n");
+					break;
+				}
+				reportHardwareFaultHistory();
 			}
 			break;
 

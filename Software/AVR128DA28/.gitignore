@@ -36,3 +36,4 @@ SignalSlinger/Release/src/
 
 # Generated hardware-bench captures and frozen diagnostic images
 /tmp/hardware-bench/
+/tmp/hardware-fault-bench-*/

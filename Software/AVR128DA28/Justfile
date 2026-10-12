@@ -25,7 +25,7 @@ policy-check:
 
 # Run dependency-light host checks for the portable workflow.
 test:
-    python3 -c "import ast,pathlib; ast.parse(pathlib.Path('scripts/run-hardware-bench.py').read_text()); ast.parse(pathlib.Path('scripts/run-serial-latency.py').read_text())"
+    python3 -c "import ast,pathlib; ast.parse(pathlib.Path('scripts/run-hardware-bench.py').read_text()); ast.parse(pathlib.Path('scripts/run-serial-latency.py').read_text()); ast.parse(pathlib.Path('scripts/run-hardware-fault-bench.py').read_text())"
     for script in ./scripts/*.mjs; do node --check "$script"; done
     shellcheck ./scripts/*.sh
     shfmt -d ./scripts/*.sh
@@ -42,6 +42,7 @@ test:
     python3 ./scripts/test-eeprom-access.py
     python3 ./scripts/test-hardware-bench.py
     python3 ./scripts/test-session-storage.py
+    python3 ./scripts/test-hardware-fault-storage.py
     python3 ./scripts/test-session-runtime.py
     python3 ./scripts/test-serial-rx-errors.py
     python3 ./scripts/test-serial-latency.py
@@ -233,3 +234,7 @@ serial-latency-bench port uid output:
 # Fail if the EEPROM regression reproductions cause receive errors or timer stalls.
 serial-eeprom-regression port uid output:
     python3 ./scripts/run-serial-latency.py --port {{quote(port)}} --uid {{quote(uid)}} --output {{quote(output)}} --focus-demo --repeats 3 --require-clean
+
+# Capture or verify persistent hardware-fault behavior on an identified unit.
+hardware-fault-bench *args:
+    python3 ./scripts/run-hardware-fault-bench.py {{args}}
