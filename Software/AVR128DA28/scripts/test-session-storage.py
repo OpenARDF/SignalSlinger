@@ -6,21 +6,21 @@ import tempfile
 
 root = Path(__file__).resolve().parent.parent
 source = (root / 'SignalSlinger/src/eeprommanager.cpp').read_text()
-start = source.index('static const uint16_t SESSION_JOURNAL_START')
-end = source.index('/**', source.index('void appendSessionHistory', start))
+start = source.index('static const uint16_t EEPROM_SETTINGS_REGION_BYTES')
+end = source.index('uint8_t hardwareFaultHistoryCapacity', source.index('void appendSessionHistory', start))
 journal = source[start:end]
 migration_start = source.index('uint8_t thermal_marker = avr_eeprom_read_byte_at')
 migration_end = source.index('float hottest_ever_temperature', migration_start)
 migration = source[migration_start:migration_end]
 stubs = r'''
 #include "session_history.h"
+#include "hardware_fault_history.h"
 #include "serial_latency.h"
 #include "thermal_shutdown.h"
 #include <assert.h>
 #include <stdexcept>
 #include <array>
-// Deliberately leave only the required minimum four slots in this fixture.
-struct EE_prom { uint8_t settings[392]; };
+struct EE_prom { uint8_t settings[135]; };
 #define EEPROM_SIZE 512
 static std::array<uint8_t, EEPROM_SIZE> storage;
 static int writes_left = -1;
@@ -62,25 +62,27 @@ int main() {
     SessionRecord record = {}; record.action = SESSION_STARTED;
     SessionRecord result[16];
     assert(readSessionHistory(result, 16) == 0);
-    for(int i = 0; i < 4; ++i) appendSessionHistory(record);
+    for(int i = 0; i < 7; ++i) appendSessionHistory(record);
     auto before = storage;
     // Cut power before each write of an overwrite. Prior entries stay readable.
     for(int cut = 0; cut <= 31; ++cut) {
         storage = before; writes_left = cut;
         try { appendSessionHistory(record); } catch(const std::runtime_error&) {}
         unsigned count = readSessionHistory(result, 16);
-        assert(count >= 3 && count <= 4);
-        assert(result[count - 1].sequence == (cut >= 31 ? 5u : 4u));
+        assert(count >= 6 && count <= 7);
+        assert(result[count - 1].sequence == (cut >= 31 ? 8u : 7u));
         for(unsigned n = 0; n < count; ++n) assert(sessionRecordValid(result[n]));
     }
     storage = before; writes_left = -1;
     for(int i = 0; i < 100; ++i) appendSessionHistory(record);
-    assert(readSessionHistory(result, 16) == 4);
-    assert(result[0].sequence == 101 && result[3].sequence == 104);
-    assert(result[3].flags & SESSION_HISTORY_GAP);
-    assert(readSessionHistory(result, 1) == 1 && result[0].sequence == 104);
+    assert(readSessionHistory(result, 16) == 7);
+    assert(result[0].sequence == 101 && result[6].sequence == 107);
+    assert(result[6].flags & SESSION_HISTORY_GAP);
+    assert(readSessionHistory(result, 1) == 1 && result[0].sequence == 107);
     // A checksum failure must never create a successful-looking stop.
-    for(unsigned offset = sizeof(EE_prom); offset < EEPROM_SIZE; offset += sizeof(SessionRecord))
+    for(unsigned offset = SESSION_JOURNAL_START;
+        offset < SESSION_JOURNAL_START + SESSION_JOURNAL_SLOTS * sizeof(SessionRecord);
+        offset += sizeof(SessionRecord))
         storage.at(offset + offsetof(SessionRecord, action)) ^= 0x01;
     assert(readSessionHistory(result, 16) == 0);
 }

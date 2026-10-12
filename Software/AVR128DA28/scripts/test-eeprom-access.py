@@ -7,7 +7,7 @@ import tempfile
 
 root = Path(__file__).resolve().parent.parent
 source = (root / 'SignalSlinger/src/eeprommanager.cpp').read_text()
-helpers = source[source.index('typedef uint16_t eeprom_addr_t;'):source.index('/* Append-only journal')]
+helpers = source[source.index('typedef uint16_t eeprom_addr_t;'):source.index('/* Fixed EEPROM v2 regions')]
 for kind in ('word', 'dword', 'float'):
     match = re.search(r'static \w+ avr_eeprom_read_' + kind + r'_at\(.*?\n}', source, re.S)
     assert match

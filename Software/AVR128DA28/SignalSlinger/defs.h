@@ -45,7 +45,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "2.0.7"
+#define SW_REVISION "2.1.0"
 #if !defined(HW_TARGET_3_4) && !defined(HW_TARGET_3_5)
 // #define HW_TARGET_3_4
 #define HW_TARGET_3_5
@@ -185,7 +185,8 @@ typedef uint16_t BatteryLevel; /* in milliVolts */
 #define EEPROM_INITIALIZED_FLAG_V0133 (uint16_t)0x0133
 #define EEPROM_INITIALIZED_FLAG_V0134 (uint16_t)0x0134
 #define EEPROM_INITIALIZED_FLAG_V0135 (uint16_t)0x0135
-#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0136
+#define EEPROM_INITIALIZED_FLAG_V0136 (uint16_t)0x0136
+#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0200
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_MASTER_SETTING_DEFAULT false

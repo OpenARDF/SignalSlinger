@@ -100,6 +100,7 @@ extern "C"
 		SB_MESSAGE_SLP = 'S' * 100 + 'L' * 10 + 'P',           /* Sleep */
 		SB_MESSAGE_VER = 'V' * 100 + 'E' * 10 + 'R',           /* Version */
 		SB_MESSAGE_INFO = 'I' * 100 + 'N' * 10 + 'F',          /* Machine-readable firmware information */
+		SB_MESSAGE_HARDWARE_FAULTS = 'H' * 100 + 'W' * 10 + 'F', /* Persistent hardware fault history */
 		SB_MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',         /* Software Reset */
 		SB_MESSAGE_UPDATE = 'U' * 100 + 'P' * 10 + 'D',        /* Enter bootloader update mode */
 		SB_MESSAGE_HELP = '?',                                 /* Help */
@@ -141,7 +142,7 @@ extern "C"
 /* Saturating receive error counters since reset, shared by the active UART. */
 void serialbusRxErrors(uint16_t *overrun, uint16_t *framing, uint16_t *parity);
 
-#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > FRE CF [kHz|MHz] - Read/set and key volatile calibration carrier\n* > FRE C [offset|X] - Calibrate/exit RF carrier\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > TMP [H [ON|OFF|n]|R [X|E]] - Temperature\n* > INF - Firmware information\n* > UI [S|C|P n|D|B samples|T [seconds]] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
+#define HELP_TEXT_TXT (char *)"\n* Commands:\n* > ? - List valid commands\n* > CLK [T|S|F|D [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/days\n* > EVT [C|F|S] - Set event\n* > FOX [fox]- Set fox role\n* > FRE [frequency] - Set tx frequency\n* > FRE CF [kHz|MHz] - Read/set and key volatile calibration carrier\n* > FRE C [offset|X] - Calibrate/exit RF carrier\n* > ID [callsign] -  Set callsign\n* > KEY [1|0] - key down/up\n* > MAS [0|1] - Set Source or Target\n* > PAT [text] - Set xmit pattern\n* > SPD I|F|P [wpm] - Set ID code speed\n* > GO 0-3 - Start event\n* > BAT [T|X] [0-2] - Battery\n* > TMP [H [ON|OFF|n]|R [X|E]] - Temperature\n* > HWF [C] - Read/clear hardware fault history\n* > INF - Firmware information\n* > UI [S|C|P n|D|B samples|T [seconds]] - UI diagnostics\n* > UPD - Enter bootloader update mode\n\0"
 
 	/**
 	 * Configure the serial bus with a baud rate and USART instance.

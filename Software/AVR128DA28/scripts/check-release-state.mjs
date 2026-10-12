@@ -12,6 +12,7 @@ import {
   readLocalReleaseTags,
   readRemoteHeads,
   readRemoteReleaseTags,
+  releaseSuccessorPolicy,
   repositoryRoot,
   runGit,
   tagAlignmentFailures,
@@ -74,10 +75,11 @@ try {
 
   const latest = latestReleaseVersion(remoteTags);
   const expected = nextPatch(latest);
-  if (candidateVersion !== expected) {
+  const versionPolicy = releaseSuccessorPolicy(latest, candidateVersion);
+  if (!versionPolicy) {
     fail(
-      `candidate ${candidateVersion} is not the next patch after origin v${latest.text}; `
-        + `expected ${expected}`,
+      `candidate ${candidateVersion} is neither the next patch (${expected}) nor `
+        + `the next minor (${latest.major}.${latest.minor + 1}.0) after origin v${latest.text}`,
     );
   }
   if (remoteTags.has(candidateVersion) || localTags.has(candidateVersion)) {
@@ -119,7 +121,9 @@ try {
     fail(`missing candidate checklist ${checklistPath}`);
   }
 
-  console.log(`PASS release state: ${branch} candidate v${candidateVersion}`);
+  console.log(
+    `PASS release state: ${branch} candidate v${candidateVersion} (${versionPolicy})`,
+  );
   console.log(`Previous origin release: v${latest.text}`);
   console.log("Local semantic release tags match origin; candidate tag is available.");
   if (options.allowDirty && relevantStatus) {

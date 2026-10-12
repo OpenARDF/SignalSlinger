@@ -52,6 +52,32 @@ export function nextPatch(version) {
   return `${version.major}.${version.minor}.${version.patch + 1}`;
 }
 
+export function releaseSuccessorPolicy(previous, candidate) {
+  const parsedCandidate = typeof candidate === "string"
+    ? parseVersion(candidate, "candidate version")
+    : candidate;
+
+  if (
+    parsedCandidate.major === previous.major
+    && parsedCandidate.minor === previous.minor
+    && parsedCandidate.patch === previous.patch + 1
+  ) {
+    return "next-patch";
+  }
+
+  // A minor release is deliberately narrow: it must be the immediately next
+  // minor in the same major series and restart the patch component at zero.
+  if (
+    parsedCandidate.major === previous.major
+    && parsedCandidate.minor === previous.minor + 1
+    && parsedCandidate.patch === 0
+  ) {
+    return "next-minor";
+  }
+
+  return null;
+}
+
 export function readFirmwareVersion() {
   const definitions = readFileSync(
     resolve(firmwareRoot, "SignalSlinger/defs.h"),
