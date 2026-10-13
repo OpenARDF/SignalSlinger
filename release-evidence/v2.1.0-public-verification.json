@@ -1,0 +1,29 @@
+{
+  "capturedAt": "2026-10-12T20:35:52-04:00",
+  "release": "https://github.com/OpenARDF/SignalSlinger/releases/tag/v2.1.0",
+  "tagObject": "963f7aab0d9010f4452d44bd021678d9741120f2",
+  "tagCommit": "1b413cb2a84766dd6b659c6e7af00e52cad31bf5",
+  "stable": true,
+  "draft": false,
+  "prerelease": false,
+  "notesMatch": true,
+  "assets": {
+    "SignalSlinger-Update-v2.1.0-HW-3.4.hex": "625c23430117b5167ec199d469dc446a9f210e8357992b67808239ed59e769c0",
+    "SignalSlinger-Update-v2.1.0-HW-3.5.hex": "8bb3de259b0c73fb1187864dfa753512fdd6dd4cad16448254fa32ba6b5970fe",
+    "SignalSlinger-v2.1.0-HW-3.4-Release-Files.zip": "7caa7ac0df1b0617e4a63924b2fa9970c52a8e1ba9900563807de40f3b45b3a8",
+    "SignalSlinger-v2.1.0-HW-3.5-Release-Files.zip": "99dbe3a851b2d4d55e80017703d5579ffd6e1fdd5135b18724d2876708a37d25"
+  },
+  "verification": [
+    "PASS: the remote annotated tag peels to the exact verified main release commit.",
+    "PASS: GitHub reports a stable, non-draft, non-prerelease release with all four expected assets.",
+    "PASS: GitHub-reported SHA-256 digests match the exact-main release build.",
+    "PASS: fresh public downloads reproduce all four expected SHA-256 digests.",
+    "PASS: both downloaded ZIP bundles pass the repository release-package validator.",
+    "PASS: each standalone update HEX is byte-for-byte identical to its matching ZIP member.",
+    "PASS: the remote GitHub release body exactly matches release-notes/v2.1.0.md."
+  ],
+  "hardwareEvidence": [
+    "release-evidence/v2.1.0-hw35-readback.json"
+  ],
+  "waiver": "Further hardware testing, including interrupted-update recovery, was explicitly waived by Charles Scharlau for v2.1.0 and is not claimed as passed."
+}

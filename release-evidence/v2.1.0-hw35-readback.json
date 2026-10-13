@@ -1,0 +1,44 @@
+{
+  "capturedAtLocal": "2026-10-12T19:45:12-04:00",
+  "host": "Moto g 5G - 2024",
+  "serialSlingerVersion": "2.1.0g",
+  "serialSlingerVersionCode": 33,
+  "device": {
+    "product": "SignalSlinger",
+    "softwareVersion": "2.1.0",
+    "hardwareVersion": "3.5",
+    "applicationStart": "0x2000",
+    "updateBaud": 115200,
+    "bootloaderVersion": "BL0.13",
+    "bootloaderProtocol": 1,
+    "uid": "42348279800036200109013300000000"
+  },
+  "readback": {
+    "stationId": "NZ0I",
+    "event": "Classic",
+    "foxRole": "Beacon",
+    "frequencyHz": 3600000,
+    "frequencyBanksHz": [3520000, 3540000, 3560000, 3600000],
+    "externalBatteryControl": "ON",
+    "transmitterEnabled": true,
+    "thermalShutdownEnabled": true,
+    "thermalShutdownThresholdC": 65,
+    "sessionHistoryCount": 7,
+    "sessionHistoryCapacity": 7,
+    "hardwareFaultCount": 0,
+    "hardwareFaultCapacity": 8
+  },
+  "residentPackage": {
+    "path": "files/signalslinger-updates/HW-3.5/2.1.0",
+    "updateHexSha256": "8bb3de259b0c73fb1187864dfa753512fdd6dd4cad16448254fa32ba6b5970fe",
+    "manifestSha256": "8c2556b8260381bd5647fbee093dbadaaa8f362b283a1b637b0bfb0464bb317a",
+    "releaseZipSha256": "6bc205f7837b407642b7dda69f67c778aa1002c83a699afcd1240caf0533239f",
+    "matchesCleanCandidatePackage": true
+  },
+  "result": "PASS",
+  "notes": [
+    "SerialSlinger was the sole serial owner and completed the full connected-device readback.",
+    "The connected transmitter already reported 2.1.0 before the validated resident package was staged on the Moto.",
+    "No same-version reflash or interrupted-update recovery was performed during this readback."
+  ]
+}
