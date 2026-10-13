@@ -38,8 +38,10 @@
 #include "globals.h"
 #include <atomic.h>
 #include "shared_state.h"
+#include "hardware_fault_history.h"
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include "atmel_start_pins.h"
 
 static const uint16_t SERIALBUS_DEFAULT_TIMEOUT_TICKS = 200;
@@ -404,6 +406,11 @@ void serialbus_disable(void)
 bool serialbus_send_text(char *text)
 {
 	bool err = true;
+	if(text && strcmp(text, TEXT_TX_NOT_RESPONDING_TXT) == 0)
+	{
+		time_t now = time(NULL);
+		recordHardwareFault(HARDWARE_FAULT_TRANSMITTER, (uint32_t)now, now > MINIMUM_VALID_EPOCH);
+	}
 
 	if(g_serialbus_disabled)
 	{

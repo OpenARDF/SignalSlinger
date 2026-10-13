@@ -17,6 +17,7 @@ import {
   readFirmwareVersion,
   readLocalReleaseTags,
   readRemoteReleaseTags,
+  releaseSuccessorPolicy,
   repositoryRoot,
   runGit,
   tagAlignmentFailures,
@@ -101,9 +102,11 @@ try {
 
   const latest = latestReleaseVersion(remoteTags);
   const expected = nextPatch(latest);
-  if (options.version !== expected) {
+  const versionPolicy = releaseSuccessorPolicy(latest, options.version);
+  if (!versionPolicy) {
     throw new Error(
-      `Expected the next patch after origin v${latest.text}: ${expected}; `
+      `Expected the next patch (${expected}) or explicitly requested next minor `
+        + `(${latest.major}.${latest.minor + 1}.0) after origin v${latest.text}; `
         + `got ${options.version}`,
     );
   }
@@ -196,7 +199,9 @@ try {
   const machineEvidence = new Map([
     [
       "release-version-incremented",
-      `Origin latest release v${latest.text}; v${options.version} was unused and is the exact next patch.`,
+      versionPolicy === "next-patch"
+        ? `Origin latest release v${latest.text}; v${options.version} was unused and is the exact next patch.`
+        : `Origin latest release v${latest.text}; v${options.version} was unused and is the explicitly requested next minor release.`,
     ],
     [
       "release-tags-reconciled",
