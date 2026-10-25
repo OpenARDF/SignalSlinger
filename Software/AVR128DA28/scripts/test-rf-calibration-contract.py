@@ -9,19 +9,21 @@ si5351 = (root / "SignalSlinger/include/si5351.h").read_text()
 storage = (root / "SignalSlinger/src/eeprommanager.cpp").read_text()
 main = (root / "SignalSlinger/main.cpp").read_text()
 transmitter = (root / "SignalSlinger/src/transmitter.cpp").read_text()
+si5351_source = (root / "SignalSlinger/src/si5351.cpp").read_text()
 
 assert "#define EEPROM_INITIALIZED_FLAG_V0135 (uint16_t)0x0135" in defs
 assert "#define EEPROM_INITIALIZED_FLAG_V0136 (uint16_t)0x0136" in defs
 assert "#define EEPROM_INITIALIZED_FLAG (uint16_t)0x0200" in defs
 assert "uint16_t clock_calibration;\n\tint32_t si5351_correction_ppb;\n\tuint8_t days_to_run;" in header
 assert "Reserved_31" not in header
-assert "static_assert(sizeof(EE_prom) == 135" in storage
+assert "static_assert(sizeof(EE_prom) == 139" in storage
 assert "static_assert(sizeof(LegacyEEPromV0136) == 288" in storage
 assert "EEPROM_SETTINGS_REGION_BYTES = 160" in storage
 assert "SESSION_JOURNAL_START = EEPROM_SETTINGS_REGION_BYTES" in storage
 assert "SESSION_JOURNAL_START = sizeof(EE_prom)" not in storage
 assert "static_assert(Eeprom_initialization_flag == 0" in header
 assert "Device_Enabled == 134" in header
+assert "Calibration_Frequency == 135" in header
 
 migration_start = storage.index("static bool migrateEEPROMLayoutIfNeeded")
 migration_end = storage.index("void EepromManager::updateEEPROMVar", migration_start)
@@ -29,6 +31,7 @@ migration = storage[migration_start:migration_end]
 correction_write = migration.index("COPY_LEGACY_BYTES(si5351_correction_ppb)")
 marker_write = migration.rindex("avr_eeprom_write_word(Eeprom_initialization_flag")
 assert correction_write < marker_write
+assert migration.index("avr_eeprom_write_dword(Calibration_Frequency") < marker_write
 assert migration.index("LegacyEEPromV0136 legacy") < migration.index("EEPROM_UNINITIALIZED")
 assert migration.index("SessionRecord history") < migration.index("EEPROM_UNINITIALIZED")
 assert migration.index("clearHardwareFaultHistory()") < marker_write
@@ -36,6 +39,9 @@ assert migration.index("clearHardwareFaultHistory()") < marker_write
 assert "*/\n#define APPLY_XTAL_CALIBRATION_VALUE\n#define SUPPORT_FOUT_BELOW_1024KHZ" in si5351
 assert "#define SUPPORT_FOUT_BELOW_1024KHZ" in si5351[si5351.index("*/") :]
 assert "#define DO_BOUNDS_CHECKING" in si5351[si5351.index("*/") :]
+assert "if(!preserveOneHz && freq_Fout > 999999)" in si5351_source
+assert "si5351SetFrequencyInternal(freq_Fout, clk, clocksOff, false)" in si5351_source
+assert "si5351SetFrequencyInternal(freq_Fout, clk, clocksOff, true)" in si5351_source
 
 handler_start = main.index("static bool handleRfCalibrationCommand")
 handler_end = main.index("/**\n * Consume and handle", handler_start)
@@ -49,7 +55,9 @@ assert cf_handler.index("txSetCalibrationFrequency(frequency_hz)") < cf_handler.
 )
 assert "previous_frequency_hz" in cf_handler
 assert "txSetCalibrationFrequency(previous_frequency_hz)" in cf_handler
-assert "updateEEPROMVar" not in cf_handler
+assert cf_handler.index("txStartCalibrationCarrier()") < cf_handler.index(
+    "updateEEPROMVar(Calibration_Frequency"
+)
 assert handler.index("eventRunning()") < handler.index("txApplyCalibrationOffsetHz(offset_hz)")
 assert handler.index("txApplyCalibrationOffsetHz(offset_hz)") < handler.index(
     "updateEEPROMVar(Si5351_Correction"
@@ -61,8 +69,8 @@ exit_start = transmitter.index("bool txExitCalibrationCarrier", apply_start)
 transaction = transmitter[transaction_start:apply_start]
 apply = transmitter[apply_start:exit_start]
 exit_calibration = transmitter[exit_start:transmitter.index("/**\n * Globally enable", exit_start)]
-assert transaction.index("powerToTransmitter(true)") < transaction.index("si5351_set_freq(g_calibration_frequency_hz")
-assert transaction.index("si5351_set_freq(g_calibration_frequency_hz") < transaction.index("keyTransmitter(true)")
+assert transaction.index("powerToTransmitter(true)") < transaction.index("si5351_set_calibration_freq(g_calibration_frequency_hz")
+assert transaction.index("si5351_set_calibration_freq(g_calibration_frequency_hz") < transaction.index("keyTransmitter(true)")
 assert "g_calibration_restore_initialized" in transaction
 assert "g_calibration_restore_keyed" in transaction
 assert "return applyCalibrationCorrectionPpb(requested_correction_ppb)" in apply

@@ -38,6 +38,10 @@ bool si5351_set_freq(Frequency_Hz frequency, int, bool) {
     if(fail_next_set) { fail_next_set = false; return true; }
     stub_programmed_frequency = frequency; return false;
 }
+bool si5351_set_calibration_freq(Frequency_Hz frequency, int, bool) {
+    if(fail_next_set) { fail_next_set = false; return true; }
+    stub_programmed_frequency = frequency; return false;
+}
 bool keyTransmitter(bool on);
 bool powerToTransmitter(bool on);
 '''
@@ -61,12 +65,12 @@ bool powerToTransmitter(bool on) {
 }
 int main() {
     assert(!txSetCalibrationFrequency(10000099UL));
-    assert(txGetCalibrationFrequency() == 10000000UL);
+    assert(txGetCalibrationFrequency() == 10000099UL);
     assert(stub_programmed_frequency == g_80m_frequency);
     assert(!txApplyCalibrationOffsetHz(10));
     assert(txCalibrationCarrierActive());
     assert(g_tx_initialized && g_transmitter_keyed);
-    assert(stub_programmed_frequency == 10000000UL);
+    assert(stub_programmed_frequency == 10000099UL);
     assert(txGetCalibrationCorrectionPpb() == -1000);
     assert(txGetCalibrationOffsetHz() == 10);
     assert(power_transitions == 1 && key_transitions == 1);

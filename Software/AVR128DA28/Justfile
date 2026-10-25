@@ -36,6 +36,8 @@ test:
     ./tmp/test-session-policy
     c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-rf-calibration.cpp -o ./tmp/test-rf-calibration
     ./tmp/test-rf-calibration
+    c++ -std=c++17 -Wall -Wextra -Werror -I ./SignalSlinger/include ./scripts/test-si5351-fraction.cpp ./SignalSlinger/src/si5351_fraction.cpp -o ./tmp/test-si5351-fraction
+    ./tmp/test-si5351-fraction
     python3 ./scripts/test-rf-calibration-contract.py
     python3 ./scripts/test-rf-calibration-runtime.py
     python3 ./scripts/test-si5351-correction-cache.py
