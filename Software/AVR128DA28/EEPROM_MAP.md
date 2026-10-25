@@ -19,8 +19,8 @@ The C++ declarations and compile-time assertions remain authoritative:
 
 | Decimal addresses | Hex addresses | Size | Purpose |
 | ---: | ---: | ---: | --- |
-| 0-134 | `0x000-0x086` | 135 bytes | Active configuration settings |
-| 135-159 | `0x087-0x09F` | 25 bytes | Reserved for append-only settings growth |
+| 0-138 | `0x000-0x08A` | 139 bytes | Active configuration settings |
+| 139-159 | `0x08B-0x09F` | 21 bytes | Reserved for append-only settings growth |
 | 160-369 | `0x0A0-0x171` | 210 bytes | Seven 30-byte session-history records |
 | 370-449 | `0x172-0x1C1` | 80 bytes | Eight 10-byte hardware-fault records |
 | 450-511 | `0x1C2-0x1FF` | 62 bytes | Unallocated future space |
@@ -72,10 +72,11 @@ padding. Multi-byte values use the AVR's little-endian representation.
 | 132 | `0x084` | 1 | `uint8_t` | Boost-regulator enable |
 | 133 | `0x085` | 1 | `uint8_t` | External-battery-control enable |
 | 134 | `0x086` | 1 | `uint8_t` | Device enabled |
-| 135-159 | `0x087-0x09F` | 25 | Reserved | Append-only settings expansion |
+| 135 | `0x087` | 4 | `uint32_t` | Saved RF calibration carrier frequency in Hz |
+| 139-159 | `0x08B-0x09F` | 21 | Reserved | Append-only settings expansion |
 
 The offset assertions in `eeprommanager.h` intentionally pin established
-settings. A new setting must be appended at address 135 or later while remaining
+settings. A new setting must be appended at address 139 or later while remaining
 inside the 160-byte settings region. Inserting a field among existing settings,
 growing beyond address 159, or changing an established representation requires
 an explicit EEPROM-map version and migration.
@@ -129,8 +130,9 @@ padded settings layout. On first boot of compact-v2 firmware, migration:
    into RAM before making an overlapping write.
 2. Invalidates the EEPROM marker so an interrupted rewrite cannot be accepted as
    a valid compact-v2 image.
-3. Copies supported settings to their compact addresses and normalizes settings
-   introduced after the detected legacy version.
+3. Copies supported settings to their compact addresses, initializes the saved
+   calibration carrier to 3,600,000 Hz, and normalizes settings introduced after
+   the detected legacy version.
 4. Rewrites valid session records into the relocated session journal.
 5. Clears the new hardware-fault region, for which no legacy records exist.
 6. Commits marker `0x0200` last.

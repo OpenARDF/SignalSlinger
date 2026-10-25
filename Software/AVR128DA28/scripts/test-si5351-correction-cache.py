@@ -12,7 +12,7 @@ setter = source[setter_start:setter_end]
 
 # The following set_freq branch is what turns an invalid cache into a fresh PLL
 # calculation and register write. Keep the behavioral test tied to that contract.
-set_freq_start = source.index("bool si5351_set_freq(")
+set_freq_start = source.index("static bool si5351SetFrequencyInternal(")
 set_freq_end = source.index("Frequency_Hz si5351_get_frequency", set_freq_start)
 set_freq = source[set_freq_start:set_freq_end]
 assert "(target_pll == SI5351_PLLA) || !freqVCOB" in set_freq

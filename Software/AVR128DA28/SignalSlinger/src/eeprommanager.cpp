@@ -50,7 +50,7 @@
 /* Canonical EEPROM image used both for layout definition and default contents. */
 const struct EE_prom EEMEM EepromManager::ee_vars = {};
 
-static_assert(sizeof(EE_prom) == 135, "Compact EEPROM settings layout changed unexpectedly");
+static_assert(sizeof(EE_prom) == 139, "Compact EEPROM settings layout changed unexpectedly");
 
 /* Exact v0x0136 layout. It is retained only long enough to migrate installed
  * units; new code never writes this padded map. AVR data types are byte-aligned. */
@@ -175,7 +175,7 @@ static uint8_t avr_eeprom_read_byte_at(eeprom_addr_t index)
 }
 
 /* Fixed EEPROM v2 regions. Mission-critical settings occupy the first region,
- * including 25 reserved bytes for append-only growth. Bounded logs follow it;
+ * including 21 reserved bytes for append-only growth. Bounded logs follow it;
  * neither a setting addition nor log growth may move another region silently. */
 static const uint16_t EEPROM_SETTINGS_REGION_BYTES = 160;
 static_assert(sizeof(EE_prom) <= EEPROM_SETTINGS_REGION_BYTES, "EEPROM settings exceeded their fixed region");
@@ -615,6 +615,7 @@ static bool migrateEEPROMLayoutIfNeeded(uint16_t initialization_flag)
 	COPY_LEGACY_BYTES(thermal_shutdown_enabled_marker); COPY_LEGACY_BYTES(hottest_ever_temperature);
 	COPY_LEGACY_BYTES(function); COPY_LEGACY_BYTES(enable_boost_regulator);
 	COPY_LEGACY_BYTES(enable_external_battery_control); COPY_LEGACY_BYTES(device_enabled);
+	avr_eeprom_write_dword(Calibration_Frequency, RF_CALIBRATION_DEFAULT_FREQUENCY_HZ);
 #undef COPY_LEGACY_BYTES
 
 	for(uint8_t slot = 0; slot < SESSION_JOURNAL_SLOTS; ++slot)
@@ -682,6 +683,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void *val)
 		case Frequency_Med:
 		case Frequency_Hi:
 		case Frequency_Beacon:
+		case Calibration_Frequency:
 		case Event_start_epoch:
 		case Event_finish_epoch:
 			avr_eeprom_write_dword_if_changed((eeprom_addr_t)v, *(const uint32_t *)val);
@@ -755,6 +757,8 @@ void EepromManager::saveAllEEPROM(void)
 	updateEEPROMVar(Enable_Boost_Regulator, (void *)&g_enable_boost_regulator);
 	updateEEPROMVar(Enable_External_Battery_Control, (void *)&g_enable_external_battery_control);
 	updateEEPROMVar(Device_Enabled, (void *)&g_device_enabled);
+	Frequency_Hz calibration_frequency_hz = txGetCalibrationFrequency();
+	updateEEPROMVar(Calibration_Frequency, (void *)&calibration_frequency_hz);
 }
 
 /**
@@ -823,6 +827,15 @@ bool EepromManager::readNonVols(void)
 			si5351_correction_ppb = EEPROM_SI5351_CALIBRATION_DEFAULT;
 			txRestoreCalibrationCorrectionPpb(si5351_correction_ppb);
 			avr_eeprom_write_dword(Si5351_Correction, (uint32_t)si5351_correction_ppb);
+		}
+
+		Frequency_Hz calibration_frequency_hz =
+		    avr_eeprom_read_dword_at(Calibration_Frequency);
+		if(txSetCalibrationFrequency(calibration_frequency_hz))
+		{
+			calibration_frequency_hz = RF_CALIBRATION_DEFAULT_FREQUENCY_HZ;
+			txSetCalibrationFrequency(calibration_frequency_hz);
+			avr_eeprom_write_dword(Calibration_Frequency, calibration_frequency_hz);
 		}
 
 		g_days_to_run = avr_eeprom_read_byte_at(Days_to_run);
@@ -963,6 +976,9 @@ bool EepromManager::initializeEEPROMVars(void)
 
 		txRestoreCalibrationCorrectionPpb(EEPROM_SI5351_CALIBRATION_DEFAULT);
 		avr_eeprom_write_dword(Si5351_Correction, (uint32_t)EEPROM_SI5351_CALIBRATION_DEFAULT);
+
+		txSetCalibrationFrequency(RF_CALIBRATION_DEFAULT_FREQUENCY_HZ);
+		avr_eeprom_write_dword(Calibration_Frequency, RF_CALIBRATION_DEFAULT_FREQUENCY_HZ);
 
 		g_days_to_run = 1;
 		avr_eeprom_write_byte(Days_to_run, g_days_to_run);
