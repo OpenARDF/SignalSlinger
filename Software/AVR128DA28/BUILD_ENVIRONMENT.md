@@ -160,7 +160,7 @@ the file exactly.
 
 For stable integration, `just release-integration-worktree 2.0.3` creates a
 clean main worktree under `/private/tmp` and stages the renormalized
-Development2 merge without committing it. This keeps unrelated changes in the
+Development1 merge without committing it. This keeps unrelated changes in the
 normal checkout, including KiCad edits, outside the release merge.
 
 ## Pinned archives
