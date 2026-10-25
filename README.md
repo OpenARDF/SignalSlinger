@@ -25,7 +25,7 @@ This `main` branch corresponds to the current stable firmware release. Download 
 
 Use SerialSlinger for normal updates on devices that already support software updates. For first-time bootloader setup, use the matching complete release bundle and an approved programmer over the board's UPDI programming header (`P101`). Always choose the file that matches your hardware revision, and do not modify fuses or disable UPDI outside the documented setup flow.
 
-For complete programming steps, setup-bundle usage, and hardware connection details, see the [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing). If you want the current development branch instead of the stable public release, switch to the `Development2` branch and use the release files referenced there.
+For complete programming steps, setup-bundle usage, and hardware connection details, see the [User Manual](https://docs.google.com/document/d/1eX7xH3cDyRNS-MVg13EojpP8IB8bDgrdszM48J0sn7k/edit?usp=sharing). If you want current firmware and software development instead of the stable public release, use `Development1`. KiCad schematic, PCB, library, simulation, and model work is collected separately on `Development1-KiCad`.
 
 ## Firmware Development
 

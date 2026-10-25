@@ -7,9 +7,13 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 ## Branch Roles
 
 - `main` is the stable release branch.
-- `Development2` is the active development release branch and may host either prereleases or normal releases when explicitly requested.
+- `Development1` is the firmware, software, tests, documentation, and release-workflow collector. It may host either prereleases or normal releases when explicitly requested and must not contain `KiCad/` changes.
+- `Development1-KiCad` is the schematic, PCB, symbol, footprint, simulation, and model collector. It must not contain firmware, tests, release notes, or release evidence.
 - Before making any software changes, explicitly state the current git branch to the user.
-- On `Development2`, do not automatically commit changes unless the user explicitly authorizes that commit.
+- Focused topics must start from and return to the applicable clean collector. Run `just branch-route-check <collector>` before returning a topic.
+- Each collector uses its own cumulative promotion PR to `main`. After either promotion, synchronize both collectors from the new `main` baseline.
+- Before requesting promotion, run `just collector-preflight <collector>` on the collector; all applicable warnings are failures unless explicitly recorded as inherited evidence.
+- Post-publication evidence is the sole exception: after the release tag is fixed, an evidence-only PR may add only `release-evidence/` records to `main` without moving the tag.
 
 ## Standard Release Checklist
 
@@ -66,7 +70,7 @@ force-push or otherwise move a published release tag.
 
 4. Decide the release channel:
    - `main` for a stable release.
-   - `Development2` for a development-branch release, using either a prerelease or a normal release as explicitly requested.
+   - `Development1` for a development-branch release, using either a prerelease or a normal release as explicitly requested.
 5. Prepare the next patch version, or the explicitly requested next minor. For
    a stable patch release after `v2.0.2`:
 
@@ -88,7 +92,7 @@ Review the resulting changes:
 The bootloader version is independent and changes only when bootloader
 executable behavior or its protocol changes.
 
-6. Commit and push the versioned release source on `Development2` when the user
+6. Commit and push the versioned release source on `Development1` when the user
    explicitly authorizes it. The standard non-KiCad staging helper also excludes
    `release-evidence/`, which remains local until post-release evidence is
    committed. Put the resulting full 40-character commit ID in the checklist's
@@ -143,7 +147,7 @@ On Windows, `build-all-release-packages.ps1` and
 10. Complete representative HW-3.4 and HW-3.5 programming, serial update,
     interrupted-update recovery, rollback, and live `INF` version checks.
 11. Review `README.md` and confirm it matches the intended branch and release channel.
-12. On `Development2`, leave changes uncommitted unless the user explicitly asks for a commit.
+12. On a focused release topic from `Development1`, leave changes uncommitted unless the user explicitly asks for a commit.
 13. Before using `gh`, ensure the GitHub CLI environment is clean in this VM session:
 
 ```powershell
@@ -196,7 +200,7 @@ just release-integration-worktree X.Y.Z
 ```
 
 This creates `/private/tmp/SignalSlinger-release-vX.Y.Z`, checks out `main`
-there, and stages the repository's renormalized `Development2` merge without
+there, and stages the repository's renormalized `Development1` merge without
 committing. It intentionally leaves the original checkout and unrelated KiCad
 edits untouched.
 
@@ -210,7 +214,7 @@ just release-publication-check /absolute/path/to/release-checklist-vX.Y.Z.json r
 ```
 
 17. Create and push the annotated tag, then create the GitHub release:
-   - Use a prerelease or a normal release on `Development2` according to the requested release channel.
+   - Use a prerelease or a normal release on `Development1` according to the requested release channel.
    - Use a normal release on `main` unless a prerelease is explicitly requested.
    - Always pass the checked file to `gh release create` with `--notes-file`.
      A release must not be published when `release-notes-check` fails.
@@ -241,7 +245,7 @@ just release-notes-remote-check /absolute/path/to/release-checklist-vX.Y.Z.json
    - the notes retain substantive `User-visible changes` and
      `Stability and reliability` sections
    - `main` README points to stable downloads
-   - `Development2` README points to the intended development-branch downloads
+   - `Development1` README points to the intended development-branch downloads
 
 Update the release checklist through `remote-release-verified` and run:
 
@@ -270,7 +274,7 @@ to the later evidence commit.
 
 ## Branch Merge Policy
 
-- Use `.\merge-development2-into-main.ps1` for `Development2` to `main` merges instead of a raw `git merge`.
+- Use `.\merge-development2-into-main.ps1 -SourceBranch Development1` for `Development1` to `main` release integration instead of a raw `git merge`.
 - The merge worktree must start clean so the renormalization step only stages merge content.
 - The policy for this repository is `core.autocrlf=false` with `.gitattributes` controlling line endings.
 - The merge helper also enforces `core.safecrlf=true` so Git rejects mixed or lossy line-ending conversions.
