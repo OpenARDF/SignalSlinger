@@ -11,7 +11,8 @@ Unless stated otherwise, commands below assume the current directory is `Softwar
 - `Development1-KiCad` is the schematic, PCB, symbol, footprint, simulation, and model collector. It must not contain firmware, tests, release notes, or release evidence.
 - Before making any software changes, explicitly state the current git branch to the user.
 - Focused topics must start from and return to the applicable clean collector. Run `just branch-route-check <collector>` before returning a topic.
-- Each collector uses its own cumulative promotion PR to `main`. After either promotion, synchronize both collectors from the new `main` baseline.
+- Keep `main` linear by using squash or rebase pull requests. Collectors use merge-commit pull requests so topic and synchronized `main` ancestry remain auditable.
+- Each collector uses its own cumulative promotion PR to `main`. After either promotion, create a focused topic from each exact remote collector tip, merge exact `origin/main` with `--no-ff`, run `just collector-sync-check <collector>`, and merge each synchronization pull request with a merge commit. Do not rebase, squash, reset, or force-push collectors.
 - Before requesting promotion, run `just collector-preflight <collector>` on the collector; all applicable warnings are failures unless explicitly recorded as inherited evidence.
 - Post-publication evidence is the sole exception: after the release tag is fixed, an evidence-only PR may add only `release-evidence/` records to `main` without moving the tag.
 

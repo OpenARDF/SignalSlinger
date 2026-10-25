@@ -10,7 +10,8 @@
 - `Development1-KiCad` collects schematic, PCB, symbol, footprint, simulation, and model changes. It must not collect firmware, tests, release notes, or release evidence.
 - Start focused work from the correct clean collector, run `just branch-route-check <collector>` on the topic, and return only the focused topic to that collector.
 - Promote each collector to `main` with its own cumulative PR. Never mix both collectors in one promotion PR.
-- After either collector is promoted, merge the new `main` baseline into both collectors before accepting more topics or preparing another promotion.
+- `main` accepts squash or rebase pull requests and keeps a linear release history. Collectors accept merge commits only so topic ancestry and synchronized `main` baselines remain auditable.
+- After either collector is promoted, fetch `origin`, create a focused sync topic from each exact remote collector tip, and merge exact `origin/main` into it with `--no-ff`. Run `just collector-sync-check <collector>`, then merge each sync pull request with a merge commit. Do not rebase, squash, reset, or force-push collectors. Finish both synchronizations before accepting more topics or preparing another promotion.
 - Run `just collector-preflight <collector>` on the collector before requesting promotion. Unwaived warnings fail the preflight.
 - Post-publication evidence may use a separate evidence-only PR to `main` after the release tag is fixed. It must contain only `release-evidence/` records and must not move the tag.
 

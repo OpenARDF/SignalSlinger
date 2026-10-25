@@ -101,8 +101,11 @@ if ! rg -q \
 	failure=1
 fi
 
-if ! rg -q '^branch-route-check collector \*args:' "$firmware_root/Justfile" ||
+if [ ! -f "$firmware_root/scripts/test-branch-workflow.sh" ] ||
+	! rg -q '^branch-route-check collector:' "$firmware_root/Justfile" ||
 	! rg -q '^collector-preflight collector:' "$firmware_root/Justfile" ||
+	! rg -q '^collector-sync-check collector:' "$firmware_root/Justfile" ||
+	! rg -q '^branch-workflow-regression:' "$firmware_root/Justfile" ||
 	! rg -q '^kicad-check:' "$firmware_root/Justfile" ||
 	! rg -q '^spice-check:' "$firmware_root/Justfile"; then
 	printf '%s\n' "ERROR: collector routing or hardware-design gates are missing" >&2
@@ -111,6 +114,8 @@ fi
 
 if ! rg -q 'Development1.*firmware, software, tests' "$firmware_root/RELEASE_WORKFLOW.md" ||
 	! rg -q 'Development1-KiCad.*schematic, PCB' "$firmware_root/RELEASE_WORKFLOW.md" ||
+	! rg -q 'Collectors use merge-commit pull requests' "$firmware_root/RELEASE_WORKFLOW.md" ||
+	! rg -q 'collector-sync-check <collector>' "$firmware_root/RELEASE_WORKFLOW.md" ||
 	! rg -q 'evidence-only PR' "$firmware_root/RELEASE_WORKFLOW.md"; then
 	printf '%s\n' "ERROR: dual-collector release policy is incomplete" >&2
 	failure=1
