@@ -87,6 +87,7 @@ struct __attribute__((packed)) EE_prom
 	uint8_t enable_boost_regulator;
 	uint8_t enable_external_battery_control;
 	uint8_t device_enabled;
+	uint32_t calibration_frequency_hz;
 };
 
 /**
@@ -133,7 +134,8 @@ typedef enum
 	Function = EEPROM_OFFSET(function),
 	Enable_Boost_Regulator = EEPROM_OFFSET(enable_boost_regulator),
 	Enable_External_Battery_Control = EEPROM_OFFSET(enable_external_battery_control),
-	Device_Enabled = EEPROM_OFFSET(device_enabled)
+	Device_Enabled = EEPROM_OFFSET(device_enabled),
+	Calibration_Frequency = EEPROM_OFFSET(calibration_frequency_hz)
 #undef EEPROM_OFFSET
 } EE_var_t;
 
@@ -158,6 +160,7 @@ static_assert(Days_to_run == 124 && Thermal_Shutdown_Threshold == 125 &&
 static_assert(Function == 131 && Enable_Boost_Regulator == 132 &&
                   Enable_External_Battery_Control == 133 && Device_Enabled == 134,
               "EEPROM operating settings moved");
+static_assert(Calibration_Frequency == 135, "EEPROM calibration frequency moved");
 
 /**
  * Load, initialize, and save the firmware's persisted configuration values.

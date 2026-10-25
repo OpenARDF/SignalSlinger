@@ -433,6 +433,13 @@ bool si5351_init(Si5351_Xtal_load_pF, Frequency_Hz);
 bool si5351_set_freq(Frequency_Hz, Si5351_clock, bool clocksOff);
 
 /**
+ * Program one calibration-only output without the normal 100 Hz safety step.
+ * Divider selection and register sequencing are otherwise identical to
+ * si5351_set_freq().
+ */
+bool si5351_set_calibration_freq(Frequency_Hz, Si5351_clock, bool clocksOff);
+
+/**
  * Report the last frequency value requested for a clock output.
  *
  * The returned value is the library's cached setting, not a readback from the

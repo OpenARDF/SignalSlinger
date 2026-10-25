@@ -24,7 +24,7 @@ const candidateItems = [
   "rollback-package",
   "release-notes-user-visible",
   "release-notes-reliability",
-  "development2-commit-policy",
+  "collector-commit-policy",
 ];
 
 const releaseItems = [
@@ -202,7 +202,10 @@ try {
   }
 
   for (const id of requiredIds) {
-    const item = itemsById.get(id);
+    const item = itemsById.get(id)
+      ?? (id === "collector-commit-policy"
+        ? itemsById.get("development2-commit-policy")
+        : undefined);
 
     if (!item) {
       failures.push(`${id}: missing from checklist`);

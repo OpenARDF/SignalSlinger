@@ -148,7 +148,7 @@ bool txSetCalibrationFrequency(Frequency_Hz frequency)
 	if(!rfCalibrationFrequencyIsValid(frequency))
 		return true;
 
-	g_calibration_frequency_hz = rfCalibrationNormalizeFrequencyHz(frequency);
+	g_calibration_frequency_hz = frequency;
 	return false;
 }
 
@@ -225,7 +225,7 @@ static bool applyCalibrationCorrectionPpb(int32_t requested_correction_ppb)
 	}
 
 	si5351_set_correction(requested_correction_ppb);
-	bool failed = si5351_set_freq(g_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+	bool failed = si5351_set_calibration_freq(g_calibration_frequency_hz, TX_CLOCK_HF_0, true);
 	if(!failed)
 		failed = !keyTransmitter(true);
 
@@ -245,7 +245,10 @@ static bool applyCalibrationCorrectionPpb(int32_t requested_correction_ppb)
 	if(g_transmitter_keyed)
 		keyTransmitter(false);
 	si5351_set_correction(previous_correction_ppb);
-	si5351_set_freq(previous_frequency, TX_CLOCK_HF_0, true);
+	if(was_calibration_active)
+		si5351_set_calibration_freq(previous_frequency, TX_CLOCK_HF_0, true);
+	else
+		si5351_set_freq(previous_frequency, TX_CLOCK_HF_0, true);
 	if(was_keyed)
 		keyTransmitter(true);
 	g_calibration_carrier_active = was_calibration_active;
@@ -294,14 +297,14 @@ bool txExitCalibrationCarrier(void)
 
 	if(si5351_set_freq(g_80m_frequency, TX_CLOCK_HF_0, true))
 	{
-		si5351_set_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+		si5351_set_calibration_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
 		keyTransmitter(true);
 		return true;
 	}
 
 	if(restore_keyed && !keyTransmitter(true))
 	{
-		si5351_set_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
+		si5351_set_calibration_freq(g_active_calibration_frequency_hz, TX_CLOCK_HF_0, true);
 		keyTransmitter(true);
 		return true;
 	}

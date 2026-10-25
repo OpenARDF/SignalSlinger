@@ -4556,8 +4556,8 @@ static void sendRfCalibrationStatus(void)
 }
 
 /* Handle the calibration-only FRE extensions before the normal 80 m parser.
- * These commands are intentionally excluded from clone traffic because the
- * correction belongs to one physical oscillator and CF is volatile. */
+ * These commands are intentionally excluded from clone traffic because both
+ * the correction and its measurement carrier belong to one physical unit. */
 static bool handleRfCalibrationCommand(SerialbusRxBuffer *sb_buff)
 {
 	const char *selector = sb_buff->fields[SB_FIELD1];
@@ -4570,7 +4570,7 @@ static bool handleRfCalibrationCommand(SerialbusRxBuffer *sb_buff)
 			Frequency_Hz frequency_hz;
 			if(!rfCalibrationParseFrequencyHz(value, &frequency_hz))
 			{
-				sb_send_string((char *)"* Error: FRE CF requires whole kHz or decimal MHz (8 kHz to 160 MHz)\n");
+				sb_send_string((char *)"* Error: FRE CF requires a whole-Hz kHz or MHz value (8 kHz to 160 MHz)\n");
 				return true;
 			}
 
@@ -4589,9 +4589,13 @@ static bool handleRfCalibrationCommand(SerialbusRxBuffer *sb_buff)
 				sb_send_string(TEXT_TX_NOT_RESPONDING_TXT);
 				return true;
 			}
+
+			/* Persist only after the exact carrier was programmed successfully. */
+			Frequency_Hz saved_frequency_hz = txGetCalibrationFrequency();
+			g_ee_mgr.updateEEPROMVar(Calibration_Frequency, (void *)&saved_frequency_hz);
 		}
 
-		sprintf(g_tempStr, "* FRE CF=%lu Hz (volatile; carrier %s)\n",
+		sprintf(g_tempStr, "* FRE CF=%lu Hz (saved; carrier %s)\n",
 		        (unsigned long)txGetCalibrationFrequency(),
 		        txCalibrationCarrierActive() ? "active" : "inactive");
 		sb_send_string(g_tempStr);
