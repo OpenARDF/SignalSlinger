@@ -28,13 +28,10 @@ static inline bool rfCalibrationCorrectionIsValid(int32_t correction_ppb)
 	       correction_ppb <= RF_CALIBRATION_MAX_CORRECTION_PPB;
 }
 
-/* The existing Si5351 safety policy uses 100 Hz steps above 1 MHz. Normalize
- * the stored calibration selection to the frequency the library will program. */
+/* Calibration uses the exact whole-Hz selection. Normal transmitter tuning
+ * retains the established 100 Hz policy in si5351_set_freq(). */
 static inline uint32_t rfCalibrationNormalizeFrequencyHz(uint32_t frequency_hz)
 {
-	if(frequency_hz > 999999UL)
-		return (frequency_hz / 100UL) * 100UL;
-
 	return frequency_hz;
 }
 
@@ -157,7 +154,14 @@ static inline bool rfCalibrationParseFrequencyHz(const char *text, uint32_t *fre
 
 	uint64_t scaled = whole * multiplier;
 	if(have_fraction)
-		scaled += (fraction * multiplier + fraction_scale / 2U) / fraction_scale;
+	{
+		const uint64_t fractional_hz = fraction * multiplier;
+		/* Calibration selections are whole hertz. Reject, rather than round,
+		 * finer input so the displayed and programmed values always agree. */
+		if(fractional_hz % fraction_scale)
+			return false;
+		scaled += fractional_hz / fraction_scale;
+	}
 	if(scaled > UINT32_MAX || !rfCalibrationFrequencyIsValid((uint32_t)scaled))
 		return false;
 

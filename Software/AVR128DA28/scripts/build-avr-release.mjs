@@ -44,6 +44,7 @@ const cppSources = [
   "src/rtc.cpp",
   "src/serialbus.cpp",
   "src/si5351.cpp",
+  "src/si5351_fraction.cpp",
   "src/slpctrl.cpp",
   "src/tcb.cpp",
   "src/timeutil.cpp",

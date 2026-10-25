@@ -42,18 +42,18 @@ try {
   }
 
   const branch = runGit(["branch", "--show-current"]).stdout;
-  if (branch !== "Development2") {
-    throw new Error(`Run this from Development2, not '${branch || "detached HEAD"}'`);
+  if (branch !== "Development1") {
+    throw new Error(`Run this from Development1, not '${branch || "detached HEAD"}'`);
   }
 
-  const developmentHead = runGit(["rev-parse", "Development2"]).stdout;
+  const developmentHead = runGit(["rev-parse", "Development1"]).stdout;
   const remoteHeads = readRemoteHeads();
-  const remoteDevelopmentHead = remoteHeads.get("Development2");
+  const remoteDevelopmentHead = remoteHeads.get("Development1");
   if (developmentHead !== remoteDevelopmentHead) {
-    throw new Error("Development2 must be committed and pushed before integration");
+    throw new Error("Development1 must be committed and pushed before integration");
   }
   if (runGit(["status", "--porcelain", "--", "Software/AVR128DA28", "README.md"]).stdout) {
-    throw new Error("Release-relevant Development2 files must be clean before integration");
+    throw new Error("Release-relevant Development1 files must be clean before integration");
   }
 
   const checklist = JSON.parse(readFileSync(
@@ -66,7 +66,7 @@ try {
   ));
   if (checklist.sourceCommit !== developmentHead) {
     throw new Error(
-      `Checklist sourceCommit must be the full Development2 commit ${developmentHead}`,
+      `Checklist sourceCommit must be the full Development1 commit ${developmentHead}`,
     );
   }
 
@@ -120,7 +120,7 @@ try {
   }
 
   console.log(`Release integration worktree: ${worktreePath}`);
-  console.log("The renormalized Development2-to-main merge is staged but not committed.");
+  console.log("The renormalized Development1-to-main merge is staged but not committed.");
   console.log("Review it, run the release preflight there, and commit only after approval.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

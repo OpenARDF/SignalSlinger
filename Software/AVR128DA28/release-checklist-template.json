@@ -43,7 +43,7 @@
     },
     {
       "id": "release-channel",
-      "description": "Decide the release channel for main or Development2.",
+      "description": "Decide the release channel for main or Development1.",
       "status": "pending",
       "evidence": ""
     },
@@ -114,8 +114,8 @@
       "evidence": ""
     },
     {
-      "id": "development2-commit-policy",
-      "description": "On Development2, leave changes uncommitted unless the user explicitly asks for a commit.",
+      "id": "collector-commit-policy",
+      "description": "Confirm the release topic was returned to Development1 through the collector preflight before promotion.",
       "status": "pending",
       "evidence": ""
     },

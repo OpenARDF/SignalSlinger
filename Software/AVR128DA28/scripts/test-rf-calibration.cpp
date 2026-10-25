@@ -20,18 +20,27 @@ int main()
 	expectFrequency("3600KHZ", 3600000UL);
 	expectFrequency("3.6M", 3600000UL);
 	expectFrequency("3.600001MHz", 3600001UL);
+	expectFrequency("3.500003", 3500003UL);
+	expectFrequency("3.500007", 3500007UL);
+	expectFrequency("3.500009", 3500009UL);
+	expectFrequency("3.500010", 3500010UL);
+	expectFrequency("3.500030", 3500030UL);
+	expectFrequency("3.500070", 3500070UL);
+	expectFrequency("3.500090", 3500090UL);
 	expectFrequency("8", RF_CALIBRATION_MIN_FREQUENCY_HZ);
 	expectFrequency("0.008", RF_CALIBRATION_MIN_FREQUENCY_HZ);
 	expectFrequency("8K", RF_CALIBRATION_MIN_FREQUENCY_HZ);
 	expectFrequency("160000", RF_CALIBRATION_MAX_FREQUENCY_HZ);
 	expectFrequency("160.0", RF_CALIBRATION_MAX_FREQUENCY_HZ);
 	expectFrequency("160M", RF_CALIBRATION_MAX_FREQUENCY_HZ);
-	assert(rfCalibrationNormalizeFrequencyHz(1000099UL) == 1000000UL);
+	assert(rfCalibrationNormalizeFrequencyHz(1000099UL) == 1000099UL);
 	assert(rfCalibrationNormalizeFrequencyHz(999999UL) == 999999UL);
 
 	uint32_t frequency_hz = 0;
 	assert(!rfCalibrationParseFrequencyHz("7", &frequency_hz));
 	assert(!rfCalibrationParseFrequencyHz("0.007999", &frequency_hz));
+	assert(!rfCalibrationParseFrequencyHz("3.6000001", &frequency_hz));
+	assert(!rfCalibrationParseFrequencyHz("3600.0001K", &frequency_hz));
 	assert(!rfCalibrationParseFrequencyHz("7.999K", &frequency_hz));
 	assert(!rfCalibrationParseFrequencyHz("160.000001M", &frequency_hz));
 	assert(!rfCalibrationParseFrequencyHz("3600000", &frequency_hz));
