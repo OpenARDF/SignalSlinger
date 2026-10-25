@@ -56,6 +56,25 @@ test:
 # Run all non-firmware repository checks.
 check: doctor docs-check policy-check test
 
+# Verify that a topic branch descends from its collector, or that a collector is promotion-ready.
+branch-route-check collector *args:
+    ./scripts/check-branch-workflow.sh "{{collector}}" {{args}}
+
+# Run the complete collector-specific promotion gate.
+collector-preflight collector:
+    ./scripts/check-branch-workflow.sh "{{collector}}" --promotion
+    just check
+    if [ "{{collector}}" = "Development1" ]; then just release-build-preflight; else just kicad-check; just spice-check; fi
+    just secrets
+
+# Run schematic ERC and require the reviewed PCB DRC baseline to remain unchanged.
+kicad-check:
+    ./scripts/check-kicad.sh
+
+# Run every checked-in SPICE deck; pass explicitly when none are present.
+spice-check:
+    ./scripts/check-spice.sh
+
 # Scan the repository and history for secrets.
 secrets:
     gitleaks detect --source "{{repo_root}}" --gitleaks-ignore-path "{{justfile_directory()}}/.gitleaksignore" --no-banner --redact

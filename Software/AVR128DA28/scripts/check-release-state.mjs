@@ -44,8 +44,8 @@ try {
   parseVersion(candidateVersion, "candidate version");
 
   const branch = runGit(["branch", "--show-current"]).stdout;
-  if (!["Development2", "main"].includes(branch)) {
-    fail(`expected Development2 or main, got '${branch || "detached HEAD"}'`);
+  if (!["Development1", "main"].includes(branch)) {
+    fail(`expected Development1 or main, got '${branch || "detached HEAD"}'`);
   }
   const remoteHeads = readRemoteHeads();
   const localHead = runGit(["rev-parse", "HEAD"]).stdout;
@@ -117,7 +117,7 @@ try {
         fail(`${name} is '${checklist[name]}', expected '${value}'`);
       }
     }
-  } else if (branch === "Development2") {
+  } else if (branch === "Development1") {
     fail(`missing candidate checklist ${checklistPath}`);
   }
 

@@ -5,8 +5,14 @@
 - Before making any software changes, explicitly state the current git branch to the user.
 - Keep this branch announcement in the commentary/update message that comes before the edit.
 - Prefer `rg` for text searches and `rg --files` for file discovery when working in this repo; use recursive PowerShell searches only as a fallback when `rg` is unavailable or blocked in the current shell.
-- On `Development2`, do not automatically commit changes; leave them uncommitted for the user to review and commit.
-- For `Development2` to `main` branch syncs, use `.\merge-development2-into-main.ps1` so the merge always includes the line-ending renormalization step before commit.
+- `main` is deployed and release-ready. Do not use it as a development collector.
+- `Development1` collects firmware, software, tests, documentation, and release-workflow changes. It must not collect `KiCad/` changes.
+- `Development1-KiCad` collects schematic, PCB, symbol, footprint, simulation, and model changes. It must not collect firmware, tests, release notes, or release evidence.
+- Start focused work from the correct clean collector, run `just branch-route-check <collector>` on the topic, and return only the focused topic to that collector.
+- Promote each collector to `main` with its own cumulative PR. Never mix both collectors in one promotion PR.
+- After either collector is promoted, merge the new `main` baseline into both collectors before accepting more topics or preparing another promotion.
+- Run `just collector-preflight <collector>` on the collector before requesting promotion. Unwaived warnings fail the preflight.
+- Post-publication evidence may use a separate evidence-only PR to `main` after the release tag is fixed. It must contain only `release-evidence/` records and must not move the tag.
 
 ## Build And Verification
 
@@ -20,7 +26,7 @@
 - Treat `release-notes/vX.Y.Z.md` as a required, versioned release artifact. It must summarize salient user-observable changes and significant stability/reliability improvements since the checklist's previous release, name all four release assets, and link the exact GitHub comparison.
 - Run `just release-publication-check <checklist> <candidate|release>` before GitHub publication. Always create the GitHub release with `gh release create --notes-file release-notes/vX.Y.Z.md`; generated notes are not an acceptable final release body.
 - After publication, run `just release-notes-remote-check <checklist>` and record evidence that the GitHub body exactly matches the checked file.
-- Use `just release-integration-worktree <version>` to stage the Development2-to-main merge in a clean `/private/tmp` worktree without touching unrelated KiCad changes in the normal checkout.
+- Use `just release-integration-worktree <version>` to stage the `Development1`-to-`main` merge in a clean `/private/tmp` worktree without touching unrelated KiCad changes in the normal checkout.
 - Release-specific checklists live under repo-root `release-evidence/` until publication is complete. The normal staging helper excludes that directory; commit the final evidence after the tag is fixed, without moving the tag.
 - Use `just avr-programmer-prereqs` for a no-hardware setup check and `just avr-probe` for a no-write connected-target check. Do not add a shortcut around the explicit fuse confirmations in `provision-bootloader.ps1`.
 - Portable Mac build artifacts and `build-evidence.json` files belong only under the ignored `tmp/avr-*` directories.
