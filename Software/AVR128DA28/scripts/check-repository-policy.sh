@@ -116,6 +116,13 @@ if ! rg -q 'Development1.*firmware, software, tests' "$firmware_root/RELEASE_WOR
 	failure=1
 fi
 
+if ! rg -q 'branch !== "Development1"' "$firmware_root/scripts/prepare-release-version.mjs" ||
+	! rg -q '\["Development1", "main"\]' "$firmware_root/scripts/check-release-state.mjs" ||
+	! rg -q "SourceBranch = 'Development1'" "$firmware_root/merge-development2-into-main.ps1"; then
+	printf '%s\n' "ERROR: release tooling must promote from Development1" >&2
+	failure=1
+fi
+
 if ! rg -q '"id": "release-notes-user-visible"' "$firmware_root/release-checklist-template.json" ||
 	! rg -q '"id": "release-notes-reliability"' "$firmware_root/release-checklist-template.json"; then
 	printf '%s\n' "ERROR: release checklist must separately require user-visible and reliability notes" >&2

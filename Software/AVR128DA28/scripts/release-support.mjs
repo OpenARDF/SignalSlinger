@@ -121,7 +121,7 @@ export function readRemoteHeads() {
     "--heads",
     "origin",
     "main",
-    "Development2",
+    "Development1",
   ]).stdout;
   const heads = new Map();
 
@@ -135,7 +135,7 @@ export function readRemoteHeads() {
       heads.set(match[1], objectId);
     }
   }
-  for (const branch of ["main", "Development2"]) {
+  for (const branch of ["main", "Development1"]) {
     if (!heads.has(branch)) {
       throw new Error(`Origin branch '${branch}' was not found`);
     }

@@ -45,6 +45,7 @@
 
 #include "include/i2c.h"
 #include "include/si5351.h"
+#include "include/si5351_fraction.h"
 
 #define SI5351_I2C_SLAVE_ADDR 0xC0 /* I2C slave address */
 
@@ -230,9 +231,14 @@ bool si5351_init(Si5351_Xtal_load_pF xtal_load_c, Frequency_Hz ref_osc_freq)
  * @param freq_Fout Requested output frequency in Hz.
  * @param clk Output clock to configure.
  * @param clocksOff true to keep the enabled outputs disabled after programming.
+ * @param preserveOneHz true only for the calibration path that permits exact
+ *        whole-Hz requests above 1 MHz.
  * @return true on failure, false on success.
  */
-bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
+static bool si5351SetFrequencyInternal(Frequency_Hz freq_Fout,
+	                                  Si5351_clock clk,
+	                                  bool clocksOff,
+	                                  bool preserveOneHz)
 {
 	Union_si5351_regs ms_reg;
 	Frequency_Hz freq_VCO = 0;
@@ -269,7 +275,7 @@ bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
 #ifdef PREVENT_UNACHIEVABLE_FREQUENCIES
 	/* Prevent unachievable frequencies from being entered. The Si5351 will accept these, but some may result */
 	/* in no clock output. */
-	if(freq_Fout > 999999)
+	if(!preserveOneHz && freq_Fout > 999999)
 	{
 		freq_Fout /= 100;
 		freq_Fout *= 100;
@@ -501,6 +507,18 @@ bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
 	}
 
 	return (false);
+}
+
+/* Keep normal tuning on the proven 100 Hz policy. */
+bool si5351_set_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
+{
+	return si5351SetFrequencyInternal(freq_Fout, clk, clocksOff, false);
+}
+
+/* Calibration alone opts into exact whole-Hz requests. */
+bool si5351_set_calibration_freq(Frequency_Hz freq_Fout, Si5351_clock clk, bool clocksOff)
+{
+	return si5351SetFrequencyInternal(freq_Fout, clk, clocksOff, true);
 }
 
 /**
@@ -926,11 +944,27 @@ bool pll_calc(Frequency_Hz vco_freq, Union_si5351_regs *reg)
 	}
 #endif
 
-	/* Find best approximation for b/c = fVCO mod fIN */
-	b = vco_freq % ref_freq;
-	c = ref_freq;
+	/* Preserve the exact reduced fraction when it fits. Otherwise use the
+	 * nearest bounded rational so both 20-bit PLL fields remain valid. */
+	const Si5351Fraction fraction = si5351BoundedFraction(vco_freq % ref_freq,
+	                                                    ref_freq,
+	                                                    SI5351_PLL_C_MAX);
+	if(fraction.numerator == fraction.denominator)
+	{
+		++a;
+		b = 0;
+		c = 1;
+	}
+	else
+	{
+		b = fraction.numerator;
+		c = fraction.denominator;
+	}
 
-	reduce_by_gcd(&b, &c);
+#ifdef DO_BOUNDS_CHECKING
+	if(a > SI5351_PLL_A_MAX)
+		return (true);
+#endif
 
 	uint32_t bx128 = b << 7;
 	uint32_t bx128overc = bx128 / c;
@@ -1134,10 +1168,25 @@ Frequency_Hz multisynth_estimate(Frequency_Hz freq_Fout, Union_si5351_regs *reg,
 
 	/* Determine integer part of feedback equation */
 	a = freqVCOB / freq_Fout;
-	b = freqVCOB % freq_Fout;
-	c = freq_Fout;
-	/* Reduce the fraction before packing to avoid overflow and match ClockBuilder math. */
-	reduce_by_gcd(&b, &c);
+	const Si5351Fraction fraction = si5351BoundedFraction(freqVCOB % freq_Fout,
+	                                                    freq_Fout,
+	                                                    SI5351_MULTISYNTH_C_MAX);
+	if(fraction.numerator == fraction.denominator)
+	{
+		++a;
+		b = 0;
+		c = 1;
+	}
+	else
+	{
+		b = fraction.numerator;
+		c = fraction.denominator;
+	}
+
+#ifdef DO_BOUNDS_CHECKING
+	if(a < SI5351_MULTISYNTH_A_MIN || a > SI5351_MULTISYNTH_A_MAX)
+		return (0);
+#endif
 
 	/* Calculate the approximated output frequency given by fOUT = fvco / (a + b/c) */
 	freq_Fout = freqVCOB;

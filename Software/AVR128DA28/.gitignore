@@ -33,6 +33,7 @@ SignalSlinger/Release/src/
 /tmp/test-session-policy
 /tmp/test-thermal-shutdown-policy
 /tmp/test-rf-calibration
+/tmp/test-si5351-fraction
 
 # Generated hardware-bench captures and frozen diagnostic images
 /tmp/hardware-bench/

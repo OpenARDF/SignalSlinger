@@ -297,6 +297,9 @@
     <Compile Include="include\si5351.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\si5351_fraction.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\slpctrl.h">
       <SubType>compile</SubType>
     </Compile>
@@ -364,6 +367,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\si5351.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\si5351_fraction.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\slpctrl.cpp">
