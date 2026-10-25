@@ -41,6 +41,16 @@ resolve_ref() {
 }
 
 collector_ref=$(resolve_ref "$collector")
+if git show-ref --verify --quiet refs/remotes/origin/main; then
+	main_ref=origin/main
+else
+	main_ref=$(resolve_ref main)
+fi
+
+if ! git merge-base --is-ancestor "$main_ref" "$collector_ref"; then
+	printf '%s\n' "ERROR: $collector_ref is behind $main_ref; synchronize the collector before accepting topics or promotion" >&2
+	exit 1
+fi
 
 if [ "$mode" = "--promotion" ]; then
 	if [ "$current_branch" != "$collector" ]; then
@@ -48,11 +58,6 @@ if [ "$mode" = "--promotion" ]; then
 		exit 1
 	fi
 
-	main_ref=$(resolve_ref main)
-	if ! git merge-base --is-ancestor "$main_ref" HEAD; then
-		printf '%s\n' "ERROR: $collector must contain the current $main_ref baseline before promotion" >&2
-		exit 1
-	fi
 	diff_base=$main_ref
 else
 	if [ "$current_branch" != "$collector" ] &&
