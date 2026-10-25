@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$SourceBranch = 'Development2',
+    [string]$SourceBranch = 'Development1',
 
     [string]$TargetBranch = 'main',
 

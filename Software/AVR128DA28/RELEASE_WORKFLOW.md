@@ -274,7 +274,7 @@ to the later evidence commit.
 
 ## Branch Merge Policy
 
-- Use `.\merge-development2-into-main.ps1 -SourceBranch Development1` for `Development1` to `main` release integration instead of a raw `git merge`.
+- Use the legacy-named `.\merge-development2-into-main.ps1 -SourceBranch Development1` helper for `Development1` to `main` release integration instead of a raw `git merge`. Its default source is now `Development1`; the filename is retained for existing automation.
 - The merge worktree must start clean so the renormalization step only stages merge content.
 - The policy for this repository is `core.autocrlf=false` with `.gitattributes` controlling line endings.
 - The merge helper also enforces `core.safecrlf=true` so Git rejects mixed or lossy line-ending conversions.

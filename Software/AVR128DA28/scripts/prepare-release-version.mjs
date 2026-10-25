@@ -85,9 +85,9 @@ try {
   const options = parseArgs(process.argv);
   parseVersion(options.version, "release version");
   const branch = runGit(["branch", "--show-current"]).stdout;
-  if (branch !== "Development2") {
+  if (branch !== "Development1") {
     throw new Error(
-      `Prepare release versions on Development2, not '${branch || "detached HEAD"}'`,
+      `Prepare release versions on Development1, not '${branch || "detached HEAD"}'`,
     );
   }
 
