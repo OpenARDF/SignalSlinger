@@ -1,118 +1,131 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
-usage() {
-	printf '%s\n' "usage: $0 <Development1|Development1-KiCad> [--promotion]" >&2
-	exit 2
-}
+firmware_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(git -C "$firmware_root" rev-parse --show-toplevel)"
+collector="${1:-}"
+mode="${2:-}"
 
-collector=${1:-}
-mode=${2:-}
-
-case "$collector" in
-Development1 | Development1-KiCad) ;;
-*) usage ;;
-esac
-
-case "$mode" in
-'' | --promotion) ;;
-*) usage ;;
-esac
-
-git rev-parse --show-toplevel >/dev/null
-current_branch=$(git branch --show-current)
-
-if [ -z "$current_branch" ]; then
-	printf '%s\n' "ERROR: branch routing cannot be checked from detached HEAD" >&2
+if [[ "$collector" != "Development1" && "$collector" != "Development1-KiCad" ]]; then
+	printf 'ERROR: collector must be Development1 or Development1-KiCad\n' >&2
+	exit 1
+fi
+if [[ -n "$mode" && "$mode" != "--promotion" && "$mode" != "--sync" ]]; then
+	printf 'ERROR: unsupported mode: %s\n' "$mode" >&2
 	exit 1
 fi
 
-resolve_ref() {
-	ref=$1
-	if git show-ref --verify --quiet "refs/heads/$ref"; then
-		printf '%s\n' "$ref"
-	elif git show-ref --verify --quiet "refs/remotes/origin/$ref"; then
-		printf '%s\n' "origin/$ref"
-	else
-		printf '%s\n' "ERROR: required branch '$ref' was not found locally or on origin" >&2
-		exit 1
-	fi
-}
-
-collector_ref=$(resolve_ref "$collector")
-if git show-ref --verify --quiet refs/remotes/origin/main; then
-	main_ref=origin/main
-else
-	main_ref=$(resolve_ref main)
-fi
-
-if ! git merge-base --is-ancestor "$main_ref" "$collector_ref"; then
-	printf '%s\n' "ERROR: $collector_ref is behind $main_ref; synchronize the collector before accepting topics or promotion" >&2
+current_branch="$(git -C "$repo_root" branch --show-current)"
+if [[ -z "$current_branch" ]]; then
+	printf 'ERROR: branch routing cannot be checked from detached HEAD\n' >&2
 	exit 1
 fi
 
-if [ "$mode" = "--promotion" ]; then
-	if [ "$current_branch" != "$collector" ]; then
-		printf '%s\n' "ERROR: promotion preflight for $collector must run on $collector, not $current_branch" >&2
+main_ref="origin/main"
+collector_ref="origin/$collector"
+
+# The Justfile fetches before invoking this script. Always validate against the
+# fetched remote tips so stale local branches cannot pass a routing gate.
+for required_ref in "$main_ref" "$collector_ref"; do
+	if git -C "$repo_root" show-ref --verify --quiet "refs/remotes/$required_ref"; then
+		continue
+	fi
+	printf 'ERROR: fetched remote branch is unavailable locally: %s\n' "$required_ref" >&2
+	exit 1
+done
+
+if [[ "$mode" == "--sync" ]]; then
+	if [[ "$current_branch" == "$collector" || "$current_branch" == "main" ]]; then
+		printf 'ERROR: synchronization must run on a focused topic branch, not %s\n' \
+			"$current_branch" >&2
 		exit 1
 	fi
 
-	diff_base=$main_ref
-else
-	if [ "$current_branch" != "$collector" ] &&
-		! git merge-base --is-ancestor "$collector_ref" HEAD; then
-		printf '%s\n' "ERROR: topic branch $current_branch must start from $collector_ref" >&2
+	collector_oid="$(git -C "$repo_root" rev-parse "$collector_ref")"
+	main_oid="$(git -C "$repo_root" rev-parse "$main_ref")"
+	parents="$(git -C "$repo_root" rev-list --parents -n 1 HEAD)"
+	IFS=' ' read -r _ first_parent second_parent extra_parent <<EOF
+$parents
+EOF
+	# Exact parents make synchronization auditable: no extra topic commits,
+	# rebases, or squash-equivalent content can masquerade as baseline ancestry.
+	if [[ -n "${extra_parent:-}" || "${first_parent:-}" != "$collector_oid" ||
+		"${second_parent:-}" != "$main_oid" ]]; then
+		printf 'ERROR: sync HEAD must merge %s first and %s second\n' \
+			"$collector_ref" "$main_ref" >&2
 		exit 1
 	fi
-	diff_base=$collector_ref
+	if ! git -C "$repo_root" diff --quiet || ! git -C "$repo_root" diff --cached --quiet; then
+		printf 'ERROR: synchronization checkout must be clean\n' >&2
+		exit 1
+	fi
+
+	printf 'PASS branch route: %s -> %s (sync)\n' "$current_branch" "$collector"
+	exit 0
+fi
+
+if ! git -C "$repo_root" merge-base --is-ancestor "$main_ref" "$collector_ref"; then
+	printf 'ERROR: %s does not contain the fetched main baseline\n' "$collector_ref" >&2
+	exit 1
+fi
+
+if [[ "$mode" == "--promotion" ]]; then
+	if [[ "$current_branch" != "$collector" ]]; then
+		printf 'ERROR: promotion preflight must run on %s, not %s\n' \
+			"$collector" "$current_branch" >&2
+		exit 1
+	fi
+	if [[ "$(git -C "$repo_root" rev-parse HEAD)" != "$(git -C "$repo_root" rev-parse "$collector_ref")" ]]; then
+		printf 'ERROR: local %s does not match %s\n' "$collector" "$collector_ref" >&2
+		exit 1
+	fi
+	diff_base="$main_ref"
+else
+	if [[ "$current_branch" == "$collector" ]]; then
+		if [[ "$(git -C "$repo_root" rev-parse HEAD)" != "$(git -C "$repo_root" rev-parse "$collector_ref")" ]]; then
+			printf 'ERROR: local %s does not match %s\n' "$collector" "$collector_ref" >&2
+			exit 1
+		fi
+	elif ! git -C "$repo_root" merge-base --is-ancestor "$collector_ref" HEAD; then
+		printf 'ERROR: %s is not based on %s\n' "$current_branch" "$collector_ref" >&2
+		exit 1
+	fi
+	diff_base="$collector_ref"
 fi
 
 failure=0
-changed_paths=$(git diff --name-only "$diff_base...HEAD")
-
-if [ "$collector" = "Development1" ]; then
-	while IFS= read -r path; do
-		[ -n "$path" ] || continue
-		case "$path" in
-		KiCad/*)
-			printf '%s\n' "ERROR: firmware/software collector cannot include KiCad path: $path" >&2
+while IFS= read -r path; do
+	[[ -n "$path" ]] || continue
+	if [[ "$collector" == "Development1" ]]; then
+		if [[ "$path" == KiCad/* ]]; then
+			printf 'ERROR: firmware/software collector contains KiCad path: %s\n' "$path" >&2
 			failure=1
-			;;
-		esac
-	done <<EOF
-$changed_paths
-EOF
-else
-	while IFS= read -r path; do
-		[ -n "$path" ] || continue
+		fi
+	else
 		case "$path" in
 		KiCad/* | README.md | \
 			Software/AVR128DA28/Justfile | \
 			Software/AVR128DA28/CODEX_WORKFLOW.md | \
 			Software/AVR128DA28/RELEASE_WORKFLOW.md | \
 			Software/AVR128DA28/scripts/check-branch-workflow.sh | \
+			Software/AVR128DA28/scripts/test-branch-workflow.sh | \
 			Software/AVR128DA28/scripts/check-kicad.sh | \
 			Software/AVR128DA28/scripts/check-spice.sh | \
 			Software/AVR128DA28/scripts/kicad-fontconfig.conf | \
-			Software/AVR128DA28/scripts/check-repository-policy.sh)
-			;;
+			Software/AVR128DA28/scripts/check-repository-policy.sh) ;;
 		*)
-			printf '%s\n' "ERROR: KiCad collector path is outside KiCad or the narrow workflow bootstrap allowlist: $path" >&2
+			printf 'ERROR: KiCad collector path is outside KiCad or the narrow workflow bootstrap allowlist: %s\n' \
+				"$path" >&2
 			failure=1
 			;;
 		esac
-	done <<EOF
-$changed_paths
-EOF
-fi
+	fi
+done < <(git -C "$repo_root" diff --name-only "$diff_base"...HEAD)
 
-if [ "$failure" -ne 0 ]; then
+if [[ "$failure" -ne 0 ]]; then
 	exit 1
 fi
 
-if [ "$mode" = "--promotion" ]; then
-	printf '%s\n' "PASS $collector promotion route: $diff_base...HEAD"
-else
-	printf '%s\n' "PASS $current_branch routes through $collector_ref"
-fi
+printf 'PASS branch route: %s -> %s%s\n' "$current_branch" "$collector" \
+	"${mode:+ (${mode#--})}"

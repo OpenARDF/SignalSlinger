@@ -54,14 +54,25 @@ test:
     node ./scripts/check-release-version-consistency.mjs
 
 # Run all non-firmware repository checks.
-check: doctor docs-check policy-check test
+check: doctor docs-check policy-check branch-workflow-regression test
 
-# Verify that a topic branch descends from its collector, or that a collector is promotion-ready.
-branch-route-check collector *args:
-    ./scripts/check-branch-workflow.sh "{{collector}}" {{args}}
+# Verify that a topic branch descends from the exact remote collector tip.
+branch-route-check collector:
+    git -C "{{repo_root}}" fetch --prune origin main "{{collector}}"
+    ./scripts/check-branch-workflow.sh "{{collector}}"
+
+# Verify that a synchronization topic joins the exact remote collector and main tips.
+collector-sync-check collector:
+    git -C "{{repo_root}}" fetch --prune origin main "{{collector}}"
+    ./scripts/check-branch-workflow.sh "{{collector}}" --sync
+
+# Prove branch routing rejects stale collectors and malformed synchronization topics.
+branch-workflow-regression:
+    ./scripts/test-branch-workflow.sh
 
 # Run the complete collector-specific promotion gate.
 collector-preflight collector:
+    git -C "{{repo_root}}" fetch --prune origin main "{{collector}}"
     ./scripts/check-branch-workflow.sh "{{collector}}" --promotion
     just check
     if [ "{{collector}}" = "Development1" ]; then just release-build-preflight; else just kicad-check; just spice-check; fi
